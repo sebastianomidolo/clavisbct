@@ -5,6 +5,9 @@
 # lastmod 31 gennaio 2013
 # lastmod 28 gennaio 2013
 
+# Example
+# include MetaSearch;do_search('bct','val pellice',false,false)
+
 require 'open-uri'
 
 module MetaSearch
@@ -190,12 +193,14 @@ module MetaSearch
   end
 
   def save_local_copy(opac,html)
-    fd=File.open("/tmp/debug/#{opac.to_s}.html","w")
+    fn=File.join("#{Rails.root.join('tmp').to_s}", "#{opac.to_s}.html")
+    fd=File.open(fn,"w")
     fd.write(html)
     fd.close
   end
   def load_from_local_copy(opac)
-    Nokogiri::HTML(open("/tmp/debug/#{opac.to_s}.html"))
+    fn=File.join("#{Rails.root.join('tmp').to_s}", "#{opac.to_s}.html")
+    Nokogiri::HTML(open(fn))
   end
   
 end

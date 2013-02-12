@@ -1,7 +1,10 @@
 # -*- mode: ruby;-*-
-# lastmod 11 febbraio 2013
 
-# RAILS_ENV=production rake import_from_clavis
+# Esempio. In development:
+# RAILS_ENV=development rake import_from_clavis 2> /tmp/import_from_clavis_development.stderr
+# In production:
+# RAILS_ENV=production rake import_from_clavis 2> /tmp/import_from_clavis_production.stderr
+
 # http://stackoverflow.com/questions/399396/can-you-get-db-username-pw-database-name-in-rails
 
 desc 'Importazione dati Clavis'
@@ -11,8 +14,19 @@ task :import_from_clavis => :environment do
   dbname=config[Rails.env]["database"]
   username=config[Rails.env]["username"]
   source=config[Rails.env]["clavis_datasource"]
-  log=File.join('/','tmp',"import_from_clavis_#{Rails.env}")
-  cmd="/usr/bin/psql --quiet -d #{dbname} #{username}  -f #{source} -L #{log} -w"
+  cmd=config[Rails.env]["clavis_getcmd"]
   puts cmd
   Kernel.system(cmd)
+
+  cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{source}"
+  puts cmd
+  Kernel.system(cmd)
+  insertdir=File.join(File.dirname(source),'inserts')
+  puts insertdir
+  Dir.glob(File.join(insertdir, "*.sql")).sort.each do |f|
+    cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{f}"
+    puts cmd
+    Kernel.system(cmd)
+  end
+
 end
