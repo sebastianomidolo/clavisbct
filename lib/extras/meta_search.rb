@@ -158,7 +158,7 @@ module MetaSearch
   end
 
   def do_search(opac,query,dryrun,debug_mode=false)
-    dryrun=nil if dryrun.blank?
+    dryrun=false if dryrun.blank?
     opac = opac.to_sym
     target=@@opacs[opac]
     return nil if target.nil? or target[:on]==false
@@ -170,7 +170,7 @@ module MetaSearch
     url=target[:query].sub('_QS_',query)
     res[:url]=url
 
-    if dryrun.nil?
+    if dryrun==false
       res[:dryrun]=false
       res[:list]={}
       [:descr, :baseurl, :link_pattern, :oid_placeholder].each { |k| res[k]=target[k] }
