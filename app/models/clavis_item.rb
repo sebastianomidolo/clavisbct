@@ -1,6 +1,3 @@
-# lastmod 25 gennaio 2013
-# lastmod 12 dicembre 2012
-
 class ClavisItem < ActiveRecord::Base
   set_table_name 'clavis.item'
   set_primary_key 'item_id'
