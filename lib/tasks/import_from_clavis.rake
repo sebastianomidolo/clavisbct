@@ -19,7 +19,8 @@ task :import_from_clavis => :environment do
      'view_prestiti',
     ].each do |fname|
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")
-      cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"
+      # cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"
+      cmd="/usr/bin/psql --no-psqlrc -d #{db} #{user}  -f #{sf}"
       puts cmd
       Kernel.system(cmd)
     end
