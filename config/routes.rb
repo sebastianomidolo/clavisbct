@@ -3,6 +3,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_manifestation do
     member do
       get 'kardex'
+      get 'testpdf'
     end
   end
 
