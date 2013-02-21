@@ -13,6 +13,7 @@
 /tmp
 
 *~
+public/index.html
 
 config/database.yml
 
