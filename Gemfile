@@ -24,4 +24,4 @@ gem 'jquery-rails'
 
 gem 'nokogiri'
 
-
+gem 'devise'
