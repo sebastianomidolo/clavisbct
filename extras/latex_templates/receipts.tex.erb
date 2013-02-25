@@ -1,0 +1,59 @@
+\documentclass[a4paper,12pt]{article}
+
+% Etichette piu' piccole
+
+% \usepackage[italian]{babel}
+\usepackage[utf8]{inputenc}
+
+% \usepackage[boxed]{ticket}
+% \usepackage[crossmark,cutmark]{ticket}
+
+% \usepackage[circlemark,emptycrossmark]{ticket}
+% \usepackage[circlemark,emptycrossmark,rowmode]{ticket}
+\usepackage[circlemark,emptycrossmark]{ticket}
+
+% \usepackage[cutmark]{ticket}
+% \usepackage{rotating}
+
+% Tarato per la stampante Brother del mio ufficio
+% A video risulta tagliato a sinistra e in alto, ma in stampa funziona
+% e anzi permette di risparmiare due tagli
+% tdf START
+\unitlength=1mm
+\hoffset=-22mm
+\voffset=-36mm
+\ticketNumbers{3}{3}
+\ticketSize{68}{90} % in unitlength
+\ticketDistance{0}{0} % in unitlength
+% tdf END
+
+\renewcommand{\ticketdefault}{%no background
+}
+
+\newcommand{\card}[6]{\ticket{%
+    \put(1,82){\parbox{62mm}{\raggedleft\Large{\textbf{ #1 }}}}%
+    \put(4,72){\parbox[t]{62mm}{\normalsize\raggedright #2}}%
+    \put(4,42){\parbox{62mm}{\normalsize\raggedright #3}}%
+    \put(4,32){\parbox{62mm}{\normalsize\raggedright #4}}%
+    \put(4,22){\parbox{62mm}{\normalsize\raggedright #5}}%
+    \put(4,12){\parbox{62mm}{\normalsize\raggedright #6}}%
+ }}
+
+% \crop
+
+\begin{document}
+
+<%
+ res=[]
+ inputdata.each do |e|
+  # e.collocazione.sub!(/^BCT\./, '')
+  # res << "\\card{#{e.collocazione}}{#{e.title}}{In prestito dal #{I18n.l e.loan_date_begin.to_date}}{#{e.barcode}}{barcode #{e.item_barcode}}{inv #{e.inventario}}" 
+  res << "\\card{#{e.collocazione}}{#{e.title}}{In prestito dal #{I18n.l e.loan_date_begin.to_date}}{#{e.barcode}}{#{e.item_barcode}}{#{e.inventario}}" 
+ end
+%>
+<%= res.join("\n") %>
+
+
+ 
+
+\end{document}
