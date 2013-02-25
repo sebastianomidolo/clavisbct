@@ -1,21 +1,17 @@
-# lastmod 20 febbraio 2013
-
 module LatexPrint
   class PDF
-    attr_accessor :latexcmd, :compile
-    def initialize(name)
+    attr_accessor :latexcmd, :texinput
+    def initialize(name, inputdata=[])
       @template=File.join(Rails.root.to_s,'extras','latex_templates',"#{name}.tex.erb")
-    end
-    
-    def read_template
-      File.read(@template)
+      erb = ERB.new(File.read(@template))
+      @texinput = erb.result(binding)
     end
 
     def latexcmd
       "/usr/bin/pdflatex"
     end
 
-    def make_pdf(texdata)
+    def makepdf
       tempdir = File.join(Rails.root.to_s, 'tmp', 'latex')
       tf = Tempfile.new("latex",tempdir)
       tex_file=tf.path + ".tex"
@@ -23,7 +19,7 @@ module LatexPrint
       aux_file=tf.path + ".aux"
       log_file=tf.path + ".log"
       fd = File.open(tex_file, "w")
-      fd.write texdata
+      fd.write @texinput
       fd.close
       # print "pdf_file: #{pdf_file}\n"
       # print "tex_file: #{tex_file}\n"

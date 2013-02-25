@@ -7,6 +7,13 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :clavis_loan do
+    collection do
+      get 'receipts'
+    end
+  end
+
+
   match '/metasearch' => 'metasearch#search'
   match '/redir' => 'metasearch#redir'
 
