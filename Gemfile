@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.11'
+gem 'rails', '3.2.12'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -24,4 +24,12 @@ gem 'jquery-rails'
 
 gem 'nokogiri'
 
-gem 'devise'
+gem "devise", ">= 2.2.3"
+
+gem "cucumber-rails", ">= 1.3.0", :group => :test, :require => false
+
+
+gem 'rspec-rails', :group => [:development, :test]
+gem "factory_girl_rails", :group => [:development, :test]
+gem "database_cleaner", :group => :test
+gem "email_spec", :group => :test
