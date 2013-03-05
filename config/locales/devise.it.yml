@@ -16,6 +16,8 @@ it:
 
   devise:
     failure:
+      user:
+       not_found_in_database: "utente non trovato"
       already_authenticated: "Hai già effettuato l'accesso."
       unauthenticated: "Devi accedere o registrarti per continuare."
       unconfirmed: "Devi confermare il tuo account per continuare."
@@ -25,7 +27,7 @@ it:
       timeout: "Sessione scaduta, accedere nuovamente per continuare."
       inactive: "Il tuo account non è stato ancora attivato."
     sessions:
-      signed_in: "Accesso effettuato con successo."
+      signed_in: "Accesso effettuato."
       signed_out: "Sei uscito correttamente."
     passwords:
       send_instructions: "Entro qualche minuto riceverai un messaggio email con le istruzioni per reimpostare la tua password."
@@ -58,3 +60,4 @@ it:
         subject: "Istruzioni per reimpostare la password"
       unlock_instructions:
         subject: "Istruzioni per sbloccare l'account"
+

@@ -25,11 +25,13 @@ gem 'jquery-rails'
 gem 'nokogiri'
 
 gem "devise", ">= 2.2.3"
+gem 'devise-encryptable'
 
 gem "cucumber-rails", ">= 1.3.0", :group => :test, :require => false
-
 
 gem 'rspec-rails', :group => [:development, :test]
 gem "factory_girl_rails", :group => [:development, :test]
 gem "database_cleaner", :group => :test
 gem "email_spec", :group => :test
+
+gem "savon"

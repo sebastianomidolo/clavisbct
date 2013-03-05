@@ -1,5 +1,8 @@
 class HomeController < ApplicationController
+  # before_filter :authenticate_user!
   def index
-    render :text=>'ok'
+    @msg=Time.now
+    # authenticate_user!
   end
 end
+

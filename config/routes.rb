@@ -1,5 +1,7 @@
 Clavisbct::Application.routes.draw do
 
+  devise_for :users
+
   resources :clavis_manifestation do
     member do
       get 'kardex'
