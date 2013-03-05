@@ -1,5 +1,8 @@
 Clavisbct::Application.routes.draw do
 
+  resources :procultura_folders
+
+
   devise_for :users
 
   resources :clavis_manifestation do
