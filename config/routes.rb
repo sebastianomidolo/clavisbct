@@ -1,7 +1,9 @@
 Clavisbct::Application.routes.draw do
 
-  resources :procultura_folders
 
+  match '/procultura' => 'procultura_folders#index'
+  resources :procultura_cards
+  resources :procultura_folders
 
   devise_for :users
 
