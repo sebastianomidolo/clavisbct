@@ -1,0 +1,20 @@
+<%
+# lastmod 7 marzo 2013
+# lastmod 6 marzo 2013
+%>
+
+
+<%=
+pf=@procultura_card.folder
+txt="#{pf.archive.name}"
+content_tag(:h3, link_to(txt, procultura_make_link(procultura_folders_path(:archive_id=>pf.archive.id))))
+%>
+<%=
+txt="Cassetto #{pf.label}"
+content_tag(:h3, link_to(txt, procultura_make_link(procultura_folder_path(pf))))
+%>
+
+<%= content_tag(:h3, @procultura_card.heading) %>
+
+<%= content_tag(:p,
+link_to('Vedi scansione della scheda originale', procultura_link_to_pdf(@procultura_card))) %>

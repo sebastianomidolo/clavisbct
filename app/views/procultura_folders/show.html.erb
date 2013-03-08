@@ -1,0 +1,15 @@
+<%
+# lastmod 7 marzo 2013
+%>
+
+<%=
+pf=@pf
+txt="#{pf.archive.name}"
+content_tag(:h2, link_to(txt, procultura_make_link(procultura_folders_path(:archive_id=>pf.archive.id))))
+%>
+
+<%= content_tag(:h3, "Cassetto #{@pf.label}") %>
+
+<%= content_tag(:div, procultura_cards(@pf)) %>
+
+
