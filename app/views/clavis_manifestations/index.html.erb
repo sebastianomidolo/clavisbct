@@ -1,0 +1,13 @@
+<%
+# lastmod 11 marzo 2013
+%>
+
+Ultimo record inserito:
+<%=
+cm=ClavisManifestation.last
+link_to(cm.id, cm.clavis_url)
+%>
+<%= cm.date_created.to_date %>
+
+
+<%= content_tag(:div, clavis_manifestations_perbid) %>

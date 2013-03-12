@@ -1,6 +1,6 @@
 \documentclass[a4paper,12pt]{article}
 
-% Etichette piu' piccole
+% 9 etichette per pagina
 
 % \usepackage[italian]{babel}
 \usepackage[utf8]{inputenc}
@@ -9,19 +9,26 @@
 % \usepackage[crossmark,cutmark]{ticket}
 
 % \usepackage[circlemark,emptycrossmark]{ticket}
-% \usepackage[circlemark,emptycrossmark,rowmode]{ticket}
-\usepackage[circlemark,emptycrossmark]{ticket}
+\usepackage[circlemark,emptycrossmark,rowmode]{ticket}
+% \usepackage[circlemark,emptycrossmark]{ticket}
 
 % \usepackage[cutmark]{ticket}
 % \usepackage{rotating}
 
-% Tarato per la stampante Brother del mio ufficio
-% A video risulta tagliato a sinistra e in alto, ma in stampa funziona
-% e anzi permette di risparmiare due tagli
 % tdf START
 \unitlength=1mm
+
+% Queste impostazioni vanno bene per la mia Brother
+% A video risulta tagliato a sinistra e in alto, ma in stampa funziona
+% e anzi permette di risparmiare due tagli
+% \hoffset=-22mm
+% \voffset=-36mm
+
+% Impostazione per stampante ufficio informazioni
 \hoffset=-22mm
-\voffset=-36mm
+\voffset=-28mm
+
+
 \ticketNumbers{3}{3}
 \ticketSize{68}{90} % in unitlength
 \ticketDistance{0}{0} % in unitlength

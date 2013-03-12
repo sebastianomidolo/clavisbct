@@ -16,11 +16,16 @@ class ProculturaCardsController < ApplicationController
                   :type=>'application/pdf')
       }
       format.png {
-        filename="/tmp/prova.png"
-        data=File.read(filename)
-        send_data(data,
-                  :filename=>filename,:disposition=>'inline',
-                  :type=>'graphics/png')
+        @procultura_card.extract_images(:png)
+        send_file(@procultura_card.firstimage_path(:png), :type => 'graphics/png', :disposition => 'inline')
+      }
+      format.jpeg {
+        @procultura_card.extract_images(:jpg)
+        send_file(@procultura_card.firstimage_path(:jpg), :type => 'graphics/jpg', :disposition => 'inline')
+      }
+      format.gif {
+        @procultura_card.extract_images(:gif)
+        send_file(@procultura_card.firstimage_path(:gif), :type => 'graphics/gif', :disposition => 'inline')
       }
     end
   end

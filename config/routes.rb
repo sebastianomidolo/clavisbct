@@ -5,12 +5,15 @@ Clavisbct::Application.routes.draw do
   resources :procultura_cards
   resources :procultura_folders
 
-  devise_for :users
+  # devise_for :users
 
-  resources :clavis_manifestation do
+  resources :clavis_manifestations do
     member do
       get 'kardex'
       get 'testpdf'
+    end
+    collection do
+      get 'shortlist'
     end
   end
 
@@ -23,6 +26,8 @@ Clavisbct::Application.routes.draw do
 
   match '/metasearch' => 'metasearch#search'
   match '/redir' => 'metasearch#redir'
+
+  match '/spazioragazzi' => 'home#spazioragazzi'
 
 
   root :to => 'home#index'

@@ -28,6 +28,7 @@ class ClavisLoan < ActiveRecord::Base
   owner_library_id=#{library_id}
     #{ldb}
    and loan_date_end isnull
+   and not collocation ~* '^DVD'
   order by section, espandi_collocazione(collocazione),
    specification, sequence1, sequence2;}
     puts sql

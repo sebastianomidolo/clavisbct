@@ -18,4 +18,8 @@ class ClavisManifestation < ActiveRecord::Base
     "#{host}/index.php?page=Catalog.Record&manifestationId=#{self.id}"
   end
 
+  def thebid
+    self.bid.blank? ? 'nobid' : self.bid
+  end
+
 end

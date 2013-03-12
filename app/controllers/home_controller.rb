@@ -4,5 +4,9 @@ class HomeController < ApplicationController
     @msg=Time.now
     # authenticate_user!
   end
+
+  def spazioragazzi
+    render :text=>File.read('/tmp/indexfile.html')
+  end
 end
 
