@@ -1,21 +1,25 @@
-<h1>Listing talking_books</h1>
+<%= content_tag(:h2, "Non catalogo del libro parlato") %>
 
-<table>
-  <tr>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
+<%= form_tag(talking_books_url, :method=>:get) do %>
 
-<% @talking_books.each do |talking_book| %>
-  <tr>
-    <td><%= link_to 'Show', talking_book %></td>
-    <td><%= link_to 'Edit', edit_talking_book_path(talking_book) %></td>
-    <td><%= link_to 'Destroy', talking_book, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-  </tr>
+<%= text_field_tag('qs', params[:qs]) %>
+
+<%=
+ checked = params[:digitalized]=='yes' ? true : false
+ check_box_tag('digitalized', 'yes', checked)
+%>
+
+<%= label_tag(:digitalized, 'solo digitalizzati') %>
+
+
+<br/>
+
+<%= submit_tag('Cerca') %>
+
 <% end %>
-</table>
 
-<br />
+<%= content_tag(:h2, "Trovati #{@talking_books.total_entries}") %>
+<%= will_paginate @talking_books %>
 
-<%= link_to 'New Talking book', new_talking_book_path %>
+<hr/>
+<%= content_tag(:div, talking_books_index(@talking_books)) %>
