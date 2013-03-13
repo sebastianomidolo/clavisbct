@@ -30,4 +30,9 @@ class ClavisManifestationsController < ApplicationController
       }
     end
   end
+
+  def show
+    cm=ClavisManifestation.find(params[:id])
+    redirect_to cm.clavis_url
+  end
 end

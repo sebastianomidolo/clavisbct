@@ -1,6 +1,6 @@
 # lastmod 21 febbraio 2013
 
-class ClavisLoanController < ApplicationController
+class ClavisLoansController < ApplicationController
   def receipts
     ldb=params[:loan_date_begin]
     params[:loan_date_begin]=Time.now.to_date - 1.day if ldb.blank?

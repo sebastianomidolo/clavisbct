@@ -37,3 +37,5 @@ gem "email_spec", :group => :test
 gem "savon"
 
 gem 'will_paginate', '~> 3.0.0'
+
+gem 'rmagick', '2.13.2'

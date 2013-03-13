@@ -1,5 +1,3 @@
-# lastmod 20 febbraio 2013
-
 class ClavisItem < ActiveRecord::Base
   self.table_name='clavis.item'
   self.primary_key = 'item_id'
@@ -11,4 +9,12 @@ class ClavisItem < ActiveRecord::Base
     r.delete_if {|a| a.blank?}
     r.join('.')
   end
+
+
+  def clavis_url(mode=:show)
+    config = Rails.configuration.database_configuration
+    host=config[Rails.env]['clavis_host']
+    "#{host}/index.php?page=Catalog.ItemViewPage&id=#{self.id}"
+  end
+
 end

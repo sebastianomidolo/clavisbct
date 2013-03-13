@@ -54,7 +54,7 @@
  res=[]
  inputdata.each do |e|
   # e.collocazione.sub!(/^BCT\./, '')
-  # res << "\\card{#{e.collocazione}}{#{e.title}}{In prestito dal #{I18n.l e.loan_date_begin.to_date}}{#{e.barcode}}{barcode #{e.item_barcode}}{inv #{e.inventario}}" 
+  e.title.gsub!("{", '\\\{')
   res << "\\card{#{e.collocazione}}{#{e.title}}{In prestito dal #{I18n.l e.loan_date_begin.to_date}}{#{e.barcode}}{#{e.item_barcode}}{#{e.inventario}}" 
  end
 %>

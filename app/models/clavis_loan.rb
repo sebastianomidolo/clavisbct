@@ -21,9 +21,9 @@ class ClavisLoan < ActiveRecord::Base
     else
       ldb="and loan_date_begin notnull"
     end
-       
-    sql=%Q{SELECT collocazione,title,loan_date_begin,barcode,manifestation_id,
-            inventario, item_barcode from clavis.view_prestiti
+
+    sql=%Q{SELECT collocazione, title, loan_date_begin, barcode, manifestation_id,
+            item_id, inventario, item_barcode from clavis.view_prestiti
   WHERE
   owner_library_id=#{library_id}
     #{ldb}

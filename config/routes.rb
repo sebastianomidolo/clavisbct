@@ -17,10 +17,13 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :clavis_loan do
+  resources :clavis_loans do
     collection do
       get 'receipts'
     end
+  end
+
+  resources :clavis_items do
   end
 
 

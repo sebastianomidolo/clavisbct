@@ -12,9 +12,9 @@
 <% end %>
 
 
-<%= content_tag(:span, "@clavis_loans: #{@clavis_loans.size}") %> (esclusi i DVD)
+<%= content_tag(:span, "@clavis_loans: #{@clavis_loans.size}") %> (escluse le collocazioni che iniziano per "DVD")
 
 
 <%= content_tag(:h2, link_to('PDF',"receipts.pdf?#{params.to_query}")) %>
 
-<%= content_tag(:div, clavis_loans_list) %>
+<%= content_tag(:div, clavis_loans_list(@clavis_loans)) %>

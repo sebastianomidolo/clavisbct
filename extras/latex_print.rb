@@ -5,6 +5,7 @@ module LatexPrint
       @template=File.join(Rails.root.to_s,'extras','latex_templates',"#{name}.tex.erb")
       erb = ERB.new(File.read(@template))
       @texinput = erb.result(binding)
+      @texinput.gsub!("&", '\\\&')
     end
 
     def latexcmd
@@ -23,25 +24,29 @@ module LatexPrint
       fd.close
       # print "pdf_file: #{pdf_file}\n"
       # print "tex_file: #{tex_file}\n"
+
+      fd=File.open(File.join(tempdir,'current_texfile.tex'),'w')
+      fd.write(@texinput)
+      fd.close
+
       Kernel.system(self.latexcmd, '-interaction=batchmode', "-output-directory=#{tempdir}", tex_file)
       x=eval("`/usr/bin/file #{pdf_file}`")
       errors=[]
       if (/PDF document/ =~ x).nil?
         # puts "non pdf"
-        x=x.split(':').last
-        data = "errore TeX: #{x}"
+        # x=x.split(':').last
+        # puts "errore TeX: #{x.inspect}"
+        data=nil
       else
         # puts "OK pdf"
         fd = File.open(pdf_file)
         data = fd.read
         fd.close
-        fd = File.open(log_file)
-        logdata=fd.read
-        fd.close
-        logdata.each_line do |l|
-          errors << l if (/^! / =~ l)==0
-        end
       end
+      fd=File.open(File.join(tempdir,'current_logfile.log'),'w')
+      fd.write(File.read(log_file))
+      fd.close
+
       # cancello i files creati da tex
       path = tf.path
       tf.close(true)
@@ -49,11 +54,12 @@ module LatexPrint
         # puts "cancello " << f
         File.delete f
       end
-      if errors.size>0
-        fd = File.open(log_file, "w")
-        fd.write(errors.join)
-        fd.close
-      end
+
+      #if errors.size>0
+      #  fd = File.open(log_file, "w")
+      #  fd.write(errors.join)
+      #  fd.close
+      #end
       return data
     end
 
