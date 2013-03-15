@@ -1,0 +1,3 @@
+<% @procultura_cards.each do |c| %>
+ <%= content_tag(:div, render(:partial=>'show', :locals=>{:card=>c})) %>
+<% end %>

@@ -1,6 +1,9 @@
 
-<%= link_to(clavis_manifestations_path) %>
+<%= link_to(clavis_manifestations_path, clavis_manifestations_path) %>
 <hr/>
+
+<%= content_tag(:h3, "Trovati #{@clavis_manifestations.total_entries}") %>
+
 <%= will_paginate @clavis_manifestations %>
 
 <hr/>

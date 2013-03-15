@@ -7,9 +7,15 @@ class ClavisManifestationsController < ApplicationController
   def shortlist
     bs=params[:bid_source]
     cond={:bid_source=>bs, :bib_level=>['m','c','s']}
+    bl=params[:bib_level]
+    cond[:bib_level]=bl if !bl.blank?
     # @clavis_manifestations=ClavisManifestation.find(:all, :limit=>300, :conditions=>cond)
     # @clavis_manifestations=ClavisManifestation.where(cond).paginate(:page=>params[:page])
-    @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,:page=>params[:page])
+    order = bs=='SBN' ? '' : 'bib_level'
+    order += ",manifestation_id" if !order.blank?
+    @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,
+                                                        :page=>params[:page],
+                                                        :order=>order)
   end
 
   def kardex

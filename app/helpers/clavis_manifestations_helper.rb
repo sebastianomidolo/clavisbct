@@ -33,7 +33,10 @@ module ClavisManifestationsHelper
       txt=r['bid_source'].blank? ? '?' : r['bid_source']
       res << content_tag(:tr, content_tag(:td, r['count']) +
                          content_tag(:td, txt) +
-                         content_tag(:td, link_to('vedi', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source']))))
+                         content_tag(:td, link_to('collane', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'c'))) +
+                         content_tag(:td, link_to('monografie', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'m'))) +
+                         content_tag(:td, link_to('seriali', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'s'))) +
+                         content_tag(:td, link_to('tutto', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source']))))
     end
     content_tag(:table, res.join.html_safe)
   end

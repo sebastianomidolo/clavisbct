@@ -1,8 +1,7 @@
-# lastmod 7 marzo 2013
-
+# -*- coding: utf-8 -*-
 module ProculturaHelper
 
-  def procultura_archivi
+  def procultura_archivi_old
     r=[]
     r << content_tag(:tr, content_tag(:td, 'Nome archivio') +
                        content_tag(:td, 'Numero schede'))
@@ -15,23 +14,48 @@ module ProculturaHelper
     content_tag(:table, r.join.html_safe)
   end
 
-  def procultura_cards(folder)
+  def procultura_archivi
+    r=[]
+    ProculturaArchive.list.each do |e|
+      lnk=procultura_make_link(procultura_folders_path(:archive_id=>e['id']))
+      r << content_tag(:li, link_to(e['name'], lnk) + " (#{e['count']} schede)")
+    end
+    content_tag(:h3, 'Attenzione: questa pagina non è ancora stata pubblicata ufficialmente sul sito delle Biblioteche Civiche Torinesi') + content_tag(:ul, r.join.html_safe)
+  end
+
+  def procultura_cards_singole_schede(folder)
     r=[]
     cnt=0
     prec=nil
     folder.cards.each do |c|
-      cnt=0 if prec!=c.heading
+      cnt=0 if prec!=c.intestazione
       cnt+=1
       lnk=procultura_make_link(procultura_card_path(c))
       if cnt==1
-        text=c.heading
+        text=c.intestazione
       else
-        text="#{c.heading} (#{cnt})"
+        text="#{c.intestazione} (#{cnt})"
       end
       r << content_tag(:tr, content_tag(:td, link_to(text, lnk)))
-      prec=c.heading
+      prec=c.intestazione
     end
     content_tag(:table, r.join.html_safe)
+  end
+
+  def procultura_cards(folder)
+    r=[]
+    folder.schede.each do |c|
+      ids=c['ids'].gsub(/\{|\}/,'')
+      if c['count']=='1'
+        lnk=procultura_make_link(procultura_card_path(ids))
+        r << content_tag(:li, link_to(c['heading'], lnk))
+      else
+        next if c['heading'].blank?
+        lnk=procultura_make_link("/procultura_cards?ids=#{ids.gsub(',','+')}")
+        r << content_tag(:li, link_to(c['heading'], lnk) + " (#{c['count']} schede)")
+      end
+    end
+    content_tag(:ol, r.join("\n").html_safe)
   end
 
   def procultura_folders(archive)
@@ -55,10 +79,7 @@ module ProculturaHelper
     lnk
   end
 
-  def procultura_link_to_pdf(record)
-    # reqfrom=params[:reqfrom]
-    # reqfrom=reqfrom.split('?').first if !reqfrom.blank?
-    lnk="http://#{request.host_with_port}#{procultura_card_path(record, {:format=>:pdf})}"
-    # lnk="http://#{reqfrom}?resource=#{lnk}" if !reqfrom.blank?
+  def procultura_link_to_image(record,format)
+    "http://#{request.host_with_port}#{procultura_card_path(record, {:format=>format})}"
   end
 end
