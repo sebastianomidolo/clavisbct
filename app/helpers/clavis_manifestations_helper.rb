@@ -46,9 +46,13 @@ module ClavisManifestationsHelper
     pg=ActiveRecord::Base.connection.execute(sql)
     res=[]
     pg.each do |r|
+      # http://clavisbct.selfip.net/clavis_manifestations/shortlist?bib_type=a02
       res << content_tag(:tr, content_tag(:td, r['value_key']) +
-                         content_tag(:td, r['value_label']) +
-                         content_tag(:td, r['value_class']))
+                         content_tag(:td, link_to(r['value_label'], shortlist_clavis_manifestations_url(:bib_type=>r['value_key']))) +
+                         content_tag(:td, link_to("#{r['value_key']} (senza bid)", shortlist_clavis_manifestations_url(:bib_type=>r['value_key'], :bid_source=>'null'))) +
+                         content_tag(:td, link_to("#{r['value_key']} (LOC)", shortlist_clavis_manifestations_url(:bib_type=>r['value_key'], :bid_source=>'LOC'))) +
+                         content_tag(:td, link_to("#{r['value_key']} (UKLIB)", shortlist_clavis_manifestations_url(:bib_type=>r['value_key'], :bid_source=>'UKLIB'))) +
+                         content_tag(:td, link_to("#{r['value_key']} (FRLIB)", shortlist_clavis_manifestations_url(:bib_type=>r['value_key'], :bid_source=>'FRLIB'))))
     end
     content_tag(:table, res.join.html_safe)
   end

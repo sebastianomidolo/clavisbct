@@ -11,7 +11,30 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130225132931) do
+ActiveRecord::Schema.define(:version => 20130317121831) do
+
+  create_table "procultura_import", :id => false, :force => true do |t|
+    t.integer "theid"
+    t.string  "theimagepath", :limit => nil, :null => false
+    t.string  "thetype",      :limit => nil
+    t.string  "theauthor",    :limit => nil
+    t.string  "thesubject",   :limit => nil
+    t.string  "thetitle",     :limit => nil
+    t.string  "thespec",      :limit => nil
+    t.string  "thedrawer",    :limit => nil
+  end
+
+  create_table "subject_subject", :id => false, :force => true do |t|
+    t.integer "s1_id",                  :null => false
+    t.integer "s2_id",                  :null => false
+    t.string  "linktype", :limit => 24, :null => false
+  end
+
+  create_table "subjects", :force => true do |t|
+    t.text "heading", :null => false
+  end
+
+  add_index "subjects", ["heading"], :name => "subjects_heading_idx"
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

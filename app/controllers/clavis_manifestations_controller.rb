@@ -5,10 +5,17 @@ class ClavisManifestationsController < ApplicationController
   end
 
   def shortlist
+    cond={:bib_level=>['m','c','s']}
     bs=params[:bid_source]
-    cond={:bid_source=>bs, :bib_level=>['m','c','s']}
+    if bs=='null'
+      cond[:bid_source]=nil
+    else
+      cond[:bid_source]=bs if !bs.blank?
+    end
     bl=params[:bib_level]
     cond[:bib_level]=bl if !bl.blank?
+    bt=params[:bib_type]
+    cond[:bib_type]=bt if !bt.blank?
     # @clavis_manifestations=ClavisManifestation.find(:all, :limit=>300, :conditions=>cond)
     # @clavis_manifestations=ClavisManifestation.where(cond).paginate(:page=>params[:page])
     order = bs=='SBN' ? '' : 'bib_level'

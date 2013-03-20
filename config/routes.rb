@@ -1,6 +1,9 @@
 Clavisbct::Application.routes.draw do
 
 
+  resources :subjects
+
+
   resources :talking_books
 
 
