@@ -9,6 +9,7 @@ SELECT l.patron_id, clavis.collocazione(ci.section, ci.collocation, ci.specifica
     ci.owner_library_id, l.loan_date_begin::date,
     l.loan_date_end::date, l.destination_name,
     ci.item_id,ci.manifestation_id,
+    ci.item_media,
     p.barcode,ci.barcode as item_barcode,
     ci.inventory_serie_id || '-' || ci.inventory_number as inventario
   FROM clavis.loan l join clavis.item ci using(item_id)
