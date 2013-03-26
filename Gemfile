@@ -42,4 +42,5 @@ gem 'rmagick', '2.13.2'
 
 gem "ruby-tcl", "~> 0.1.1"
 
+gem 'htmlentities'
 

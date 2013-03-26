@@ -6,6 +6,8 @@ Clavisbct::Application.routes.draw do
 
   resources :talking_books
 
+  resources :sp_bibliographies
+  resources :sp_items
 
   match '/procultura' => 'procultura_folders#index'
   resources :procultura_cards
