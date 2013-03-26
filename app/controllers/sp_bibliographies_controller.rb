@@ -4,7 +4,7 @@ class SpBibliographiesController < ApplicationController
     cond=[]
     if !qs.blank?
       ts=SpBibliography.connection.quote_string(qs.split.join(' & '))
-      cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
+      cond << "to_tsvector('simple', description) @@ to_tsquery('simple', '#{ts}')"
     end
     cond = cond.join(" AND ")
 

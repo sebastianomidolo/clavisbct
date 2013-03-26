@@ -8,4 +8,10 @@ class SpSection < ActiveRecord::Base
     SpItem.find_by_sql(sql)
   end
 
+  def sp_sections
+    sql=%Q{SELECT * FROM sp.sp_sections WHERE bibliography_id = '#{self.bibliography_id}' and parent=#{self.number} order by sortkey}
+    SpSection.find_by_sql(sql)
+  end
+
+
 end
