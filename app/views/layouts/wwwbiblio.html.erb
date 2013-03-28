@@ -1,0 +1,13 @@
+<%=
+ t = @h1_link.nil? ? @h1_title : link_to(@h1_title, build_link(@h1_link))
+ content_tag(:h1, t)
+%>
+<%= content_tag(:h2, @h2_title) %>
+<!--FINE TITOLO PRINCIPALE -->
+</div><hr />
+	
+<%= open_div(@css_id) %>
+	
+<!-- INIZIO CONTENUTI -->
+<%= yield %>
+<!--FINE CONTENUTI -->
