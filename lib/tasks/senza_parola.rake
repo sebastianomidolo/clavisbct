@@ -79,6 +79,7 @@ task :senza_parola => :environment do
           v = enc.decode(v)
           v.gsub!("\n", '\r')
           v.gsub!("\t", "TABULATORE")
+          v.gsub!("\\", 'B_A_C_K_S_L_A_S_H')
         end
         data << v
       end
@@ -86,11 +87,11 @@ task :senza_parola => :environment do
     end
     fdout.write("\\.\n")
     fdout.close
-    # cmd="/bin/cp #{tempfile} /tmp/1_provvisorio_da_cancellare.sql"
+    # cmd="/bin/cp #{tempfile} /tmp/1_senzaparola_import_bibliografie.sql"
     # puts cmd
     # Kernel.system(cmd)
     cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{tempfile}"
-    puts cmd
+    # puts cmd
     Kernel.system(cmd)
     tf.close(true)
   end

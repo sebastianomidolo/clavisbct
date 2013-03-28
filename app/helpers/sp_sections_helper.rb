@@ -14,10 +14,10 @@ module SpSectionsHelper
     sections.each do |s|
       res << content_tag(:tr,
                          content_tag(:td, link_to(s.title,
-                                                  sp_section_path(s, :number=>s.number))) +
+                                                  build_link(sp_section_path(s, :number=>s.number)))) +
                          content_tag(:td, s.parent))
     end
-    content_tag(:table, res.join.html_safe)
+    res.size==0 ? '' : content_tag(:table, res.join("\n").html_safe)
   end
 
 end

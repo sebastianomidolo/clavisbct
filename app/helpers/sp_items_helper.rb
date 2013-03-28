@@ -12,7 +12,9 @@ module SpItemsHelper
   def sp_items_list_items(sp_items)
     res=[]
     sp_items.each do |i|
-      res << content_tag(:tr, content_tag(:td, link_to(i.bibdescr, sp_item_path(i))) +
+      res << content_tag(:tr, content_tag(:td,
+                                          link_to(i.bibdescr,
+                                                  build_link(sp_item_path(i)))) +
                          content_tag(:td, i.section_number) +
                          content_tag(:td, i.collciv))
     end
