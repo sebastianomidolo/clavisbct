@@ -9,6 +9,7 @@ class SenzaParola < ActiveRecord::Migration
         title varchar(512) not null,
         subtitle varchar(512),
         description text,
+        html_description text,
         comment varchar(512),
         status char(1)
       );
