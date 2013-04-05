@@ -1,4 +1,2 @@
-<%= content_tag(:h2, link_to(bibliography.title, build_link(sp_bibliography_path(bibliography)))) %>
-<%
-  # content_tag(:p, bibliography.description_html.html_safe)
-%>
+<%= content_tag(:h2, link_to(bibliography.title, build_link(sp_bibliography_path(bibliography))) + ' ' + bibliography.id) %>
+<%= content_tag(:div, sp_bibliography_short_description(bibliography), :style=>'margin-bottom: 18px; margin-top: 12px; padding-left: 16px;') %>

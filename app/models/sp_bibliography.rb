@@ -9,23 +9,34 @@ class SpBibliography < ActiveRecord::Base
   has_many :sp_items, :foreign_key=>'bibliography_id'
   
   def description_html
-    return '' if self.description.nil?
-    SpBibliography.latex_html(self.description)
+    self.html_description
+    #return '' if self.description.nil?
+    #SpBibliography.latex_html(self.description)
   end
 
+  def SpBibliography.sanifica_html(html)
+    return nil if html.nil?
+    s=Nokogiri::HTML::DocumentFragment.parse(html)
+    s=s.to_html
+    s.gsub!(/<br>/, '<br/>')
+    #s.gsub!(/^(<br>)+|(<br>)+$/,'')
+    s.gsub!(/^<br\/>|<br\/>$/,'')
+    s
+  end
+
+
   def SpBibliography.latex_html(src)
-    tf = Tempfile.new("import", File.join(Rails.root.to_s, 'tmp'))
+    # tf = Tempfile.new("import", File.join(Rails.root.to_s, 'tmp'))
     #tempdir=tf.path
     #tempfile=tf.path + ".tex"
 
 
-    tempfile = ""
     basename = "xyz"
     workdir  = "/tmp"
     outdir   = File.join(workdir, basename)
-    puts "outdir: #{outdir}"
+    # puts "outdir: #{outdir}"
     tempfile = File.join(workdir, "#{basename}.tex")
-    puts tempfile
+    # puts tempfile
 
     # tempfile="/tmp/templatex.tex"
     fdout=File.open(tempfile,'w')
@@ -38,16 +49,22 @@ class SpBibliography < ActiveRecord::Base
     src.gsub!("B_A_C_K_S_L_A_S_Hrm", "\\\\rm")
     src.gsub!("B_A_C_K_S_L_A_S_Hr", "\n")
     src.gsub!("B_A_C_K_S_L_A_S_H", '\\\\')
+    src.gsub!("%", '\\%')
     fdout.write(src)
     fdout.close
 
     cmd = "/usr/bin/latex2html -lcase_tags #{tempfile} > /dev/null 2>/dev/null"
-    puts cmd
+    # puts cmd
     Kernel.system(cmd)
     data=File.read(File.join(outdir, 'index.html'))
     i=data.index("<!--End of Navigation Panel-->")+30
     x=data.index("<!--Table of Child-Links-->")-1
-    data[i..x]
+    data=data[i..x]
+    data.gsub!('<p>','<br/>')
+    data.gsub!('<br>','<br/>')
+    data.gsub!('<hr>','')
+    data.gsub!('``','"')
+    data
   end
 
 

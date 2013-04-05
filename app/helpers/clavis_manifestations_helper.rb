@@ -30,7 +30,12 @@ module ClavisManifestationsHelper
     pg=ActiveRecord::Base.connection.execute(sql)
     res=[]
     pg.each do |r|
-      txt=r['bid_source'].blank? ? '?' : r['bid_source']
+      if r['bid_source'].blank?
+        r['bid_source']='null'
+        txt='[missing]'
+      else
+        txt=r['bid_source']
+      end
       res << content_tag(:tr, content_tag(:td, r['count']) +
                          content_tag(:td, txt) +
                          content_tag(:td, link_to('collane', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'c'))) +

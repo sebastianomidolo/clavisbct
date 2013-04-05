@@ -22,8 +22,17 @@ module SpBibliographiesHelper
     res=[]
     res << content_tag(:h1, record.title)
     res << content_tag(:h2, record.subtitle)
-    res << content_tag(:p, record.description_html.html_safe)
+    # res << sp_bibliography_short_description(record)
+    res << SpBibliography.sanifica_html(record.html_description)
     res.join.html_safe
+  end
+
+  def sp_bibliography_short_description(record)
+    return '' if record.html_description.blank?
+    res=SpBibliography.sanifica_html(record.html_description)
+    i=res.index('<br')
+    i = (i.nil? or i>300) ? 300 : i-1
+    content_tag(:div, res[0..i].html_safe)
   end
 
 end

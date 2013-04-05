@@ -15,7 +15,7 @@ module SpSectionsHelper
       res << content_tag(:tr,
                          content_tag(:td, link_to(s.title,
                                                   build_link(sp_section_path(s, :number=>s.number)))) +
-                         content_tag(:td, s.parent))
+                         content_tag(:td, s.sp_items.size))
     end
     res.size==0 ? '' : content_tag(:table, res.join("\n").html_safe)
   end

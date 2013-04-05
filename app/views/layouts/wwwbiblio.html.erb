@@ -1,5 +1,13 @@
 <%=
- t = @h1_link.nil? ? @h1_title : link_to(@h1_title, build_link(@h1_link))
+ if !@refresh.nil?
+  # javascript_tag(%Q{setTimeout('location.href="http://clavisbct.selfip.net/sp_items/random?layout=wwwbiblio"', 4000)})
+   javascript_tag(%Q{setTimeout('location.href="http://wwwbiblio.selfip.net/ricerche_cataloghi/bibliografie_auto.shtml?resource=sp_items/random"', 4000)})
+ end
+%>
+
+<%=
+ style="color:#c00; text-decoration:none;display:block"
+ t = @h1_link.nil? ? @h1_title : link_to(@h1_title, build_link(@h1_link), :style=>style)
  content_tag(:h1, t)
 %>
 <%= content_tag(:h2, @h2_title) %>

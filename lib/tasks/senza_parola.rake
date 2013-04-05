@@ -55,6 +55,7 @@ task :senza_parola => :environment do
             :id,
             :created_at,
             :description,
+            :html_description,
             :status,
             :subtitle,
             :title,
@@ -68,18 +69,31 @@ task :senza_parola => :environment do
     fdout.write("COPY sp.sp_bibliographies (#{attrib.join(',')}) FROM stdin;\n")
     enc=HTMLEntities.new
     Dir.glob(File.join(rootdir, '*')).each do |d|
+      puts d
       info = read_bibliography_info(d)
       data=[]
+      if !info[:description].blank?
+        v = info[:description].force_encoding('utf-8').encode('utf-8')
+        v.gsub!("\n", '\r')
+        v.gsub!("\t", "TABULATORE")
+        v.gsub!("\\", 'B_A_C_K_S_L_A_S_H')
+        info[:html_description] = SpBibliography.latex_html(v)
+      end
       attrib.each do |a|
         v = info[a]
         if v.blank?
           v = "\\N"
         else
-          v = v.force_encoding('utf-8').encode('utf-8')
-          v = enc.decode(v)
-          v.gsub!("\n", '\r')
-          v.gsub!("\t", "TABULATORE")
-          v.gsub!("\\", 'B_A_C_K_S_L_A_S_H')
+          if a==:html_description
+            v.gsub!("\n", '')
+            v.gsub!("\t", "TABULATORE")
+          else
+            v = v.force_encoding('utf-8').encode('utf-8')
+            v = enc.decode(v)
+            v.gsub!("\n", '\r')
+            v.gsub!("\t", "TABULATORE")
+            # v.gsub!("\\", 'B_A_C_K_S_L_A_S_H')
+          end
         end
         data << v
       end
@@ -87,9 +101,9 @@ task :senza_parola => :environment do
     end
     fdout.write("\\.\n")
     fdout.close
-    # cmd="/bin/cp #{tempfile} /tmp/1_senzaparola_import_bibliografie.sql"
-    # puts cmd
-    # Kernel.system(cmd)
+    cmd="/bin/cp #{tempfile} /tmp/1_senzaparola_import_bibliografie.sql"
+    puts cmd
+    Kernel.system(cmd)
     cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{tempfile}"
     # puts cmd
     Kernel.system(cmd)
@@ -238,6 +252,7 @@ task :senza_parola => :environment do
     tempfile=tf.path
     fdout=File.open(tempfile,'w')
     fdout.write("TRUNCATE sp.sp_items;\n")
+    fdout.write("SELECT setval('sp.sp_items_id_seq', 1);\n")
     fdout.write("COPY sp.sp_items (#{attrib.join(',')}) FROM stdin;\n")
 
     enc=HTMLEntities.new
@@ -256,7 +271,7 @@ task :senza_parola => :environment do
             v = enc.decode(v)
             v.gsub!("\n", '\r')
             v.gsub!("\r", '\r')
-            v.gsub!("\\", 'BACKSLASH')
+            v.gsub!("\\", 'B_A_C_K_S_L_A_S_H')
             v.gsub!("\t", "TABULATORE")
           end
           data << v
@@ -285,5 +300,14 @@ task :senza_parola => :environment do
   import_sp_sections(rootdir, dbname, username)
   import_sp_items(rootdir, dbname, username)
 
+  sql=%Q{
+   UPDATE sp.sp_bibliographies set title=replace(title,'``','"') where title ~* '``';
+   UPDATE sp.sp_items set bibdescr=replace(bibdescr,'B_A_C_K_S_L_A_S_Hr','<br/>')
+     WHERE bibdescr ~* 'B_A_C_K_S_L_A_S_Hr';
+   UPDATE sp.sp_items set bibdescr=replace(bibdescr,'B_A_C_K_S_L_A_S_Hpar','<br/>')
+     WHERE bibdescr ~* 'B_A_C_K_S_L_A_S_Hpar';
+  }
+  SpItem.connection.execute(sql)
+  puts "importazione completata"
 end
 

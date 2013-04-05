@@ -16,6 +16,7 @@ class SpBibliographiesController < ApplicationController
     @sp_bibliographies = SpBibliography.paginate(:conditions=>cond,
                                                  :page=>params[:page],
                                                  :include=>:sp_items,
+                                                 :per_page=>10,
                                                  :order=>'sp_bibliographies.updated_at desc')
 
     respond_to do |format|

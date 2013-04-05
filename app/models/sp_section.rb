@@ -5,6 +5,7 @@ class SpSection < ActiveRecord::Base
 
   def sp_items
     sql=%Q{SELECT * FROM sp.sp_items WHERE bibliography_id = '#{self.bibliography_id}' and section_number=#{self.number} order by sortkey}
+    # sql=%Q{SELECT * FROM sp.sp_items WHERE bibliography_id = '#{self.bibliography_id}' order by sortkey}
     SpItem.find_by_sql(sql)
   end
 
