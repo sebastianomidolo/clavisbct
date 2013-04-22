@@ -4,7 +4,11 @@ class SpItemsController < ApplicationController
       @sp_item=SpItem.find_by_sql('select * from sp.sp_items order by random() limit 1').first
       @refresh = true
     else
-      @sp_item=SpItem.find(params[:id])
+      if params[:id]=='last'
+        @sp_item=SpItem.find_by_sql('select * from sp.sp_items where updated_at notnull order by updated_at desc limit 1').first
+      else
+        @sp_item=SpItem.find(params[:id])
+      end
     end
     @h1_title='Proposte bibliografiche'
     @h1_link="/sp_bibliographies"

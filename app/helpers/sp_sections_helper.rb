@@ -12,12 +12,23 @@ module SpSectionsHelper
   def sp_section_list_sections(sections)
     res=[]
     sections.each do |s|
-      res << content_tag(:tr,
-                         content_tag(:td, link_to(s.title,
-                                                  build_link(sp_section_path(s, :number=>s.number)))) +
-                         content_tag(:td, s.sp_items.size))
+      nsked=s.sp_items.size
+      if nsked==0
+        ski=''
+      else
+        ski=content_tag(:span, " (#{s.sp_items.size} #{nsked==1 ? 'scheda' : 'schede'})")
+      end
+      if s.sp_sections==[]
+        sublist = ''
+      else
+        sublist = sp_section_list_sections(s.sp_sections)
+      end
+      res << content_tag(:li,
+                         content_tag(:span,
+                                     link_to(s.title,
+                                             build_link(sp_section_path(s, :number=>s.number)))) + ski + sublist)
     end
-    res.size==0 ? '' : content_tag(:table, res.join("\n").html_safe)
+    res.size==0 ? '' : content_tag(:ul, res.join("\n").html_safe)
   end
 
 end

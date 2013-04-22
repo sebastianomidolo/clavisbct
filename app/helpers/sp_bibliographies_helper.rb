@@ -12,7 +12,7 @@ module SpBibliographiesHelper
   def sp_bibliographies_list(records)
     res=[]
     records.each do |r|
-      next if r.description.blank?
+      # next if r.description.blank?
       res << render(:partial=>'/sp_bibliographies/shortview', :locals=>{:bibliography=>r})
     end
     res.join.html_safe

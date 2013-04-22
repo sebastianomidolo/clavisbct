@@ -1,5 +1,9 @@
 class SpSection < ActiveRecord::Base
   self.table_name='sp.sp_sections'
+  # self.primary_keys :bibliography_id, :number
+
+  attr_accessible :number, :parent, :sortkey, :title, :status, :bibliography_id, :description
+
 
   belongs_to :sp_bibliography, :foreign_key=>'bibliography_id'
 

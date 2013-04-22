@@ -1,6 +1,8 @@
 class SpItem < ActiveRecord::Base
   self.table_name='sp.sp_items'
 
+  attr_accessible :bibliography_id, :item_id, :bibdescr, :updated_at, :section_number, :colldec, :sbn_bid, :created_at, :mainentry, :collciv, :sigle, :sortkey, :note
+
   belongs_to :sp_bibliography, :foreign_key=>'bibliography_id'
 
   def sp_section

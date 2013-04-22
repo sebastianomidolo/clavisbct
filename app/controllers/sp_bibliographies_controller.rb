@@ -10,7 +10,7 @@ class SpBibliographiesController < ApplicationController
       ts=SpBibliography.connection.quote_string(qs.split.join(' & '))
       cond << "to_tsvector('simple', description) @@ to_tsquery('simple', '#{ts}')"
     end
-    cond << "sp_bibliographies.status IN('A','C','N')"
+    # cond << "sp_bibliographies.status IN('A','C','N')"
     cond = cond.join(" AND ")
 
     @sp_bibliographies = SpBibliography.paginate(:conditions=>cond,

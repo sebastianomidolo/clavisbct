@@ -1,6 +1,50 @@
 module SenzaParola
 
+  def sp_sourcedir
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["sp_source"]
+  end
+
+  def sp_primary_key(sourcedir)
+    File.basename(sourcedir)
+  end
+
+  def sp_items_updated_after(bibliography_id,timestamp)
+    return [] if timestamp.nil?
+    sourcedir = File.join(sp_sourcedir, bibliography_id, 'Deposito')
+    # puts "cerco files per #{bibliography_id} - #{sourcedir}"
+    res=[]
+    Dir[(File.join(sourcedir,'*'))].collect do |f|
+      if (File.stat(f).mtime > timestamp)
+        # puts "'#{File.basename(f)}' mtime: #{File.stat(f).mtime} <=> #{timestamp}"
+        res << File.basename(f)
+      end
+    end
+    res
+  end
+
+  def sp_last_entries(max=nil)
+    d=(Dir[(File.join(sp_sourcedir,'*'))].sort do |a,b|
+         File.stat(a).mtime <=> File.stat(b).mtime
+       end)
+    max.nil? ? d.reverse : d.reverse[0..max-1]
+  end
+
+  def sp_new_bibliography(bibliography_id)
+    if SpBibliography.exists?(bibliography_id)
+      return SpBibliography.find(bibliography_id) 
+    end
+    sourcedir = File.join(sp_sourcedir, bibliography_id)
+    data=sp_read_bibliography_info(sourcedir)
+    return nil if data[:id].nil?
+    b=SpBibliography.new(data)
+    b.id=bibliography_id
+    b.save
+    b
+  end
+  
   def tcl_load_file(fname)
+    return nil if !File.exists?(fname)
     utfname="/tmp/tmp.utf8"
     cmd="/usr/bin/iconv -f latin1 -t utf8 #{fname} > #{utfname}"
     Kernel.system(cmd)
@@ -8,7 +52,7 @@ module SenzaParola
   end
 
 
-  def read_bibliography_info(sourcedir)
+  def sp_read_bibliography_info(sourcedir)
     fh={
       'comm'  => :comment,
       'ctime' => :created_at,
@@ -20,10 +64,10 @@ module SenzaParola
     }
 
     res={}
+    i=tcl_load_file(File.join(sourcedir, 'info.tcl'))
+    return res if i.nil?
     res[:id]=File.basename(sourcedir)
 
-    i=tcl_load_file(File.join(sourcedir, 'info.tcl'))
-    
     # puts File.join(sourcedir, 'info.tcl')
     i.eval("array name ProInfo").split.each do |vn|
       v=i.var("ProInfo(#{vn})").value
@@ -39,6 +83,71 @@ module SenzaParola
     res
   end
 
+  def sp_read_section_info(sourcedir)
+    bibliography_id=sp_primary_key(sourcedir)
+    sourcedir = File.join(sp_sourcedir, bibliography_id) if sourcedir==bibliography_id
+    # puts "sourcedir: #{sourcedir}"
+    fh={
+      'key' => :sortkey,
+      'tit' => :title,
+      'did' => :description,
+    }
+    res={}
+    fname=File.join(sourcedir, 'sect.tcl')
+    return nil if !File.exists?(fname)
+    res[:bibliography_id]=File.basename(sourcedir)
+    i=tcl_load_file(fname)
+    # Ogni sezione ha questi campi:
+    fields="parent key tit did status exp"
+    sections=[]
+    i.eval("array name SectInfo").split.each do |sn|
+      v=i.var("SectInfo(#{sn})").value
+      i.eval("foreach {#{fields}} [list #{v}] {}")
+      hs={}
+      hs[:number]=sn
+      fields.split.each do |f|
+        k = fh[f].nil? ? f.to_sym : fh[f]
+        hs[k] = i.var(f).value if !i.var(f).value.blank?
+      end
+      sections << hs
+    end
+    return nil if sections.size==0
+    res[:sections]=sections
+    res
+  end
+
+  def sp_sked_fname(sourcedir, bibliography_id, item_id)
+    File.join(sp_sourcedir, bibliography_id, "Deposito", item_id)
+  end
+
+  def sp_read_item_info(bibliography_id, item_id)
+    fname = sp_sked_fname(sp_sourcedir, bibliography_id, item_id)
+    # puts "fname: #{fname}"
+    return nil if !File.exists?(fname)
+    fh={
+      'descr' => :bibdescr,
+      'ctime' => :created_at,
+      'mtime' => :updated_at,
+      'section' => :section_number,
+      'urlref_2' => :sbn_bid,
+      'key'   => :sortkey,
+    }
+    res={:bibliography_id=>bibliography_id, :item_id=>item_id}
+    i=tcl_load_file(fname)
+    fields = i.eval("array name SkInfo")
+    fields.split.each do |f|
+      v=i.var("SkInfo(#{f})").value.strip
+      next if v.blank? or ['urlref_1','urlref_3','urlref_4','impronta'].include?(f)
+      k = fh[f].nil? ? f.to_sym : fh[f]
+      if ['ctime','mtime'].include?(f)
+        # ih[k] = Time.parse(i.eval(%Q{clock format #{v} -format "%Y-%m-%d %H:%M:%S"}))
+        res[k] = i.eval(%Q{clock format #{v} -format "%Y-%m-%d %H:%M:%S"})
+      else
+        res[k] = v
+      end
+    end
+    res
+  end
 
   def sp_latex_to_html(src)
     # tf = Tempfile.new("import", File.join(Rails.root.to_s, 'tmp'))
@@ -63,10 +172,14 @@ module SenzaParola
     i=data.index("<!--End of Navigation Panel-->")+30
     x=data.index("<!--Table of Child-Links-->")-1
     data=data[i..x]
+    data.strip!
     data.gsub!('<p>','<br/>')
     data.gsub!('<br>','<br/>')
     data.gsub!('<hr>','')
     data.gsub!('``','"')
+    data.gsub!(/^<br\/>/, '')
+    # Ripetizione necessaria, non eliminare:
+    data.strip!
     data
   end
 
