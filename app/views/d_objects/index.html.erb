@@ -1,0 +1,21 @@
+<h1>Listing d_objects</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @d_objects.each do |d_object| %>
+  <tr>
+    <td><%= link_to 'Show', d_object %></td>
+    <td><%= link_to 'Edit', edit_d_object_path(d_object) %></td>
+    <td><%= link_to 'Destroy', d_object, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New D object', new_d_object_path %>
