@@ -11,7 +11,29 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130323212457) do
+ActiveRecord::Schema.define(:version => 20130424094029) do
+
+  create_table "d_objects", :force => true do |t|
+    t.string   "drive",     :limit => 48
+    t.string   "container", :limit => 240
+    t.string   "filepath",  :limit => 320
+    t.xml      "tags"
+    t.decimal  "bfilesize",                :precision => 15, :scale => 0
+    t.string   "mime_type", :limit => 24
+    t.datetime "f_ctime"
+    t.datetime "f_mtime"
+  end
+
+  create_table "file_infos", :force => true do |t|
+    t.string  "collocazione", :limit => 128
+    t.string  "filepath",     :limit => 320
+    t.string  "drive",        :limit => 48
+    t.xml     "mp3_tags"
+    t.integer "tracknum"
+    t.string  "container",    :limit => 240
+    t.decimal "bfilesize",                   :precision => 15, :scale => 0
+    t.string  "mime_type",    :limit => 24
+  end
 
   create_table "procultura_import", :id => false, :force => true do |t|
     t.integer "theid"
@@ -35,6 +57,12 @@ ActiveRecord::Schema.define(:version => 20130323212457) do
   end
 
   add_index "subjects", ["heading"], :name => "subjects_heading_idx"
+
+  create_table "temp_subjects", :id => false, :force => true do |t|
+    t.text   "s1"
+    t.text   "s2"
+    t.string "linktype", :limit => 20
+  end
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

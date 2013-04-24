@@ -1,6 +1,9 @@
 Clavisbct::Application.routes.draw do
 
 
+  resources :d_objects
+
+
   resources :subjects
 
 
