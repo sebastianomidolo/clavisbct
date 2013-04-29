@@ -1,21 +1,23 @@
-<h1>Listing d_objects</h1>
+
+<%= render :partial=>'searchform' %>
+
+
+<%= will_paginate @d_objects %>
 
 <table>
   <tr>
-    <th></th>
     <th></th>
     <th></th>
   </tr>
 
 <% @d_objects.each do |d_object| %>
   <tr>
+    <%= content_tag(:td, d_object.filename) %>
     <td><%= link_to 'Show', d_object %></td>
-    <td><%= link_to 'Edit', edit_d_object_path(d_object) %></td>
-    <td><%= link_to 'Destroy', d_object, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>
 <% end %>
 </table>
 
 <br />
 
-<%= link_to 'New D object', new_d_object_path %>
+<%= content_tag(:div, d_objects_summary) %>

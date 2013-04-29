@@ -45,6 +45,9 @@ gem "ruby-tcl", "~> 0.1.1"
 gem 'htmlentities'
 
 # Aggiunto 16 aprile 2013 - ma non funziona:
+# gem 'composite_primary_keys', '~> 3.1.0'
 # [...] cannot load such file -- active_record/associations/association_proxy.rb (LoadError)
 
-# gem 'composite_primary_keys', '~> 3.1.0'
+gem 'ruby-filemagic'
+
+
