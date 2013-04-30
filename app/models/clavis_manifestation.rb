@@ -11,6 +11,8 @@ class ClavisManifestation < ActiveRecord::Base
   has_many :clavis_items, :foreign_key=>'manifestation_id'
   has_many :clavis_issues, :foreign_key=>'manifestation_id'
 
+  has_many :attachments, :as => :attachable
+
   def ultimi_fascicoli
     self.clavis_issues.all(:order=>'issue_id desc', :limit=>10)
   end

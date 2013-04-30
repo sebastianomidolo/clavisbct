@@ -11,7 +11,21 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130424094029) do
+ActiveRecord::Schema.define(:version => 20130430080617) do
+
+  create_table "attachment_categories", :id => false, :force => true do |t|
+    t.string "code",        :limit => 1,  :null => false
+    t.string "label",       :limit => 32, :null => false
+    t.string "description"
+  end
+
+  create_table "attachments", :id => false, :force => true do |t|
+    t.integer "d_object_id",                          :null => false
+    t.integer "attachable_id",                        :null => false
+    t.integer "position"
+    t.string  "attachable_type",        :limit => 24, :null => false
+    t.string  "attachment_category_id", :limit => 1
+  end
 
   create_table "d_objects", :force => true do |t|
     t.string   "filename",  :limit => 2048
@@ -45,6 +59,12 @@ ActiveRecord::Schema.define(:version => 20130424094029) do
   end
 
   add_index "subjects", ["heading"], :name => "subjects_heading_idx"
+
+  create_table "temp_subjects", :id => false, :force => true do |t|
+    t.text   "s1"
+    t.text   "s2"
+    t.string "linktype", :limit => 20
+  end
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false
