@@ -4,8 +4,10 @@ module DObjectsHelper
     record.attributes.keys.each do |k|
       next if record[k].blank?
       v = (k=='bfilesize') ? "#{number_to_human_size(record[k])} (#{record[k]})" : record[k]
-      res << content_tag(:tr, content_tag(:td, k) +
-                         content_tag(:td, v))
+      res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, v))
+    end
+    record.references.each do |ref|
+      res << content_tag(:tr, content_tag(:td, ref.attachable.class) + content_tag(:td, ref.attachable.to_label))
     end
     res=content_tag(:table, res.join.html_safe)
   end

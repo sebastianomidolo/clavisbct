@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130430080617) do
+ActiveRecord::Schema.define(:version => 20130502093133) do
 
   create_table "attachment_categories", :id => false, :force => true do |t|
     t.string "code",        :limit => 1,  :null => false
@@ -59,12 +59,6 @@ ActiveRecord::Schema.define(:version => 20130430080617) do
   end
 
   add_index "subjects", ["heading"], :name => "subjects_heading_idx"
-
-  create_table "temp_subjects", :id => false, :force => true do |t|
-    t.text   "s1"
-    t.text   "s2"
-    t.string "linktype", :limit => 20
-  end
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

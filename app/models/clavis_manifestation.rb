@@ -13,6 +13,10 @@ class ClavisManifestation < ActiveRecord::Base
 
   has_many :attachments, :as => :attachable
 
+  def to_label
+    self.title
+  end
+
   def ultimi_fascicoli
     self.clavis_issues.all(:order=>'issue_id desc', :limit=>10)
   end

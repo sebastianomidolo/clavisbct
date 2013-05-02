@@ -4,6 +4,9 @@ class ProculturaCard < ActiveRecord::Base
   belongs_to :folder, :class_name=>'ProculturaFolder'
   has_many :attachments, :as => :attachable
 
+  def to_label
+    "\##{self.id} #{self.folder.label} in #{self.folder.archive.name}"
+  end
 
   def fspath
     File.join(ProculturaCard.storagepath, self.filepath)
