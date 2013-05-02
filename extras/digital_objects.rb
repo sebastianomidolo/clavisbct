@@ -6,6 +6,12 @@ module DigitalObjects
     config[Rails.env]["digital_objects_mount_point"]
   end
 
+  def digital_objects_cache
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["digital_objects_cache"]
+  end
+
+
   def digital_objects_dirscan(dirname, fdout=nil)
     # puts "analizzo dir #{dirname}"
     fm=FileMagic.mime

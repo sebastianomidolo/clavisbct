@@ -6,7 +6,8 @@ class DObjectsController < ApplicationController
     cond << "mime_type='#{params[:mime_type]}'" if !params[:mime_type].blank?
     cond << "filename ~* #{ActiveRecord::Base.connection.quote(params[:filename])}" if !params[:filename].blank?
     cond = cond.join(" AND ")
-    order=''
+    cond = "false" if cond.blank?
+    order='filename'
     @d_objects = DObject.paginate(:conditions=>cond,
                                   :page=>params[:page],
                                   :order=>order)

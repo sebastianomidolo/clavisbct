@@ -1,6 +1,7 @@
 
 <%= render :partial=>'searchform' %>
 
+<%= content_tag(:h2, "Trovati #{@d_objects.total_entries}") if @d_objects.size>0 %>
 
 <%= will_paginate @d_objects %>
 
