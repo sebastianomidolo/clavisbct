@@ -6,8 +6,9 @@ Clavisbct::Application.routes.draw do
 
   resources :subjects
 
-
   resources :talking_books
+  resources :iss_articles
+
 
   resources :sp_bibliographies
   resources :sp_sections
