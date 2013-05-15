@@ -16,7 +16,7 @@ task :find_d_objects => :environment do
   fdout=File.open(tempfile,'w')
 
 
-  fdout.write(%Q{TRUNCATE public.d_objects;
+  fdout.write(%Q{TRUNCATE public.d_objects CASCADE;
   SELECT setval('public.d_objects_id_seq', 1);\n})
 
   numfiles=0

@@ -1,7 +1,7 @@
 class ClavisItemsController < ApplicationController
   def show
-    i=ClavisItem.find(params[:id])
-    redirect_to i.clavis_url
+    @clavis_item=ClavisItem.find(params[:id])
+    redirect_to @clavis_item.clavis_url if !params[:redir].blank?
   end
 end
 

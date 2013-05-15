@@ -3,9 +3,17 @@ class ClavisItem < ActiveRecord::Base
   self.primary_key = 'item_id'
 
   has_many :talking_books, :foreign_key=>'n', :primary_key=>'collocation'
+  belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
+  has_many :attachments, :as => :attachable
 
+  def to_label
+    if self.clavis_manifestation.nil?
+      self.collocazione
+    else
+      "#{self.collocazione} (#{self.clavis_manifestation.title.strip})"
+    end
+  end
 
-  belongs_to :clavis_manifestation, :foreign_key=>:item_id
 
   def collocazione
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]

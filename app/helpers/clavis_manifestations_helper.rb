@@ -18,8 +18,9 @@ module ClavisManifestationsHelper
       res << content_tag(:tr, content_tag(:td, r.thebid) +
                          content_tag(:td, r.bib_level) +
                          content_tag(:td, r.bib_type) +
-                         content_tag(:td, link_to('[edit]', r.clavis_url(:edit))) +
-                         content_tag(:td, link_to(tit, r.clavis_url)))
+                         content_tag(:td, r.created_by) +
+                         content_tag(:td, link_to('[edit]', r.clavis_url(:edit), :target=>'_blank')) +
+                         content_tag(:td, link_to(tit, r.clavis_url, :target=>'_blank')))
     end
     content_tag(:table, res.join.html_safe)
   end

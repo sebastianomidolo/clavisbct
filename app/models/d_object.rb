@@ -11,13 +11,29 @@ class DObject < ActiveRecord::Base
     self.save if self.changed?
   end
 
+
+  def get_pdfimage(n=1)
+    n-=1
+    return nil if (/^application\/pdf/ =~ self.mime_type).nil?
+    f="#{self.pdf_rootname}-#{format('%03d',n)}.jpg"
+    puts f
+    File.exists?(f) ? f : nil
+  end
+
+  def pdf_rootdir
+    File.join(self.digital_objects_cache,File.dirname(self.filename))
+  end
+  def pdf_rootname
+    rootname=File.join(self.pdf_rootdir,File.basename(self.filename, File.extname(self.filename)))
+  end
+  def filename_with_path
+    File.join(self.digital_objects_mount_point,self.filename)
+  end
+
   def split_if_pdf
     return if (/^application\/pdf/ =~ self.mime_type).nil?
-    rootdir=File.join(self.digital_objects_cache,File.dirname(self.filename))
-    FileUtils.mkdir_p(rootdir)
-    rootname=File.basename(self.filename, File.extname(self.filename))
-    rootname=File.join(rootdir,rootname)
-    cmd="/usr/bin/pdfimages -j \"#{File.join(self.digital_objects_mount_point,self.filename)}\" \"#{rootname}\""
+    FileUtils.mkdir_p(self.pdf_rootdir)
+    cmd="/usr/bin/pdfimages -j \"#{self.filename_with_path}\" \"#{self.pdf_rootname}\""
     puts cmd
     Kernel.system(cmd)
     #Dir[(File.join(rootdir,'*'))].each do |entry|
