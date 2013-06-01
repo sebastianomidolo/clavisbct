@@ -1,5 +1,6 @@
 Clavisbct::Application.routes.draw do
 
+  match 'obj/:id/:key' => 'd_objects#objshow'
 
   resources :d_objects
 
@@ -24,6 +25,7 @@ Clavisbct::Application.routes.draw do
     member do
       get 'kardex'
       get 'testpdf'
+      get 'attachments'
     end
     collection do
       get 'shortlist'

@@ -5,10 +5,14 @@ module ClavisManifestationsHelper
     config = Rails.configuration.database_configuration
     r=[]
     # lnk=content_tag(link_to(record.title, record.clavis_url))
-    lnk=link_to(record.title, record.clavis_url)
+    lnk=link_to(record.title, record.clavis_url(:opac))
     r << content_tag(:div, content_tag(:b, lnk))
     r << content_tag(:div, clavis_issue_list(record))
     r.join.html_safe
+  end
+
+  def clavis_manifestation_opac_preview(record)
+    %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{record.id}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
   def clavis_manifestations_shortlist(records)
@@ -19,6 +23,7 @@ module ClavisManifestationsHelper
                          content_tag(:td, r.bib_level) +
                          content_tag(:td, r.bib_type) +
                          content_tag(:td, r.created_by) +
+                         content_tag(:td, link_to('[opac]', r.clavis_url(:opac), :target=>'_blank')) +
                          content_tag(:td, link_to('[edit]', r.clavis_url(:edit), :target=>'_blank')) +
                          content_tag(:td, link_to(tit, r.clavis_url, :target=>'_blank')))
     end

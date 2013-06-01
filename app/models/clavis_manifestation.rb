@@ -31,6 +31,10 @@ class ClavisManifestation < ActiveRecord::Base
     if mode==:edit
       r="#{host}/index.php?page=Catalog.EditRecord&manifestationId=#{self.id}"
     end
+    if mode==:opac
+      host=config[Rails.env]['clavis_host_dng']
+      r="#{host}/opac/detail/view/sbct:catalog:#{self.id}"
+    end
     r
   end
 

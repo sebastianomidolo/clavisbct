@@ -44,6 +44,12 @@ class DObject < ActiveRecord::Base
 
   end
 
+  def xmltag(tag)
+    tag=tag.to_s if tag.class==Symbol
+    doc = REXML::Document.new(self.tags)
+    elem=doc.root.elements[tag]
+    elem.nil? ? nil : elem.text
+  end
 
   def DObject.fs_scan(folder,fdout=nil)
     digital_objects_dirscan(File.join(digital_objects_mount_point, folder), fdout)

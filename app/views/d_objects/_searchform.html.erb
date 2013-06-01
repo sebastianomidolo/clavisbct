@@ -2,6 +2,10 @@
 
 <%= text_field_tag('filename', params[:filename]) %> (parte del nome del file)
 
+<br/>
+
+<%= text_field_tag('tags', params[:tags]) %> (ricerca per sottostringa in xml tags)
+
 <%= submit_tag('Cerca') %>
 
 <% end %>

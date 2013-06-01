@@ -1,0 +1,10 @@
+
+<% if @clavis_manifestation.attachments.size>0 %>
+ jQuery("#attachments").html('<%= attachments_render(@clavis_manifestation.attachments) %>');
+ jQuery("#attachments").prepend('<h4 style=\'margin-left: 2em\'>Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso</h4>');
+ jQuery('a','#attachments_tab').text('<%= "Allegati (#{@clavis_manifestation.attachments.size})" %>');
+ jQuery('#attachments_tab').fadeIn(3000);
+<% else %>
+
+<% end %>
+

@@ -14,7 +14,7 @@
 <% @d_objects.each do |d_object| %>
   <tr>
     <%= content_tag(:td, d_object.filename) %>
-    <td><%= link_to 'Show', d_object %></td>
+    <td><%= link_to 'Show', d_object_md5_link(d_object) %></td>
   </tr>
 <% end %>
 </table>

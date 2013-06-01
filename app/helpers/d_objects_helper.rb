@@ -9,7 +9,7 @@ module DObjectsHelper
     record.references.each do |ref|
       path=ref.attachable.class.name.underscore + "_path"
       if self.respond_to?(path)
-        link = link_to(ref.attachable.to_label, self.send(path, ref.attachable.id), :target=>'_new')
+        link = link_to(ref.attachable.to_label, self.send(path, ref.attachable.id), :target=>'_blank')
       else
         link = ref.attachable.to_label
       end
@@ -34,7 +34,10 @@ module DObjectsHelper
 
   def d_objects_render(d_objects)
     res=[]
+    audio=false
+    cnt=0
     d_objects.each do |o|
+      cnt+=1
       # res << image_tag(d_objects_path(o, :format=>'jpeg'))
       # res << content_tag(:div, d_objects_path(o))
       case o.mime_type.split(';').first
@@ -45,14 +48,24 @@ module DObjectsHelper
           res << content_tag(:span, image_tag(d_object_path(o, :format=>'jpeg')))
         end
       when 'image/jpeg', 'image/tiff'
-          res << content_tag(:span, image_tag(d_object_path(o, :format=>'jpeg')))
+        res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg)))
+        break if cnt>20
+      when 'audio/mpeg'
+        audio=true
+        res << content_tag(:li, link_to(o.xmltag(:title), d_object_md5_link(o,:mp3)))
       else
         res << content_tag(:div, "non so che fare con questo: #{o.mime_type}")
       end
     end
-    content_tag(:div, res.join.html_safe)
+    res << javascript_include_tag('http://webplayer.yahooapis.com/player.js') if audio
+    # content_tag(:ul, res.join.html_safe, :style=>'width: 50%; padding: 3px; border: 4px outset green; list-style: none')
+    content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green; list-style: none')
   end
 
+  def d_object_md5_link(record,extension='html')
+    p=Digest::MD5.hexdigest(record.filename)
+    "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}"
+  end
 
   def rmagick_image_info(record)
     return if !['image/tiff','image/jpeg','application/pdf'].include?(record.mime_type.split(";")[0])

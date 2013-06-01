@@ -17,6 +17,7 @@ task :import_from_clavis => :environment do
   def clavis_init(db,user)
     ['collocazione',
      'view_prestiti',
+     'view_digitalizzati',
      'setup',
     ].each do |fname|
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")

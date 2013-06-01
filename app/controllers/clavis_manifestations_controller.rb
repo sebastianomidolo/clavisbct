@@ -20,9 +20,13 @@ class ClavisManifestationsController < ApplicationController
     # @clavis_manifestations=ClavisManifestation.where(cond).paginate(:page=>params[:page])
     order = bs=='SBN' ? '' : 'bib_level,created_by'
     order += ",manifestation_id" if !order.blank?
-    @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,
-                                                        :page=>params[:page],
-                                                        :order=>order)
+    if params[:digit].blank?
+      @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,
+                                                          :page=>params[:page],
+                                                          :order=>order)
+    else
+      @clavis_manifestations=ClavisManifestation.paginate_by_sql('select * from clavis.digitalizzati order by lower(title)', :page=>params[:page])
+    end
   end
 
   def kardex
@@ -48,5 +52,15 @@ class ClavisManifestationsController < ApplicationController
     cm=ClavisManifestation.find(params[:id])
     @clavis_manifestation=cm
     redirect_to cm.clavis_url if !params[:redir].blank?
+  end
+
+  def attachments
+    headers['Access-Control-Allow-Origin'] = "*"
+
+    @clavis_manifestation=ClavisManifestation.find(params[:id])
+    respond_to do |format|
+      format.html
+      format.js
+    end
   end
 end

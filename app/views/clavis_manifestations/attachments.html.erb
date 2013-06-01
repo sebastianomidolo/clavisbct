@@ -1,0 +1,9 @@
+<%=
+ content_tag(:div,
+   "attachments for #{@clavis_manifestation}: #{@clavis_manifestation.attachments.size}")
+%>
+
+attachments_render(@clavis_manifestation.attachments)
+
+<%= content_tag(:div, attachments_render(@clavis_manifestation.attachments)) %>
+
