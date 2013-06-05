@@ -38,11 +38,10 @@ INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
    (select id,338747,'ClavisManifestation' from public.d_objects
     WHERE filename ~* 'hd2/Persepolis');
 
+
 INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
-   (select id,53650,'ClavisManifestation' from public.d_objects
-    WHERE filename ~* 'hd1/Luraghi/tif');
-
-
+   (select id,67146,'ClavisManifestation' from public.d_objects
+    WHERE filename ~* 'hd1/botta');
 
 COMMIT;
 
@@ -50,27 +49,27 @@ COMMIT;
 /* Nota: per funzionare, bisogna che prima siano stati inseriti i metadati da bctaudio:
    (cd /home/ror/bctaudio; rake export_fileinfo_metadata > /tmp/bctaudio_metadata.sql)
  */
-/*
-Non conviene eseguirla in fase di test, è molto lunga:
-\i /tmp/bctaudio_metadata.sql
 
-Andrebbe anche eseguito questo:
-rake allinea_collocazioni
-Nota (27 maggio 2013): resta ancora da definire l'ordine dei vari passaggi.
+UPDATE public.d_objects o SET tags=i.tags FROM public.import_bctaudio_metatags i
+  WHERE(i.filename=o.filename);
+
+/* La DISTINCT qui è necessaria perché in clavis.item possono esserci più esemplari con identica
+   "collocation", distinguibili per "specification", "sequence1", "sequence2"
+   Esempio 
+select item_id, manifestation_id, collocation,specification, sequence1
+   from clavis.item where collocation='11.F.420';
+ item_id | manifestation_id | collocation | specification | sequence1
+---------+------------------+-------------+---------------+-----------
+ 1943110 |           561618 | 11.F.420    | CD            | 1
+ 1943111 |           561618 | 11.F.420    | CD            | 2
+(2 rows)
 */
 
-BEGIN;
-create temp table temp_d_objects_collocation as
- select id,(xpath('/r/@collocation',tags))[1]::text as collocation
-  from d_objects where tags notnull;
-create INDEX temp_d_objects_collocation_idx on temp_d_objects_collocation(collocation);
-update temp_d_objects_collocation set collocation=substr(collocation,5) where collocation ~* '^BCT' ;
-
-INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type,attachment_category_id)
- (SELECT DISTINCT o.id,i.manifestation_id,'ClavisManifestation','A' FROM temp_d_objects_collocation o
-   JOIN clavis.item i USING(collocation) WHERE i.owner_library_id=3 and i.manifestation_id!=0);
-
-UPDATE public.attachments a SET position=unnest(xpath('//r/tracknum/text()',o.tags))::text::integer
-  FROM public.d_objects o WHERE(a.d_object_id=o.id) AND a.position ISNULL;
-
-COMMIT;
+INSERT INTO public.attachments
+  (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
+  (
+  select DISTINCT o.id,ci.manifestation_id, 'ClavisManifestation','A',i.tracknum
+    from import_bctaudio_metatags i join clavis.item ci using(collocation)
+     join d_objects o using(filename) where ci.owner_library_id=3
+      and ci.manifestation_id!=0
+  );

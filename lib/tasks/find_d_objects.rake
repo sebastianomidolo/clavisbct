@@ -37,9 +37,9 @@ COPY public.d_objects (filename, bfilesize, f_ctime, f_mtime, f_atime, mime_type
   end
   fdout.close
 
-  # cmd="/bin/cp #{tempfile} /tmp/d_objects_testfile.sql"
-  # puts cmd
-  # Kernel.system(cmd)
+  cmd="/bin/cp #{tempfile} /tmp/d_objects_testfile.sql"
+  puts cmd
+  Kernel.system(cmd)
 
   config = Rails.configuration.database_configuration
   dbname=config[Rails.env]["database"]
