@@ -1,0 +1,21 @@
+<%= content_tag(:h2, "Biblioteca musicale - materiale catalogato provvisoriamente (\"fuori catalogo\")") %>
+
+<%= form_tag(clavis_items_url, :method=>:get) do %>
+<%= text_field_tag('qs', params[:qs]) %>
+<br/>
+<%= submit_tag('Cerca') %>
+<% end %>
+
+<% if @clavis_items.size>0 %>
+<%= content_tag(:h2, "Trovati #{@clavis_items.total_entries}") %>
+<%= content_tag(:span, @clavis_items.total_entries, {:id=>'hits',:style=>'display: none'}) %>
+<%= will_paginate @clavis_items %>
+<% else %>
+<%= content_tag(:h2, "Nessun risultato per \"#{params[:qs]}\"") %>
+<%= content_tag(:span, 0, {:id=>'hits',:style=>'display: none'}) %>
+<% end %>
+
+<hr/>
+<%= content_tag(:div, clavis_items_shortlist(@clavis_items)) %>
+
+
