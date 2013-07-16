@@ -16,8 +16,8 @@ INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
 DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation';
 DELETE FROM public.attachments WHERE attachable_type='ClavisItem';
 
-INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
-   (select id,53650,'ClavisManifestation' from public.d_objects
+INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type,attachment_category_id)
+   (select id,53650,'ClavisManifestation','C' from public.d_objects
     WHERE filename ~* 'hd1/Luraghi/tif');
 
 /* Capire se sia meglio legarlo all'esemplare
@@ -33,6 +33,12 @@ INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
 INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
    (select id,81210,'ClavisManifestation' from public.d_objects
     WHERE filename ~* 'hd2/La lotta della Giovent');
+
+
+INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
+   (select id,15432,'ClavisManifestation' from public.d_objects
+    WHERE filename ~* '/fischietto/Fischietto_1848');
+
 
 INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
    (select id,338747,'ClavisManifestation' from public.d_objects
@@ -66,10 +72,19 @@ select item_id, manifestation_id, collocation,specification, sequence1
 */
 
 INSERT INTO public.attachments
-  (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
+  (d_object_id,attachable_id,attachable_type,attachment_category_id,position,folder)
   (
-  select DISTINCT o.id,ci.manifestation_id, 'ClavisManifestation','A',i.tracknum
+  select DISTINCT o.id,ci.manifestation_id, 'ClavisManifestation','A',i.tracknum,i.folder
     from import_bctaudio_metatags i join clavis.item ci using(collocation)
      join d_objects o using(filename) where ci.owner_library_id=3
       and ci.manifestation_id!=0
   );
+
+INSERT INTO public.attachments
+  (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
+  (
+  select lp.d_object_id,ci.manifestation_id,'ClavisManifestation','D',lp.position
+   from import_libroparlato_colloc lp join clavis.item ci using(collocation)
+   where section='LP' and owner_library_id=29 and ci.manifestation_id!=0
+  );
+

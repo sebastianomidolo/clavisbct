@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130502093133) do
+ActiveRecord::Schema.define(:version => 20130702145700) do
 
   create_table "attachment_categories", :id => false, :force => true do |t|
     t.string "code",        :limit => 1,  :null => false
@@ -20,11 +20,12 @@ ActiveRecord::Schema.define(:version => 20130502093133) do
   end
 
   create_table "attachments", :id => false, :force => true do |t|
-    t.integer "d_object_id",                          :null => false
-    t.integer "attachable_id",                        :null => false
+    t.integer "d_object_id",                           :null => false
+    t.integer "attachable_id",                         :null => false
     t.integer "position"
-    t.string  "attachable_type",        :limit => 24, :null => false
+    t.string  "attachable_type",        :limit => 24,  :null => false
     t.string  "attachment_category_id", :limit => 1
+    t.string  "folder",                 :limit => 128
   end
 
   create_table "d_objects", :force => true do |t|
@@ -36,6 +37,32 @@ ActiveRecord::Schema.define(:version => 20130502093133) do
     t.datetime "f_mtime"
     t.datetime "f_atime"
   end
+
+  add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
+
+  create_table "dng_sessions", :force => true do |t|
+    t.string   "client_ip",  :limit => 128
+    t.datetime "login_time"
+    t.integer  "patron_id",                 :null => false
+  end
+
+  create_table "import_bctaudio_metatags", :id => false, :force => true do |t|
+    t.string  "collocation", :limit => 128
+    t.string  "folder",      :limit => 512
+    t.string  "filename",    :limit => 2048
+    t.integer "tracknum"
+    t.xml     "tags"
+  end
+
+  add_index "import_bctaudio_metatags", ["filename"], :name => "import_bctaudio_metatags_filename_idx"
+
+  create_table "import_libroparlato_colloc", :id => false, :force => true do |t|
+    t.string  "collocation", :limit => 128
+    t.integer "d_object_id"
+    t.integer "position"
+  end
+
+  add_index "import_libroparlato_colloc", ["collocation"], :name => "import_libroparlato_colloc_collocation_idx"
 
   create_table "procultura_import", :id => false, :force => true do |t|
     t.integer "theid"
@@ -59,6 +86,12 @@ ActiveRecord::Schema.define(:version => 20130502093133) do
   end
 
   add_index "subjects", ["heading"], :name => "subjects_heading_idx"
+
+  create_table "temp_subjects", :id => false, :force => true do |t|
+    t.text   "s1"
+    t.text   "s2"
+    t.string "linktype", :limit => 20
+  end
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false

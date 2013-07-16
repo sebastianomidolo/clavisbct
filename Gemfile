@@ -51,4 +51,8 @@ gem 'htmlentities'
 gem 'ruby-filemagic'
 
 
-gem 'prawn'
+# gem 'prawn'
+
+# gem 'image_sorcery'
+
+

@@ -14,6 +14,11 @@ class ClavisItem < ActiveRecord::Base
     end
   end
 
+  def view
+    extra = self['value_label'].nil? ? '' : "#{self['value_label']}: "
+    "#{extra}#{self.title.strip}#{self.collocazione}"
+  end
+
 
   def collocazione
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
@@ -21,11 +26,18 @@ class ClavisItem < ActiveRecord::Base
     r.join('.')
   end
 
-
   def clavis_url(mode=:show)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
-    "#{host}/index.php?page=Catalog.ItemViewPage&id=#{self.id}"
+    r=''
+    if mode==:show
+      r="#{host}/index.php?page=Catalog.ItemViewPage&id=#{self.id}"
+    end
+    if mode==:loan
+      r="#{host}/index.php?page=Circulation.NewLoan&itemId=#{self.id}"
+    end
+    r
   end
+
 
 end

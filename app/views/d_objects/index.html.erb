@@ -21,4 +21,11 @@
 
 <br />
 
-<%= content_tag(:div, d_objects_summary) %>
+<%=
+if params[:show_attachments].blank?
+  content_tag(:div, d_objects_summary)
+else
+  content_tag(:div, clavis_manifestations_attachments_summary) 
+end
+%>
+

@@ -1,3 +1,5 @@
+require 'RMagick'
+
 include DigitalObjects
 
 class DObject < ActiveRecord::Base
@@ -46,12 +48,72 @@ class DObject < ActiveRecord::Base
 
   def xmltag(tag)
     tag=tag.to_s if tag.class==Symbol
+    return nil if self.tags.nil?
     doc = REXML::Document.new(self.tags)
     elem=doc.root.elements[tag]
     elem.nil? ? nil : elem.text
   end
 
+  def parent_folder
+    Pathname.new(File.expand_path("..",self.filename)).split.last.to_s
+  end
+
+  def parent_folder_with_metadata?
+    if DObject.includes_metadata_tags?(self.parent_folder)
+      true
+    else
+      false
+    end
+  end
+
+  def DObject.to_pdf(ids,pdf_filename)
+    # return true if File.exists?(pdf_filename)
+    logo = Magick::Image.read("/home/storage/preesistente/testzone/logo.jpg").first
+    iList =  Magick::ImageList.new
+    ids.each do |o|
+      # puts o.filename
+      img=Magick::Image.read(o.filename_with_path).first
+      img.resize_to_fit!(2000)
+      img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
+      img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
+      iList << img
+    end
+    iList.write(pdf_filename)
+    iList.each {|i| i.destroy!}
+    pdf_filename
+  end
+
+  def DObject.raggruppa_per_folder(attachments)
+    att=attachments.group_by {|a| a.folder}
+    folders=[]
+    att.keys.sort.each do |k|
+      folder_title = k.nil? ? 'Attachments' : k.capitalize
+      a=att[k]
+      atc=a.sort {|x,y| x.position<=>y.position}
+      dob=[]
+      atc.each do |x|
+        dob << x.d_object
+      end
+      folder_content=dob
+      folders << [folder_title,folder_content]
+    end
+    folders
+  end
+
   def DObject.fs_scan(folder,fdout=nil)
     digital_objects_dirscan(File.join(digital_objects_mount_point, folder), fdout)
   end
+
+  def DObject.includes_metadata_tags?(filepath)
+    return false if filepath.blank?
+    pn=Pathname.new(filepath)
+    pn.split.each do |f|
+      f.to_s.split('#').each do |e|
+        tag,data=e.split('_')
+        return true if FILENAME_METADATA_TAGS.include?(tag.to_sym) and !data.blank?
+      end
+    end
+    false
+  end
+
 end

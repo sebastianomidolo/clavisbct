@@ -38,6 +38,7 @@ class DObjectsController < ApplicationController
                   :type=>@d_object.mime_type)
       }
       format.jpeg {
+        logo = Magick::Image.read("/home/storage/preesistente/testzone/logo.jpg").first
         if !@d_object.get_pdfimage.nil?
           img=Magick::Image.read(@d_object.get_pdfimage).first
         else
@@ -47,6 +48,9 @@ class DObjectsController < ApplicationController
         # img.scale!(0.25)
         # img.resize_to_fit!(300, 300)
         img.resize_to_fit!(800, 800)
+        # http://www.imagemagick.org/RMagick/doc/image3.html#watermark
+        img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
+        img=img.watermark(logo,0.1,0.5,Magick::SouthGravity,0,0)
         send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
         # send_file(@d_object.get_pdfimage, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
       }

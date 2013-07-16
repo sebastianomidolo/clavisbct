@@ -7,4 +7,16 @@ class TalkingBook < ActiveRecord::Base
   def digitalized
     self.digitalizzato.nil? ? false : true
   end
+
+  def TalkingBook.filename2colloc(fname)
+    regexp_collocazione = /(NA|NB|NT|MP) +((\d+)[ -]|(\d+$))/
+    regexp_collocazione =~ fname
+    if $1=='MP'
+      p="CD MP"
+    else
+      p=$1
+    end
+    num=$2.to_i
+    "#{p} #{num}"
+  end
 end

@@ -1,5 +1,7 @@
 require 'filemagic'
 
+FILENAME_METADATA_TAGS=[:au,:ti,:an,:mid,:pp,:uid]
+
 module DigitalObjects
   def digital_objects_mount_point
     config = Rails.configuration.database_configuration
@@ -11,6 +13,20 @@ module DigitalObjects
     config[Rails.env]["digital_objects_cache"]
   end
 
+
+  # http://bctdoc.selfip.net/documents/30
+  def get_bibdata_from_filename
+    res={}
+    self.filename.split('/').each do |part|
+      part.split('#').each do |e|
+        tag,data=e.split('_')
+        # puts "tag #{tag} contiene '#{data}'"
+        ts=tag.to_sym
+        res[ts]=data if FILENAME_METADATA_TAGS.include?(ts) and !data.blank?
+      end
+    end
+    res
+  end
 
   def digital_objects_dirscan(dirname, fdout=nil)
     # puts "analizzo dir #{dirname}"

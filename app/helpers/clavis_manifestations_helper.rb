@@ -49,6 +49,7 @@ module ClavisManifestationsHelper
                          content_tag(:td, link_to('seriali', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'s'))) +
                          content_tag(:td, link_to('tutto', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source']))))
     end
+    res << content_tag(:td, link_to('polo bct', shortlist_clavis_manifestations_url(:bid_source=>'SBN', :polo=>'BCT')))
     content_tag(:table, res.join.html_safe)
   end
 
@@ -68,5 +69,35 @@ module ClavisManifestationsHelper
     content_tag(:table, res.join.html_safe)
   end
 
+  def clavis_manifestations_attachments_summary
+    sql=%Q{select trim(cm.title) as title,cm.manifestation_id,ac.label,count(*) from attachments a join attachment_categories ac on(a.attachment_category_id=ac.code) join clavis.manifestation as cm on(a.attachable_id=cm.manifestation_id) group by cm.title,cm.sort_text,cm.manifestation_id,ac.label order by ac.label desc,lower(trim(cm.sort_text));}
+    pg=ActiveRecord::Base.connection.execute(sql)
+    res=[]
+    pg.each do |r|
+      lnk="http://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}"
+      res << content_tag(:tr, content_tag(:td, link_to(r['title'], lnk)) +
+                         content_tag(:td, r['label']) +
+                         content_tag(:td, link_to('vedi',
+                  clavis_manifestation_path(r['manifestation_id']))) +
+                         content_tag(:td, r['count']))
+    end
+    content_tag(:table, res.join.html_safe)
+  end
+
+  def clavis_manifestation_pdf_links(record)
+    res=[]
+    n=0
+    record.attachments_generate_pdf(false).each do |fname|
+      ac=access_control_key
+      next if ac.nil?
+      text=n
+      dg=Digest::MD5.hexdigest(fname)
+      lnk=link_to("pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :user=>params[:user]))
+      res << content_tag(:tr, content_tag(:td, lnk) +
+                         content_tag(:td, number_to_human_size(File.size(fname))))
+      n+=1
+    end
+    content_tag(:table, res.join.html_safe)
+  end
 
 end

@@ -2,6 +2,9 @@ Clavisbct::Application.routes.draw do
 
   match 'obj/:id/:key' => 'd_objects#objshow'
 
+  # match 'ccu/:user/:pass/:clientip' => 'clavis_patrons#user_checkin_notification'
+  match 'ccu/:user/:pass/:ip' => 'clavis_patrons#user_checkin_notification'
+
   resources :d_objects
 
 
@@ -29,6 +32,7 @@ Clavisbct::Application.routes.draw do
     end
     collection do
       get 'shortlist'
+      get 'attachments_list'
     end
   end
 

@@ -49,15 +49,19 @@ module DObjectsHelper
         end
       when 'image/jpeg', 'image/tiff'
         res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg)))
-        break if cnt>20
+        break if cnt>=4
       when 'audio/mpeg'
         audio=true
-        res << content_tag(:li, link_to(o.xmltag(:title), d_object_md5_link(o,:mp3)))
+        text = o.xmltag(:title).blank? ? File.basename(o.filename) : o.xmltag(:title)
+        res << content_tag(:li, link_to(text, d_object_md5_link(o,:mp3)))
       else
-        res << content_tag(:div, "non so che fare con questo: #{o.mime_type}")
+        # res << content_tag(:div, "non so che fare con questo: #{o.mime_type}")
       end
     end
-    res << javascript_include_tag('http://webplayer.yahooapis.com/player.js') if audio
+    # res << javascript_include_tag('http://webplayer.yahooapis.com/player.js') if audio
+    res << javascript_include_tag('http://webplayer.yahooapis.com/player-beta.js') if audio
+
+
     # content_tag(:ul, res.join.html_safe, :style=>'width: 50%; padding: 3px; border: 4px outset green; list-style: none')
     content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green; list-style: none')
   end
