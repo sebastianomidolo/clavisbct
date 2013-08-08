@@ -1,11 +1,4 @@
 module AttachmentsHelper
-  def attachments_render_old(attachments)
-    dob=[]
-    attachments.reorder('position').each do |a|
-      dob << a.d_object
-    end
-    d_objects_render(dob)
-  end
 
   def attachments_render(attachments)
     att=attachments.group_by {|a| a.folder}
