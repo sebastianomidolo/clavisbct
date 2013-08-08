@@ -127,7 +127,8 @@ module ClavisManifestationsHelper
         end
       end
     else
-      tabtitle="Allegati (#{record.attachments.size})"
+      x=record.attachments.first.attachment_category.label
+      tabtitle="#{x} (#{record.attachments.size})"
       testo_avviso="Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso"
       content=content_tag(:div, attachments_render(record.attachments))
     end
