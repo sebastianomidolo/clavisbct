@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # lastmod 20 febbraio 2013
 
 module ClavisManifestationsHelper
@@ -17,12 +18,22 @@ module ClavisManifestationsHelper
 
   def clavis_manifestations_shortlist(records)
     res=[]
+    res << content_tag(:tr, content_tag(:td, 'BID') +
+                       content_tag(:td, 'level') +
+                       content_tag(:td, 'type') +
+                       content_tag(:td, 'created') +
+                       content_tag(:td, 'modif') +
+                       content_tag(:td, '') +
+                       content_tag(:td, '') +
+                       content_tag(:td, ''))
+
     records.each do |r|
       tit=r.title.blank? ? '[vedi titolo]' : r.title[0..80]
       res << content_tag(:tr, content_tag(:td, r.thebid) +
                          content_tag(:td, r.bib_level) +
                          content_tag(:td, r.bib_type) +
                          content_tag(:td, r.created_by) +
+                         content_tag(:td, r.modified_by) +
                          content_tag(:td, link_to('[opac]', r.clavis_url(:opac), :target=>'_blank')) +
                          content_tag(:td, link_to('[edit]', r.clavis_url(:edit), :target=>'_blank')) +
                          content_tag(:td, link_to(tit, r.clavis_url, :target=>'_blank')))
@@ -98,6 +109,30 @@ module ClavisManifestationsHelper
       n+=1
     end
     content_tag(:table, res.join.html_safe)
+  end
+
+  def clavis_manifestation_show_attachments(record,params,request,dng_session)
+    return [nil,nil] if record.attachments.size==0
+    content=tabtitle=testo_avviso=nil
+    if record.bib_type=='i05'
+      # Libro parlato
+      tabtitle="Audio libro parlato"
+      if dng_session.nil?
+        content="La sessione di lavoro risulta scaduta - è necessario effettuare nuovamente l'accesso"
+      else
+        if dng_session.check_service('talking_book',dng_session,params,request)
+          content=content_tag(:div, attachments_render(record.attachments))
+        else
+          content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio Libro parlato"
+        end
+      end
+    else
+      tabtitle="Allegati (#{record.attachments.size})"
+      testo_avviso="Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso"
+      content=content_tag(:div, attachments_render(record.attachments))
+    end
+    return [nil,nil] if content.blank?
+    [tabtitle,content_tag(:span, testo_avviso) + content_tag(:div, content)]
   end
 
 end
