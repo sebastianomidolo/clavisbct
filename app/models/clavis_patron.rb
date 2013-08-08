@@ -12,4 +12,17 @@ class ClavisPatron < ActiveRecord::Base
     DngSession.create(:patron_id=>self.id, :client_ip=>client_ip, :login_time=>Time.now)
   end
 
+  def appellativo
+    s = self.gender=='F' ? 'Gent.ma' : 'Gentile'
+    "#{s} #{self.name} #{self.lastname}"
+  end
+
+  # Attualmente considero abilitati al servizio libro parlato gli utenti contenuti
+  # nello scaffale numero 1929 (assurdo, ma funziona)
+  def autorizzato_al_servizio_lp
+    sql="select true from clavis.shelf_item where shelf_id = 1929 and object_id=#{self.patron_id}"
+    r=ClavisPatron.connection.execute(sql).num_tuples
+    r == 0 ? false : true
+  end
+
 end
