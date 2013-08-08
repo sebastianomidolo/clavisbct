@@ -8,11 +8,20 @@ class DngSession < ActiveRecord::Base
     Digest::SHA2.hexdigest([ip,self.login_time].join(','))
   end
 
-  def check_service(service_name)
-    puts self.patron_id
+  def check_service(service_name,dng_session,params,request)
+    return false if dng_session.nil?
+
     if service_name=='talking_book'
-      return true
+      # return dng_session.inspect + params.inspect
+      if (dng_session.patron.opac_username != params[:dng_user] or
+          dng_session.client_ip != DngSession.format_client_ip(request))
+        # return "#{dng_session.client_ip} != #{DngSession.format_client_ip(request)}"
+        return false
+      else
+        return dng_session.patron.autorizzato_al_servizio_lp
+      end
     end
+
     false
   end
 
