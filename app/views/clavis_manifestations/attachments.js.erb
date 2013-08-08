@@ -1,25 +1,6 @@
-
-<% if @clavis_manifestation.clavis_items.size>0
-   @section=@clavis_manifestation.clavis_items[0].section
-   end
-%>
-
-
-
-<% if @clavis_manifestation.attachments.size>0 and @section!='LP' %>
- jQuery("#attachments").html('<%= attachments_render(@clavis_manifestation.attachments) %>');
- jQuery("#attachments").prepend('<h4 style=\'margin-left: 2em\'>Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso</h4>');
- jQuery('a','#attachments_tab').text('<%= "Allegati (#{@clavis_manifestation.attachments.size})" %>');
- jQuery('#attachments_tab').fadeIn(3000);
-<% else if @section=='LP' and @clavis_manifestation.attachments.size>0 %>
-
- jQuery("#attachments").html('<%= @dng_session.inspect %>');
-
- jQuery("#attachments").prepend('<h4 style=\'margin-left: 2em\'>Libro parlato, condizioni di accesso da definire</h4>');
- jQuery('a','#attachments_tab').text('<%= "Ascolta il libro parlato (#{@clavis_manifestation.attachments.size} files)" %>');
- jQuery('#attachments_tab').fadeIn(3000);
-<%
-  end
- end
-%>
-
+<% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session) %>
+<% if !title.nil? %>
+jQuery("#attachments").html('<%= content %>');
+jQuery('a','#attachments_tab').text('<%= title %>');
+jQuery('#attachments_tab').fadeIn(1000);
+<% end %>
