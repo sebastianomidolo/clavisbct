@@ -49,8 +49,8 @@ class ClavisManifestationsController < ApplicationController
         condtext << "bid ~* #{polo}" 
         cond=condtext.join(" AND ")
         logger.info(cond)
+        order = "modified_by, bid"
       end
-
       @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,
                                                           :page=>params[:page],
                                                           :order=>order)
