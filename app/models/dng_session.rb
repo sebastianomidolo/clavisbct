@@ -25,7 +25,10 @@ class DngSession < ActiveRecord::Base
     false
   end
 
-  # Da fare: controllare anche l'ora dell'ultimo accesso
+  def expired?
+    (Time.now-self.login_time).to_i > 3600 ? true : false
+  end
+
   def DngSession.find_from_params(params)
     return nil if params[:dng_user].blank?
     user=DngSession.connection.quote(params[:dng_user].downcase)
@@ -46,6 +49,12 @@ class DngSession < ActiveRecord::Base
 
   def DngSession.format_client_ip(request)
     [request.remote_ip, request.headers['REMOTE_ADDR']].uniq.join(', ')
+  end
+
+  def DngSession.access_control_key(params)
+    dng = DngSession.find_from_params(params)
+    return nil if dng.nil? or dng.expired?
+    dng.generate_ac
   end
 
 end
