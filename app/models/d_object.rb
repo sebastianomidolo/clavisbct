@@ -5,6 +5,7 @@ include DigitalObjects
 class DObject < ActiveRecord::Base
   # attr_accessible :title, :body
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
+  belongs_to :access_right
 
   def read_metadata
     self.digital_object_read_metadata
