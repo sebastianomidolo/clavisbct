@@ -1,15 +1,22 @@
 module DObjectsHelper
   def d_object_show(record)
     res=[]
+    if !record.access_right_id.nil?
+      res << content_tag(:tr, content_tag(:td, 'Accesso') + content_tag(:td, record.access_right.label))
+    end
     record.attributes.keys.each do |k|
-      next if record[k].blank?
+      next if record[k].blank? or ['tags','filename'].include?(k)
+      
       v = (k=='bfilesize') ? "#{number_to_human_size(record[k])} (#{record[k]})" : record[k]
       res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, v))
     end
+
     record.references.each do |ref|
       path=ref.attachable.class.name.underscore + "_path"
       if self.respond_to?(path)
-        link = link_to(ref.attachable.to_label, self.send(path, ref.attachable.id), :target=>'_blank')
+        extra={}
+        [:ac,:dng_user].each {|t| extra[t] = params[t] if !params[t].blank?}
+        link = link_to(ref.attachable.to_label, self.send(path, ref.attachable.id, extra), :target=>'_blank')
       else
         link = ref.attachable.to_label
       end
@@ -48,6 +55,7 @@ module DObjectsHelper
           res << content_tag(:span, image_tag(d_object_path(o, :format=>'jpeg')))
         end
       when 'image/jpeg', 'image/tiff'
+        # res << content_tag(:li, d_object_md5_link(o,:jpeg))
         res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg)))
         break if cnt>=4
       when 'audio/mpeg'
@@ -68,7 +76,9 @@ module DObjectsHelper
 
   def d_object_md5_link(record,extension='html')
     p=Digest::MD5.hexdigest(record.filename)
-    "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}"
+    ac="&amp;ac=#{access_control_key}"
+    ac='' if(!record.access_right_id.nil? and record.access_right.code==0)
+    "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}#{ac}"
   end
 
   def rmagick_image_info(record)
