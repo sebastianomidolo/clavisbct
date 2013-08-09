@@ -16,9 +16,7 @@ module ApplicationHelper
   end
 
   def access_control_key
-    dng = DngSession.find_from_params(params)
-    return nil if dng.nil?
-    dng.generate_ac
+    DngSession.access_control_key(params)
   end
 
 end
