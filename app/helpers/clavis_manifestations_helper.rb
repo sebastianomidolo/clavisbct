@@ -100,10 +100,10 @@ module ClavisManifestationsHelper
     n=0
     record.attachments_generate_pdf(false).each do |fname|
       ac=access_control_key
-      next if ac.nil?
+      next if ac.nil? or ac!=params[:ac]
       text=n
       dg=Digest::MD5.hexdigest(fname)
-      lnk=link_to("pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :user=>params[:user]))
+      lnk=link_to("pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :dng_user=>params[:dng_user]))
       res << content_tag(:tr, content_tag(:td, lnk) +
                          content_tag(:td, number_to_human_size(File.size(fname))))
       n+=1
