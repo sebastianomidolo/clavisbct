@@ -1,6 +1,6 @@
 require 'filemagic'
 
-FILENAME_METADATA_TAGS=[:au,:ti,:an,:mid,:pp,:uid]
+FILENAME_METADATA_TAGS=[:au,:ti,:an,:mid,:pp,:uid,:sc]
 
 module DigitalObjects
   def digital_objects_mount_point
