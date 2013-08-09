@@ -11,7 +11,15 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130702145700) do
+ActiveRecord::Schema.define(:version => 20130808123001) do
+
+  create_table "access_rights", :id => false, :force => true do |t|
+    t.integer "code",        :limit => 2,  :null => false
+    t.string  "label",       :limit => 32, :null => false
+    t.string  "description"
+  end
+
+  add_index "access_rights", ["label"], :name => "access_rights_label_idx", :unique => true
 
   create_table "attachment_categories", :id => false, :force => true do |t|
     t.string "code",        :limit => 1,  :null => false
@@ -29,15 +37,17 @@ ActiveRecord::Schema.define(:version => 20130702145700) do
   end
 
   create_table "d_objects", :force => true do |t|
-    t.string   "filename",  :limit => 2048
+    t.string   "filename",        :limit => 2048
     t.xml      "tags"
-    t.decimal  "bfilesize",                 :precision => 15, :scale => 0
-    t.string   "mime_type", :limit => 96
+    t.decimal  "bfilesize",                       :precision => 15, :scale => 0
+    t.string   "mime_type",       :limit => 96
     t.datetime "f_ctime"
     t.datetime "f_mtime"
     t.datetime "f_atime"
+    t.integer  "access_right_id", :limit => 2
   end
 
+  add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
   add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
 
   create_table "dng_sessions", :force => true do |t|
