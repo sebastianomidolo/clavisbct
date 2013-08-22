@@ -16,7 +16,7 @@ module ApplicationHelper
   end
 
   def access_control_key
-    DngSession.access_control_key(params)
+    DngSession.access_control_key(params,request)
   end
 
 end
