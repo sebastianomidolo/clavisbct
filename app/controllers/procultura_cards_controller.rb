@@ -29,7 +29,10 @@ class ProculturaCardsController < ApplicationController
       }
       format.jpeg {
         @procultura_card.get_image(:jpg)
-        send_file(@procultura_card.firstimage_path(:jpg), :type => 'graphics/jpg', :disposition => 'inline')
+        img=Magick::Image.read(@procultura_card.cached_filename(:jpg)).first
+        # img.resize_to_fit!(800)
+        img.resize!(800,491)
+        send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
       }
       format.gif {
         @procultura_card.get_image(:gif)
