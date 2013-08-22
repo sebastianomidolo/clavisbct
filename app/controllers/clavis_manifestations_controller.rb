@@ -87,7 +87,7 @@ class ClavisManifestationsController < ApplicationController
   def attachments
     headers['Access-Control-Allow-Origin'] = "*"
 
-    @dng_session=DngSession.find_from_params(params)
+    @dng_session=DngSession.find_by_params_and_request(params,request)
 
     @clavis_manifestation=ClavisManifestation.find(params[:id])
     respond_to do |format|
@@ -101,7 +101,7 @@ class ClavisManifestationsController < ApplicationController
           render :text=>"error #{fname}", :content_type=>'text/plain'
           return
         end
-        ac=DngSession.access_control_key(params)
+        ac=DngSession.access_control_key(params,request)
         if ac.nil? or ac!=params[:ac]
           render :text=>"Error! (wrong dng_user or dng_session expired)",:content_type=>'text/plain' and return
         end
