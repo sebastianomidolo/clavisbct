@@ -23,9 +23,13 @@ class DObjectsController < ApplicationController
   def objshow
     @d_object = DObject.find(params[:id])
     key=Digest::MD5.hexdigest(@d_object.filename)
-    # test="id: #{@d_object.id} - filename: #{@d_object.filename} - #{key} <=> #{params[:key]}"
-    if key!=params[:key] and request.remote_ip!='158.102.56.204'
+    if key!=params[:key]
       render :text=>"error #{request.remote_ip}", :content_type=>'text/plain'
+      return
+    end
+    ack=DngSession.access_control_key(params,request)
+    if ack!=params[:ac]
+      render :text=>'error', :content_type=>'text/plain'
       return
     end
     log="#{Time.new}|objshow|#{@d_object.id}|#{request.remote_ip}|dng_user=#{params[:dng_user]}"
