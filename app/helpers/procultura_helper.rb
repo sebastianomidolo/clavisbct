@@ -30,16 +30,17 @@ module ProculturaHelper
     folder.cards.each do |c|
       cnt=0 if prec!=c.intestazione
       cnt+=1
-      lnk=procultura_make_link(procultura_card_path(c))
+      # lnk=procultura_make_link(procultura_card_path(c, :format=>:png))
+      lnk="http://clavisbct.comperio.it/procultura_cards/#{c.id}.jpg"
       if cnt==1
         text=c.intestazione
       else
         text="#{c.intestazione} (#{cnt})"
       end
-      r << content_tag(:tr, content_tag(:td, link_to(text, lnk)))
+      r << content_tag(:li, link_to(text, lnk, {:rel=>'lightbox [procultura]', :title=>text}))
       prec=c.intestazione
     end
-    content_tag(:table, r.join.html_safe)
+    content_tag(:ol, r.join("\n").html_safe)
   end
 
   def procultura_cards(folder)
