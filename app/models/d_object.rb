@@ -14,6 +14,22 @@ class DObject < ActiveRecord::Base
     self.save if self.changed?
   end
 
+  def access_right_to_label
+    self.access_right_id.nil? ? 'diritti non specificati' : self.access_right.description
+  end
+
+  def access_right_for(dng_session)
+    case self.access_right_id
+    when 0
+      true
+    when 1
+      false
+    when 2
+      dng_session.nil? ? false : dng_session.patron.autorizzato_al_servizio_lp
+    else
+      false
+    end
+  end
 
   def get_pdfimage(n=1)
     n-=1
