@@ -9,8 +9,7 @@ x=link_to(txt, procultura_make_link(procultura_folders_path(:archive_id=>pf.arch
 content_tag(:h3, x + " - cassetto #{@pf.label}")
 %>
 
-<%= content_tag(:div, procultura_cards(@pf)) %>
-<%= content_tag(:h3, "Segue elenco dettagliato a fini di servizio, per revisione dati:") %>
+<% content_tag(:div, procultura_cards(@pf)) %>
 <%= content_tag(:div, procultura_cards_singole_schede(@pf)) %>
 
 
