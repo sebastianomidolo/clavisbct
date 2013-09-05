@@ -43,6 +43,8 @@ module DObjectsHelper
     res=[]
     audio=false
     cnt=0
+    return '---' if access_control_key.nil?
+    dng_session=DngSession.find_by_params_and_request(params,request)
     d_objects.each do |o|
       cnt+=1
       # res << image_tag(d_objects_path(o, :format=>'jpeg'))
@@ -59,16 +61,20 @@ module DObjectsHelper
         res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg)))
         break if cnt>=4
       when 'audio/mpeg'
-        audio=true
         text = o.xmltag(:title).blank? ? File.basename(o.filename) : o.xmltag(:title)
-        res << content_tag(:li, link_to(text, d_object_md5_link(o,:mp3)))
+        if o.access_right_for(dng_session)
+          audio=true
+          res << content_tag(:li, link_to(text, d_object_md5_link(o,:mp3)))
+        else
+          res << content_tag(:li, "#{text} [#{o.access_right_to_label}]")
+        end
       else
         # res << content_tag(:div, "non so che fare con questo: #{o.mime_type}")
       end
     end
     # res << javascript_include_tag('http://webplayer.yahooapis.com/player.js') if audio
-    res << javascript_include_tag('http://webplayer.yahooapis.com/player-beta.js') if audio
-
+    # res << javascript_include_tag('http://webplayer.yahooapis.com/player-beta.js') if audio
+    res << javascript_include_tag('http://clavisbct.selfip.net/player.js') if audio
 
     # content_tag(:ul, res.join.html_safe, :style=>'width: 50%; padding: 3px; border: 4px outset green; list-style: none')
     content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green; list-style: none')
@@ -77,7 +83,6 @@ module DObjectsHelper
   def d_object_md5_link(record,extension='html')
     p=Digest::MD5.hexdigest(record.filename)
     ac="&amp;ac=#{access_control_key}"
-    ac='' if(!record.access_right_id.nil? and record.access_right.code==0)
     "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}#{ac}"
   end
 
