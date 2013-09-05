@@ -34,7 +34,8 @@ class ClavisManifestationsController < ApplicationController
     cond[:bib_type]=bt if !bt.blank?
     # @clavis_manifestations=ClavisManifestation.find(:all, :limit=>300, :conditions=>cond)
     # @clavis_manifestations=ClavisManifestation.where(cond).paginate(:page=>params[:page])
-    order = bs=='SBN' ? '' : 'bib_level,created_by'
+    # order = bs=='SBN' ? '' : 'bib_level,created_by'
+    order = 'bib_type,created_by'
     order += ",manifestation_id" if !order.blank?
     if params[:digit].blank?
 
