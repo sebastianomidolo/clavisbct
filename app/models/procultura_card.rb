@@ -24,9 +24,12 @@ class ProculturaCard < ActiveRecord::Base
   def intestazione
     self.heading.blank? ? 'senza intestazione' : self.heading
   end
-  def get_image(fmt)
+  def cached_filename(fmt)
     cpath=ProculturaCard.cachepath
-    outfile=File.join(cpath, "#{self.id}.#{fmt}")
+    File.join(cpath, "#{self.id}.#{fmt}")
+  end
+  def get_image(fmt)
+    outfile=self.cached_filename(fmt)
     if !File.exists?(outfile)
       puts "ricavo #{outfile} da #{self.fspath}"
       fn=self.to_netpbm
@@ -46,7 +49,7 @@ class ProculturaCard < ActiveRecord::Base
       pbm_file=File.join(cpath, "#{self.id}-000.pbm")
       File.rename(pbm_file, outfile)
     end
-    puts outfile
+    # puts outfile
     outfile
   end
 
