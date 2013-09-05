@@ -13,6 +13,15 @@ class ClavisManifestation < ActiveRecord::Base
 
   has_many :attachments, :as => :attachable
 
+  def d_objects_set_access_rights(access_right)
+    ActiveRecord::Base.transaction do
+      self.d_objects.each do |o|
+        o.access_right=access_right
+        o.save if o.changed?
+      end
+    end
+  end
+
   def d_objects(folder=nil,conditions='')
     conditions = "AND #{conditions}" if !conditions.blank?
     if folder.blank?
