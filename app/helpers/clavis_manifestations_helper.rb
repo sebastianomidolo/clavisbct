@@ -84,12 +84,15 @@ module ClavisManifestationsHelper
     sql=%Q{select trim(cm.title) as title,cm.manifestation_id,ac.label,count(*) from attachments a join attachment_categories ac on(a.attachment_category_id=ac.code) join clavis.manifestation as cm on(a.attachable_id=cm.manifestation_id) group by cm.title,cm.sort_text,cm.manifestation_id,ac.label order by ac.label desc,lower(trim(cm.sort_text));}
     pg=ActiveRecord::Base.connection.execute(sql)
     res=[]
+    cnt=0
     pg.each do |r|
+      cnt+=1
       lnk="http://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}"
-      res << content_tag(:tr, content_tag(:td, link_to(r['title'], lnk)) +
+      res << content_tag(:tr, content_tag(:td, cnt) +
+                         content_tag(:td, link_to(r['title'], lnk)) +
                          content_tag(:td, r['label']) +
                          content_tag(:td, link_to('vedi',
-                  clavis_manifestation_path(r['manifestation_id']))) +
+                  clavis_manifestation_path(r['manifestation_id'], :dng_user=>params[:dng_user]))) +
                          content_tag(:td, r['count']))
     end
     content_tag(:table, res.join.html_safe)
@@ -100,10 +103,15 @@ module ClavisManifestationsHelper
     n=0
     record.attachments_generate_pdf(false).each do |fname|
       ac=access_control_key
+      # res << content_tag(:tr, content_tag(:td, ac))
       next if ac.nil? or ac!=params[:ac]
+      dng_session = DngSession.find_by_params_and_request(params,request)
+      if !dng_session.check_service('download_pdf',params,request,record)
+        return false
+      end
       text=n
       dg=Digest::MD5.hexdigest(fname)
-      lnk=link_to("pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :dng_user=>params[:dng_user]))
+      lnk=link_to("Scarica file in formato PDF: pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :dng_user=>params[:dng_user]))
       res << content_tag(:tr, content_tag(:td, lnk) +
                          content_tag(:td, number_to_human_size(File.size(fname))))
       n+=1
@@ -120,15 +128,16 @@ module ClavisManifestationsHelper
       if dng_session.nil?
         content="La sessione di lavoro risulta scaduta - è necessario effettuare nuovamente l'accesso"
       else
-        if dng_session.check_service('talking_book',dng_session,params,request)
+        if dng_session.check_service('talking_book',params,request)
           content=content_tag(:div, attachments_render(record.attachments))
         else
           content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio Libro parlato"
         end
       end
     else
-      x=record.attachments.first.attachment_category.label
-      tabtitle="#{x} (#{record.attachments.size})"
+      x=record.attachments.first.attachment_category
+      x = x.nil? ? 'Allegati' : x.label
+      tabtitle="#{x}"
       testo_avviso="Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso"
       content=content_tag(:div, attachments_render(record.attachments))
     end
