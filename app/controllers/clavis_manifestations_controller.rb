@@ -113,4 +113,13 @@ class ClavisManifestationsController < ApplicationController
       }
     end
   end
+
+  def sbn_opac_redir
+    cm=ClavisManifestation.find_by_bid(params[:id])
+    if cm.nil?
+      render :text=>"BID #{params[:id]} non trovato"
+    else
+      redirect_to cm.clavis_url(:opac)
+    end
+  end
 end

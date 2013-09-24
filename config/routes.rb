@@ -29,6 +29,7 @@ Clavisbct::Application.routes.draw do
       get 'kardex'
       get 'testpdf'
       get 'attachments'
+      get 'sbn_opac_redir'
     end
     collection do
       get 'shortlist'
