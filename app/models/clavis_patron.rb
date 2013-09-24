@@ -22,6 +22,7 @@ class ClavisPatron < ActiveRecord::Base
   # Attualmente considero abilitati al servizio libro parlato gli utenti contenuti
   # nello scaffale numero 1929 (assurdo, ma funziona)
   def autorizzato_al_servizio_lp
+    return true if self.loan_class=='@'
     sql="select true from clavis.shelf_item where shelf_id = 1929 and object_id=#{self.patron_id}"
     r=ClavisPatron.connection.execute(sql).num_tuples
     r == 0 ? false : true
