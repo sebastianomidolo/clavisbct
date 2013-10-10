@@ -1,5 +1,7 @@
 Clavisbct::Application.routes.draw do
 
+  match 'jsonip' => 'home#jsonip'
+
   match 'obj/:id/:key' => 'd_objects#objshow'
 
   # match 'ccu/:user/:pass/:clientip' => 'clavis_patrons#user_checkin_notification'
