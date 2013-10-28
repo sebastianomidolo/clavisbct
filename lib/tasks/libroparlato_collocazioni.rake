@@ -1,17 +1,14 @@
 # -*- mode: ruby;-*-
 
-# RAILS_ENV=development rake libroparlato_tags | psql clavisbct_development informhop
-# RAILS_ENV=production  rake libroparlato_tags | psql clavisbct_production informhop
+# RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop
+# RAILS_ENV=production  rake libroparlato_collocazioni | psql clavisbct_production informhop
 
-desc 'Tags per libro parlato'
+desc 'Creazione tabella import_libroparlato_colloc per libro parlato'
 
-task :libroparlato_tags => :environment do
+task :libroparlato_collocazioni => :environment do
   sql=%Q{select * from d_objects where filename ~* 'libroparlato' order by filename;}
 
-  flog='/tmp/export_libroparlato_colloc.log'
-  fd=File.open(flog,'w')
   ttable='public.import_libroparlato_colloc'
-  puts "-- output di libroparlato_tags.rake / logfile: #{flog}"
   puts "DROP TABLE #{ttable};"
   puts "CREATE TABLE #{ttable} (collocation varchar(128), d_object_id integer, position integer);"
   puts "COPY #{ttable} (collocation,position,d_object_id) FROM stdin;"
@@ -25,10 +22,8 @@ task :libroparlato_tags => :environment do
     end
     pos+=1
     puts "#{colloc}\t#{pos}\t#{r['id']}"
-   end
+  end
   puts "\\.\n"
   puts "CREATE INDEX #{ttable.sub('public.','')}_collocation_idx ON #{ttable} (collocation);"
-  fd.close
-
 end
 
