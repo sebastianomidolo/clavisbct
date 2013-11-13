@@ -82,7 +82,7 @@ module DObjectsHelper
 
   def d_object_md5_link(record,extension='html')
     p=Digest::MD5.hexdigest(record.filename)
-    ac="&amp;ac=#{access_control_key}"
+    ac=";ac=#{access_control_key}"
     "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}#{ac}"
   end
 
