@@ -36,4 +36,25 @@ class TalkingBooksController < ApplicationController
     end
   end
 
+  def download_mp3
+    ack=DngSession.access_control_key(params,request)
+    if ack!=params[:ac]
+      render :text=>'error', :content_type=>'text/plain'
+      return
+    end
+    @talking_book = TalkingBook.find(params[:id])
+    dng = DngSession.find_by_params_and_request(params,request)
+    @clavis_patron=ClavisPatron.find_by_opac_username(params[:dng_user])
+    if @clavis_patron.id!=dng.patron.id
+      render :text=>'user error', :content_type=>'text/plain'
+      return
+    end
+
+    # Utente @clavis_patron autorizzato al download nella sessione corrente
+    zipfile=@talking_book.zip_filepath(@clavis_patron)
+    if !File.exist?(zipfile)
+      @talking_book.make_audio_zip(@clavis_patron)
+    end
+    send_file(zipfile)
+  end
 end
