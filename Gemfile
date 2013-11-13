@@ -55,4 +55,10 @@ gem 'ruby-filemagic'
 
 # gem 'image_sorcery'
 
+gem 'rubyzip'
+
+gem 'ruby-mp3info'
+
+gem 'google-api-client'
+
 
