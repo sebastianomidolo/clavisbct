@@ -98,38 +98,48 @@ module ClavisManifestationsHelper
     content_tag(:table, res.join.html_safe)
   end
 
-  def clavis_manifestation_pdf_links(record)
+  def clavis_manifestation_pdf_links(record,ac_key=nil)
     res=[]
     n=0
-    record.attachments_generate_pdf(false).each do |fname|
+    record.attachments_generate_pdf(true).each do |fname|
       ac=access_control_key
+      # return "ac: #{ac} - params[:ac]: #{params[:ac]}"
       # res << content_tag(:tr, content_tag(:td, ac))
+      # next if ac.nil? or ac!=params[:ac]
+      params[:ac]=ac_key if params[:ac].blank? and !ac_key.nil?
       next if ac.nil? or ac!=params[:ac]
       dng_session = DngSession.find_by_params_and_request(params,request)
       if !dng_session.check_service('download_pdf',params,request,record)
-        return false
+        return '[file pdf non accessibile]'
       end
       text=n
       dg=Digest::MD5.hexdigest(fname)
-      lnk=link_to("Scarica file in formato PDF: pdf_file_#{n+1}",attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :dng_user=>params[:dng_user]))
+      lnk=link_to("Scarica file in formato PDF: pdf_file_#{n+1}","http://#{request.host_with_port}#{attachments_clavis_manifestation_path(record, :format=>'pdf', :fkey=>dg,:filenum=>n, :ac=>ac, :dng_user=>params[:dng_user])}")
       res << content_tag(:tr, content_tag(:td, lnk) +
                          content_tag(:td, number_to_human_size(File.size(fname))))
       n+=1
     end
+    # return "vuoto" if res.blank?
     content_tag(:table, res.join.html_safe)
   end
 
   def clavis_manifestation_show_attachments(record,params,request,dng_session)
     return [nil,nil] if record.attachments.size==0
     content=tabtitle=testo_avviso=nil
-    if record.bib_type=='i05'
+    if ['i05','i02'].include?(record.bib_type)
       # Libro parlato
+      # tabtitle="Audio libro parlato #{record.bib_type}"
       tabtitle="Audio libro parlato"
       if dng_session.nil?
         content="La sessione di lavoro risulta scaduta - è necessario effettuare nuovamente l'accesso"
       else
         if dng_session.check_service('talking_book',params,request)
           content=content_tag(:div, attachments_render(record.attachments))
+          if record.talking_book
+            authstring="?dng_user=#{params[:dng_user]};ac=#{access_control_key}"
+            lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record.talking_book) + authstring
+            content += content_tag(:div, link_to("scarica audio mp3 completo", lnk))
+          end
         else
           content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio Libro parlato"
         end
@@ -139,10 +149,23 @@ module ClavisManifestationsHelper
       x = x.nil? ? 'Allegati' : x.label
       tabtitle="#{x}"
       testo_avviso="Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso"
-      content=content_tag(:div, attachments_render(record.attachments))
+      # Attenzione, la chiamata "sicura" sarebbe questa:
+      # content = clavis_manifestation_pdf_links(record)
+      # Ma per far funzionare le cose, uso questa:
+      content = clavis_manifestation_pdf_links(record, access_control_key)
+      # La cosa giusta sarebbe che la chiamata da javascript includa il parametro ac=???
+      # nell'url, cosa che al momento (ottobre 2013) non è possibile perché il valore di "ac"
+      # dovrebbe essere incluso nella pagina fornita da Comperio in base al contesto.
+      # Per ora ci accontentiamo di un codice meno sicuro, nel senso che con molta fantasia
+      # un utente potrebbe riuscire a ricavare l'indirizzo corretto per scaricare un pdf
+      # pur non avendone i diritti... ma non si tratta di conti bancari per cui al momento va bene così
+      # In ogni caso, quando la sessione utente scade, il link al pdf viene comunque invalidato
+
+      content+=content_tag(:div, attachments_render(record.attachments))
+
     end
     return [nil,nil] if content.blank?
-    [tabtitle,content_tag(:span, testo_avviso) + content_tag(:div, content)]
+    [tabtitle,content_tag(:span, testo_avviso) + content_tag(:div, content.html_safe)]
   end
 
 end
