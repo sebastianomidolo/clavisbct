@@ -1,5 +1,6 @@
 class ClavisManifestationsController < ApplicationController
   include LatexPrint
+  include REXML
 
   def index
   end
@@ -83,6 +84,12 @@ class ClavisManifestationsController < ApplicationController
     cm=ClavisManifestation.find(params[:id])
     @clavis_manifestation=cm
     redirect_to cm.clavis_url if !params[:redir].blank?
+    respond_to do |format|
+      format.html
+      format.xml {
+        render xml: cm.export_to_metaopac
+      }
+    end
   end
 
   def attachments
