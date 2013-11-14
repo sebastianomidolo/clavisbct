@@ -12,7 +12,11 @@ Clavisbct::Application.routes.draw do
 
   resources :subjects
 
-  resources :talking_books
+  resources :talking_books do
+    member do
+      get 'download_mp3'
+    end
+  end
   resources :iss_articles
 
 
