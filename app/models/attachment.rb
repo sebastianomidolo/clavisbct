@@ -23,6 +23,25 @@ select o.filename,o.id,a.position from attachments a join d_objects o
     puts sql
   end
 
+  def Attachment.filelist(attachments)
+    att=attachments.group_by {|a| a.folder}
+    res=[]
+    att.keys.sort.each do |k|
+      tmpres=[]
+      folder = k.nil? ? '' : k.capitalize
+      tmpres << folder
+      a=att[k]
+      atc=a.sort {|x,y| x.position<=>y.position}
+      dob=[]
+      atc.each do |x|
+        dob << x.d_object.filename
+      end
+      tmpres << dob
+      res << tmpres
+    end
+    res
+  end
+
   def Attachment.set_position(attachable_id)
     sql=%Q{select a.* from attachments a join d_objects o
    on(a.d_object_id=o.id) where a.attachable_id=#{attachable_id} order by a.attachable_type, lower(o.filename);}
