@@ -88,3 +88,12 @@ INSERT INTO public.attachments
    where section='LP' and owner_library_id=29 and ci.manifestation_id!=0
   );
 
+UPDATE public.d_objects SET access_right_id=2 WHERE access_right_id ISNULL AND filename ~ '^libroparlato/';
+UPDATE public.d_objects SET access_right_id=0 WHERE access_right_id ISNULL AND filename ~ '^mp3clips/';
+
+
+BEGIN;
+-- See lib/tasks/find_d_objects.rake (DROP CONSTRAINT "d_object_id_fkey")
+ALTER TABLE public.attachments ADD CONSTRAINT "d_object_id_fkey" FOREIGN KEY(d_object_id)
+   REFERENCES d_objects ON UPDATE CASCADE ON DELETE CASCADE;
+COMMIT;

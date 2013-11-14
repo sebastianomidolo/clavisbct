@@ -15,9 +15,9 @@ task :find_d_objects => :environment do
   puts tempfile
   fdout=File.open(tempfile,'w')
 
-
-  fdout.write(%Q{TRUNCATE public.d_objects CASCADE;
-  SELECT setval('public.d_objects_id_seq', 1);\n})
+  fdout.write(%Q{ALTER TABLE public.attachments DROP CONSTRAINT "d_object_id_fkey";
+TRUNCATE public.d_objects;
+SELECT setval('public.d_objects_id_seq', 1);\n})
 
   numfiles=0
   dirs=[
@@ -35,6 +35,7 @@ COPY public.d_objects (filename, bfilesize, f_ctime, f_mtime, f_atime, mime_type
     numfiles+=DObject.fs_scan(folder, fdout)
     fdout.write("\\.\n")
   end
+  # See /extras/sql/attachments_insert.sql (ADD CONSTRAINT "d_object_id_fkey")
   fdout.close
 
   cmd="/bin/cp #{tempfile} /tmp/d_objects_testfile.sql"
