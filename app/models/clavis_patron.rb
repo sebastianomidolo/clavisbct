@@ -34,29 +34,60 @@ class ClavisPatron < ActiveRecord::Base
     # Esempio di pdf libero (in quanto composto da oggetti a loro volta liberi):
     # reload!;ClavisPatron.find(8959).autorizzato_download_pdf(ClavisManifestation.find(219606))
     aut=true
-    scadenza=Time.now + 1.hour
+    scadenza=nil
     return false if clavis_manifestation.d_objects.size==0
     dob=clavis_manifestation.d_objects.first
     dirname=File.dirname(dob.filename)
     clavis_manifestation.d_objects.each do |o|
+      # Provvisorio: solo i files in doc_delivery sono autorizzabili, gli altri no in ogni caso (per ora)
+      if !(/^doc/ =~  o.filename)
+        puts "filename #{o.filename}"
+        aut=false
+      end
       next if o.access_right_id==0
+      return false if o.access_right_id==2
+      puts o.tags
       mid=o.xmltag(:mid).to_i
       if mid==0
-        puts o.filename
+        # puts o.filename
       end
       next if mid!=clavis_manifestation.id
-      uid=o.xmltag(:uid).to_i
-      # puts "uid: #{uid}"
-      # uid=8959; #debug only
-      aut=false if uid!=self.id
       sc = o.xmltag(:sc)
       next if sc.blank?
-      mesi = sc.split[0].to_i
-      t1 = o.f_mtime + mesi.months
-      scadenza = t1 if scadenza > t1
+      uid=o.xmltag(:uid).to_i
+      puts "uid: #{uid}"
+      # uid=8959; # debug only
+      if uid!=self.id and uid!=0
+        aut=false
+        # <sc>mm12</sc>
+        mesi = sc.gsub('mm','').split[0].to_i
+        # puts "mesi: #{mesi}"
+        # o.tags="<r><dc>2012-08</dc></r>"
+        dc = o.xmltag(:dc)
+        if dc.blank?
+          dc = o.f_mtime
+        else
+          dc_anno,dc_mese=dc.split('-')
+          # puts dc_anno
+          # puts dc_mese
+          dc = Time.new(dc_anno, dc_mese)
+        end
+        # puts "data_caricamento_file: #{dc}"
+        t1 = dc + mesi.months
+        # puts t1
+        scadenza = t1 if scadenza.nil? or scadenza > t1
+      end
     end
-    return true if aut==true
-    Time.now >= scadenza
+    return false if scadenza.nil? and aut==false
+    # puts "scadenza: #{scadenza}"
+    if scadenza.nil?
+      # In realtà è un po' troppo permissivo: potrebbero esserci e ci sono casi
+      # in cui il semplice fatto che non sia indicata una scadenza dei diritti
+      # non implica che i diritti ci siano
+      true
+    else
+      Time.now >= scadenza
+    end
   end
 
 end
