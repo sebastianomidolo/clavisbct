@@ -19,6 +19,9 @@ class ClavisItem < ActiveRecord::Base
     "#{extra}#{self.title.strip}#{self.collocazione}"
   end
 
+  def inventario
+    "#{inventory_serie_id}-#{inventory_number}"
+  end
 
   def collocazione
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
