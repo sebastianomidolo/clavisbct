@@ -1,4 +1,8 @@
-<% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session) %>
+<% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session)
+  if @clavis_manifestation.talking_book
+    content = content_tag(:div, @clavis_manifestation.talking_book.abstract) + content
+  end
+%>
 <% if !title.nil? %>
 jQuery("#attachments").html('<%= content %>');
 jQuery('a','#attachments_tab').text('<%= title %>');
