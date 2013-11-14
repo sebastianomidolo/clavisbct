@@ -134,14 +134,15 @@ module ClavisManifestationsHelper
         content="La sessione di lavoro risulta scaduta - è necessario effettuare nuovamente l'accesso"
       else
         if dng_session.check_service('talking_book',params,request)
-          content=content_tag(:div, attachments_render(record.attachments))
+          content=''
           if record.talking_book
-            authstring="?dng_user=#{params[:dng_user]};ac=#{access_control_key}"
-            lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record.talking_book) + authstring
+            lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record.talking_book, :mid => record.id, :dng_user => params[:dng_user], :ac => access_control_key)
             content += content_tag(:div, link_to("scarica audio mp3 completo", lnk))
           end
+          content+=content_tag(:div, attachments_render(record.attachments))
         else
-          content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio Libro parlato"
+          content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
+          content+=content_tag(:span, link_to('\"Condizioni di iscrizione e prestito\"', 'http://www.comune.torino.it/cultura/biblioteche/lettura_accessibile/libriparlati.shtml'))
         end
       end
     else
