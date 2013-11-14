@@ -51,9 +51,10 @@ class TalkingBooksController < ApplicationController
     end
 
     # Utente @clavis_patron autorizzato al download nella sessione corrente
-    zipfile=@talking_book.zip_filepath(@clavis_patron)
+    cm=ClavisManifestation.find(params[:mid])
+    zipfile=@talking_book.zip_filepath(@clavis_patron, cm)
     if !File.exist?(zipfile)
-      @talking_book.make_audio_zip(@clavis_patron)
+      @talking_book.make_audio_zip(@clavis_patron, cm)
     end
     send_file(zipfile)
   end
