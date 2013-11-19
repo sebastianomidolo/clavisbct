@@ -59,6 +59,10 @@ gem 'rubyzip'
 
 gem 'ruby-mp3info'
 
-gem 'google-api-client'
+# gem 'google-api-client'
+# gem "gdata", "~> 1.1.2"
+
+gem 'google_drive'
+
 
 
