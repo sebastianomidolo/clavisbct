@@ -2,6 +2,8 @@ class ClavisManifestationsController < ApplicationController
   include LatexPrint
   include REXML
 
+  layout 'navbar'
+
   def index
   end
 
