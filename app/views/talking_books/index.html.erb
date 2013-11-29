@@ -1,4 +1,4 @@
-<%= content_tag(:h2, "Non catalogo del libro parlato") %>
+<%= content_tag(:h2, "Libro parlato - archivio access CB") %>
 
 <%= form_tag(talking_books_url, :method=>:get) do %>
 
@@ -19,7 +19,8 @@
 <% end %>
 
 <%= content_tag(:h2, "Trovati #{@talking_books.total_entries}") %>
-<%= will_paginate @talking_books %>
+<%= will_paginate @talking_books, renderer: BootstrapPagination::Rails %>
+
 
 <hr/>
 <%= content_tag(:div, talking_books_index(@talking_books)) %>
