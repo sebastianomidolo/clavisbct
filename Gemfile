@@ -64,5 +64,6 @@ gem 'ruby-mp3info'
 
 gem 'google_drive'
 
+gem 'simple_form'
 
-
+gem 'will_paginate-bootstrap'
