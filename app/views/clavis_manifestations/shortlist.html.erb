@@ -4,7 +4,7 @@
 
 <%= content_tag(:h3, "Trovati #{@clavis_manifestations.total_entries}") %>
 
-<%= will_paginate @clavis_manifestations %>
+<%= will_paginate @clavis_manifestations, renderer: BootstrapPagination::Rails %>
 
 <hr/>
 <%= content_tag(:div, clavis_manifestations_shortlist(@clavis_manifestations)) %>
