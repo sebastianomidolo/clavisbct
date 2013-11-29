@@ -1,4 +1,5 @@
 class TalkingBooksController < ApplicationController
+  layout 'navbar'
   # GET /talking_books
   # GET /talking_books.json
   def index

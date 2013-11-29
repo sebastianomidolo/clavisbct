@@ -1,4 +1,5 @@
 class IssArticlesController < ApplicationController
+  layout 'navbar'
 
   def index
     qs=params[:qs]

@@ -1,6 +1,7 @@
 require 'RMagick'
 
 class DObjectsController < ApplicationController
+  layout 'navbar'
 
   def index
     cond=[]
