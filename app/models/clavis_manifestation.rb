@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # lastmod 20 febbraio 2013
 
+include DigitalObjects
 include REXML
 
 class ClavisManifestation < ActiveRecord::Base
@@ -34,7 +35,7 @@ class ClavisManifestation < ActiveRecord::Base
       extra="AND a.folder=#{self.connection.quote(folder)}"
       order='lower(folder),a.position'
     end
-    sql=%Q{SELECT o.*,ar.description as access_rights_description
+    sql=%Q{SELECT o.*,ar.description as access_rights_description,a.attachment_category_id
        FROM clavis.manifestation m JOIN public.attachments a
       ON(a.attachable_type='ClavisManifestation' AND a.attachable_id=m.manifestation_id)
       JOIN public.d_objects o ON(o.id=a.d_object_id)
@@ -54,7 +55,7 @@ class ClavisManifestation < ActiveRecord::Base
     sql=%Q{SELECT DISTINCT folder,lower(folder) FROM clavis.manifestation m JOIN public.attachments a
       ON(a.attachable_type='ClavisManifestation' AND a.attachable_id=m.manifestation_id)
       WHERE m.manifestation_id=#{self.id} ORDER BY lower(folder);}
-    # puts sql
+    puts sql
     res=[]
     self.connection.execute(sql).each do |r|
       res << r['folder']
@@ -169,6 +170,28 @@ class ClavisManifestation < ActiveRecord::Base
       r="#{host}/opac/detail/view/sbct:catalog:#{self.id}"
     end
     r
+  end
+
+  def audioclips
+    cm=self
+    storage_dir=DigitalObjects.digital_objects_mount_point
+    title=cm.title.strip
+    d_objects=cm.d_objects
+    clips=[]
+    cnt=0
+    d_objects.each do |o|
+      next if o.attachment_category_id!='D'
+      # creo audioclip della durata specificata (40 secondi, per esempio)
+      clipfn=o.digital_object_create_audioclip(40)
+      if !clipfn.nil?
+        cnt+=1
+        clip = DObject.new(filename: clipfn, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary',
+                           tags: "<r><title>Preascolto traccia #{cnt}</title></r>")
+        clip.id=o.id
+        clips << clip
+      end
+    end
+    clips
   end
 
   def thebid
@@ -297,7 +320,7 @@ class ClavisManifestation < ActiveRecord::Base
 
   def talking_book
     sql=%Q{select tb.* from clavis.manifestation cm join clavis.item ci using(manifestation_id)
-     join libroparlato.catalogo tb on(tb.n=ci.collocation) where ci.section='LP'
+     join libroparlato.catalogo tb on(tb.n=replace(ci.collocation,'CD ','')) where ci.section='LP'
       AND cm.manifestation_id=#{self.id}}
     TalkingBook.find_by_sql(sql).first
   end
