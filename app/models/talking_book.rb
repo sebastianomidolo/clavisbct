@@ -14,6 +14,7 @@ class TalkingBook < ActiveRecord::Base
   end
 
   def clavis_manifestations
+    return [] if n.nil?
     inventory=self.n.split.last.to_i
     basecolloc=self.n.split.first
     series=["'NV#{basecolloc}'"]
