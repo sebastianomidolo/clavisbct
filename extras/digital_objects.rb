@@ -64,4 +64,32 @@ module DigitalObjects
     self.bfilesize = File.size(fname)
   end
 
+  def audioclip_basename(ext='mp3')
+    "audioclip_#{self.id}.#{ext}"
+  end
+  def audioclip_basedir
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["audioclips_basedir"]
+  end
+  def audioclip_filename(ext='mp3')
+    File.join(audioclip_basedir,audioclip_basename(ext))
+  end
+
+  def digital_object_create_audioclip(seconds=30,ext='mp3')
+    return nil if self.mime_type!='audio/mpeg; charset=binary'
+    fn=File.join(digital_objects_mount_point,self.filename)
+    target=audioclip_filename(ext)
+    return target if File.exists?(target) and File.size(target)>0
+    cmd=%Q{/usr/bin/sox "#{fn}" "#{target}" trim 0 #{seconds} fade h 0 0:0:#{seconds} 4}
+    # puts cmd
+    Kernel.system(cmd)
+    mp3=Mp3Info.open(target)
+    mp3.tag2.TCOP="Biblioteche civiche torinesi - Servizio libro parlato"
+    # mp3.tag2.WOAS="http://clavisbct.comperio.it/"
+    mp3.tag2.TCON='Audiobook'
+    mp3.tag2.COMM="Preascolto traccia audio"
+    mp3.close
+    target
+  end
+
 end
