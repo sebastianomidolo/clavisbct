@@ -25,12 +25,21 @@ class DObjectsController < ApplicationController
     @d_object = DObject.find(params[:id])
     key=Digest::MD5.hexdigest(@d_object.filename)
     if key!=params[:key]
+      key=Digest::MD5.hexdigest(@d_object.audioclip_filename)
+      if key==params[:key]
+        tmp_id=@d_object.id
+        @d_object = DObject.new(filename: @d_object.audioclip_filename, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary')
+        @d_object.id=tmp_id
+      end
+    end
+    if key!=params[:key]
       render :text=>"error #{request.remote_ip}", :content_type=>'text/plain'
       return
     end
     ack=DngSession.access_control_key(params,request)
     if ack!=params[:ac]
-      render :text=>'error', :content_type=>'text/plain'
+      # render :text=>params[:ac], :content_type=>'text/plain'
+      render :template=>'d_objects/show_restricted'
       return
     end
     log="#{Time.new}|objshow|#{@d_object.id}|#{request.remote_ip}|dng_user=#{params[:dng_user]}"
@@ -60,7 +69,7 @@ class DObjectsController < ApplicationController
         # send_file(@d_object.get_pdfimage, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
       }
       format.mp3 {
-        send_file(@d_object.filename_with_path, :type => 'audio/mpeg; charset=binary', :disposition => 'inline')
+        send_file(@d_object.filename_with_path, :type => @d_object.mime_type, :disposition => 'inline')
       }
 
     end
