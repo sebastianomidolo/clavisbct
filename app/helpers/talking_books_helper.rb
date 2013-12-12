@@ -42,5 +42,36 @@ module TalkingBooksHelper
     res
   end
 
+  def talking_book_opac_presentation(clavis_manifestation,authorized)
+    record = clavis_manifestation.talking_book
+    res=[]
+    if !record.nil? and !record.abstract.blank?
+      res << content_tag(:div, content_tag(:div, content_tag(:b, 'Il libro in sintesi'),
+                                           class: 'panel-heading') +
+                         content_tag(:div, record.abstract, class: 'panel-body'), class: 'panel panel-info')
+    end
+    if !record.nil? and !access_control_key.blank? and authorized
+      mid=clavis_manifestation.manifestation_id
+      lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record, :mid => mid, :dng_user => params[:dng_user], :ac => access_control_key)
+      res << image_tag("http://#{request.host_with_port}/assets/icona_download01.gif?mid=#{mid}", style: 'padding: 4px')
+      res << link_to(content_tag(:span, 'Scarica audio mp3 completo', class: "badge"), lnk)
+
+      if clavis_manifestation.attachments.size>0
+        res << '<br/>'
+        res << image_tag("http://#{request.host_with_port}/assets/icona_ascolto.gif?mid=#{mid}", style: 'padding: 4px')
+        res << content_tag(:span, 'Ascolta in streaming')
+        # content_tag(:span, clavis_manifestation.title, :class=>'label label-default')
+        # content_tag(:span, ' in streaming')
+        # res << content_tag(:button, access_control_key, :class=>'btn')
+        res << content_tag(:div, attachments_render(clavis_manifestation.attachments))
+      end
+    else
+      res << content_tag(:div, d_objects_render(clavis_manifestation.audioclips))
+      # res << content_tag(:div, clavis_manifestation.id)
+    end
+
+    content_tag(:div, res.join.html_safe)
+  end
+
 
 end
