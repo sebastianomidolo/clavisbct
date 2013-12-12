@@ -85,7 +85,7 @@ class ClavisManifestationsController < ApplicationController
   def show
     cm=ClavisManifestation.find(params[:id])
     @clavis_manifestation=cm
-    redirect_to cm.clavis_url if !params[:redir].blank?
+    redirect_to cm.clavis_url and return if !params[:redir].blank?
     respond_to do |format|
       format.html
       format.xml {
@@ -129,6 +129,24 @@ class ClavisManifestationsController < ApplicationController
       render :text=>"BID #{params[:id]} non trovato"
     else
       redirect_to cm.clavis_url(:opac)
+    end
+  end
+
+  def libriparlati_con_audio
+    @records=Attachment.libriparlati(params[:colloc])
+    respond_to do |format|
+      format.html
+      format.csv  {
+        require 'csv'
+        csv_string = CSV.generate do |csv|
+          csv << ["Collocazione", "Titolo"]
+          @records.each do |r|
+            csv << [r['collocation'],r['title']]
+          end
+        end
+        send_data csv_string, type: Mime::CSV,
+        disposition: "attachment; filename=libriparlati_con_audio.csv"
+      }
     end
   end
 end
