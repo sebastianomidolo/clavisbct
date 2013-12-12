@@ -129,20 +129,19 @@ module ClavisManifestationsHelper
     if ['i05','i02'].include?(record.bib_type)
       # Libro parlato
       # tabtitle="Audio libro parlato #{record.bib_type}"
+      # return '' if dng_session.nil?
       tabtitle="Audio libro parlato"
-      if dng_session.nil?
-        content="La sessione di lavoro risulta scaduta - è necessario effettuare nuovamente l'accesso"
+      if dng_session and dng_session.expired?
+        content=%Q{La sessione di lavoro risulta scaduta - <a href="/Security/logout">Effettuare un nuovo accesso</a>}
       else
-        if dng_session.check_service('talking_book',params,request)
-          content=''
-          if record.talking_book
-            lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record.talking_book, :mid => record.id, :dng_user => params[:dng_user], :ac => access_control_key)
-            content += content_tag(:div, link_to("scarica audio mp3 completo", lnk))
-          end
-          content+=content_tag(:div, attachments_render(record.attachments))
+        if dng_session and dng_session.check_service('talking_book',params,request)
+          content = talking_book_opac_presentation(record,true)
         else
-          content="#{dng_session.patron.appellativo}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
+          uname = dng_session.nil? ? 'Gentile utente' : dng_session.patron.appellativo
+          content="#{uname}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
           content+=content_tag(:span, link_to('\"Condizioni di iscrizione e prestito\"', 'http://www.comune.torino.it/cultura/biblioteche/lettura_accessibile/libriparlati.shtml'))
+          content+=content_tag(:br)
+          content += talking_book_opac_presentation(record,false)
         end
       end
     else
