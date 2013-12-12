@@ -5,7 +5,15 @@ module DObjectsHelper
       res << content_tag(:tr, content_tag(:td, 'Accesso') + content_tag(:td, record.access_right.label))
     end
     record.attributes.keys.each do |k|
-      next if record[k].blank? or ['tags','filename'].include?(k)
+      next if record[k].blank? or ['filename','access_right_id'].include?(k)
+      if k=='tags'
+        [:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
+          v=record.xmltag(tg)
+          next if v.blank?
+          res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v))
+        end
+        next
+      end
       
       v = (k=='bfilesize') ? "#{number_to_human_size(record[k])} (#{record[k]})" : record[k]
       res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, v))
@@ -43,7 +51,7 @@ module DObjectsHelper
     res=[]
     audio=false
     cnt=0
-    return '---' if access_control_key.nil?
+    anonimo = access_control_key.nil? ? true : false
     dng_session=DngSession.find_by_params_and_request(params,request)
     d_objects.each do |o|
       cnt+=1
@@ -58,15 +66,15 @@ module DObjectsHelper
         end
       when 'image/jpeg', 'image/tiff'
         # res << content_tag(:li, d_object_md5_link(o,:jpeg))
-        res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg)))
+        res << content_tag(:li, image_tag(d_object_md5_link(o,:jpeg))) if !anonimo
         break if cnt>=4
       when 'audio/mpeg'
         text = o.xmltag(:title).blank? ? File.basename(o.filename) : o.xmltag(:title)
-        if o.access_right_for(dng_session)
+        if o.access_right_id==0 or (o.access_right_for(dng_session) and !anonimo)
           audio=true
           res << content_tag(:li, link_to(text, d_object_md5_link(o,:mp3)))
         else
-          res << content_tag(:li, "#{text} [#{o.access_right_to_label}]")
+          res << content_tag(:li, "#{text} [#{o.access_right_to_label}]") if request.format=='text/html'
         end
       else
         # res << content_tag(:div, "non so che fare con questo: #{o.mime_type}")
@@ -77,7 +85,11 @@ module DObjectsHelper
     res << javascript_include_tag('http://clavisbct.selfip.net/player.js') if audio
 
     # content_tag(:ul, res.join.html_safe, :style=>'width: 50%; padding: 3px; border: 4px outset green; list-style: none')
-    content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green; list-style: none')
+    if anonimo and request.format=='text/html'
+      content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green;')
+    else
+      content_tag(:ul, res.join.html_safe, :style=>'width: 80%; padding: 3px; border: 0px outset green; list-style: none')
+    end
   end
 
   def d_object_md5_link(record,extension='html')
