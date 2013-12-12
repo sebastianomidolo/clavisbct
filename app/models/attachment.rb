@@ -61,4 +61,17 @@ select o.filename,o.id,a.position from attachments a join d_objects o
     end
     Attachment.connection.execute("BEGIN;#{sq.join("\n")};COMMIT;")
   end
+
+  def Attachment.libriparlati(collocpattern='')
+    if !collocpattern.blank?
+      collocpattern = "AND ci.collocation ~* #{Attachment.connection.quote(collocpattern)}"
+    end
+    sql=%Q{SELECT ci.collocation,ci.title,ci.manifestation_id FROM clavis.item ci
+      WHERE ci.manifestation_id IN (SELECT attachable_id FROM attachments
+        WHERE attachable_type='ClavisManifestation' AND attachment_category_id='D')
+        #{collocpattern}
+         ORDER by espandi_collocazione(ci.collocation),ci.title}
+    Attachment.connection.execute(sql).to_a
+  end
+
 end
