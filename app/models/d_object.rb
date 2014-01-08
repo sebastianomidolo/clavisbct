@@ -1,9 +1,11 @@
 require 'RMagick'
 
 include DigitalObjects
+require 'mp3info'
+
 
 class DObject < ActiveRecord::Base
-  # attr_accessible :title, :body
+  attr_accessible :filename, :access_right_id, :mime_type, :tags
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
 
@@ -46,7 +48,11 @@ class DObject < ActiveRecord::Base
     rootname=File.join(self.pdf_rootdir,File.basename(self.filename, File.extname(self.filename)))
   end
   def filename_with_path
-    File.join(self.digital_objects_mount_point,self.filename)
+    if !(/^\// =~ self.filename)
+      File.join(self.digital_objects_mount_point,self.filename)
+    else
+      self.filename
+    end
   end
 
   def split_if_pdf
@@ -61,6 +67,11 @@ class DObject < ActiveRecord::Base
     #  Kernel.system(cmd)
     #end
 
+  end
+
+  def write_tags_from_filename
+    self.tags=self.get_bibdata_from_filename.to_xml(:root=>:r,:skip_instruct=>true,:indent=>0)
+    self.save if self.changed?
   end
 
   def xmltag(tag)
