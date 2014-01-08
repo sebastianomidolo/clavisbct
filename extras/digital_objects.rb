@@ -1,6 +1,6 @@
 require 'filemagic'
 
-FILENAME_METADATA_TAGS=[:au,:ti,:an,:mid,:pp,:uid,:sc]
+FILENAME_METADATA_TAGS=[:au,:ti,:an,:mid,:pp,:uid,:sc,:dc]
 
 module DigitalObjects
   def digital_objects_mount_point
@@ -40,6 +40,9 @@ module DigitalObjects
       else
         fstat = File.stat(entry)
         mtype = fm.file(entry)
+        if entry =~ /\.mp3$/i and mtype != 'audio/mpeg; charset=binary'
+          puts "discrepanza: #{entry}"
+        end
 
         entry.sub!(mp,'')
         # puts "File: #{entry}"
