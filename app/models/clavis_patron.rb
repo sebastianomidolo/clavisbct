@@ -47,7 +47,7 @@ class ClavisPatron < ActiveRecord::Base
       end
       next if o.access_right_id==0
       return false if o.access_right_id==2
-      puts o.tags
+      return false if o.access_right_id==1
       mid=o.xmltag(:mid).to_i
       if mid==0
         # puts o.filename
