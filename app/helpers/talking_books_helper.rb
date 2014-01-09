@@ -46,7 +46,7 @@ module TalkingBooksHelper
     record = clavis_manifestation.talking_book
     res=[]
     if !record.nil? and !record.abstract.blank?
-      res << content_tag(:div, content_tag(:div, content_tag(:b, 'Il libro in sintesi'),
+      res << content_tag(:div, content_tag(:div, content_tag(:b, "Il libro in sintesi (#{record.collocazione})"),
                                            class: 'panel-heading') +
                          content_tag(:div, record.abstract, class: 'panel-body'), class: 'panel panel-info')
     end
@@ -72,6 +72,5 @@ module TalkingBooksHelper
 
     content_tag(:div, res.join.html_safe)
   end
-
 
 end

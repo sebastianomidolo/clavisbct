@@ -1,7 +1,7 @@
 <%= form_tag('receipts', :method=>:get) do %>
 
 <%= text_field_tag('loan_date_begin', params[:loan_date_begin]) %>
-(data inizio prestito in formato aaaa-mm-gg, esempio 2013-03-11)
+(data inizio prestito in formato giorno-mese-anno, esempio 3/11/2013)
 <br/>
 <%= text_field_tag('library_id', params[:library_id]) %>
 (biblioteca: 2 civica centrale, 3 musicale)

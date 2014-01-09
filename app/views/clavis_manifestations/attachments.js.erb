@@ -1,10 +1,10 @@
-<% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session)
-  if @clavis_manifestation.talking_book
-    content = content_tag(:div, @clavis_manifestation.talking_book.abstract) + content
-  end
-%>
+<% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session) %>
 <% if !title.nil? %>
 jQuery("#attachments").html('<%= content %>');
 jQuery('a','#attachments_tab').text('<%= title %>');
+jQuery('a','#attachments_tab').attr('title',"Accedi all'audio mp3");
+jQuery('a','#attachments_tab').attr('accesskey','5');
 jQuery('#attachments_tab').fadeIn(1000);
+<% else %>
+jQuery("#attachments_tab").text('');
 <% end %>
