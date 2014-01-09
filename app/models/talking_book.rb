@@ -13,6 +13,19 @@ class TalkingBook < ActiveRecord::Base
     self.digitalizzato.nil? ? false : true
   end
 
+  def collocazione
+    "#{self.n} - #{self.titolo}"
+  end
+
+  def codice_opera
+    self.n
+  end
+
+  def titolo_completo
+    cm=self.clavis_manifestations.first
+    cm.nil? ? self.titolo : cm.title
+  end
+
   def clavis_manifestations
     return [] if n.nil?
     inventory=self.n.split.last.to_i
@@ -26,6 +39,15 @@ class TalkingBook < ActiveRecord::Base
        AND inventory_serie_id IN (#{series.join(',')}) ;}
     puts sql
     ClavisManifestation.find_by_sql(sql)
+  end
+
+  def build_readme_file
+    str=File.read(File.join(Rails.root.to_s,'extras','talking_book_readme.txt.erb'))
+    erb = ERB.new(str)
+    record=self
+    erb.result(binding).gsub("\n", "\r\n")
+    TalkingBook.loadhelper
+    word_wrap(erb.result(binding)).gsub("\n", "\r\n")
   end
 
   def zip_filepath(patron, clavis_manifestation)
@@ -82,19 +104,10 @@ class TalkingBook < ActiveRecord::Base
     zipfile_name = self.zip_filepath(patron, cm)
     File.delete(zipfile_name) if File.exists?(zipfile_name)
 
-    readme_info = d_objects.collect do |o|
-      o.access_rights_description
-    end
-    readme_info.uniq!
     tf = Tempfile.new("readme_zip",tempdir)
     readme_filename=tf.path
     fdout=File.open(readme_filename,'w')
-    readme_info.each do |r|
-      fdout.write("#{r}\n")
-    end
-    if !self.abstract.blank?
-      fdout.write("Abstract:\n\n#{self.abstract}\n\n(per Claudio: possiamo inserire qui altre informazioni)\n")
-    end
+    fdout.write(self.build_readme_file)
     fdout.close
 
     folder_title=cm.title.split("/").first.strip
@@ -136,5 +149,9 @@ class TalkingBook < ActiveRecord::Base
     end
     num=$2.to_i
     "#{p} #{num}"
+  end
+
+  def self.loadhelper
+    include ActionView::Helpers::TextHelper
   end
 end
