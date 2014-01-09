@@ -84,8 +84,11 @@ INSERT INTO public.attachments
   (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
   (
   select lp.d_object_id,ci.manifestation_id,'ClavisManifestation','D',lp.position
-   from import_libroparlato_colloc lp join clavis.item ci using(collocation)
+   from import_libroparlato_colloc lp join clavis.item ci
+  on(replace(lp.collocation,'CD ','')=replace(ci.collocation,'CD ',''))
+   join d_objects o on(lp.d_object_id=o.id)
    where section='LP' and owner_library_id=29 and ci.manifestation_id!=0
+        and o.mime_type='audio/mpeg; charset=binary'
   );
 
 UPDATE public.d_objects SET access_right_id=2 WHERE access_right_id ISNULL AND filename ~ '^libroparlato/';
