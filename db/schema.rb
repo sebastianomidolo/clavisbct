@@ -36,6 +36,11 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
     t.string  "folder",                 :limit => 128
   end
 
+  create_table "audio_clips", :force => true do |t|
+    t.xml     "tags",                 :null => false
+    t.integer "clavis_manifestation"
+  end
+
   create_table "d_objects", :force => true do |t|
     t.string   "filename",        :limit => 2048
     t.xml      "tags"
@@ -48,7 +53,6 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
-  add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
 
   create_table "dng_sessions", :force => true do |t|
     t.string   "client_ip",  :limit => 128
@@ -58,7 +62,6 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
 
   create_table "import_bctaudio_metatags", :id => false, :force => true do |t|
     t.string  "collocation", :limit => 128
-    t.string  "folder",      :limit => 512
     t.string  "filename",    :limit => 2048
     t.integer "tracknum"
     t.xml     "tags"
@@ -96,12 +99,6 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
   end
 
   add_index "subjects", ["heading"], :name => "subjects_heading_idx"
-
-  create_table "temp_subjects", :id => false, :force => true do |t|
-    t.text   "s1"
-    t.text   "s2"
-    t.string "linktype", :limit => 20
-  end
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false
