@@ -45,8 +45,8 @@ class TalkingBooksController < ApplicationController
     end
     @talking_book = TalkingBook.find(params[:id])
     dng = DngSession.find_by_params_and_request(params,request)
-    @clavis_patron=ClavisPatron.find_by_opac_username(params[:dng_user])
-    if @clavis_patron.id!=dng.patron.id
+    @clavis_patron=ClavisPatron.find_by_opac_username(params[:dng_user].downcase)
+    if @clavis_patron.nil? or @clavis_patron.id!=dng.patron.id
       render :text=>'user error', :content_type=>'text/plain'
       return
     end
