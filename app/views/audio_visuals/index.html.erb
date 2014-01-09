@@ -1,0 +1,17 @@
+<%= content_tag(:h2, "CD e DVD Biblioteca musicale") %>
+
+<%= form_tag(audio_visuals_url, :method=>:get) do %>
+
+<%= text_field_tag('qs', params[:qs]) %>
+
+<br/>
+
+<%= submit_tag('Cerca') %>
+
+<% end %>
+
+<%= content_tag(:h2, "Trovati #{@audio_visuals.total_entries}") %>
+<%= will_paginate @audio_visuals %>
+
+<hr/>
+<%= content_tag(:div, audio_visuals_index(@audio_visuals)) %>

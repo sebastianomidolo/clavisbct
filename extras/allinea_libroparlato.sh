@@ -23,3 +23,7 @@ psql -c "DROP SCHEMA bm_audiovisivi CASCADE" clavisbct_development informhop
 pg_dump -n bm_audiovisivi -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA bm_letteratura CASCADE" clavisbct_development informhop
 pg_dump -n bm_letteratura -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+
+# 8 gennaio 2014:
+(psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_development informhop)
+(psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_production informhop)

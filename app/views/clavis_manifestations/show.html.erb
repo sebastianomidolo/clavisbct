@@ -6,4 +6,14 @@
 
 <%= content_tag(:div, attachments_render(@clavis_manifestation.attachments)) %>
 
-<%= content_tag(:div, talking_book_extra_data(@clavis_manifestation.talking_book)) if !@clavis_manifestation.talking_book.nil? %>
+<% content_tag(:div, talking_book_extra_data(@clavis_manifestation.talking_book)) if !@clavis_manifestation.talking_book.nil? %>
+
+<%= content_tag(:div, talking_book_opac_presentation(@clavis_manifestation,false)) if !@clavis_manifestation.talking_book.nil? %>
+
+<% @clavis_manifestation.audio_visuals.each do |av| %>
+ <%= content_tag(:div, audio_visual_show(av,false)) %>
+<% end %>
+
+
+
+

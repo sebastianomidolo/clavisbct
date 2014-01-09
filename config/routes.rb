@@ -18,6 +18,7 @@ Clavisbct::Application.routes.draw do
     end
   end
   resources :iss_articles
+  resources :audio_visuals
 
 
   resources :sp_bibliographies
@@ -40,6 +41,7 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'shortlist'
       get 'attachments_list'
+      get 'libriparlati_con_audio'
     end
   end
 
