@@ -41,7 +41,7 @@ module DigitalObjects
         fstat = File.stat(entry)
         mtype = fm.file(entry)
         if entry =~ /\.mp3$/i and mtype != 'audio/mpeg; charset=binary'
-          puts "discrepanza: #{entry}"
+          puts "wrong mime type?: #{entry}"
         end
 
         entry.sub!(mp,'')
