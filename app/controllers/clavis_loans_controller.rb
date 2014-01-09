@@ -1,6 +1,8 @@
 # lastmod 21 febbraio 2013
 
 class ClavisLoansController < ApplicationController
+  layout 'navbar'
+
   def receipts
     ActiveRecord::Base.connection.execute("SET DateStyle TO ISO, DMY; SET timezone TO 'GMT-1';")
     ldb=params[:loan_date_begin]
