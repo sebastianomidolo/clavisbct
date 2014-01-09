@@ -1,0 +1,17 @@
+
+<%= link_to('Scarica lista in CSV',
+   libriparlati_con_audio_clavis_manifestations_path(:format=>:csv),
+    {class: "btn btn-primary btn-lg active", role: "button"})
+%>
+
+<table class="table table-striped">
+<tbody>
+<% cnt=0 %>
+<% @records.each do |r| %>
+  <%= cnt+=1; content_tag(:tr, content_tag(:td, cnt) +
+        content_tag(:td, r['collocation']) +
+        content_tag(:td, link_to(r['title'], clavis_manifestation_path(r['manifestation_id']))))
+  %>
+<% end %>
+</tbody>
+</table>

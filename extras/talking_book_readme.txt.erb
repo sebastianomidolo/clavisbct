@@ -1,0 +1,22 @@
+Città di Torino
+Biblioteche civiche torinesi
+Servizio del Libro parlato
+
+Autore: <%= record.intestatio %>
+Titolo: <%= record.titolo_completo %>
+Codice dell'opera: <%= record.codice_opera %>
+<% if record.digitalizzato? %>Data di produzione: <%= record.digitalizzato %><% end %>
+Lettura ad alta voce dell'edizione a stampa: <%= record.editore %>
+<% record.clavis_manifestations.each do |cm| %>
+Scheda catalografica [<%= cm.oggbibl_5 %>]:
+  <%= cm.clavis_url(:opac) %>
+<% end %>
+
+La presente registrazione è stata effettuata ai sensi dall’articolo
+71 bis della legge 22 aprile 1941 numero 633 "Protezione del diritto
+d'autore e di altri diritti connessi al suo esercizio".
+
+La fruizione della presente registrazione è consentita per uso personale.
+La cessione a terzi o l'uso commerciale dell'opera sono vietati.
+
+-------------------------------------------------------------------------
