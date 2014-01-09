@@ -9,7 +9,7 @@ class DngSession < ActiveRecord::Base
   end
 
   def check_service(service_name,params,request,authorizable_object=nil)
-    if (self.patron.opac_username != params[:dng_user] or
+    if (self.patron.opac_username.upcase != params[:dng_user].upcase or
         self.client_ip != DngSession.format_client_ip(request))
       return false
     end
