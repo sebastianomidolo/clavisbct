@@ -41,8 +41,7 @@ SELECT setval('public.d_objects_id_seq', (select max(id) FROM public.d_objects)+
 
   category='C'; # Da modificare in futuro
   DObject.find_by_sql("select * from public.d_objects where id>#{lastid} and filename like 'doc_delivery/%' order by lower(filename)").each do |o|
-    o.tags=o.get_bibdata_from_filename.to_xml(:root=>:r,:skip_instruct=>true,:indent=>0)
-    o.save if o.changed?
+    o.write_tags_from_filename
     mid=o.xmltag(:mid)
     if o.parent_folder_with_metadata?
       folder = "\\N"
