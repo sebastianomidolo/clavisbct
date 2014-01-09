@@ -17,6 +17,10 @@ class ClavisManifestation < ActiveRecord::Base
 
   has_many :attachments, :as => :attachable
 
+  has_and_belongs_to_many(:audio_visuals, :join_table=>'av_manifestations',
+                          :foreign_key=>'manifestation_id',
+                          :association_foreign_key=>'idvolume');
+
   def d_objects_set_access_rights(access_right)
     ActiveRecord::Base.transaction do
       self.d_objects.each do |o|
@@ -192,6 +196,55 @@ class ClavisManifestation < ActiveRecord::Base
       end
     end
     clips
+  end
+
+  def write_mp3tags_libroparlato
+    storage_dir=DigitalObjects.digital_objects_mount_point
+    lp=self.talking_book
+    return nil if lp.nil?
+    title=lp.titolo.strip
+    totale=0
+    self.d_objects.each do |o|
+      next if o.attachment_category_id!='D' or o.mime_type!='audio/mpeg; charset=binary'
+      totale+=1
+    end
+    
+    cnt=0
+    self.d_objects.each do |o|
+      next if o.attachment_category_id!='D' or o.mime_type!='audio/mpeg; charset=binary'
+      fname=File.join(storage_dir, o.filename)
+      cnt+=1
+      tstamp=File.mtime(fname)
+      begin
+        mp3=Mp3Info.open(fname)
+      rescue
+        puts "Errore d_object #{o.id}: #{$!}"
+        next
+      end
+      next if mp3.tag2.WOAS == self.clavis_url(:opac)
+      puts %Q{#{cnt} "#{fname}"}
+      mp3.tag.album="#{lp.n} - #{title}"
+      mp3.tag.title="traccia #{cnt} di #{totale}"
+      mp3.tag.artist=lp.intestatio
+      mp3.tag.tracknum=cnt
+      mp3.tag.year=lp.digitalizzato.year if !lp.digitalizzato.blank?
+      mp3.tag2.TCOP="Biblioteche civiche torinesi - Servizio del libro parlato"
+      mp3.tag2.WOAS=self.clavis_url(:opac)
+      mp3.tag2.TCON='Audiobook'
+      mp3.tag2.TPOS=1                  ;# Disc number, sempre 1
+      mp3.tag2.TBPM=mp3.bitrate
+      mp3.tag2.COMM="Registrazione a uso esclusivo degli utenti del Servizio libro parlato delle BCT"
+      mp3.close
+      # FileUtils.touch(fname, :mtime=>tstamp)
+    end
+  end
+
+  def oggbibl_5
+    sql=%Q{select lv.value_label from clavis.manifestation cm join clavis.lookup_value lv
+     on(lv.value_key=bib_type and value_language='it_IT' AND value_class='OGGBIBL_5')
+      where manifestation_id =#{self.id}}
+    r=connection.execute(sql).first
+    r.nil? ? nil : r['value_label']
   end
 
   def thebid
