@@ -1,0 +1,13 @@
+
+<%= simple_form_for(@audio_visual, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= f.input :titolo, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+  <%= f.input :autore, hint: 'autore', as: 'string', label: false, placeholder: 'autore' %>
+  <%= f.input :interpreti, hint: 'interpreti', as: 'string', label: false, placeholder: 'interpreti' %>
+  <%= f.input :collocazione, hint: 'collocazione', label: false, placeholder: 'collocazione', as: :string %>
+  <%= f.input :tipologia, collection: [['Tutti',''],['DVD', 'dvd'] ,['CD', 'cd']], label: false, hint: 'Tipologia',
+         as: :radio_buttons
+
+   %>
+  <%= f.submit 'cerca', :class=>'btn btn-info' %>
+  <%= link_to('azzera',audio_visuals_path) %>
+<% end %>

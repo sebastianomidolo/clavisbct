@@ -1,14 +1,5 @@
-<%= content_tag(:h2, "CD e DVD Biblioteca musicale") %>
-
-<%= form_tag(audio_visuals_url, :method=>:get) do %>
-
-<%= text_field_tag('qs', params[:qs]) %>
-
-<br/>
-
-<%= submit_tag('Cerca') %>
-
-<% end %>
+<%= content_tag(:h2, "CD e DVD Biblioteca musicale (archivio locale Access)") %>
+<%= render :partial => 'searchform' if params[:nosearchform].blank? %>
 
 <%= content_tag(:h2, "Trovati #{@audio_visuals.total_entries}") %>
 <%= will_paginate @audio_visuals %>

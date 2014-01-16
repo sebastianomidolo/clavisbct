@@ -2,17 +2,19 @@ class AudioVisualsController < ApplicationController
   layout 'navbar'
 
   def index
-    qs=params[:qs]
+    @audio_visual = AudioVisual.new(params[:audio_visual])
+    fields=['titolo','autore','interpreti','tipologia']
     cond=[]
-    cond << "collocazione!=''"
-    if !qs.blank?
-      ts=AudioVisual.connection.quote_string(qs.split.join(' & '))
-      cond << "to_tsvector('simple', titolo) @@ to_tsquery('simple', '#{ts}') OR to_tsvector('simple', autore) @@ to_tsquery('simple', '#{ts}')"
+    if !@audio_visual.collocazione.blank?
+      cond << "replace(collocazione,' ','')=#{AudioVisual.connection.quote(@audio_visual.collocazione)}"
+    end
+    fields.each do |f|
+      next if @audio_visual.send(f).blank?
+      ts=AudioVisual.connection.quote_string(@audio_visual.send(f).split.join(' & '))
+      cond << "to_tsvector('simple', #{f}) @@ to_tsquery('simple', '#{ts}')"
     end
     cond = cond.join(" AND ")
-
-    @audio_visuals = AudioVisual.paginate(:conditions=>cond,:page=>params[:page], :order=>'espandi_collocazione(collocazione)')
-
+    @audio_visuals = AudioVisual.paginate(:conditions=>cond,:per_page=>300,:page=>params[:page], :order=>'espandi_collocazione(collocazione)')
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: @audio_visuals }
