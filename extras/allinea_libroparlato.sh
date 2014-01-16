@@ -27,3 +27,10 @@ pg_dump -n bm_letteratura -U informhop bctaudio_development | psql clavisbct_dev
 # 8 gennaio 2014:
 (psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_development informhop)
 (psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_production informhop)
+
+# 10 gennaio 2014:
+(cd /home/ror/clavisbct; sh extras/export_to_bctaudio.sh > /home/sites/456.selfip.net/html/export_bctaudio.xml)
+
+# 16 gennaio 2014:
+(cd /home/ror/clavisbct; ./extras/create_musicbrainz_artists_clavis_authorities.sh)
+
