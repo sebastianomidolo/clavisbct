@@ -14,3 +14,7 @@ CREATE INDEX av_manifestation_idvolume_idx on av_manifestations(idvolume);
 -- In attesa di una soluzione, inserisco a mano:
 INSERT INTO av_manifestations (idvolume , manifestation_id) VALUES (135,539578);
 INSERT INTO av_manifestations (idvolume , manifestation_id) VALUES (41,350456);
+
+UPDATE bm_audiovisivi.t_volumi set interpreti = regexp_replace(interpreti, '(;| )+$', '');
+UPDATE bm_audiovisivi.t_volumi set interpreti = null where interpreti='';
+
