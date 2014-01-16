@@ -67,3 +67,6 @@ gem 'google_drive'
 gem 'simple_form'
 
 gem 'will_paginate-bootstrap'
+
+# Aggiunto 13 gennaio 2014
+gem 'musicbrainz'

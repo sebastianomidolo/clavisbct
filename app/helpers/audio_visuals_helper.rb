@@ -4,7 +4,10 @@ module AudioVisualsHelper
     records.each do |r|
       colloc=r.collocazione.blank? ? 'non collocato' : r.collocazione.gsub(' ','')
       res << content_tag(:tr, content_tag(:td, colloc) +
-                         content_tag(:td, link_to(r.titolo, audio_visual_path(r))))
+                         content_tag(:td, link_to(r.titolo, audio_visual_path(r))) +
+                         content_tag(:td, r.autore) +
+                         content_tag(:td, r.interpreti))
+
     end
     content_tag(:table, res.join.html_safe)
   end
@@ -30,6 +33,34 @@ module AudioVisualsHelper
     end
     res=content_tag(:table, res.join.html_safe)
     content_tag(:div, content_tag(:span,"Record #{record.id} da archivio audiovisivi Biblioteca Musicale") + res)
+  end
+
+  def audio_visual_show_musicbrainz_artist(mba)
+    return '' if mba.nil?
+    res=[]
+    mba.urls.each do |r|
+      t,u=r
+      u=[u] if u.class==String
+      u.each do |url|
+        res << content_tag(:li, link_to(t,url) + ' => ' + url)
+      end
+    end
+    content_tag(:ol, res.join.html_safe)
+  end
+
+  def audio_visual_musicbrainz_query(record)
+    return '' if record.autore.blank?
+    # require 'musicbrainz'
+
+    res=[]
+    record.autore.split(';').each do |aut|
+      stringa=aut.split(',').reverse.join(' ').strip
+      a = MusicBrainz::Artist.find_by_name(stringa)
+      next if a.nil?
+      res << content_tag(:h3, %Q{Informazioni su <a href="http://musicbrainz.org/artist/#{a.id}"><b>#{stringa}</b></a> da MusicBrainz}.html_safe) +
+        content_tag(:div, audio_visual_show_musicbrainz_artist(a))
+    end
+    content_tag(:div, res.join.html_safe)
   end
 
 end
