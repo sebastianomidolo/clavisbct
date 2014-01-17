@@ -2,6 +2,15 @@
 <%= link_to(clavis_manifestations_path, clavis_manifestations_path) %>
 <hr/>
 
+
+<%= form_tag(shortlist_clavis_manifestations_url, :method=>:get) do %>
+ <% if !params[:polo].blank? %>
+  <%= "POLO #{text_field_tag('polo', params[:polo])}".html_safe %>
+  <%= submit_tag('Cerca') %>
+ <% end %>
+<% end %>
+
+
 <%= content_tag(:h3, "Trovati #{@clavis_manifestations.total_entries}") %>
 
 <%= will_paginate @clavis_manifestations, renderer: BootstrapPagination::Rails %>

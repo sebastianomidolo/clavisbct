@@ -1,7 +1,8 @@
 CREATE INDEX clavis_item_collocation_idx on clavis.item(collocation);
 CREATE INDEX clavis_item_serieinv_idx on clavis.item(inventory_serie_id);
-update clavis.manifestation SET bid_source='SBN_bad_bid' where length(bid)!=10 and bid_source='SBN';
+UPDATE clavis.manifestation SET bid_source='SBN_bad_bid' WHERE length(bid)!=10 and bid_source='SBN';
 
+UPDATE clavis.manifestation SET bid_source='SBNBCT' WHERE bid_source = 'SBN' AND bid ~ '^BCT';
 
 create index clavis_item_manifestation_id_ndx on clavis.item(manifestation_id);
 -- create index clavis_item_title_ndx on clavis.item(to_tsvector('simple', title));

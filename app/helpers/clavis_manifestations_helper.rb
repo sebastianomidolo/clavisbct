@@ -60,7 +60,7 @@ module ClavisManifestationsHelper
                          content_tag(:td, link_to('seriali', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source'], :bib_level=>'s'))) +
                          content_tag(:td, link_to('tutto', shortlist_clavis_manifestations_url(:bid_source=>r['bid_source']))))
     end
-    res << content_tag(:td, link_to('polo bct', shortlist_clavis_manifestations_url(:bid_source=>'SBN', :polo=>'BCT')))
+    res << content_tag(:td, link_to('polo bct', shortlist_clavis_manifestations_url(:bid_source=>'SBNBCT', :polo=>'BCT')))
     content_tag(:table, res.join.html_safe)
   end
 
