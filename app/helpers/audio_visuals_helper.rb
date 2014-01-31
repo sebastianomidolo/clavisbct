@@ -14,12 +14,15 @@ module AudioVisualsHelper
 
   def audio_visual_show(record,show_clavis_manifestations=true)
     res=[]
-    skip=[:idvolume,:r_colloc,:prot_fattura,:importo_fattura,:data_sollecito,:data_sospensione,:data_ordine,:data_arrivo,:fornitore,:ordinato,:numero_fattura]
+    skip=[:idvolume,:r_colloc,:prot_fattura,:importo_fattura,:data_sollecito,:data_sospensione,:data_ordine,:data_arrivo,:fornitore,:ordinato,:numero_fattura,:sigla]
     record.attributes.keys.each do |k|
       next if record[k].blank?
       next if skip.include?(k.to_sym)
       res << content_tag(:tr, content_tag(:td, k) +
                          content_tag(:td, record[k]))
+    end
+    if !record.naxos_link.blank?
+      res << content_tag(:tr, content_tag(:td, '') + content_tag(:td, link_to(record.naxos_link, record.naxos_link, {target: '_new'})))
     end
 
     if show_clavis_manifestations
