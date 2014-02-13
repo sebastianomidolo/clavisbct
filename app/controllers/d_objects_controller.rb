@@ -21,14 +21,29 @@ class DObjectsController < ApplicationController
     end
   end
 
+  def show
+    @d_object = DObject.find(params[:id])
+    respond_to do |format|
+      format.html
+      format.mp3 {
+        cnt = params[:t].blank? ? nil : params[:t].to_i
+        if @d_object.audioclip_exists?(cnt)
+          send_file(@d_object.audioclip_filename(cnt), :type=>'audio/mpeg; charset=binary', :disposition => 'inline')
+        else
+          render text: "fname: #{fname}", :content_type=>'text/plain'
+        end
+      }
+    end
+  end
+
   def objshow
     @d_object = DObject.find(params[:id])
     key=Digest::MD5.hexdigest(@d_object.filename)
     if key!=params[:key]
-      key=Digest::MD5.hexdigest(@d_object.audioclip_filename)
+      key=Digest::MD5.hexdigest(@d_object.libroparlato_audioclip_filename)
       if key==params[:key]
         tmp_id=@d_object.id
-        @d_object = DObject.new(filename: @d_object.audioclip_filename, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary')
+        @d_object = DObject.new(filename: @d_object.libroparlato_audioclip_filename, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary')
         @d_object.id=tmp_id
       end
     end
@@ -69,7 +84,14 @@ class DObjectsController < ApplicationController
         # send_file(@d_object.get_pdfimage, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
       }
       format.mp3 {
-        send_file(@d_object.filename_with_path, :type => @d_object.mime_type, :disposition => 'inline')
+        if @d_object.audioclip_exists?
+          fname=@d_object.libroparlato_audioclip_filename
+        else
+          fname=@d_object.filename_with_path
+        end
+        # render text: "=> #{fname}", :content_type=>'text/plain'
+        # return
+        send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
       }
 
     end
