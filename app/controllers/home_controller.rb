@@ -1,4 +1,6 @@
 class HomeController < ApplicationController
+  layout 'navbar'
+
   # before_filter :authenticate_user!
   def index
     @msg=Time.now
