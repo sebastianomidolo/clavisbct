@@ -94,6 +94,33 @@ class DObject < ActiveRecord::Base
     end
   end
 
+  def audioclip_exists?(cnt=1)
+    File.exists?(self.audioclip_filename(cnt))
+    # (!r and cnt==1) ? File.exists?(self.audioclip_filename) : r
+  end
+  def audioclip_filename(cnt=1)
+    dir=File.dirname(File.join("/home/seb/BCT/wca22014/bm_audio/audioclips/", self.filename).sub('bm::',''))
+    basename=File.basename(self.filename)
+    puts dir
+    puts basename
+    f=File.join(dir, format("%03d%s", cnt, '.mp3'))
+    puts "clip?: #{f}"
+    fname = File.exists?(f) ? f : File.join(dir,basename)
+    puts "audioclip per #{self.id} traccia #{cnt}: #{fname}"
+    fname
+  end
+
+  def get_tracklist
+    return [] if self.tags.nil?
+    doc = REXML::Document.new(self.tags)
+    return [] if doc.root.name!='tracklist'
+    res=[]
+    doc.root.elements.each do |e|
+      res << {e.name => e.text, attributes: e.attributes, :audioclip=>self.audioclip_exists?}
+    end
+    res
+  end
+
   def DObject.to_pdf(ids,pdf_filename)
     # return true if File.exists?(pdf_filename)
     logo = Magick::Image.read("/home/storage/preesistente/testzone/logo.jpg").first
