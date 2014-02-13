@@ -110,6 +110,14 @@ class ClavisManifestation < ActiveRecord::Base
         fnames << fname
       end
     end
+    if fnames.size==0
+      self.attachments_folders.each do |folder|
+        dobs=self.d_objects(folder, "mime_type ~* '^application/pdf'")
+        dobs.each do |ar|
+          fnames << fname=File.join(DObject.digital_objects_mount_point, ar.filename)
+        end
+      end
+    end
     fnames
   end
 
