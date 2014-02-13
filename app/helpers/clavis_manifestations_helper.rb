@@ -80,8 +80,9 @@ module ClavisManifestationsHelper
     content_tag(:table, res.join.html_safe)
   end
 
-  def clavis_manifestations_attachments_summary
-    sql=%Q{select trim(cm.title) as title,cm.manifestation_id,ac.label,count(*) from attachments a join attachment_categories ac on(a.attachment_category_id=ac.code) join clavis.manifestation as cm on(a.attachable_id=cm.manifestation_id) group by cm.title,cm.sort_text,cm.manifestation_id,ac.label order by ac.label desc,lower(trim(cm.sort_text));}
+  def clavis_manifestations_attachments_summary(attachment_category)
+    cond=attachment_category.blank? ? '' : "where ac.code=#{ActiveRecord::Base.connection.quote(attachment_category)}"
+    sql=%Q{select trim(cm.title) as title,cm.manifestation_id,ac.label,count(*) from attachments a join attachment_categories ac on(a.attachment_category_id=ac.code) join clavis.manifestation as cm on(a.attachable_id=cm.manifestation_id) #{cond} group by cm.title,cm.sort_text,cm.manifestation_id,ac.label order by ac.label desc,lower(trim(cm.sort_text));}
     pg=ActiveRecord::Base.connection.execute(sql)
     res=[]
     cnt=0
