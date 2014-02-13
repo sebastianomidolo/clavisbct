@@ -7,14 +7,19 @@ module DObjectsHelper
     record.attributes.keys.each do |k|
       next if record[k].blank? or ['filename','access_right_id'].include?(k)
       if k=='tags'
-        [:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
-          v=record.xmltag(tg)
-          next if v.blank?
-          res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v))
+        if !(lista=d_object_tracklist(record)).nil?
+          v=REXML::Document.new(record.tags).root.attributes.inspect
+          res << content_tag(:tr, content_tag(:td, "Lista tracce #{v}") + content_tag(:td, content_tag(:ul, lista, :style=>'width: 100%; padding: 3px; border: 1px outset green; list-style: none'), :style=>'width: 100%'))
+        else
+          [:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
+            v=record.xmltag(tg)
+            next if v.blank?
+            res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v))
+          end
         end
         next
       end
-      
+
       v = (k=='bfilesize') ? "#{number_to_human_size(record[k])} (#{record[k]})" : record[k]
       res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, v))
     end
@@ -116,11 +121,26 @@ module DObjectsHelper
     res << content_tag(:tr, content_tag(:td, 'Filesize') + content_tag(:td, img.filesize))
 
     res << content_tag(:tr, content_tag(:td, 'Resolution') + content_tag(:td, "#{img.x_resolution.to_i}x#{img.y_resolution.to_i} pixels/#{img.units == Magick::PixelsPerInchResolution ? 'inch' : 'centimeter'}"))
-
-
-
     res=content_tag(:table, res.join.html_safe)
+  end
 
+  def d_object_tracklist(record)
+    audio=false; lista=[]
+    cnt=1
+    record.get_tracklist.each do |track|
+      # lista << content_tag(:li, record.audioclip_exists?(cnt))
+      # lista << content_tag(:li, record.audioclip_filename(cnt))
+      if record.audioclip_exists?(cnt)
+        audio=true
+        lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{track['title']}", %Q{http://#{request.host_with_port}/#{d_object_path(record, format: 'mp3', t: cnt)}}))
+      else
+        # lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
+      end
+      cnt+=1
+    end
+    lista << javascript_include_tag('http://clavisbct.comperio.it/player.js') if audio
+
+    lista.size==0 ? nil : lista.join.html_safe
   end
     
 end
