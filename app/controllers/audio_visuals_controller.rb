@@ -3,7 +3,7 @@ class AudioVisualsController < ApplicationController
 
   def index
     @audio_visual = AudioVisual.new(params[:audio_visual])
-    fields=['titolo','autore','interpreti','tipologia']
+    fields=['titolo','autore','interpreti','tipologia','editore']
     cond=[]
     if !@audio_visual.collocazione.blank?
       cond << "replace(collocazione,' ','')=#{AudioVisual.connection.quote(@audio_visual.collocazione)}"
