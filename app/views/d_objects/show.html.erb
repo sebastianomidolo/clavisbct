@@ -1,0 +1,7 @@
+<%= @d_object.id %>
+
+
+<% @d_object.references.each do |r| %>
+ <%= content_tag(:li, "#{r.attachable_type} => #{r.attachable_id}") %>
+<% end %>
+
