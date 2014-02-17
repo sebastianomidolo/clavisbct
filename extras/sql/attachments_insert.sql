@@ -71,6 +71,8 @@ select item_id, manifestation_id, collocation,specification, sequence1
 (2 rows)
 */
 
+/*
+Sostituito da extras/allinea_bm_audio.sh (13 febbraio 2014)
 INSERT INTO public.attachments
   (d_object_id,attachable_id,attachable_type,attachment_category_id,position,folder)
   (
@@ -79,6 +81,7 @@ INSERT INTO public.attachments
      join d_objects o using(filename) where ci.owner_library_id=3
       and ci.manifestation_id!=0
   );
+*/
 
 INSERT INTO public.attachments
   (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
