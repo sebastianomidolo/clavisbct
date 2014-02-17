@@ -1,4 +1,4 @@
-<%= content_tag(:h1, @msg) %>
+<% content_tag(:h1, @msg) %>
 
 <%= link_to('Stampa segnaposto per libri in prestito', receipts_clavis_loans_url) %>
 
@@ -6,4 +6,10 @@
 <%= content_tag(:div, link_to('Controlli BID', clavis_manifestations_url)) %>
 
 <hr/>
-<%= content_tag(:div, link_to('Titoli con digitalizzazioni', shortlist_clavis_manifestations_url(:digit=>true))) %>
+<% # content_tag(:div, link_to('Titoli con digitalizzazioni', shortlist_clavis_manifestations_url(:digit=>true))) %>
+
+<%= link_to('MediaLibraryOnLine', 'http://bct.medialibrary.it/home/home.aspx') %>
+<br/>
+<%= link_to('Naxos', 'http://naxosml.medialibrary.it/') %>
+
+

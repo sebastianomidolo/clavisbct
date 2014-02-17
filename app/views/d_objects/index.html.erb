@@ -22,10 +22,10 @@
 <br />
 
 <%=
-if params[:show_attachments].blank?
-  content_tag(:div, d_objects_summary)
+if params[:show_attachments].blank? and params[:attachment_category].blank?
+   content_tag(:div, attachments_summary, {style: 'border: 1px solid grey;padding:4px'}) + content_tag(:div, d_objects_summary)
 else
-  content_tag(:div, clavis_manifestations_attachments_summary) 
+  content_tag(:div, clavis_manifestations_attachments_summary(params[:attachment_category]))
 end
 %>
 

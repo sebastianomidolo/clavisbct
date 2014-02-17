@@ -194,7 +194,7 @@ class ClavisManifestation < ActiveRecord::Base
     d_objects.each do |o|
       next if o.attachment_category_id!='D'
       # creo audioclip della durata specificata (40 secondi, per esempio)
-      clipfn=o.digital_object_create_audioclip(40)
+      clipfn=o.digital_object_create_libroparlato_audioclip(40)
       if !clipfn.nil?
         cnt+=1
         clip = DObject.new(filename: clipfn, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary',

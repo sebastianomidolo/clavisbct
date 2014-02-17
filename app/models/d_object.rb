@@ -99,7 +99,7 @@ class DObject < ActiveRecord::Base
     # (!r and cnt==1) ? File.exists?(self.audioclip_filename) : r
   end
   def audioclip_filename(cnt=1)
-    dir=File.dirname(File.join("/home/seb/BCT/wca22014/bm_audio/audioclips/", self.filename).sub('bm::',''))
+    dir=File.dirname(File.join(self.audioclips_basedir, self.filename).sub('bm::',''))
     basename=File.basename(self.filename)
     puts dir
     puts basename
