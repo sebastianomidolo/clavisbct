@@ -13,6 +13,10 @@ module DigitalObjects
     config[Rails.env]["digital_objects_cache"]
   end
 
+  def digital_objects_audioclips_dir
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["digital_objects_audioclips_dir"]
+  end
 
   # http://bctdoc.selfip.net/documents/30
   def get_bibdata_from_filename
@@ -67,21 +71,21 @@ module DigitalObjects
     self.bfilesize = File.size(fname)
   end
 
-  def audioclip_basename(ext='mp3')
+  def libroparlato_audioclip_basename(ext='mp3')
     "audioclip_#{self.id}.#{ext}"
   end
-  def audioclip_basedir
+  def libroparlato_audioclips_basedir
     config = Rails.configuration.database_configuration
-    config[Rails.env]["audioclips_basedir"]
+    config[Rails.env]["libroparlato_audioclips_basedir"]
   end
-  def audioclip_filename(ext='mp3')
-    File.join(audioclip_basedir,audioclip_basename(ext))
+  def libroparlato_audioclip_filename(ext='mp3')
+    File.join(libroparlato_audioclips_basedir,libroparlato_audioclip_basename(ext))
   end
 
-  def digital_object_create_audioclip(seconds=30,ext='mp3')
+  def digital_object_create_libroparlato_audioclip(seconds=30,ext='mp3')
     return nil if self.mime_type!='audio/mpeg; charset=binary'
     fn=File.join(digital_objects_mount_point,self.filename)
-    target=audioclip_filename(ext)
+    target=libroparlato_audioclip_filename(ext)
     return target if File.exists?(target) and File.size(target)>0
     cmd=%Q{/usr/bin/sox "#{fn}" "#{target}" trim 0 #{seconds} fade h 0 0:0:#{seconds} 4}
     # puts cmd
@@ -93,6 +97,11 @@ module DigitalObjects
     mp3.tag2.COMM="Preascolto traccia audio"
     mp3.close
     target
+  end
+
+  def audioclips_basedir
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["audioclips_basedir"]
   end
 
 end
