@@ -22,7 +22,7 @@ module AttachmentsHelper
             lista=d_object_tracklist(d_ob)
             if !lista.nil?
               res << content_tag(:div, content_tag(:ul, lista,
-                                                   :style=>'width: 80%; padding: 3px; border: 1px outset green; list-style: none'))
+                                                   :style=>'width: 80%; padding: 0px; border: 0px outset green; list-style: none'))
             end
           end
         else

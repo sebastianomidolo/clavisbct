@@ -132,9 +132,9 @@ module DObjectsHelper
       # lista << content_tag(:li, record.audioclip_filename(cnt))
       if record.audioclip_exists?(cnt)
         audio=true
-        lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{track['title']}", %Q{http://#{request.host_with_port}/#{d_object_path(record, format: 'mp3', t: cnt)}}))
+        lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{track['title']}", %Q{http://#{request.host_with_port}#{d_object_path(record, format: 'mp3', t: cnt)}}))
       else
-        # lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
+        lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
       end
       cnt+=1
     end
