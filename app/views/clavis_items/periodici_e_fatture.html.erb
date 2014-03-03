@@ -1,0 +1,6 @@
+<%= form_tag('/periodici_e_fatture',:method=>:get) %>
+<%= select_tag(:library_id, options_for_select([ ['Centrale',2], ['Musicale',3]  ], params[:library_id]), onchange: 'submit()') %>
+<%= select_tag(:year, options_for_select([ 2012,2013,2014 ], params[:year]), onchange: 'submit()') %>
+</form>
+<%= clavis_items_periodici_e_fatture(@clavis_items) %>
+
