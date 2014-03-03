@@ -70,3 +70,6 @@ gem 'will_paginate-bootstrap'
 
 # Aggiunto 13 gennaio 2014
 gem 'musicbrainz'
+
+gem 'roo'
+gem 'rubyzip'
