@@ -34,6 +34,7 @@ module AttachmentsHelper
   end
 
   def attachment_category(ac)
+    return nil if ac.nil?
     ac=AttachmentCategory.find(ac) if ac.class==String
     if ac.description.nil?
       content_tag(:span, ac.label)
