@@ -149,4 +149,11 @@ class ClavisManifestationsController < ApplicationController
       }
     end
   end
+
+  def periodici_ordini
+    library_id=3
+    @records=ClavisManifestation.periodici_ordini(library_id)
+    render layout: 'navbar'
+  end
+
 end

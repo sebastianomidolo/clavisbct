@@ -168,20 +168,7 @@ class ClavisManifestation < ActiveRecord::Base
   end
 
   def clavis_url(mode=:show)
-    config = Rails.configuration.database_configuration
-    host=config[Rails.env]['clavis_host']
-    r=''
-    if mode==:show
-      r="#{host}/index.php?page=Catalog.Record&manifestationId=#{self.id}"
-    end
-    if mode==:edit
-      r="#{host}/index.php?page=Catalog.EditRecord&manifestationId=#{self.id}"
-    end
-    if mode==:opac
-      host=config[Rails.env]['clavis_host_dng']
-      r="#{host}/opac/detail/view/sbct:catalog:#{self.id}"
-    end
-    r
+    ClavisManifestation.clavis_url(self.id,mode)
   end
 
   def audioclips
@@ -385,5 +372,38 @@ class ClavisManifestation < ActiveRecord::Base
       AND cm.manifestation_id=#{self.id}}
     TalkingBook.find_by_sql(sql).first
   end
+
+  def self.clavis_url(id,mode=:show)
+    config = Rails.configuration.database_configuration
+    host=config[Rails.env]['clavis_host']
+    r=''
+    if mode==:show
+      r="#{host}/index.php?page=Catalog.Record&manifestationId=#{id}"
+    end
+    if mode==:edit
+      r="#{host}/index.php?page=Catalog.EditRecord&manifestationId=#{id}"
+    end
+    if mode==:opac
+      host=config[Rails.env]['clavis_host_dng']
+      r="#{host}/opac/detail/view/sbct:catalog:#{id}"
+    end
+    r
+  end
+
+  def self.periodici_ordini(library_id=3,year='2014')
+    sql=%Q{SELECT cm.title as clavis_title,op.title,cm.manifestation_id,op.excel_cell_id,
+  array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status || ' ' ||
+     case when i.invoice_id is null then 0 else i.invoice_id end), ',') as info_fattura
+ FROM public.ordini_periodici_musicale op
+  LEFT JOIN clavis.manifestation cm USING(manifestation_id)
+  LEFT JOIN clavis.item ci ON (ci.manifestation_id=cm.manifestation_id AND ci.issue_year='#{year}'
+                            AND ci.owner_library_id=#{library_id})
+  LEFT JOIN clavis.invoice i ON(i.invoice_id=ci.invoice_id)
+GROUP BY op.title,cm.manifestation_id,op.excel_cell_id
+  ORDER BY op.title;}
+    puts sql
+    self.connection.execute(sql).to_a
+  end
+
 
 end
