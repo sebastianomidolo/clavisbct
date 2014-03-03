@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20130808123001) do
+ActiveRecord::Schema.define(:version => 20140219100238) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -36,10 +36,30 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
     t.string  "folder",                 :limit => 128
   end
 
-  create_table "audio_clips", :force => true do |t|
-    t.xml     "tags",                 :null => false
-    t.integer "clavis_manifestation"
+  create_table "av_manifestations", :id => false, :force => true do |t|
+    t.integer "idvolume"
+    t.integer "manifestation_id"
   end
+
+  add_index "av_manifestations", ["idvolume", "manifestation_id"], :name => "av_manifestation_idx", :unique => true
+  add_index "av_manifestations", ["idvolume"], :name => "av_manifestation_idvolume_idx"
+  add_index "av_manifestations", ["manifestation_id"], :name => "av_manifestation_manifestation_id_idx"
+
+  create_table "avdata", :id => false, :force => true do |t|
+    t.integer "primary_id"
+    t.integer "manifestation_id"
+    t.integer "bm_id"
+  end
+
+  create_table "collocazioni_musicale", :id => false, :force => true do |t|
+    t.integer "d_object_id"
+    t.text    "collocation"
+    t.text    "folder"
+    t.integer "position"
+    t.string  "mime_type",   :limit => 96
+  end
+
+  add_index "collocazioni_musicale", ["collocation"], :name => "collocazioni_musicale_idx"
 
   create_table "d_objects", :force => true do |t|
     t.string   "filename",        :limit => 2048
@@ -53,6 +73,7 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
+  add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
 
   create_table "dng_sessions", :force => true do |t|
     t.string   "client_ip",  :limit => 128
@@ -60,8 +81,31 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
     t.integer  "patron_id",                 :null => false
   end
 
+  create_table "excel_cells", :force => true do |t|
+    t.integer "cell_row",                    :null => false
+    t.string  "cell_column",    :limit => 2, :null => false
+    t.text    "cell_content"
+    t.integer "excel_sheet_id",              :null => false
+  end
+
+  add_index "excel_cells", ["cell_column"], :name => "excel_cells_column_idx"
+  add_index "excel_cells", ["cell_row"], :name => "excel_cells_row_idx"
+
+  create_table "excel_files", :force => true do |t|
+    t.string "file_name"
+  end
+
+  create_table "excel_sheets", :force => true do |t|
+    t.string  "sheet_name"
+    t.integer "sheet_number",  :null => false
+    t.integer "excel_file_id", :null => false
+  end
+
+  add_index "excel_sheets", ["sheet_number", "excel_file_id"], :name => "excel_sheets_idx1", :unique => true
+
   create_table "import_bctaudio_metatags", :id => false, :force => true do |t|
     t.string  "collocation", :limit => 128
+    t.string  "folder",      :limit => 512
     t.string  "filename",    :limit => 2048
     t.integer "tracknum"
     t.xml     "tags"
@@ -76,6 +120,20 @@ ActiveRecord::Schema.define(:version => 20130808123001) do
   end
 
   add_index "import_libroparlato_colloc", ["collocation"], :name => "import_libroparlato_colloc_collocation_idx"
+
+  create_table "musicbrainz_artists_clavis_authorities", :id => false, :force => true do |t|
+    t.string  "gid",          :limit => nil
+    t.integer "authority_id"
+  end
+
+  add_index "musicbrainz_artists_clavis_authorities", ["authority_id"], :name => "musicbrainz_artists_clavis_authorities_authority_id_idx"
+  add_index "musicbrainz_artists_clavis_authorities", ["gid"], :name => "musicbrainz_artists_clavis_authorities_gid_idx"
+
+  create_table "ordini_periodici_musicale", :id => false, :force => true do |t|
+    t.text    "title"
+    t.integer "manifestation_id"
+    t.integer "excel_cell_id"
+  end
 
   create_table "procultura_import", :id => false, :force => true do |t|
     t.integer "theid"
