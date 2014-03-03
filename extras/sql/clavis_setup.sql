@@ -21,6 +21,8 @@ CREATE TABLE clavis.collocazioni AS
 DELETE FROM clavis.collocazioni WHERE collocazione='';
 UPDATE clavis.collocazioni SET sort_text = espandi_collocazione(collocazione);
 
+UPDATE clavis.item SET issue_status = NULL WHERE issue_status NOTNULL AND issue_id ISNULL;
+
 ALTER TABLE clavis.collocazioni add primary key(item_id);
 CREATE INDEX collocazioni_idx ON clavis.collocazioni(collocazione);
 CREATE INDEX collocazioni_sort_text_idx ON clavis.collocazioni(sort_text);
