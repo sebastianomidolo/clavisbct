@@ -1,6 +1,7 @@
 require 'RMagick'
 
 include DigitalObjects
+require 'rexml/document'
 require 'mp3info'
 
 
