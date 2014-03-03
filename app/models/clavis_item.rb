@@ -35,14 +35,21 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def clavis_url(mode=:show)
+    ClavisItem.clavis_url(self.id,mode)
+  end
+
+  def self.clavis_url(item_id,mode=:show)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
     r=''
     if mode==:show
-      r="#{host}/index.php?page=Catalog.ItemViewPage&id=#{self.id}"
+      r="#{host}/index.php?page=Catalog.ItemViewPage&id=#{item_id}"
+    end
+    if mode==:edit
+      r="#{host}/index.php?page=Catalog.ItemInsertPage&id=#{item_id}"
     end
     if mode==:loan
-      r="#{host}/index.php?page=Circulation.NewLoan&itemId=#{self.id}"
+      r="#{host}/index.php?page=Circulation.NewLoan&itemId=#{item_id}"
     end
     r
   end
@@ -64,6 +71,23 @@ class ClavisItem < ActiveRecord::Base
       where library_status='A' AND library_internal='1' order by label}
     puts sql
     self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
+  end
+  def self.periodici_e_fatture(library_id,issue_years)
+    issue_years=[issue_years] if issue_years.class==String
+    years=(issue_years.collect {|x| "'#{x}'"}).join(',')
+    sql=%Q{SELECT issue_year,ci.manifestation_id,cm.title,ec.id as excel_cell_id,
+   array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status || ' ' ||
+     case when i.invoice_id is null then 0 else i.invoice_id end), ',') as info_fattura
+ FROM clavis.manifestation cm JOIN clavis.item ci USING (manifestation_id)
+    LEFT JOIN clavis.invoice i USING(invoice_id)
+    LEFT JOIN public.excel_cells ec ON (cell_content=cm."ISBNISSN"
+     AND excel_sheet_id=26 and cell_column='_K')
+ WHERE ci.owner_library_id = #{library_id} AND ci.issue_year IN(#{years})
+  AND issue_id NOTNULL
+  GROUP BY ci.issue_year,ci.manifestation_id,cm.sort_text,cm.title,ec.id
+  ORDER BY ci.issue_year,cm.sort_text;}
+    puts sql
+    self.connection.execute(sql).to_a
   end
 
 end

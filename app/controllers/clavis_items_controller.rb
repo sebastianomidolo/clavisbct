@@ -40,5 +40,13 @@ class ClavisItemsController < ApplicationController
     @clavis_item=ClavisItem.find(params[:id])
     redirect_to @clavis_item.clavis_url if !params[:redir].blank?
   end
+
+  def periodici_e_fatture
+    year=params[:year].blank? ? '2014' : params[:year]
+    library_id=params[:library_id].blank? ? 3 : params[:library_id]
+    @clavis_items=ClavisItem.periodici_e_fatture(library_id,year)
+    render layout: 'navbar'
+  end
+
 end
 
