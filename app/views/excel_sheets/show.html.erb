@@ -1,0 +1,7 @@
+<%= content_tag(:h3, "Foglio: #{@excel_sheet.sheet_name}") %>
+<%= form_tag(excel_sheets_url + "/#{@excel_sheet.id}", :method=>:get) do %>
+<%= text_field_tag('qs', params[:qs]) %>
+<%= submit_tag('Cerca') %>
+<% end %>
+
+<%= content_tag(:div, excel_cells_list(@excel_cells,@cell_column)) %>

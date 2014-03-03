@@ -1,0 +1,14 @@
+<%= content_tag(:h3, "File: #{@excel_file.basename}") %>
+<%= form_tag(excel_files_url + "/#{@excel_file.id}", :method=>:get) do %>
+<%= text_field_tag('qs', params[:qs]) %>
+<%= submit_tag('Cerca') %>
+<% end %>
+
+<%= content_tag(:div, excel_file_show(@excel_file)) %>
+
+<% @excel_cells.each do |c| %>
+<%= content_tag(:div, excel_cell_show_row(c), :style=>"border-bottom: 1px solid black") %>
+<% end %>
+<%= content_tag(:div, "cells: #{@excel_cells.size}") %>
+
+
