@@ -2,7 +2,7 @@ class ExcelFilesController < ApplicationController
   layout 'navbar'
 
   def index
-    @excel_files=ExcelFile.all
+    @excel_files=ExcelFile.summary
   end
 
   def show
