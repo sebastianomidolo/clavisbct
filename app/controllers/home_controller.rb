@@ -13,6 +13,9 @@ class HomeController < ApplicationController
     render json: {ip: DngSession.format_client_ip(request)}.to_json
   end
 
+  def periodici_musicale_in_ritardo
+  end
+
   def spazioragazzi
     render :text=>File.read('/tmp/indexfile.html')
   end
