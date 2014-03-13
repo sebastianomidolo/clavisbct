@@ -65,6 +65,7 @@ Clavisbct::Application.routes.draw do
 
   match '/spazioragazzi' => 'home#spazioragazzi'
 
+  match '/pmr' => 'home#periodici_musicale_in_ritardo'
 
   root :to => 'home#index'
 end
