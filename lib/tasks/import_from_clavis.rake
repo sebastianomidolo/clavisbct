@@ -23,8 +23,9 @@ task :import_from_clavis => :environment do
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")
       # cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"
       cmd="/usr/bin/psql --no-psqlrc -d #{db} #{user}  -f #{sf}"
-      puts cmd
+      puts "import_from_clavis, inizio esecuzione #{cmd}: #{Time.now}"
       Kernel.system(cmd)
+      puts "import_from_clavis, fine esecuzione #{cmd}: #{Time.now}"
     end
   end
 
@@ -33,15 +34,21 @@ task :import_from_clavis => :environment do
   (puts cmd; Kernel.system(cmd)) if !cmd.blank?
   cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{source}"
   puts cmd
+  puts "import_from_clavis, inizio esecuzione #{cmd}: #{Time.now}"
   Kernel.system(cmd)
+  puts "import_from_clavis, fine esecuzione #{cmd}: #{Time.now}"
 
   insertdir=File.join(File.dirname(source),'inserts')
   puts insertdir
   Dir.glob(File.join(insertdir, "*.sql")).sort.each do |f|
     cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{f}"
     puts cmd
+    puts "import_from_clavis, inizio esecuzione #{cmd}: #{Time.now}"
     Kernel.system(cmd)
+    puts "import_from_clavis, fine esecuzione #{cmd}: #{Time.now}"
   end
 
+  puts "import_from_clavis: chiamo clavis_init: #{Time.now}"
   clavis_init(dbname,username)
+  puts "import_from_clavis: tornato da clavis_init: #{Time.now}"
 end
