@@ -56,7 +56,6 @@ Clavisbct::Application.routes.draw do
 
   resources :excel_files
   resources :excel_sheets
-  resources :excel_cells
 
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
