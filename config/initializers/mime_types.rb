@@ -5,3 +5,5 @@
 # Mime::Type.register_alias "text/html", :iphone
 
 Mime::Type.register "audio/mp3", :mp3
+Mime::Type.register "application/msword", :doc
+
