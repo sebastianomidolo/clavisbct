@@ -56,6 +56,23 @@ class DObject < ActiveRecord::Base
     end
   end
 
+  def pdf_to_jpeg
+    return [] if self.mime_type!='application/pdf; charset=binary'
+    if !File.exists?(self.pdf_rootdir)
+      FileUtils.mkdir_p(self.pdf_rootdir)
+    end
+    filelist=[]
+    img=Magick::Image.read(self.filename_with_path)
+    cnt=1
+    img.each do |i|
+      jpegfile="#{self.pdf_rootname}_#{cnt}.jpeg"
+      i.write(jpegfile)
+      cnt+=1
+      filelist << jpegfile
+    end
+    filelist
+  end
+
   def split_if_pdf
     return if (/^application\/pdf/ =~ self.mime_type).nil?
     FileUtils.mkdir_p(self.pdf_rootdir)
@@ -74,6 +91,14 @@ class DObject < ActiveRecord::Base
     self.tags=self.get_bibdata_from_filename.to_xml(:root=>:r,:skip_instruct=>true,:indent=>0)
     self.save if self.changed?
   end
+
+  def write_fulltext_from_pdf
+    ft=self.get_fulltext_from_pdf
+    return nil if ft.blank?
+    self.tags=ft.to_xml(:root=>:r,:skip_instruct=>true,:indent=>0)
+    self.save if self.changed?
+  end
+
 
   def xmltag(tag)
     tag=tag.to_s if tag.class==Symbol
