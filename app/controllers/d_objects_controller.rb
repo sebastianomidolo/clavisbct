@@ -25,6 +25,28 @@ class DObjectsController < ApplicationController
     @d_object = DObject.find(params[:id])
     respond_to do |format|
       format.html
+      format.jpeg {
+        if (@d_object.access_right_id==0 and @d_object.mime_type=='application/pdf; charset=binary' and !params[:page].blank?)
+          fname=@d_object.pdf_to_jpeg[params[:page].to_i]
+          send_file(fname, :type=>'image/jpeg; charset=binary', :disposition => 'inline')
+        else
+          render text: "Non accessibile", :content_type=>'text/plain'
+        end
+      }
+      format.pdf {
+        if @d_object.access_right_id==0 and @d_object.mime_type=='application/pdf; charset=binary'
+          send_file(@d_object.filename_with_path, :filename=>File.basename(@d_object.filename), :type=>'application/pdf', :disposition => 'inline')
+        else
+          render text: "Non accessibile", :content_type=>'text/plain'
+        end
+      }
+      format.doc {
+        if @d_object.access_right_id==0 and @d_object.mime_type=='application/msword; charset=binary'
+          send_file(@d_object.filename_with_path, :filename=>File.basename(@d_object.filename), :type=>'application/msword', :disposition => 'inline')
+        else
+          render text: "Non accessibile", :content_type=>'text/plain'
+        end
+      }
       format.mp3 {
         cnt = params[:t].blank? ? nil : params[:t].to_i
         if @d_object.audioclip_exists?(cnt)
