@@ -177,6 +177,7 @@ module ClavisManifestationsHelper
 
 
   def clavis_manifestations_periodici_ordini(records)
+    return 'procedura in fase di revision (aprile 2014)'
     return '' if records.size==0
     hstatus = {
       'A' => 'Arrivato',
@@ -218,7 +219,7 @@ module ClavisManifestationsHelper
       # invoice=fattura.nil? ? 'non fatturato': 
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
-    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+    content_tag(:div, link_to("(click qui per vedere l'elenco dei fascicoli in ritardo)",'/pmr')) + content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
 
