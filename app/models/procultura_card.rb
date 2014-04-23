@@ -22,7 +22,7 @@ class ProculturaCard < ActiveRecord::Base
     true
   end
   def intestazione
-    self.heading.blank? ? 'senza intestazione' : self.heading
+    self.heading.blank? ? '(intestazione in fase di revisione)' : self.heading
   end
   def cached_filename(fmt)
     cpath=ProculturaCard.cachepath
