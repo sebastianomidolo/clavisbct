@@ -11,7 +11,7 @@ module DObjectsHelper
           v=REXML::Document.new(record.tags).root.attributes.inspect
           res << content_tag(:tr, content_tag(:td, "Lista tracce #{v}") + content_tag(:td, content_tag(:ul, lista, :style=>'width: 100%; padding: 3px; border: 1px outset green; list-style: none'), :style=>'width: 100%'))
         else
-          [:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
+          [:fulltext,:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
             v=record.xmltag(tg)
             next if v.blank?
             res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v))
