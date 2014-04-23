@@ -3,16 +3,14 @@ class ExcelSheetsController < ApplicationController
 
   def show
     @excel_sheet=ExcelSheet.find(params[:id])
-    @cell_column=params[:cell_column]
-    if params[:qs].blank?
-      if @cell_column.blank?
-        @excel_cells=ExcelCell.where(:excel_sheet_id=>@excel_sheet.id).limit(2)
-      else
-        @excel_cells=ExcelCell.where(:excel_sheet_id=>@excel_sheet.id,cell_column: @cell_column).order(:cell_content)
-        # @excel_cells=ExcelCell.select("cell_content,excel_sheet_id,count(*)").where(:excel_sheet_id=>@excel_sheet.id,cell_column: @cell_column).order(:cell_content).group(:cell_content,:excel_sheet_id)
-      end
+    @view_number=params[:view_number].blank? ? nil : params[:view_number].to_i
+    if params[:group].blank?
+      @records=@excel_sheet.sql_paginate(params, :page=>params[:page])
     else
-      @excel_cells=ExcelCell.where(:excel_sheet_id=>@excel_sheet.id).where("cell_content ~* '#{params[:qs]}'")
+      @column_number=params[:group].to_i
+      @records=@excel_sheet.sql_paginate_group_by(params,:page=>params[:page])
+      render template: '/excel_sheets/group'
     end
   end
+
 end
