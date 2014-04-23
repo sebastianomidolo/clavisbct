@@ -2,3 +2,12 @@
 
 <%= content_tag(:div, d_object_show(@d_object)) %>
 
+<% if @d_object.access_right_id==0 %>
+ <% cnt=-1; @d_object.pdf_to_jpeg.each do |f| %>
+  <%= content_tag(:div, link_to('Scarica pdf',d_object_path(@d_object, :format=>'pdf'))) if cnt==-1 %>
+  <%= cnt+=1; image_tag(d_object_path(@d_object, :format=>'jpeg', :page=>cnt)) %>
+ <% end %>
+ <% if @d_object.mime_type=='application/msword; charset=binary' %>
+  <%= content_tag(:div, link_to('Scarica documento in formato Word',d_object_path(@d_object, :format=>'doc'))) %>
+ <% end %>
+<% end %>
