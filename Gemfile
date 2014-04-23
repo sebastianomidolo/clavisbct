@@ -73,3 +73,5 @@ gem 'musicbrainz'
 
 gem 'roo'
 gem 'rubyzip'
+
+gem 'pdf-reader'
