@@ -51,11 +51,6 @@ INSERT INTO public.attachments(d_object_id,attachable_id,attachable_type)
 
 COMMIT;
 
-/* Inserimento clips_mp3 della biblioteca musicale (owner_library_id=3) */
-/* Nota: per funzionare, bisogna che prima siano stati inseriti i metadati da bctaudio:
-   (cd /home/ror/bctaudio; rake export_fileinfo_metadata > /tmp/bctaudio_metadata.sql)
- */
-
 UPDATE public.d_objects o SET tags=i.tags FROM public.import_bctaudio_metatags i
   WHERE(i.filename=o.filename);
 
@@ -95,8 +90,13 @@ INSERT INTO public.attachments
   );
 
 UPDATE public.d_objects SET access_right_id=2 WHERE access_right_id ISNULL AND filename ~ '^libroparlato/';
-UPDATE public.d_objects SET access_right_id=0 WHERE access_right_id ISNULL AND filename ~ '^mp3clips/';
+UPDATE public.d_objects SET access_right_id=0 WHERE access_right_id ISNULL AND filename ~ '^uac/locandine';
 
+/*
+   Piano works / Schumann
+*/
+UPDATE attachments set attachable_id = 522565 where attachable_id=355191
+   and attachable_type = 'ClavisManifestation';
 
 BEGIN;
 -- See lib/tasks/find_d_objects.rake (DROP CONSTRAINT "d_object_id_fkey")
