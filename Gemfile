@@ -72,6 +72,5 @@ gem 'will_paginate-bootstrap'
 gem 'musicbrainz'
 
 gem 'roo'
-gem 'rubyzip'
 
 gem 'pdf-reader'
