@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140219100238) do
+ActiveRecord::Schema.define(:version => 20140403132314) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -33,7 +33,12 @@ ActiveRecord::Schema.define(:version => 20140219100238) do
     t.integer "position"
     t.string  "attachable_type",        :limit => 24,  :null => false
     t.string  "attachment_category_id", :limit => 1
-    t.string  "folder",                 :limit => 128
+    t.string  "folder",                 :limit => 512
+  end
+
+  create_table "audio_clips", :force => true do |t|
+    t.xml     "tags",                 :null => false
+    t.integer "clavis_manifestation"
   end
 
   create_table "av_manifestations", :id => false, :force => true do |t|
@@ -44,12 +49,6 @@ ActiveRecord::Schema.define(:version => 20140219100238) do
   add_index "av_manifestations", ["idvolume", "manifestation_id"], :name => "av_manifestation_idx", :unique => true
   add_index "av_manifestations", ["idvolume"], :name => "av_manifestation_idvolume_idx"
   add_index "av_manifestations", ["manifestation_id"], :name => "av_manifestation_manifestation_id_idx"
-
-  create_table "avdata", :id => false, :force => true do |t|
-    t.integer "primary_id"
-    t.integer "manifestation_id"
-    t.integer "bm_id"
-  end
 
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
     t.integer "d_object_id"
@@ -73,7 +72,6 @@ ActiveRecord::Schema.define(:version => 20140219100238) do
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
-  add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
 
   create_table "dng_sessions", :force => true do |t|
     t.string   "client_ip",  :limit => 128
@@ -81,24 +79,17 @@ ActiveRecord::Schema.define(:version => 20140219100238) do
     t.integer  "patron_id",                 :null => false
   end
 
-  create_table "excel_cells", :force => true do |t|
-    t.integer "cell_row",                    :null => false
-    t.string  "cell_column",    :limit => 2, :null => false
-    t.text    "cell_content"
-    t.integer "excel_sheet_id",              :null => false
-  end
-
-  add_index "excel_cells", ["cell_column"], :name => "excel_cells_column_idx"
-  add_index "excel_cells", ["cell_row"], :name => "excel_cells_row_idx"
-
   create_table "excel_files", :force => true do |t|
-    t.string "file_name"
+    t.string   "file_name"
+    t.integer  "file_size"
+    t.datetime "updated_at"
   end
 
   create_table "excel_sheets", :force => true do |t|
     t.string  "sheet_name"
     t.integer "sheet_number",  :null => false
     t.integer "excel_file_id", :null => false
+    t.text    "columns"
   end
 
   add_index "excel_sheets", ["sheet_number", "excel_file_id"], :name => "excel_sheets_idx1", :unique => true
@@ -128,12 +119,6 @@ ActiveRecord::Schema.define(:version => 20140219100238) do
 
   add_index "musicbrainz_artists_clavis_authorities", ["authority_id"], :name => "musicbrainz_artists_clavis_authorities_authority_id_idx"
   add_index "musicbrainz_artists_clavis_authorities", ["gid"], :name => "musicbrainz_artists_clavis_authorities_gid_idx"
-
-  create_table "ordini_periodici_musicale", :id => false, :force => true do |t|
-    t.text    "title"
-    t.integer "manifestation_id"
-    t.integer "excel_cell_id"
-  end
 
   create_table "procultura_import", :id => false, :force => true do |t|
     t.integer "theid"

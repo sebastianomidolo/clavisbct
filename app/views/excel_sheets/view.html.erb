@@ -1,11 +1,12 @@
 <%= content_tag(:h3, "View #{@excel_sheet.to_label}") %>
 
-<%= form_tag(excel_sheet_path(@excel_sheet), :method=>:get) do %>
+<%= form_tag(view_excel_sheet_path(@excel_sheet), :method=>:get) do %>
 <%= text_field_tag('qs', params[:qs]) %>
 <%= hidden_field_tag('view', params[:view]) %>
 <%= submit_tag('Cerca') %>
 <% end %>
 
-<%= content_tag(:div, excel_sheet_display_view(@excel_sheet,params[:view].to_i,params[:qs])) %>
+<%= content_tag(:div, "#{@records.total_entries} record") %>
 
+(non usare)
 
