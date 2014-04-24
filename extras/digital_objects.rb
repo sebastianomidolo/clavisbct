@@ -18,6 +18,30 @@ module DigitalObjects
     config[Rails.env]["digital_objects_audioclips_dir"]
   end
 
+  def get_fulltext_from_pdf
+    return nil if (/^application\/pdf/ =~ self.mime_type).nil?
+    puts "ok"
+    begin
+      reader=PDF::Reader.new(self.filename_with_path)
+    rescue
+      puts "Errore: #{$!}"
+      return {}
+    end
+    begin
+      res=[]
+      reader.pages.each do |p|
+        puts p.class
+        text=p.text
+        next if text.blank?
+        text.squish!
+        res << text
+      end
+      {fulltext: res.join("\l")}
+    rescue
+      puts "errore #{$!}"
+    end
+  end
+
   # http://bctdoc.selfip.net/documents/30
   def get_bibdata_from_filename
     res={}
