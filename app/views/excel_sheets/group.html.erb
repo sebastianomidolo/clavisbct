@@ -1,0 +1,17 @@
+<%= content_tag(:div, excel_sheet_breadcrumbs(@excel_sheet,@view_number)) %>
+<%= form_tag(excel_sheet_path(@excel_sheet.id), :method=>:get) do %>
+<%= hidden_field_tag('group', params[:group]) %>
+<%= hidden_field_tag(:view_number, @view_number) %>
+<%= text_field_tag('qs', params[:qs]) %>
+<%= submit_tag("Cerca in #{@excel_sheet.sql_columns(@view_number)[params[:group].to_i]}") %>
+<% end %>
+
+
+
+<%= content_tag(:div, "#{@records.total_entries} rows") %>
+
+<%= will_paginate @records, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, excel_sheet_records_group_by(@excel_sheet,@records,@column_number,@view_number)) %>
+
+
