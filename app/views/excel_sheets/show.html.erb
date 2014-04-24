@@ -1,7 +1,14 @@
-<%= content_tag(:h3, "Foglio: #{@excel_sheet.sheet_name}") %>
-<%= form_tag(excel_sheets_url + "/#{@excel_sheet.id}", :method=>:get) do %>
+<%= content_tag(:div, excel_sheet_breadcrumbs(@excel_sheet,@view_number)) %>
+
+<%= form_tag(excel_sheet_path(@excel_sheet.id), :method=>:get) do %>
+<%= hidden_field_tag(:view_number, @view_number) %>
 <%= text_field_tag('qs', params[:qs]) %>
-<%= submit_tag('Cerca') %>
+<%= submit_tag("Cerca") %>
 <% end %>
 
-<%= content_tag(:div, excel_cells_list(@excel_cells,@cell_column)) %>
+<%= content_tag(:div, "#{@records.total_entries} record") %>
+
+<%= will_paginate @records, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, excel_sheet_records(@excel_sheet,@records,@view_number)) %>
+
