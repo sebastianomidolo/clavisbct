@@ -34,3 +34,7 @@ pg_dump -n bm_letteratura -U informhop bctaudio_development | psql clavisbct_dev
 # 16 gennaio 2014:
 (cd /home/ror/clavisbct; ./extras/create_musicbrainz_artists_clavis_authorities.sh)
 
+# 1 aprile 2014:
+/bin/rm -rf /home/sites/456.selfip.net/html/clavis/mn
+/usr/bin/wget --quiet -O /dev/stdout http://libroparlato.selfip.net/ProgettiCivica/IntraVedo/html/costellazione_clavis.tar.bz2 | /usr/bin/tar -j -C /home/sites/456.selfip.net/html/clavis -xf -
+
