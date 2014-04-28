@@ -177,7 +177,7 @@ module ClavisManifestationsHelper
 
 
   def clavis_manifestations_periodici_ordini(records)
-    return 'procedura in fase di revision (aprile 2014)'
+    # return 'procedura in fase di revision (aprile 2014)'
     return '' if records.size==0
     hstatus = {
       'A' => 'Arrivato',
@@ -211,7 +211,10 @@ module ClavisManifestationsHelper
       end
       in_clavis=r['manifestation_id'].blank? ? content_tag(:div, 'Manca manifestation_id', class: 'alert alert-danger') : link_to(r['clavis_title'],ClavisManifestation.clavis_url(r['manifestation_id']))
       res << content_tag(:tr, content_tag(:td, "#{cnt}") +
-                         content_tag(:td, link_to(r['title'],excel_cell_path(r['excel_cell_id'].to_i)), :style=>'width: 30%') +
+                         content_tag(:td, link_to(r['titolo'],
+                                                  excel_sheet_path(r['excel_sheet_id'],
+                                                                   row: r['excel_cell_row'])),
+                                     :style=>'width: 30%') +
                          content_tag(:td, in_clavis, :style=>'width: 30%') +
                          content_tag(:td, fatture.join('</br>').html_safe) +
                          content_tag(:td, info.join('</br>').html_safe))
@@ -219,7 +222,7 @@ module ClavisManifestationsHelper
       # invoice=fattura.nil? ? 'non fatturato': 
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
-    content_tag(:div, link_to("(click qui per vedere l'elenco dei fascicoli in ritardo)",'/pmr')) + content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
 
