@@ -50,7 +50,7 @@ class ExcelSheet < ActiveRecord::Base
       ts=self.connection.quote_string(qs.split.join(' & '))
       conditions << %Q{to_tsvector(#{fields.join(" || ' ' || ")}) @@ to_tsquery('english','#{ts}')}
     end
-    if !vn.nil?
+    if !vn.nil? and cols[0]!='excel_cell_row'
       # conditions << "#{cols[0]} is not null"
       conditions << "#{cols[0]} !=''"
     end
@@ -181,7 +181,7 @@ class ExcelSheet < ActiveRecord::Base
       self.save if self.changed?
     end
     if !view_number.nil?
-      res=[]
+      res=['excel_cell_row']
       self.views[view_number-1][:columns].each do |c|
         res << @sql_columns[c]
       end
@@ -207,7 +207,7 @@ class ExcelSheet < ActiveRecord::Base
     cnt=0
     self.sql_columns(nil,excel).each do |c|
       cnt+=1
-      if cnt==1
+      if cnt==1 or c=='"manifestation_id"'
         ar << "#{c} integer"
       else
         ar << "#{c} text"
@@ -223,8 +223,20 @@ class ExcelSheet < ActiveRecord::Base
     end
   end
 
+  def rebuild_table
+    self.sql_droptable
+    self.sql_createtable
+    self.import_from_sourcefile
+  end
+
+  def load_row(row_id)
+    sql=%Q{SELECT #{self.sql_columns.join(',')} FROM #{self.sql_tablename} WHERE excel_cell_row=#{row_id.to_i}}
+    self.connection.execute(sql).first
+  end
+
   def import_from_sourcefile(excel=nil)
     ef=self.excel_file
+    dth=self.data_types
     puts "copy data from #{ef.file_name}"
     excel=Roo::Excel.new(ef.file_name) if excel.nil?
     sheet=excel.sheet(self.sheet_number)
@@ -237,17 +249,17 @@ class ExcelSheet < ActiveRecord::Base
     puts "scrivo su #{sqlfile}"
 
     fdout.write(%Q{TRUNCATE TABLE #{self.sql_tablename};\n})
-    fdout.write(%Q{COPY #{self.sql_tablename} (#{self.sql_columns.join(',')}) FROM stdin;\n})
+    cols=self.sql_columns
+    fdout.write(%Q{COPY #{self.sql_tablename} (#{cols.join(',')}) FROM stdin;\n})
 
     (from..sheet.last_row).each do |rn|
       cnt=0
       data=[rn]
       sheet.row(rn).each do |d|
         cnt+=1
-        # puts "d (#{cnt}) #{d}"
+        # puts "d (#{cnt}) #{d} => #{cols[cnt]} => #{dth[cols[cnt]]}"
         if d.blank?
-          # d="\\N"
-          d=''
+          d = dth[cols[cnt]]=='integer' ? "\\N" : ''
         else
           if d.class==Float
             intero=d.to_i
