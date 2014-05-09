@@ -13,7 +13,7 @@ class ExcelSheet < ActiveRecord::Base
     mtime=File.mtime(ef.file_name)
     if mtime > ef.updated_at
       begin
-        self.import_from_sourcefile
+        self.rebuild_table
         ef.updated_at=mtime
         ef.file_size=File.size(ef.file_name)
         ef.save if ef.changed?
@@ -50,13 +50,17 @@ class ExcelSheet < ActiveRecord::Base
       ts=self.connection.quote_string(qs.split.join(' & '))
       conditions << %Q{to_tsvector(#{fields.join(" || ' ' || ")}) @@ to_tsquery('english','#{ts}')}
     end
-    if !vn.nil? and cols[0]!='excel_cell_row'
-      # conditions << "#{cols[0]} is not null"
-      conditions << "#{cols[0]} !=''"
+    # if !vn.nil? and cols[0]!='excel_cell_row'
+    if !vn.nil?
+      # conditions << "#{cols[1]} is not null"
+      conditions << "#{cols[1]} !=''"
     end
     where=conditions.size==0 ? '' : "WHERE #{conditions.join(' AND ')}"
-    order = "ORDER BY #{cols[0..3].join(',')}"
+    order = "ORDER BY #{cols[1..3].join(',')}"
     sql=%Q{SELECT #{cols.join(',')} FROM #{self.sql_tablename} #{where} #{order}}
+    # fd=File.open("/tmp/logfile.txt","w")
+    # fd.write(sql)
+    # fd.close
     ExcelSheet.paginate_by_sql(sql,options)
   end
 
@@ -77,7 +81,16 @@ class ExcelSheet < ActiveRecord::Base
   end
 
   def sql_tablename
-    %Q{excel_files_tables."table_#{self.id}_#{self.sheet_name.downcase.gsub(' ','_')}"}
+    cfg=self.load_config
+    if cfg[:tablename].nil?
+      tname="table_#{self.id}_#{self.sheet_name.downcase.gsub(' ','_')}"
+      self.tablename=nil
+    else
+      tname=cfg[:tablename]
+      self.tablename=tname
+    end
+    self.save if self.changed?
+    %Q{excel_files_tables.#{tname}}
   end
 
   def load_config
@@ -90,7 +103,8 @@ class ExcelSheet < ActiveRecord::Base
     x=self.load_config[:postload_sql_exec]
     return if x.nil?
     x.each do |s|
-      sql=sprintf s,self.sql_tablename
+      sql=s.sub('replace_with_tablename', self.sql_tablename)
+      sql=sql.sub('replace_with_excel_sheet_id', "#{self.id}")
       begin
         self.connection.execute(sql)
       rescue
@@ -193,7 +207,7 @@ class ExcelSheet < ActiveRecord::Base
     return "Colonna #{cnt}" if s.class!=String
     s.gsub(/\n|\r/,' ').gsub('"',"'")
   end
-  def sql_droptable(excel=nil)
+  def sql_droptable
     sql="DROP TABLE #{self.sql_tablename}"
     puts "sql da eseguire:\n#{sql}"
     begin
@@ -224,9 +238,15 @@ class ExcelSheet < ActiveRecord::Base
   end
 
   def rebuild_table
+    excel=self.excel_file.open_excel_file
     self.sql_droptable
-    self.sql_createtable
-    self.import_from_sourcefile
+    self.columns=nil
+    self.sql_createtable(excel)
+    self.save
+    self.reload
+    self.import_from_sourcefile(excel)
+    self.postload_sql_exec
+    self.alter_data_types
   end
 
   def load_row(row_id)
@@ -311,10 +331,10 @@ class ExcelSheet < ActiveRecord::Base
         # self.connection.execute(sql)
       end
       ['date','integer','float'].each do |newtype|
-        puts "tipo di partenza per #{col}: #{v} candidato alla conversione da #{v} a #{newtype}"
+        # puts "tipo di partenza per #{col}: #{v} candidato alla conversione da #{v} a #{newtype}"
         next if v==newtype or v!='text'
 
-        puts "procedo per #{col} da #{v} a #{newtype}"
+        # puts "procedo per #{col} da #{v} a #{newtype}"
         sql=%Q{ALTER table #{self.sql_tablename} ALTER COLUMN #{col} TYPE #{newtype} USING(#{col}::#{newtype})}
         if newtype=='date'
           ['DMY','YMD'].each do |datestyle|
@@ -323,7 +343,7 @@ class ExcelSheet < ActiveRecord::Base
               self.connection.execute(sql)
               break
             rescue
-              puts "conversione impossibile (datestyle #{datestyle})"
+              # puts "conversione impossibile (datestyle #{datestyle})"
             end
           end
         else
@@ -331,7 +351,7 @@ class ExcelSheet < ActiveRecord::Base
             self.connection.execute(sql)
             break
           rescue
-            puts "conversione impossibile"
+            # puts "conversione impossibile"
           end
         end
       end
