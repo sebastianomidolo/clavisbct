@@ -54,7 +54,9 @@ module ExcelSheetsHelper
     res << content_tag(:tr, excel_sheet_headings(sheet,view_number))
     records.each do |r|
       tdd=[]
+      cnt=0
       sheet.sql_columns(view_number).each do |c|
+        cnt+=1
         if c=='"manifestation_id"'
           mid=r[c.gsub('"','')].to_i
           if mid!=0
@@ -65,7 +67,12 @@ module ExcelSheetsHelper
             tdd << content_tag(:td, "manca manifestation_id")
           end
         else
-          tdd << content_tag(:td, r[c.gsub('"','')])
+          if cnt==1
+            tdd << content_tag(:td, link_to(r[c.gsub('"','')],
+                                            excel_sheet_path(sheet, :row=>r['excel_cell_row'])))
+          else
+            tdd << content_tag(:td, r[c.gsub('"','')])
+          end
         end
       end
       res << content_tag(:tr, tdd.join.html_safe)
@@ -85,6 +92,16 @@ module ExcelSheetsHelper
       res << content_tag(:li, excel_sheet.sheet_name,class:'active')
     end
     content_tag(:ol, res.join.html_safe, class: 'breadcrumb')
+  end
+
+  def excel_sheet_row(excel_sheet,row_id)
+    res=[]
+    excel_sheet.load_row(row_id).each do |r|
+      label,content=r
+      next if content.blank? or label=='excel_cell_row'
+      res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, content))
+    end
+    content_tag(:table, res.join.html_safe, {class: 'table'})
   end
 
 end
