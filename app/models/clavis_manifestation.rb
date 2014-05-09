@@ -383,6 +383,9 @@ class ClavisManifestation < ActiveRecord::Base
     if mode==:edit
       r="#{host}/index.php?page=Catalog.EditRecord&manifestationId=#{id}"
     end
+    if mode==:add_subscription
+      r="#{host}/index.php?page=Acquisition.SubscriptionInsertPage&manifestationId=#{id}"
+    end
     if mode==:opac
       host=config[Rails.env]['clavis_host_dng']
       r="#{host}/opac/detail/view/sbct:catalog:#{id}"
@@ -390,18 +393,46 @@ class ClavisManifestation < ActiveRecord::Base
     r
   end
 
-  def self.periodici_ordini(library_id=3,year='2014')
-    sql=%Q{SELECT cm.title as clavis_title,op.title,cm.manifestation_id,op.excel_cell_id,
+  def self.clavis_subscription_url(id)
+    config = Rails.configuration.database_configuration
+    host=config[Rails.env]['clavis_host']
+    "#{host}/index.php?page=Acquisition.SubscriptionViewPage&id=#{id}"
+  end
+
+  def self.periodici_ordini(library_id,year)
+    return [] if library_id.nil? or year.nil?
+    excel_sheet_id=nil
+    target_library=nil
+    if library_id==3
+      excel_sheet_id='ordini_periodici_musicale'
+      linked_excel_sheet_id='celdes_musicale_admin_report_ordini'
+    else
+      sql=%Q{SELECT label FROM public.biblioteche_celdes WHERE library_id=#{library_id}}
+      target_library=self.connection.execute(sql).first
+      if !target_library.nil?
+        target_library = target_library['label'] 
+        excel_sheet_id='titoli_celdes_clavis'
+        linked_excel_sheet_id='celdes_gest_riepilogo_situazione_ordini'
+      end
+    end
+    return [] if excel_sheet_id.nil?
+    where_conditions = target_library.nil? ? '' : "WHERE st.destinatario='#{target_library}'"
+    sql=%Q{SELECT cm.title as clavis_title,op.titolo,cm.manifestation_id,
+           cs.subscription_id,st.excel_cell_row,
+           '#{linked_excel_sheet_id}' as excel_sheet_id,
   array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status || ' ' ||
      case when i.invoice_id is null then 0 else i.invoice_id end), ',') as info_fattura
- FROM public.ordini_periodici_musicale op
+ FROM #{ExcelSheet.find_by_tablename(excel_sheet_id).sql_tablename} op
+  JOIN #{ExcelSheet.find_by_tablename(linked_excel_sheet_id).sql_tablename} as st USING(titolo)
   LEFT JOIN clavis.manifestation cm USING(manifestation_id)
   LEFT JOIN clavis.item ci ON (ci.manifestation_id=cm.manifestation_id AND ci.issue_year='#{year}'
                             AND ci.owner_library_id=#{library_id})
   LEFT JOIN clavis.invoice i ON(i.invoice_id=ci.invoice_id)
-GROUP BY op.title,cm.manifestation_id,op.excel_cell_id
-  ORDER BY op.title;}
-    puts sql
+  LEFT JOIN clavis.subscription cs ON(cs.manifestation_id=cm.manifestation_id
+              AND cs.library_id=#{library_id} AND cs.year=#{year})
+  #{where_conditions}
+GROUP BY op.titolo,cm.manifestation_id,cs.subscription_id,st.excel_cell_row
+  ORDER BY op.titolo;}
     self.connection.execute(sql).to_a
   end
 

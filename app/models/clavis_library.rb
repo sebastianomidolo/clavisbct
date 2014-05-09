@@ -7,5 +7,8 @@ class ClavisLibrary < ActiveRecord::Base
   def to_label
     self.label[0..40]
   end
+  def nice_description
+    self.description[5..100]
+  end
   
 end
