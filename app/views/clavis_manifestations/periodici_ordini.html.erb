@@ -1,2 +1,9 @@
-<%= clavis_manifestations_periodici_ordini(@records) %>
+
+<% if params[:library_id].blank? or params[:year].blank? %>
+ <%= content_tag(:div, clavis_libraries_celdes_libraries) %>
+<% else %>
+ <%= content_tag(:div, "Ordini periodici CELDES #{params[:year]} '#{ClavisLibrary.find(params[:library_id]).nice_description}'") %>
+ <%= clavis_manifestations_periodici_ordini(@records) %>
+<% end %>
+
 
