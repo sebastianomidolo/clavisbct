@@ -52,10 +52,25 @@ Clavisbct::Application.routes.draw do
   end
 
   resources :clavis_items do
+    collection do
+      get 'collocazioni'
+    end
+  end
+
+  resources :clavis_issues do
+    collection do
+      get 'check'
+    end
   end
 
   resources :excel_files
   resources :excel_sheets
+
+  resources :clavis_authorities do
+    collection do
+      get 'info'
+    end
+  end
 
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
