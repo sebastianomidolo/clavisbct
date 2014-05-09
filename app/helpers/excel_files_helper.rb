@@ -4,6 +4,7 @@ module ExcelFilesHelper
     res << content_tag(:tr, content_tag(:th, 'Nome file') + content_tag(:th, 'File size')+
                        content_tag(:th, 'Ultima modifica'))
     records.each do |r|
+      next if !File.exists?(r.file_name)
       size=File.size(r.file_name)
       lastmod=File.mtime(r.file_name)
       res << content_tag(:tr,
@@ -24,10 +25,16 @@ module ExcelFilesHelper
       cnt=0
       r.views.each do |v|
         cnt+=1
-        vs << content_tag(:li, link_to(v[:name],excel_sheet_path(r,view_number: cnt)) + " (#{r.sql_columns(cnt).join(', ')})")
+        if r.tablename.nil?
+          lnk=excel_sheet_path(r,view_number: cnt)
+        else
+          lnk=excel_sheet_path(id: r.tablename,view_number: cnt)
+        end
+        vs << content_tag(:li, link_to(v[:name],lnk) + " (#{r.sql_columns(cnt).join(', ')})")
       end
       vs = vs.size==0 ? '' : content_tag(:ul, vs.join.html_safe)
-      li << content_tag(:li, link_to(r.sheet_name, excel_sheet_path(r)) + vs)
+      lnk = r.tablename.nil? ? excel_sheet_path(r) : excel_sheet_path(id: r.tablename)
+      li << content_tag(:li, link_to(r.sheet_name, lnk) + vs)
     end
     res << content_tag(:ul, li.join.html_safe)
     res.join.html_safe
