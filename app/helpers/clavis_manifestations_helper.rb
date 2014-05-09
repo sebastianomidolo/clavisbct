@@ -209,10 +209,15 @@ module ClavisManifestationsHelper
         lnk = v.size==1 ? link_to(hstatus[k],ClavisItem.clavis_url(v.first,:edit)) : hstatus[k]
         info << "#{lnk} (#{v.size})"
       end
-      in_clavis=r['manifestation_id'].blank? ? content_tag(:div, 'Manca manifestation_id', class: 'alert alert-danger') : link_to(r['clavis_title'],ClavisManifestation.clavis_url(r['manifestation_id']))
+      clavis_subscription=''
+      if !r['manifestation_id'].blank?
+        clavis_subscription=r['subscription_id'].blank? ? link_to('[aggiungi abbonamento]',ClavisManifestation.clavis_url(r['manifestation_id'],:add_subscription)) : link_to('[vedi abbonamento]',ClavisManifestation.clavis_subscription_url(r['subscription_id']))
+      end
+      lnktext="#{r['clavis_title']}<br/>#{clavis_subscription}".html_safe
+      in_clavis=r['manifestation_id'].blank? ? content_tag(:div, 'Manca manifestation_id', class: 'alert alert-danger') : link_to(lnktext,ClavisManifestation.clavis_url(r['manifestation_id']))
       res << content_tag(:tr, content_tag(:td, "#{cnt}") +
                          content_tag(:td, link_to(r['titolo'],
-                                                  excel_sheet_path(r['excel_sheet_id'],
+                                                  excel_sheet_path(id: r['excel_sheet_id'],
                                                                    row: r['excel_cell_row'])),
                                      :style=>'width: 30%') +
                          content_tag(:td, in_clavis, :style=>'width: 30%') +
