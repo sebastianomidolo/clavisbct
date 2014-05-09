@@ -4,7 +4,7 @@
 class ClavisAuthoritiesController < ApplicationController
   def info
     headers['Access-Control-Allow-Origin'] = "*"
-    sql=%Q{SELECT r.value_label as rectype,t.value_label as authtype,
+    sql=%Q{SELECT r.value_label as rectype,t.value_label as authtype, a.bid_source,
   full_text as heading,authority_id,subject_class,bid as term_resource,
    (xpath('//d300/sa/text()',unimarc::xml))[1] as note
   FROM clavis.authority a
