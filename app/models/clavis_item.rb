@@ -34,6 +34,12 @@ class ClavisItem < ActiveRecord::Base
     r.join('.')
   end
 
+  def collocazione
+    r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
+    r.delete_if {|a| a.blank?}
+    r.join('.')
+  end
+
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)
   end
