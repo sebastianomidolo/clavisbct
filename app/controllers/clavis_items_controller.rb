@@ -37,8 +37,30 @@ class ClavisItemsController < ApplicationController
   end
 
   def show
-    @clavis_item=ClavisItem.find(params[:id])
-    redirect_to @clavis_item.clavis_url if !params[:redir].blank?
+    headers['Access-Control-Allow-Origin'] = "*"
+
+    if params[:id]=='0'
+      issue_id=params[:issue_id]
+      sel="item_id,item_status,loan_class,section,collocation,inventory_serie_id,item_media"
+      @clavis_item = ClavisItem.all(:select=>sel,:limit=>1,:conditions=>{:issue_id=>issue_id,:owner_library_id=>params[:owner_library_id]})
+      if @clavis_item!=[]
+        @clavis_item = @clavis_item.first
+      else
+        # @clavis_item=ClavisItem.first
+        @clavis_item=nil
+        if ClavisIssue.exists?(issue_id)
+          ci=ClavisIssue.find(issue_id)
+          @clavis_item = ClavisItem.first(:select=>sel,:conditions=>{:manifestation_id=>ci.manifestation_id,:owner_library_id=>params[:owner_library_id]})
+        end
+      end
+    else
+      @clavis_item=ClavisItem.find(params[:id])
+      redirect_to @clavis_item.clavis_url if !params[:redir].blank?
+    end
+    respond_to do |format|
+      format.html # show.html.erb
+      format.json { render :json => @clavis_item }
+    end
   end
 
   def periodici_e_fatture
@@ -46,6 +68,34 @@ class ClavisItemsController < ApplicationController
     library_id=params[:library_id].blank? ? 3 : params[:library_id]
     @clavis_items=ClavisItem.periodici_e_fatture(library_id,year)
     render layout: 'navbar'
+  end
+
+  def collocazioni
+    headers['Access-Control-Allow-Origin'] = "*"
+
+    mids=params[:mids]
+    library_id=params[:library_id]
+    library_id='' if library_id=='0'
+    res={}
+    sel='manifestation_id,section,collocation'
+    cond="manifestation_id IN (#{mids.split.join(',')})"
+    cond << " AND owner_library_id=#{library_id}" if !library_id.blank?
+
+    #ClavisItem.find_all_by_manifestation_id(mids.split,:select=>sel).each do |r|
+    #  res[r[:manifestation_id]]=r.collocazione
+    #end
+
+    sel='manifestation_id,section,collocation,specification,sequence1,sequence2'
+
+    sql="SELECT #{sel} FROM clavis.item WHERE #{cond}"
+    logger.warn(sql)
+    ClavisItem.find_by_sql(sql).each do |r|
+      res[r[:manifestation_id]]=r.collocazione
+    end
+
+    respond_to do |format|
+      format.json { render :json => res }
+    end
   end
 
 end
