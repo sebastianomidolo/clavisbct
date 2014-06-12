@@ -99,7 +99,12 @@ module ExcelSheetsHelper
     excel_sheet.load_row(row_id).each do |r|
       label,content=r
       next if content.blank? or label=='excel_cell_row'
-      res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, content))
+      if label=='filename'
+        lnk = link_to(content, d_objects_path(:filename=>content))
+        res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, lnk))
+      else
+        res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, content))
+      end
     end
     content_tag(:table, res.join.html_safe, {class: 'table'})
   end
