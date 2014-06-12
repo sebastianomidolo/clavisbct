@@ -177,7 +177,6 @@ module ClavisManifestationsHelper
 
 
   def clavis_manifestations_periodici_ordini(records)
-    # return 'procedura in fase di revision (aprile 2014)'
     return '' if records.size==0
     hstatus = {
       'A' => 'Arrivato',
