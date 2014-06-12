@@ -22,7 +22,12 @@ class DObjectsController < ApplicationController
   end
 
   def show
-    @d_object = DObject.find(params[:id])
+    if !params[:filename].blank?
+      sql="SELECT * FROM d_objects WHERE filename ~ '#{ActiveRecord::Base.connection.quote_string(params[:filename])}$'"
+      @d_object = DObject.find_by_sql(sql).first
+    else
+      @d_object = DObject.find(params[:id])
+    end
     respond_to do |format|
       format.html
       format.jpeg {
