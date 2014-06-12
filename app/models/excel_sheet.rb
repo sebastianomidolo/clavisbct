@@ -282,8 +282,11 @@ class ExcelSheet < ActiveRecord::Base
           d = dth[cols[cnt]]=='integer' ? "\\N" : ''
         else
           if d.class==Float
-            intero=d.to_i
-            d = intero!=0 ? intero : d.to_s
+            if d.to_i.to_f == d
+              d = d.to_i
+            else
+              d = d.to_s
+            end
           else
             d=d.to_s.strip
             d.gsub!(/\n|\r/,'\r')
