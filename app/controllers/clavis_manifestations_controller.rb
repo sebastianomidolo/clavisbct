@@ -151,7 +151,14 @@ class ClavisManifestationsController < ApplicationController
   end
 
   def periodici_ordini
-    @records=ClavisManifestation.periodici_ordini(params[:library_id].to_i,params[:year])
+    parm={}
+    parm[:numero_fattura]=params[:numero_fattura] if !params[:numero_fattura].blank?
+    per_page=250
+    if params[:library_id].blank? or params[:year].blank?
+    else
+      ordine=Ordine.new(library_id: params[:library_id], ordanno: params[:year])
+      @records=ClavisManifestation.periodici_ordini(ordine,params[:page],per_page,parm)
+    end
   end
 
 end

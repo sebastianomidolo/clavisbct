@@ -1,8 +1,14 @@
+<!--
+<%= render :partial => 'ordini_periodici_search_form' %>
+-->
 
 <% if params[:library_id].blank? or params[:year].blank? %>
  <%= content_tag(:div, clavis_libraries_celdes_libraries) %>
 <% else %>
  <%= content_tag(:div, "Ordini periodici CELDES #{params[:year]} '#{ClavisLibrary.find(params[:library_id]).nice_description}'") %>
+<%= content_tag(:h2, "Trovati #{@records.total_entries}") %>
+<%= will_paginate @records %>
+
  <%= clavis_manifestations_periodici_ordini(@records) %>
 <% end %>
 

@@ -194,31 +194,70 @@ module ClavisManifestationsHelper
       fatture=[]
       items_info={}
       info_fattura.split(',').each do |f|
-        item_id,issue_status,invoice_id=f.split
+        item_id,issue_status,giorni_ritardo,data_arrivo,atteso_per,invoice_id=f.split
         items_info[issue_status]=[] if items_info[issue_status].nil?
-        items_info[issue_status] << item_id
-        # info << "issue_status=#{issue_status} => #{link_to(item_id,ClavisItem.clavis_url(item_id))}"
+        items_info[issue_status] << [item_id,giorni_ritardo,data_arrivo,atteso_per]
         if invoice_id!='0'
-          fatture << %Q{<div class="alert alert-success">#{link_to("Fattura #{invoice_id}", "http://sbct.comperio.it/index.php?page=Acquisition.InvoiceViewPage&id=#{invoice_id}", class: 'alert-link', target: '_blank')} su esemplare #{link_to(item_id,ClavisItem.clavis_url(item_id,:edit))} (#{hstatus[issue_status]})</div>}
+          fatture << %Q{<div class="alert alert-success">#{link_to("Fattura in Clavis", "http://sbct.comperio.it/index.php?page=Acquisition.InvoiceViewPage&id=#{invoice_id}", class: 'alert-link', target: '_blank')} su esemplare #{link_to(item_id,ClavisItem.clavis_url(item_id,:edit))} (#{hstatus[issue_status]})</div>}
         end
       end
-      # fatture << content_tag(:div, 'Non fatturato', class: 'alert alert-danger') if fatture.size==0
-      # fatture << link_to('fattura celdes (prova)', excel_cell_path(r['excel_cell_id'])) if !r['excel_cell_id'].nil? and r['issue_year']=='2014'
       items_info.each_pair do |k,v|
-        lnk = v.size==1 ? link_to(hstatus[k],ClavisItem.clavis_url(v.first,:edit)) : hstatus[k]
-        info << "#{lnk} (#{v.size})"
+        if v.size==1
+          item_id,ritardo,data_arrivo,atteso_per=v.first
+          lnk=link_to(hstatus[k],ClavisItem.clavis_url(item_id,:edit))
+          if ritardo.to_i>0 and ['M','N','P'].include?(k)
+            # info << content_tag(:span, "#{lnk} (#{ritardo} giorni ritardo)".html_safe, class: 'alert alert-danger')
+            info << content_tag(:b, "#{lnk} (#{ritardo} giorni ritardo)".html_safe)
+          else
+            # info << "#{lnk} (previsto tra #{ritardo.to_i.abs} giorni)"
+            # info << "#{lnk}"
+
+            if ['N','P'].include?(k)
+              info << content_tag(:b, "#{lnk} (#{atteso_per})".html_safe)
+            else
+              arrivo=data_arrivo=='-' ? '' : " (#{data_arrivo})"
+              info << content_tag(:b, "#{lnk}#{arrivo}".html_safe)
+            end
+          end
+        else
+          info << "#{hstatus[k]} (#{v.size} esemplari)"
+        end
+
       end
       clavis_subscription=''
       if !r['manifestation_id'].blank?
         clavis_subscription=r['subscription_id'].blank? ? link_to('[aggiungi abbonamento]',ClavisManifestation.clavis_url(r['manifestation_id'],:add_subscription)) : link_to('[vedi abbonamento]',ClavisManifestation.clavis_subscription_url(r['subscription_id']))
       end
-      lnktext="#{r['clavis_title']}<br/>#{clavis_subscription}".html_safe
+      if r['numero_fattura'].blank?
+        textbox=%Q{#{content_tag(:div,r['titolo'])}
+          #{content_tag(:div, 'Non fatturato', class: 'alert alert-danger')}
+        }
+      else
+        tipodoc=r['tipodoc']=='F' ? 'Fattura' : 'Nota di credito'
+        textbox=%Q{#{content_tag(:div,r['titolo'])}
+        #{
+        content_tag(:table,
+         content_tag(:tr, content_tag(:td, tipodoc + ' numero') + content_tag(:td,content_tag(:b, r['numero_fattura']))) +
+         content_tag(:tr, content_tag(:td,'Data emissione') + content_tag(:td,r['data_emissione'])) +
+         content_tag(:tr, content_tag(:td,'Periodo') + content_tag(:td,r['periodo'])) +
+         content_tag(:tr, content_tag(:td,'Formato') + content_tag(:td,r['formato'])) +
+         content_tag(:tr, content_tag(:td,'Prezzo') + content_tag(:td,r['prezzo'])) +
+         content_tag(:tr, content_tag(:td,'Sconto') + content_tag(:td,r['commissione_sconto'])) +
+         (r['iva'] == '0' ? '' : content_tag(:tr, content_tag(:td,'IVA') + content_tag(:td,r['iva']))) +
+         content_tag(:tr, content_tag(:td,'Prezzo finale') + content_tag(:td,r['prezzo_finale'])) +
+         (r['note_interne'].blank? ? '' : content_tag(:tr, content_tag(:td,'Note interne') + content_tag(:td,r['note_interne'])))
+        )}
+        }
+      end
+      if !@ordine.nil? and @ordine.library_id.nil?
+        bib="<br/>#{content_tag(:b,r['library'])}"
+      else
+        bib=''
+      end
+      lnktext="#{r['title']}<br/>#{clavis_subscription}#{bib}".html_safe
       in_clavis=r['manifestation_id'].blank? ? content_tag(:div, 'Manca manifestation_id', class: 'alert alert-danger') : link_to(lnktext,ClavisManifestation.clavis_url(r['manifestation_id']))
-      res << content_tag(:tr, content_tag(:td, "#{cnt}") +
-                         content_tag(:td, link_to(r['titolo'],
-                                                  excel_sheet_path(id: r['excel_sheet_id'],
-                                                                   row: r['excel_cell_row'])),
-                                     :style=>'width: 30%') +
+      res << content_tag(:tr, content_tag(:td, "#{r['id']}") +
+                         content_tag(:td, textbox.html_safe, :style=>'width: 30%') +
                          content_tag(:td, in_clavis, :style=>'width: 30%') +
                          content_tag(:td, fatture.join('</br>').html_safe) +
                          content_tag(:td, info.join('</br>').html_safe))

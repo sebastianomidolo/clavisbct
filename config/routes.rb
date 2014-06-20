@@ -30,6 +30,11 @@ Clavisbct::Application.routes.draw do
   resources :procultura_folders
 
   # devise_for :users
+  resources :ordini do
+    collection do
+      get 'fatture'
+    end
+  end
 
   resources :clavis_manifestations do
     member do

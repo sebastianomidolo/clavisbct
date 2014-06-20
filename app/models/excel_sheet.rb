@@ -44,7 +44,8 @@ class ExcelSheet < ActiveRecord::Base
       else
         cols.each do |col|
           next if col=='excel_cell_row'
-          fields << "#{col}::text"
+          next if dtypes[col]=='date'
+          fields << "#{col}::#{dtypes[col]}"
         end
       end
       ts=self.connection.quote_string(qs.split.join(' & '))

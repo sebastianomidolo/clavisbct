@@ -1,0 +1,31 @@
+
+<%= simple_form_for(@ordine, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= f.input :titolo, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+  <%= f.input :numero_fattura, hint: 'numero fattura', as: 'string', label: false, placeholder: 'numero fattura' %>
+  <%= f.association :clavis_library, collection: ClavisItem.owner_library, include_blank: true, label: false %>
+  <%= f.input :issue_status, collection: [['Filtra per...',''],
+       ['Senza manifestation_id', 'SM'],
+       ['Non in Clavis', 'NIC'],
+       ['Non in Clavis e non fatturato', 'NICNF'],
+       ['Non in Clavis fatturato', 'NICF'],
+       ['Fatturato', 'FATT'],
+       ['Non fatturato', 'NFATT'],
+       ['Arrivato', 'A'],
+       ['Mancante', 'M'],
+       ['Arrivo previsto', 'N'],
+       ['Prossimo arrivo', 'P'],
+       ['Ultimo arrivo', 'U']],
+       include_blank: false, label:false  %>
+  <%= f.submit 'cerca', :class=>'btn btn-info' %>
+  <%= link_to('azzera',ordini_path) %>
+<% end %>
+
+
+<% if !@ordine.library_id.nil? %>
+<%=
+ text=link_to(' <b>fatture...</b>'.html_safe, fatture_ordini_path(library_id:@ordine.library_id))
+ javascript_tag("$('#ordine_library_id').parent().append('#{text}');")
+%>
+
+<% end %>
+

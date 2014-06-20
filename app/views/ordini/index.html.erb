@@ -1,0 +1,9 @@
+<%= content_tag(:h3, "Ordini Celdes - periodici") %>
+<%= render :partial => 'searchform' if params[:nosearchform].blank? %>
+
+<% if @ordini.size>0 %>
+ <%= content_tag(:h3, "Trovati #{@ordini.total_entries}") %>
+ <%= will_paginate @ordini %>
+ <hr/>
+ <%= clavis_manifestations_periodici_ordini(@ordini) %>
+<% end %>

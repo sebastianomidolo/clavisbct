@@ -21,6 +21,8 @@ class ClavisManifestation < ActiveRecord::Base
                           :foreign_key=>'manifestation_id',
                           :association_foreign_key=>'idvolume');
 
+  has_many :ordini, foreign_key: 'manifestation_id'
+
   def d_objects_set_access_rights(access_right)
     ActiveRecord::Base.transaction do
       self.d_objects.each do |o|
@@ -399,41 +401,57 @@ class ClavisManifestation < ActiveRecord::Base
     "#{host}/index.php?page=Acquisition.SubscriptionViewPage&id=#{id}"
   end
 
-  def self.periodici_ordini(library_id,year)
-    return [] if library_id.nil? or year.nil?
-    excel_sheet_id=nil
-    target_library=nil
-    if library_id==3
-      excel_sheet_id='ordini_periodici_musicale'
-      linked_excel_sheet_id='celdes_musicale_admin_report_ordini'
-    else
-      sql=%Q{SELECT label FROM public.biblioteche_celdes WHERE library_id=#{library_id}}
-      target_library=self.connection.execute(sql).first
-      if !target_library.nil?
-        target_library = target_library['label'] 
-        excel_sheet_id='titoli_celdes_clavis'
-        linked_excel_sheet_id='celdes_gest_riepilogo_situazione_ordini'
+  def self.periodici_ordini(ordine_template,page_number=1,per_page=50,extra_sql_conditions='')
+    conditions=[]
+    ordine_template.attribute_names.each do |n|
+      next if ordine_template[n].blank? or n=='titolo'
+      v=ordine_template[n]
+      conditions << "sat.#{n}=#{Ordine.connection.quote(ordine_template[n])}"
+      if v.class==Fixnum
+      else
       end
     end
-    return [] if excel_sheet_id.nil?
-    where_conditions = target_library.nil? ? '' : "WHERE st.destinatario='#{target_library}'"
-    sql=%Q{SELECT cm.title as clavis_title,op.titolo,cm.manifestation_id,
-           cs.subscription_id,st.excel_cell_row,
-           '#{linked_excel_sheet_id}' as excel_sheet_id,
-  array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status || ' ' ||
-     case when i.invoice_id is null then 0 else i.invoice_id end), ',') as info_fattura
- FROM #{ExcelSheet.find_by_tablename(excel_sheet_id).sql_tablename} op
-  JOIN #{ExcelSheet.find_by_tablename(linked_excel_sheet_id).sql_tablename} as st USING(titolo)
+    if extra_sql_conditions.size>0
+      conditions << extra_sql_conditions
+    end
+    conditions=conditions.flatten.join(" AND ")
+    where = conditions=='' ? 'WHERE false' : 'WHERE'
+    ordine_template.ordanno=2013 if ordine_template.ordanno.nil?
+    year=ordine_template.ordanno
+    subscription_year=year.to_i + 1
+    sql=%Q{SELECT
+      sat.id,sat.titolo,cm.title,cm.manifestation_id,cs.subscription_id,sat.numero_fattura,
+        sat.importo_fattura,sat.fattura_o_nota_di_credito as tipodoc,sat.periodo,sat.formato,sat.note_interne,
+        sat.data_emissione,sat.data_pagamento,sat.prezzo,sat.commissione_sconto,
+        sat.totale,sat.iva,sat.prezzo_finale,sat.numcopie,sat.ordnum,sat.ordanno,sat.ordprogressivo,
+        cl.shortlabel as library,
+  array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status ||
+     ' ' || date_part('day', now()-issue_arrival_date_expected) ||
+     ' ' || case when ci.issue_arrival_date is null then '-' else ci.issue_arrival_date::text end ||
+     ' ' || case when ci.issue_arrival_date_expected is null then '-' else ci.issue_arrival_date_expected::text end ||
+     ' ' || case when i.invoice_id is null then 0 else i.invoice_id end), ',') as info_fattura
+ FROM public.serials_admin_table as sat
+  JOIN clavis.library cl using(library_id)
   LEFT JOIN clavis.manifestation cm USING(manifestation_id)
-  LEFT JOIN clavis.item ci ON (ci.manifestation_id=cm.manifestation_id AND ci.issue_year='#{year}'
-                            AND ci.owner_library_id=#{library_id})
+  LEFT JOIN clavis.item ci ON (ci.manifestation_id=cm.manifestation_id AND ci.issue_year='#{subscription_year}'
+             AND ci.owner_library_id=sat.library_id)
   LEFT JOIN clavis.invoice i ON(i.invoice_id=ci.invoice_id)
   LEFT JOIN clavis.subscription cs ON(cs.manifestation_id=cm.manifestation_id
-              AND cs.library_id=#{library_id} AND cs.year=#{year})
-  #{where_conditions}
-GROUP BY op.titolo,cm.manifestation_id,cs.subscription_id,st.excel_cell_row
-  ORDER BY op.titolo;}
-    self.connection.execute(sql).to_a
+              AND cs.library_id=sat.library_id AND cs.year=#{subscription_year})
+   #{where} #{conditions}
+GROUP BY
+      sat.id,sat.titolo,cm.title,cm.manifestation_id,cs.subscription_id,sat.numero_fattura,
+        sat.importo_fattura,sat.fattura_o_nota_di_credito,sat.periodo,sat.formato,sat.note_interne,
+        sat.data_emissione,sat.data_pagamento,sat.prezzo,sat.commissione_sconto,
+        sat.totale,sat.iva,sat.prezzo_finale,sat.numcopie,sat.ordnum,sat.ordanno,sat.ordprogressivo,
+        cl.shortlabel
+  ORDER BY sat.titolo,cl.shortlabel,sat.data_emissione,sat.numero_fattura
+    }
+    fd=File.open("/tmp/prova.sql", "w")
+    fd.write(sql)
+    fd.close
+    Ordine.paginate_by_sql(sql,:per_page=>per_page, :page=>page_number)
+    # self.connection.execute(sql).to_a
   end
 
 

@@ -1,0 +1,9 @@
+<%= simple_form_for(:periodici_ordini, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= f.input :title, hint: '(NON FUNZIONA ANCORA!) parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+  <%= f.input :title, hint: '(NON FUNZIONA ANCORA!) numero fattura', as: 'string', label: false,
+       placeholder: 'numero fattura' %>
+  <%= f.submit 'cerca', :class=>'btn btn-info' %>
+  <%= hidden_field_tag(:library_id, :value=>3) %>
+  <%= hidden_field_tag(:year, :value=>2013) %>
+<% end %>
+

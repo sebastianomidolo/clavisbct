@@ -1,0 +1,10 @@
+
+
+<% if !@fatture.nil? %>
+ <%= content_tag(:h3, "Ordini Celdes - periodici - fatture #{@library.shortlabel}") %>
+ <%= ordini_fatture(@ordine,@fatture) %>
+<% else %>
+ <%= content_tag(:h3, "Ordini Celdes - periodici - fattura numero #{@ordine.numero_fattura} per #{@library.shortlabel}") %>
+ <%= will_paginate @ordini %>
+ <%= clavis_manifestations_periodici_ordini(@ordini) %>
+<% end %>
