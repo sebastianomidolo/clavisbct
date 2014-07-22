@@ -19,5 +19,13 @@ class HomeController < ApplicationController
   def spazioragazzi
     render :text=>File.read('/tmp/indexfile.html')
   end
+
+  def uni856
+    @pagetitle='Titoli in Clavis con URL (unimarc tag 856)'
+    sql=%Q{select trim(cm.title) as title,u.* from clavis.uni856 u
+        join clavis.manifestation cm using(manifestation_id)
+         order by lower(u.nota),cm.sort_text}
+    @records=ActiveRecord::Base.connection.execute(sql)
+  end
 end
 

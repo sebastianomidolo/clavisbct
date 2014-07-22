@@ -25,6 +25,8 @@ Clavisbct::Application.routes.draw do
   resources :sp_sections
   resources :sp_items
 
+  match '/uni856' => 'home#uni856'
+
   match '/procultura' => 'procultura_folders#index'
   resources :procultura_cards
   resources :procultura_folders
