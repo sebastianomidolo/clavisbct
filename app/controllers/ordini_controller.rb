@@ -15,6 +15,12 @@ class OrdiniController < ApplicationController
       case @ordine.issue_status
       when 'SM'
         cond << "sat.manifestation_id is null"
+      when 'CES'
+        cond << "sat.stato='Cessata'"
+      when 'RIT'
+        cond << "sat.stato='In Ritardo'"
+      when 'ARCPER'
+        cond << "sat.ordnum is null"
       when 'NIC'
         cond << "issue_status is null"
       when 'NICNF'
@@ -25,6 +31,8 @@ class OrdiniController < ApplicationController
         cond << "sat.numero_fattura is not null"
       when 'NFATT'
         cond << "sat.numero_fattura is null"
+      when 'AUA'
+        cond << "issue_status IN('A','U')"
       else
         cond << "issue_status='#{@ordine.issue_status}'"
       end

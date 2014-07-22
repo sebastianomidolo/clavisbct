@@ -11,10 +11,14 @@
        ['Fatturato', 'FATT'],
        ['Non fatturato', 'NFATT'],
        ['Arrivato', 'A'],
+       ['Ultimo arrivo', 'U'],
+       ['Arrivato o Ultimo arrivo', 'AUA'],
        ['Mancante', 'M'],
        ['Arrivo previsto', 'N'],
        ['Prossimo arrivo', 'P'],
-       ['Ultimo arrivo', 'U']],
+       ['In ritardo (per Celdes)', 'RIT'],
+       ['Importato da archivio_periodici.txt', 'ARCPER'],
+       ['Cessata', 'CES']],
        include_blank: false, label:false  %>
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
   <%= link_to('azzera',ordini_path) %>
