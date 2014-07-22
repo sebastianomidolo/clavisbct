@@ -228,25 +228,18 @@ module ClavisManifestationsHelper
       if !r['manifestation_id'].blank?
         clavis_subscription=r['subscription_id'].blank? ? link_to('[aggiungi abbonamento]',ClavisManifestation.clavis_url(r['manifestation_id'],:add_subscription)) : link_to('[vedi abbonamento]',ClavisManifestation.clavis_subscription_url(r['subscription_id']))
       end
-      if r['numero_fattura'].blank?
-        textbox=%Q{#{content_tag(:div,r['titolo'])}
-          #{content_tag(:div, 'Non fatturato', class: 'alert alert-danger')}
-        }
-      else
-        tipodoc=r['tipodoc']=='F' ? 'Fattura' : 'Nota di credito'
+      if r['numero_fattura'].blank? and !r['ordnum'].blank?
         textbox=%Q{#{content_tag(:div,r['titolo'])}
         #{
-        content_tag(:table,
-         content_tag(:tr, content_tag(:td, tipodoc + ' numero') + content_tag(:td,content_tag(:b, r['numero_fattura']))) +
-         content_tag(:tr, content_tag(:td,'Data emissione') + content_tag(:td,r['data_emissione'])) +
-         content_tag(:tr, content_tag(:td,'Periodo') + content_tag(:td,r['periodo'])) +
-         content_tag(:tr, content_tag(:td,'Formato') + content_tag(:td,r['formato'])) +
-         content_tag(:tr, content_tag(:td,'Prezzo') + content_tag(:td,r['prezzo'])) +
-         content_tag(:tr, content_tag(:td,'Sconto') + content_tag(:td,r['commissione_sconto'])) +
-         (r['iva'] == '0' ? '' : content_tag(:tr, content_tag(:td,'IVA') + content_tag(:td,r['iva']))) +
-         content_tag(:tr, content_tag(:td,'Prezzo finale') + content_tag(:td,r['prezzo_finale'])) +
-         (r['note_interne'].blank? ? '' : content_tag(:tr, content_tag(:td,'Note interne') + content_tag(:td,r['note_interne'])))
-        )}
+          content_tag(:div, 'Non fatturato', class: 'alert alert-danger') +
+          content_tag(:div, ordini_dettaglio_ordine(r))
+         }
+        }
+      else
+        textbox=%Q{#{content_tag(:div,r['titolo'])}
+        #{
+          content_tag(:div, ordini_dettaglio_ordine(r))
+         }
         }
       end
       if !@ordine.nil? and @ordine.library_id.nil?
