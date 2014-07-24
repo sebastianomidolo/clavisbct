@@ -41,4 +41,26 @@ ci.issue_arrival_date_expected as previsto
                 :class=>'table-responsive')
   end
 
+  def misc_uni856(records)
+    res=[]
+    prec=''
+    cnt=0
+    records.each do |r|
+      title=r['title'].blank? ? '[?]' : r['title']
+      if r['nota']!=prec
+        cnt=0
+        prec=r['nota']
+      end
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}.")) +
+                         content_tag(:td, r['nota']) +
+                         content_tag(:td,
+                                     link_to(title,
+                                             ClavisManifestation.clavis_url(r['manifestation_id'],:edit)) +
+                                     "<br/>#{r['url']}".html_safe))
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+  end
+
 end
