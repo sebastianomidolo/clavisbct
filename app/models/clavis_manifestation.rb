@@ -424,7 +424,7 @@ class ClavisManifestation < ActiveRecord::Base
         sat.importo_fattura,sat.fattura_o_nota_di_credito as tipodoc,sat.periodo,sat.formato,sat.note_interne,
         sat.data_emissione,sat.data_pagamento,sat.prezzo,sat.commissione_sconto,
         sat.totale,sat.iva,sat.prezzo_finale,sat.numcopie,sat.ordnum,sat.ordanno,sat.ordprogressivo,
-        cl.shortlabel as library,
+        cl.shortlabel as library,sat.stato,
   array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status ||
      ' ' || date_part('day', now()-issue_arrival_date_expected) ||
      ' ' || case when ci.issue_arrival_date is null then '-' else ci.issue_arrival_date::text end ||
