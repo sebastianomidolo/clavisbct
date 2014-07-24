@@ -30,9 +30,9 @@ CREATE INDEX item_owner_library_id_idx ON clavis.item(owner_library_id);
 CREATE INDEX item_section_idx ON clavis.item("section");
 CREATE INDEX item_specification_idx ON clavis.item(specification);
 
-
-
-
-
-
-
+CREATE TABLE clavis.uni856 AS
+  SELECT manifestation_id,
+  (xpath('//d856/su/text()',unimarc::xml))[1]::varchar(128) AS url,
+  (xpath('//d856/sz/text()',unimarc::xml))[1]::varchar(128) AS nota
+FROM clavis.manifestation WHERE (xpath('//d856/su/text()',unimarc::xml))[1] NOTNULL;
+CREATE index uni856_manifestation_id_idx ON clavis.uni856(manifestation_id);
