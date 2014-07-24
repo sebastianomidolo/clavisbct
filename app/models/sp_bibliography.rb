@@ -139,6 +139,11 @@ class SpBibliography < ActiveRecord::Base
         iteminfo[k]=enc.decode(iteminfo[k].force_encoding('utf-8').encode('utf-8'))
       end
       sp_item=SpItem.new(iteminfo)
+      if sp_item.bibdescr.blank?
+        puts "Errore: scheda #{sp_item.item_id} della bibliografia #{sp_item.bibliography_id} priva di descrizione bibliografica"
+        next
+      end
+      sp_item.sortkey=sp_item.sortkey[0..511]
       if sp_item.created_at.nil?
         fname=File.join(sourcedir, item_id)
         # puts "non ho la data nel record, la leggo dal file: #{fname}"
@@ -169,7 +174,7 @@ class SpBibliography < ActiveRecord::Base
       if self[k]==val or k==:updated_at
         # puts "#{k} non cambiato"
       else
-        puts "#{k} CAMBIA da '#{self[k]}' a '#{info[k]}'"
+        puts "#{k} MODIFICATO"
         self[k]=info[k]
       end
     end
@@ -255,7 +260,12 @@ class SpBibliography < ActiveRecord::Base
         puts "aggiorno bibliografia #{id} =>#{b.title}"
       else
         puts "nuova bibliografia: #{id}"
-        b=SenzaParola::sp_new_bibliography(id)
+        begin
+          b=SenzaParola::sp_new_bibliography(id)
+        rescue
+          b=nil
+          puts "Errore da SenzaParola::sp_new_bibliography(#{id})"
+        end
       end
       if !b.nil?
         # puts "b.class: #{b.class}"
