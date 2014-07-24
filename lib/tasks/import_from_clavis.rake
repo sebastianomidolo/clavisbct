@@ -19,7 +19,7 @@ task :import_from_clavis => :environment do
      'view_prestiti',
      'view_digitalizzati',
      'setup',
-     'create_serials_admin_table.sql',
+     'create_serials_admin_table',
     ].each do |fname|
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")
       # cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"
@@ -52,4 +52,9 @@ task :import_from_clavis => :environment do
   puts "import_from_clavis: chiamo clavis_init: #{Time.now}"
   clavis_init(dbname,username)
   puts "import_from_clavis: tornato da clavis_init: #{Time.now}"
+
+  puts "chiamo ora Ordine.importa_archivio_periodici #{Time.now}"
+  Ordine.importa_archivio_periodici
+  puts "tornato da Ordine.importa_archivio_periodici #{Time.now}"
+
 end
