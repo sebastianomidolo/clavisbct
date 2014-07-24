@@ -29,6 +29,7 @@ select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
  o.prezzo, o.commissione_sconto, o.totale, o.iva, o."prezzo finale" as prezzo_finale,
  o.numcopie, o.ordnum, o.ordanno, o.ordprogressivo,
  o.abbmesedal || '/' || o.abbannodal || '-' || o.abbmeseal || '/' || o.abbannoal as periodo,
+ o.statodettaglio as stato,
  g.formato,NULL as note_interne
   from excel_files_tables.celdes_gest_riepilogo_situazione_ordini g
    left join excel_files_tables.titoli_celdes_clavis cc using(titolo)
@@ -55,6 +56,7 @@ select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattur
  o.prezzo, o.commissione_sconto, o.totale, o.iva, o."prezzo finale" as prezzo_finale,
  o.numcopie, o.ordnum, o.ordanno, o.ordprogressivo,
  o.abbmesedal || '/' || o.abbannodal || '-' || o.abbmeseal || '/' || o.abbannoal as periodo,
+ o.statodettaglio,
  o.tipo as formato, cc.note as note_interne
   from excel_files_tables.celdes_musicale_admin_report_ordini o
     left join excel_files_tables.ordini_periodici_musicale cc using(titolo)

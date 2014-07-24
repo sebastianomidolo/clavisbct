@@ -13,16 +13,24 @@ pg_dump -n libroparlato -U informhop bctaudio_development | psql clavisbct_devel
 (cd /home/ror/clavisbct;psql -f extras/sql/libroparlato_setup.sql clavisbct_development informhop)
 (cd /home/ror/clavisbct; RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop)
 
-# Aggiunta del 15 ottobre 2013
 psql -c "DROP SCHEMA bm_audiovisivi CASCADE" clavisbct_production informhop
 pg_dump -n bm_audiovisivi -U informhop bctaudio_production | psql clavisbct_production informhop -f -
 psql -c "DROP SCHEMA bm_letteratura CASCADE" clavisbct_production informhop
 pg_dump -n bm_letteratura -U informhop bctaudio_production | psql clavisbct_production informhop -f -
+psql -c "DROP SCHEMA cr_attrezzature CASCADE" clavisbct_production informhop
+pg_dump -n cr_attrezzature -U informhop bctaudio_production | psql clavisbct_production informhop -f -
+psql -c "DROP SCHEMA cr_acquisti CASCADE" clavisbct_production informhop
+pg_dump -n cr_acquisti -U informhop bctaudio_production | psql clavisbct_production informhop -f -
+
 
 psql -c "DROP SCHEMA bm_audiovisivi CASCADE" clavisbct_development informhop
 pg_dump -n bm_audiovisivi -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA bm_letteratura CASCADE" clavisbct_development informhop
 pg_dump -n bm_letteratura -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+psql -c "DROP SCHEMA cr_attrezzature CASCADE" clavisbct_development informhop
+pg_dump -n cr_attrezzature -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+psql -c "DROP SCHEMA cr_acquisti CASCADE" clavisbct_development informhop
+pg_dump -n cr_acquisti -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 
 # 8 gennaio 2014:
 (psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_development informhop)
