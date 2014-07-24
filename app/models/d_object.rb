@@ -149,7 +149,7 @@ class DObject < ActiveRecord::Base
 
   def DObject.to_pdf(ids,pdf_filename)
     # return true if File.exists?(pdf_filename)
-    logo = Magick::Image.read("/home/storage/preesistente/testzone/logo.jpg").first
+    logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.gif").first
     iList =  Magick::ImageList.new
     ids.each do |o|
       # puts o.filename
