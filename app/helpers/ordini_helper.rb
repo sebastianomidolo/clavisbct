@@ -1,3 +1,4 @@
+
 module OrdiniHelper
   def ordini_index(records)
     return '' if records.size==0
@@ -31,6 +32,21 @@ module OrdiniHelper
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
 
+  def ordini_dettaglio_ordine(r)
+    res=[]
+    if !r['numero_fattura'].blank?
+      tipodoc=r['tipodoc']=='F' ? 'Fattura' : 'Nota di credito'
+      res << content_tag(:tr,
+                         content_tag(:td, tipodoc + ' numero') +
+                         content_tag(:td,content_tag(:b, r['numero_fattura'])))
+    end
+    ['stato','data_emissione','periodo','formato','prezzo','sconto','prezzo_finale','note_interne'].each do |f|
+      next if r[f].blank?
+      res << content_tag(:tr, content_tag(:td,f.capitalize) + content_tag(:td, r[f]))
+    end
+    # res << (r['iva'] == '0' ? '' : content_tag(:tr, content_tag(:td,'IVA') + content_tag(:td,r['iva'])))
+    content_tag(:table, res.join.html_safe)
   end
 end
