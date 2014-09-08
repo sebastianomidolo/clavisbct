@@ -55,7 +55,7 @@ class ClavisItemsController < ApplicationController
       end
     else
       @clavis_item=ClavisItem.find(params[:id])
-      redirect_to @clavis_item.clavis_url if !params[:redir].blank?
+      redirect_to @clavis_item.clavis_url and return if !params[:redir].blank?
     end
     respond_to do |format|
       format.html # show.html.erb
