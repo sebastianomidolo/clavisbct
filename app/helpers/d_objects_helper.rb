@@ -87,7 +87,7 @@ module DObjectsHelper
     end
     # res << javascript_include_tag('http://webplayer.yahooapis.com/player.js') if audio
     # res << javascript_include_tag('http://webplayer.yahooapis.com/player-beta.js') if audio
-    res << javascript_include_tag('http://clavisbct.selfip.net/player.js') if audio
+    res << javascript_include_tag('http://clavisbct.comperio.it/player.js') if audio
 
     # content_tag(:ul, res.join.html_safe, :style=>'width: 50%; padding: 3px; border: 4px outset green; list-style: none')
     if anonimo and request.format=='text/html'

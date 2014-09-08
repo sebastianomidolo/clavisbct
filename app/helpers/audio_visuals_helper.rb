@@ -14,10 +14,10 @@ module AudioVisualsHelper
 
   def audio_visual_show(record,show_clavis_manifestations=true)
     res=[]
-    skip=[:idvolume,:r_colloc,:prot_fattura,:importo_fattura,:data_sollecito,:data_sospensione,:data_ordine,:data_arrivo,:fornitore,:ordinato,:numero_fattura,:sigla]
-    record.attributes.keys.each do |k|
+    fields=[:autore,:titolo,:collocazione,:interpreti,:editore,:numero_editoriale,:anno_edizione]
+    # fields=record.attributes.keys
+    fields.each do |k|
       next if record[k].blank?
-      next if skip.include?(k.to_sym)
       res << content_tag(:tr, content_tag(:td, k) +
                          content_tag(:td, record[k]))
     end
@@ -35,7 +35,8 @@ module AudioVisualsHelper
                          content_tag(:td, link_to("Vai al record #{record.id}",audio_visual_path(record))))
     end
     res=content_tag(:table, res.join.html_safe)
-    content_tag(:div, content_tag(:span,"Record #{record.id} da archivio audiovisivi Biblioteca Musicale") + res)
+    # content_tag(:div, content_tag(:span,"Record #{record.id} da archivio audiovisivi Biblioteca Musicale") + res)
+    content_tag(:div, content_tag(:span,"Scheda informativa") + res)
   end
 
   def audio_visual_show_musicbrainz_artist(mba)

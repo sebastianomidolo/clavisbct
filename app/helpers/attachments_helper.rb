@@ -6,7 +6,7 @@ module AttachmentsHelper
 
     ct.each_pair do |category,allegati|
       # res << content_tag(:div, content_tag(:h2, attachment_category(category)))
-      res << content_tag(:div, attachment_category(category))
+      res << content_tag(:p, attachment_category(category))
       att=allegati.group_by {|a| a.folder}
       att.keys.sort.each do |k|
         res << content_tag(:div, content_tag(:b, k.capitalize)) if !k.nil? and !k.gsub(/CD/,'').blank?
