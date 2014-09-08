@@ -1,0 +1,7 @@
+<% text="Soggettario delle Biblioteche civiche torinesi (versione alfa - lavori in corso - #{Subject.count} soggetti)" %>
+<% if showlink %>
+ <%= content_tag(:h4, link_to(text, subjects_path)) %>
+<% else %>
+ <%= content_tag(:h4, text) %>
+<% end %>
+

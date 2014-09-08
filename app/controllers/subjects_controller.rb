@@ -1,9 +1,27 @@
 class SubjectsController < ApplicationController
+  layout 'navbar'
+
   # GET /subjects
   # GET /subjects.json
   def index
-    @subjects = Subject.all
+    @pagetitle='Soggettario BCT'
+    @subject = Subject.new(params[:subject])
 
+    cond=[]
+    if !@subject.heading.blank?
+      ts=Subject.connection.quote_string(@subject.heading.split.join(' & '))
+      cond << "to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}') and not heading ~ '^[aiv]'"
+      # cond << "to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}')"
+    end
+    if !@subject.clavis_subject_class.blank?
+      cond << "clavis_subject_class = #{Subject.connection.quote(@subject.clavis_subject_class)}"
+    end
+    if @subject.inbct==true
+      cond << "inbct is true"
+    end
+    cond = cond==[] ? 'false' : cond.join(" AND ")
+
+    @subjects = Subject.paginate(:conditions=>cond,:per_page=>300,:page=>params[:page], :order=>'heading')
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: @subjects }
@@ -14,70 +32,11 @@ class SubjectsController < ApplicationController
   # GET /subjects/1.json
   def show
     @subject = Subject.find(params[:id])
-
+    @pagetitle="Soggettario BCT: #{@subject.heading} "
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @subject }
     end
   end
 
-  # GET /subjects/new
-  # GET /subjects/new.json
-  def new
-    @subject = Subject.new
-
-    respond_to do |format|
-      format.html # new.html.erb
-      format.json { render json: @subject }
-    end
-  end
-
-  # GET /subjects/1/edit
-  def edit
-    @subject = Subject.find(params[:id])
-  end
-
-  # POST /subjects
-  # POST /subjects.json
-  def create
-    @subject = Subject.new(params[:subject])
-
-    respond_to do |format|
-      if @subject.save
-        format.html { redirect_to @subject, notice: 'Subject was successfully created.' }
-        format.json { render json: @subject, status: :created, location: @subject }
-      else
-        format.html { render action: "new" }
-        format.json { render json: @subject.errors, status: :unprocessable_entity }
-      end
-    end
-  end
-
-  # PUT /subjects/1
-  # PUT /subjects/1.json
-  def update
-    @subject = Subject.find(params[:id])
-
-    respond_to do |format|
-      if @subject.update_attributes(params[:subject])
-        format.html { redirect_to @subject, notice: 'Subject was successfully updated.' }
-        format.json { head :no_content }
-      else
-        format.html { render action: "edit" }
-        format.json { render json: @subject.errors, status: :unprocessable_entity }
-      end
-    end
-  end
-
-  # DELETE /subjects/1
-  # DELETE /subjects/1.json
-  def destroy
-    @subject = Subject.find(params[:id])
-    @subject.destroy
-
-    respond_to do |format|
-      format.html { redirect_to subjects_url }
-      format.json { head :no_content }
-    end
-  end
 end

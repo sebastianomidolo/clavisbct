@@ -1,5 +1,23 @@
-<p id="notice"><%= notice %></p>
+<%= render :partial => 'title', :locals=>{:showlink=>true} %>
+<%=
+  txt="[#{@subject.clavis_subject_class}] #{@subject.to_html}"
 
+   au=@subject.clavis_authority
+   if !au.nil?
+     txt << " " + link_to("[Clavis (#{au.authority_type})]", ClavisAuthority.clavis_url(au.id), :target=>'_blank') 
+     au = au.clavis_authority
+     if !au.nil?
+       txt << "" + link_to(" [Clavis (#{au.authority_type})]", ClavisAuthority.clavis_url(au.id), :target=>'_blank') 
+     end
+     txt << content_tag(:p, 'Presente nel soggettario') if @subject.inbct
+   end
 
-<%= link_to 'Edit', edit_subject_path(@subject) %> |
-<%= link_to 'Back', subjects_path %>
+   txt << content_tag(:p, @subject.scope_note) if !@subject.scope_note.nil?
+content_tag(:div,
+     content_tag(:div, txt.html_safe, class: 'panel-heading'), class: 'panel panel-default')
+%>
+
+<%= subject_related_terms(@subject) %>
+
+<% link_to 'Edit', edit_subject_path(@subject) %> <% link_to 'Back', subjects_path %>
+

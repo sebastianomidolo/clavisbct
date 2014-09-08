@@ -1,21 +1,21 @@
-<h1>Listing subjects</h1>
+<%= render :partial => 'title', :locals=>{:showlink=>false} %>
+<%= render :partial => 'searchform' %>
 
+<%= will_paginate @subjects %>
+
+<hr/>
 <table>
+<% @subjects.each do |s| %>
   <tr>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
-
-<% @subjects.each do |subject| %>
-  <tr>
-    <td><%= link_to 'Show', subject %></td>
-    <td><%= link_to 'Edit', edit_subject_path(subject) %></td>
-    <td><%= link_to 'Destroy', subject, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+    <td><%= link_to s.heading, s, :target=>'_blank' %></td>
+    <td><%= if !s.clavis_authority_id.nil?
+              link_to s.clavis_subject_class, ClavisAuthority.clavis_url(s.clavis_authority_id), :target=>'_blank'
+            else
+	      s.clavis_subject_class
+            end %>
+    </td>
   </tr>
 <% end %>
 </table>
 
-<br />
 
-<%= link_to 'New Subject', new_subject_path %>

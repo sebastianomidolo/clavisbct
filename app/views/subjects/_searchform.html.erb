@@ -1,0 +1,12 @@
+
+<%= simple_form_for(@subject, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= f.input :heading, hint: 'parole da cercare', as: 'string', label: false, placeholder: 'parole nel soggetto' %>
+
+  <%= f.input :clavis_subject_class, collection: Subject.clavis_subject_classes, include_blank: true, label: false,
+       :input_html => {:onchange=>"submit()"}
+    %>
+  <%= f.input :inbct, label: false, hint: 'filtra solo le voci presenti nel soggettario', :input_html=>{:onclick=>"submit()"} %>
+
+  <%= f.submit 'cerca', :class=>'btn btn-info' %>
+  <%= link_to('azzera',subjects_path) %>
+<% end %>
