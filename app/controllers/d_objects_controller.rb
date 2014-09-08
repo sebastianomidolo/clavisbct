@@ -29,7 +29,8 @@ class DObjectsController < ApplicationController
       @d_object = DObject.find(params[:id])
     end
     respond_to do |format|
-      format.html
+      format.html {
+      }
       format.jpeg {
         if (@d_object.access_right_id==0 and @d_object.mime_type=='application/pdf; charset=binary' and !params[:page].blank?)
           fname=@d_object.pdf_to_jpeg[params[:page].to_i]
@@ -139,4 +140,14 @@ class DObjectsController < ApplicationController
     render :text=>@d_object.mime_type
   end
 
+
+  def random_mp3
+    @pagetitle='Traccia audio casuale'
+    @d_object = Attachment.first(:conditions=>"attachment_category_id='E'", :order=>'random()').d_object
+    # @d_object = DObject.find(5403645)
+    fname=@d_object.filename_with_path
+    logger.warn("random_mp3 id #{@d_object.id} (#{fname})")
+    @d_object['random']=true
+    render :action=>:show, :layout=>'navbar_nomenu'
+  end
 end
