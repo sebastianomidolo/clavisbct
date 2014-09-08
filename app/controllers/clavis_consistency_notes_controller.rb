@@ -31,8 +31,14 @@ join clavis.manifestation cm using(manifestation_id)
   def details
     headers['Access-Control-Allow-Origin'] = "*"
     if params[:manifestation_id].blank?
+      render :text=>'manifestation_id?' and return
     end
-    render :layout=>false
+    mid=params[:manifestation_id].to_i
+    @clavis_consistency_note=ClavisConsistencyNote.where("library_id=2 AND manifestation_id=#{mid} AND collocazione_per NOTNULL").first
+    respond_to do |f|
+      f.html
+      f.js  {render :layout=>false}
+    end
   end
 
 
