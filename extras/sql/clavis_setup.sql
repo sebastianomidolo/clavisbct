@@ -36,3 +36,14 @@ CREATE TABLE clavis.uni856 AS
   (xpath('//d856/sz/text()',unimarc::xml))[1]::varchar(128) AS nota
 FROM clavis.manifestation WHERE (xpath('//d856/su/text()',unimarc::xml))[1] NOTNULL;
 CREATE index uni856_manifestation_id_idx ON clavis.uni856(manifestation_id);
+
+
+
+CREATE INDEX clavis_authorities_full_text ON clavis.authority(full_text);
+CREATE INDEX clavis_authorities_authority_id ON clavis.authority(authority_id);
+CREATE INDEX clavis_authorities_subject_class ON clavis.authority(subject_class);
+CREATE INDEX clavis_authorities_authority_type ON clavis.authority(authority_type);
+
+
+UPDATE clavis.authority SET subject_class='no label' WHERE authority_type = 's' AND subject_class IS NULL;
+

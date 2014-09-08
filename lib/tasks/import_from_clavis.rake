@@ -57,4 +57,12 @@ task :import_from_clavis => :environment do
   Ordine.importa_archivio_periodici
   puts "tornato da Ordine.importa_archivio_periodici #{Time.now}"
 
+
+  puts "chiamo ora ClavisConsistencyNote.create_periodici_in_casse #{Time.now}"
+  ClavisConsistencyNote.create_periodici_in_casse
+  puts "tornato da ClavisConsistencyNote.create_periodici_in_casse #{Time.now}"
+  puts "chiamo ora ClavisConsistencyNote.update_collocazione_per #{Time.now}"
+  ClavisConsistencyNote.update_collocazione_per
+  puts "tornato da ClavisConsistencyNote.update_collocazione_per #{Time.now}"
+
 end
