@@ -32,7 +32,10 @@ module SpBibliographiesHelper
     res=SpBibliography.sanifica_html(record.html_description)
     i=res.index('<br')
     i = (i.nil? or i>300) ? 300 : i-1
-    content_tag(:div, res[0..i].html_safe)
+    # content_tag(:div, res[0..i].html_safe)
+    content_tag(:div, res.html_safe)
   end
 
 end
+
+
