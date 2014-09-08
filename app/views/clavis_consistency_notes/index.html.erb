@@ -1,0 +1,12 @@
+<%= render :partial => 'searchform' %>
+<%= content_tag(:p, "Trovati #{@clavis_consistency_notes.total_entries}") %>
+<%= will_paginate @clavis_consistency_notes, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, clavis_consistency_notes_index(@clavis_consistency_notes)) %>
+
+
+<%= link_to('Elenco su GoogleDrive', "https://docs.google.com/spreadsheets/d/1q69AxbCy4i_mchKvAm_-3iiVUUrvY0Ks0VzQIgqEmjo", :target=>'_blank') %>
+
+
+
+
