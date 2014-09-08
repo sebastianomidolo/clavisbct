@@ -1,5 +1,5 @@
 class AudioVisualsController < ApplicationController
-  layout 'navbar'
+  layout 'navbar_nomenu'
 
   def index
     @audio_visual = AudioVisual.new(params[:audio_visual])
