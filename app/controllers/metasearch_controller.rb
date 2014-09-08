@@ -11,7 +11,8 @@ class MetasearchController < ApplicationController
       res={}
     else
       # true=>debug mode (default false)
-      res=do_search(sys,q,params[:dryrun],false)
+      dryrun = params[:dryrun]=='0' ? false : true
+      res=do_search(sys,q,dryrun,false)
     end
     respond_to do |format|
       format.html { render :text=>res.inspect }
