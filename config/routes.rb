@@ -7,7 +7,11 @@ Clavisbct::Application.routes.draw do
   # match 'ccu/:user/:pass/:clientip' => 'clavis_patrons#user_checkin_notification'
   match 'ccu/:user/:pass/:ip' => 'clavis_patrons#user_checkin_notification'
 
-  resources :d_objects
+  resources :d_objects do
+    collection do
+      get 'random_mp3'
+    end
+  end
 
 
   resources :subjects
@@ -26,6 +30,7 @@ Clavisbct::Application.routes.draw do
   resources :sp_items
 
   match '/uni856' => 'home#uni856'
+  match '/verifica_consistenze' => 'clavis_consistency_notes#index'
 
   match '/procultura' => 'procultura_folders#index'
   resources :procultura_cards
@@ -67,6 +72,12 @@ Clavisbct::Application.routes.draw do
   resources :clavis_issues do
     collection do
       get 'check'
+    end
+  end
+
+  resources :clavis_consistency_notes do
+    collection do
+      get 'details'
     end
   end
 
