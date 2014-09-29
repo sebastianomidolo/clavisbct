@@ -10,6 +10,13 @@
  <% end %>
 <% end %>
 
+<%= form_tag(shortlist_clavis_manifestations_url, :method=>:get) do %>
+ <% if !params[:created_by].blank? %>
+  Created_by
+  <%= select_tag(:created_by, options_for_select(ClavisManifestation.creators,
+      params[:created_by].to_i), :onchange=>'submit();') %>
+ <% end %>
+<% end %>
 
 <%= content_tag(:h3, "Trovati #{@clavis_manifestations.total_entries}") %>
 

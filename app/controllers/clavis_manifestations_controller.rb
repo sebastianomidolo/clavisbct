@@ -42,6 +42,7 @@ class ClavisManifestationsController < ApplicationController
     order += ",manifestation_id" if !order.blank?
     if params[:digit].blank?
 
+      cond[:created_by]=params[:created_by] if !params[:created_by].blank?
       polo=params[:polo]
       if !polo.blank?
         condtext=[]

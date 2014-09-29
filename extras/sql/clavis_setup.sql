@@ -47,3 +47,5 @@ CREATE INDEX clavis_authorities_authority_type ON clavis.authority(authority_typ
 
 UPDATE clavis.authority SET subject_class='no label' WHERE authority_type = 's' AND subject_class IS NULL;
 
+CREATE TABLE clavis.manifestation_creators AS (SELECT DISTINCT created_by FROM clavis.manifestation);
+

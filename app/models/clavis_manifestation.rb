@@ -395,6 +395,10 @@ class ClavisManifestation < ActiveRecord::Base
     r
   end
 
+  def self.creators
+    self.connection.execute("SELECT created_by FROM clavis.manifestation_creators ORDER BY created_by").collect{|x| x['created_by']}
+  end
+
   def self.clavis_subscription_url(id)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
