@@ -3,15 +3,17 @@ module ClavisConsistencyNotesHelper
   def clavis_consistency_notes_index(records)
     res=[]
     records.each do |r|
-      title=r.title.blank? ? '[?]' : r.title
+      title=r.title.blank? ? '[?]' : r.title[0..80]
       casse = r.casse.size==0 ? '' : r.casse.collect {|z| z.cassa }.join(', ')
-      casse = params[:fmt]=='short' ? '' : content_tag(:td, casse)
+      casse = params[:fmt]=='short' ? '' : content_tag(:td, casse, :style=>'width: 20%')
       res << content_tag(:tr, content_tag(:td, content_tag(:b, "Per.#{r.collocazione_per}"), :class=>'info') +
                          content_tag(:td, link_to(r.collocation, clavis_consistency_note_path(r.id),
                                                   :target=>'_blank')) +
-                         content_tag(:td, r.text_note) + casse +
-                         content_tag(:td, link_to(title, ClavisManifestation.clavis_url(r.manifestation_id,:opac),
-                                                  :target=>'_blank')))
+                         content_tag(:td, r.text_note,:style=>'width: 20%') + casse +
+                         content_tag(:td,
+                                     link_to(title, ClavisManifestation.clavis_url(r.manifestation_id,:show), :target=>'_blank') + link_to('<br/><b>[opac]</b>'.html_safe, ClavisManifestation.clavis_url(r.manifestation_id,:opac), :target=>'_blank'),:style=>'width: 36%'))
+
+
     end
     # content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'), :class=>'table-responsive')
     content_tag(:table, res.join("\n").html_safe, :class=>'table table-bordered table-striped table-condensed')
@@ -22,14 +24,14 @@ module ClavisConsistencyNotesHelper
     cnt=0
     res << content_tag(:tr, content_tag(:td, 'Consistenza') +
                        content_tag(:td, 'Annata') +
-                       content_tag(:td, 'Note') +
-                       content_tag(:td, 'Posizione'))
+                       content_tag(:td, 'Posizione') +
+                       content_tag(:td, 'Note'))
     record.casse.each do |r|
       cnt+=1
       res << content_tag(:tr, content_tag(:td, r.consistenza) +
                          content_tag(:td, r.annata) +
-                         content_tag(:td, r.note) +
-                         content_tag(:td, content_tag(:b, r.cassa)))
+                         content_tag(:td, content_tag(:b, r.cassa) +
+                         content_tag(:td, r.note)))
     end
     cnt==0? '' : content_tag(:table, res.join.html_safe, :class=>'table table-striped')
   end
