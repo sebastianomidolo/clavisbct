@@ -17,10 +17,10 @@ module TalkingBooksHelper
                          content_tag(:td, record[k]))
     end
     res=content_tag(:table, res.join.html_safe)
-    record.clavis_manifestations.each do |cm|
-      lnk=clavis_manifestation_path(cm)
-      res << link_to("Vedi manifestation #{cm.id}",lnk)
-      res << content_tag(:div, clavis_manifestation_opac_preview(cm))
+    if !record.manifestation_id.nil?
+      lnk=clavis_manifestation_path(record.manifestation_id)
+      res << link_to("Vedi manifestation #{record.manifestation_id}",lnk)
+      res << content_tag(:div, clavis_manifestation_opac_preview(record.manifestation_id))
     end
     res
   end

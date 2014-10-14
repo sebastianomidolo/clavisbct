@@ -16,13 +16,26 @@ class TalkingBooksController < ApplicationController
     else
       logger.warn("type: tutti")
     end
-    cond = cond.join(" AND ")
-
-    @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
 
     respond_to do |format|
-      format.html # index.html.erb
-      format.json { render json: @talking_books }
+      format.html {
+        cond = cond.join(" AND ")
+        @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+      }
+      format.pdf {
+        case params[:type]
+        when 'novita'
+          # cond << "data_collocazione notnull"
+          mesi = params[:mesi].blank? ? 12 : params[:mesi].to_i
+          mesi = 12 if mesi==0
+          cond << "data_collocazione > now() - interval '#{mesi} months'"
+        else
+        end
+        cond = cond.join(" AND ")
+        @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+        pdf=TalkingBook.pdf_catalog(@talking_books)
+        send_data(pdf, :disposition=>'inline', :type=>'application/pdf')
+      }
     end
   end
 
@@ -34,6 +47,16 @@ class TalkingBooksController < ApplicationController
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @talking_book }
+    end
+  end
+
+  def digitalizzati
+    respond_to do |format|
+      format.pdf {
+        TalkingBook.digitalizzati
+        pdf=TalkingBook.pdf_catalog(TalkingBook.digitalizzati)
+        send_data(pdf, :disposition=>'inline', :type=>'application/pdf')
+      }
     end
   end
 
@@ -52,10 +75,9 @@ class TalkingBooksController < ApplicationController
     end
 
     # Utente @clavis_patron autorizzato al download nella sessione corrente
-    cm=ClavisManifestation.find(params[:mid])
-    zipfile=@talking_book.zip_filepath(@clavis_patron, cm)
+    zipfile=@talking_book.zip_filepath(@clavis_patron)
     if !File.exist?(zipfile)
-      @talking_book.make_audio_zip(@clavis_patron, cm)
+      @talking_book.make_audio_zip(@clavis_patron)
     end
     send_file(zipfile)
   end

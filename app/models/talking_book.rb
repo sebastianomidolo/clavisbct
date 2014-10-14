@@ -9,12 +9,33 @@ class TalkingBook < ActiveRecord::Base
   # has_one :clavis_manifestation, :through=>:clavis_item
   has_many :attachments, :as => :attachable
 
+  def main_entry
+    # self.intestatio.blank? ? "#{self.titolo}" : "#{self.intestatio}. "
+    self.intestatio.blank? ? "" : "#{self.intestatio}. "
+  end
+
   def digitalized
     self.digitalizzato.nil? ? false : true
   end
 
   def collocazione
-    "#{self.n} - #{self.titolo}"
+    # "#{self.n} - #{self.titolo}"
+    self.cd.nil? ? self.n : "#{self.cd} CD #{self.n}"
+  end
+
+  def area_descrizione_fisica_tex
+    res=[]
+    res << "#{self.n} [#{self.cassette}~cass.]" if !cassette.nil?
+    if !cd.nil?
+      res << "CD#{self.n} [#{self.cd}~cd~mp3]"
+      if res.size==0
+        # res << "#{self.n} [#{self.cd}~CD~mp3]"
+      else
+
+      end
+    end
+    return '' if res.size==0
+    "#{res.join(' -- ')}"
   end
 
   def codice_opera
@@ -50,16 +71,31 @@ class TalkingBook < ActiveRecord::Base
     word_wrap(erb.result(binding)).gsub("\n", "\r\n")
   end
 
-  def zip_filepath(patron, clavis_manifestation)
-    return nil if patron.loan_class!='@'
-    cm=clavis_manifestation
-    File.join(DigitalObjects.digital_objects_cache, "mid_#{cm.id}_uid_#{patron.id}.zip")
+  def zip_filepath(patron=nil)
+    return nil if self.manifestation_id.nil?
+    return nil if !patron.nil? and patron.loan_class!='@'
+    if patron.nil?
+      uid = ''
+      mid = "tb_#{self.id}_mid_#{self.manifestation_id}"
+      config = Rails.configuration.database_configuration
+      path = config[Rails.env]["libroparlato_download_area_basedir"]
+    else
+      uid = "_uid_#{patron.id}"
+      mid = "mid_#{self.manifestation_id}"
+      path = DigitalObjects.digital_objects_cache
+    end
+    File.join(path, "#{mid}#{uid}.zip")
   end
 
-  def make_audio_zip(patron, clavis_manifestation)
-    return nil if patron.loan_class!='@'
-    cm=clavis_manifestation
+  def make_audio_zip(patron=nil)
+    return nil if self.manifestation_id.nil?
+    return nil if !patron.nil? and patron.loan_class!='@'
 
+    require 'zip'
+    zipfile_name = self.zip_filepath(patron)
+    return true if File.exists?(zipfile_name)
+
+    cm=ClavisManifestation.find(self.manifestation_id)
     tempdir=Dir.mktmpdir('make_audio_zip', File.join(Rails.root.to_s, 'tmp'))
     storage_dir=DigitalObjects.digital_objects_mount_point
     title=cm.title.strip
@@ -83,7 +119,11 @@ class TalkingBook < ActiveRecord::Base
       mp3.tag.artist=self.intestatio
       mp3.tag.tracknum=cnt
       mp3.tag.year=self.digitalizzato.year
-      mp3.tag2.TCOP="Biblioteche civiche torinesi - utente #{patron.id}"
+      if patron.nil?
+        mp3.tag2.TCOP="Biblioteche civiche torinesi"
+      else
+        mp3.tag2.TCOP="Biblioteche civiche torinesi - utente #{patron.id}"
+      end
       # "WOAS" => "Official audio source webpage"
       # "TCON" => "Content type"
       # "TPOS" => "Part of a set"
@@ -94,15 +134,14 @@ class TalkingBook < ActiveRecord::Base
       mp3.tag2.TCON='Audiobook'
       mp3.tag2.TPOS=1                  ;# Disc number, sempre 1
       mp3.tag2.TBPM=mp3.bitrate
-      mp3.tag2.COMM="Registrazione a uso esclusivo degli utenti del Servizio libro parlato delle BCT (utente #{patron.id})"
+      if patron.nil?
+        mp3.tag2.COMM="Registrazione a uso esclusivo degli utenti del Servizio libro parlato delle BCT"
+      else
+        mp3.tag2.COMM="Registrazione a uso esclusivo degli utenti del Servizio libro parlato delle BCT (utente #{patron.id})"
+      end
       mp3.close
       # puts mp3.to_s
     end
-
-    # puts tempdir
-    require 'zip'
-    zipfile_name = self.zip_filepath(patron, cm)
-    File.delete(zipfile_name) if File.exists?(zipfile_name)
 
     tf = Tempfile.new("readme_zip",tempdir)
     readme_filename=tf.path
@@ -149,6 +188,22 @@ class TalkingBook < ActiveRecord::Base
     end
     num=$2.to_i
     "#{p} #{num}"
+  end
+
+  def TalkingBook.pdf_catalog(talking_books)
+    lp=LatexPrint::PDF.new('talkingbooks_catalog', talking_books)
+    fd=File.open("/tmp/prova.tex","w")
+    fd.write(lp.texinput)
+    fd.close
+    lp.makepdf
+  end
+
+  def TalkingBook.digitalizzati
+    sql=%Q{SELECT * FROM libroparlato.catalogo WHERE manifestation_id IN
+      (SELECT attachable_id FROM attachments WHERE attachable_type='ClavisManifestation' AND attachment_category_id='D')
+      ORDER BY chiave,ordine
+    }
+    TalkingBook.find_by_sql(sql)
   end
 
   def self.loadhelper
