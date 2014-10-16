@@ -66,7 +66,8 @@ select o.filename,o.id,a.position from attachments a join d_objects o
     if !collocpattern.blank?
       collocpattern = "AND ci.collocation ~* #{Attachment.connection.quote(collocpattern)}"
     end
-    sql=%Q{SELECT ci.collocation,ci.title,ci.manifestation_id FROM clavis.item ci
+    sql=%Q{SELECT ci.collocation,ci.title,ci.manifestation_id,lp.id as talking_book_id FROM clavis.item ci
+       JOIN libroparlato.catalogo lp USING(manifestation_id)
       WHERE ci.manifestation_id IN (SELECT attachable_id FROM attachments
         WHERE attachable_type='ClavisManifestation' AND attachment_category_id='D')
         #{collocpattern}
