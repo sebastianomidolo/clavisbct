@@ -18,6 +18,16 @@
 
   <body>
 
+<% if user_signed_in? %>
+<% access_link=link_to "#{current_user.email} <b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete %>
+<% else %>
+<% access_link=link_to "Sign in", new_user_session_path
+   access_link=link_to "Log in", new_user_session_path
+%>
+<% end %>
+
+
+
     <div class="container">
 
       <!-- Static navbar -->
@@ -58,9 +68,13 @@
             <li><a href="https://github.com/plataformatec/simple_form">Simple form</a></li>
             <li><a target="_blank" href="https://github.com/sebastianomidolo/clavisbct">Sources</a></li>
             <li><a target="_blank" href="http://getbootstrap.com/">Bootstrap</a></li>
+	    <%= content_tag(:li, access_link) %>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
+
+       <p class="notice"><%= notice %></p>
+       <p class="alert"><%= alert %></p>
 
       <!-- Main component for a primary marketing message or call to action -->
       <div class="jumbotron">
