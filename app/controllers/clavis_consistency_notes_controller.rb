@@ -34,7 +34,12 @@ join clavis.manifestation cm using(manifestation_id)
       render :text=>'manifestation_id?' and return
     end
     mid=params[:manifestation_id].to_i
-    @clavis_consistency_note=ClavisConsistencyNote.where("library_id=2 AND manifestation_id=#{mid} AND collocazione_per NOTNULL").first
+    # @clavis_consistency_note=ClavisConsistencyNote.where("library_id=2 AND manifestation_id=#{mid} AND collocazione_per NOTNULL").first
+
+    sql=%Q{select cn.* from clavis.consistency_note cn, clavis.periodici_in_casse pc
+       where cn.library_id=2 AND manifestation_id=#{mid} and
+       (cn.collocazione_per=pc.collocazione_per or cn.consistency_note_id=pc.consistency_note_id);}
+    @clavis_consistency_note=ClavisConsistencyNote.find_by_sql(sql).first
     respond_to do |f|
       f.html
       f.js  {render :layout=>false}
