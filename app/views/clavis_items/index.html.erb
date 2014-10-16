@@ -1,4 +1,17 @@
-<%= render :partial => 'searchform' if params[:nosearchform].blank? %>
-<%= content_tag(:div, @sql_conditions, class: 'panel panel-success') %>
+<%=
+  if user_signed_in?
+   render :partial => 'searchform_signed_in'
+  else
+   render :partial => 'searchform' if params[:nosearchform].blank?
+  end
+%>
+<% content_tag(:div, @sql_conditions, class: 'panel panel-success') %>
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
-<%= clavis_items_shortlist(@clavis_items) %>
+<%=
+ if user_signed_in?
+  clavis_items_shortlist_signed_in(@clavis_items)
+ else
+  clavis_items_shortlist(@clavis_items)
+ end
+%>
+
