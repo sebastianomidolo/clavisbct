@@ -8,9 +8,9 @@
 <tbody>
 <% cnt=0 %>
 <% @records.each do |r| %>
-  <%= cnt+=1; content_tag(:tr, content_tag(:td, cnt) +
-        content_tag(:td, r['collocation']) +
-        content_tag(:td, link_to(r['title'], clavis_manifestation_path(r['manifestation_id']))))
+  <%= tb=TalkingBook.find(r['talking_book_id'])
+      cnt+=1; content_tag(:tr, content_tag(:td, r['collocation'], :style=>'white-space: nowrap') +
+      content_tag(:td, link_to(r['title'], clavis_manifestation_path(r['manifestation_id']))))
   %>
 <% end %>
 </tbody>
