@@ -3,13 +3,15 @@ class ClavisItem < ActiveRecord::Base
   self.primary_key = 'item_id'
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
-                   :item_media, :collocation, :inventory_number, :manifestation_dewey
+  :item_media, :collocation, :inventory_number, :manifestation_dewey,
+  :current_container
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
 
   has_many :talking_books, :foreign_key=>'n', :primary_key=>'collocation'
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
   has_many :attachments, :as => :attachable
+
 
   def to_label
     if self.clavis_manifestation.nil?
@@ -28,6 +30,22 @@ class ClavisItem < ActiveRecord::Base
     "#{inventory_serie_id}-#{inventory_number}"
   end
 
+  def consistency_notes
+    coll=self.connection.quote(self.collocation)
+    where="manifestation_id=#{self.manifestation_id} AND library_id=#{self.owner_library_id}"
+    sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
+         AND collocation = #{coll}}
+    r=ClavisConsistencyNote.find_by_sql(sql)
+    return r if r.size==1
+    sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
+       AND collocation ~* #{coll} ORDER BY consistency_note_id}
+    r=ClavisConsistencyNote.find_by_sql(sql)
+    return r if r.size!=0
+    sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
+       ORDER BY consistency_note_id}
+    ClavisConsistencyNote.find_by_sql(sql)
+  end
+
   def la_collocazione
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
     r.delete_if {|a| a.blank?}
@@ -38,6 +56,30 @@ class ClavisItem < ActiveRecord::Base
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
     r.delete_if {|a| a.blank?}
     r.join('.')
+  end
+
+  def current_container
+    @current_container
+  end
+
+  def current_container= value
+    return nil if value.nil?
+    @current_container=value.upcase.gsub(' ','')
+  end
+
+
+  def save_in_google_drive(ws)
+    data=[]
+    title=self.title.strip
+    if self.item_media=='S'
+      self.consistency_notes.each do |cn|
+        cn_colloc=cn.collocation==self.collocazione ? '' : cn.collocation
+        data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,self.item_id,cn.consistency_note_id,cn.text_note,cn_colloc,(cn.closed.to_i==1 ? 'Consistenza CHIUSA' : 'Consistenza APERTA')]
+      end
+    else
+      data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,self.item_id]
+    end
+    ws.update_cells(ws.num_rows+1,1,data)
   end
 
   def clavis_url(mode=:show)
