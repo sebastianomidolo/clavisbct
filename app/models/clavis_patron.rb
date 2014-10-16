@@ -2,6 +2,18 @@
 # lastmod 21 febbraio 2013
 
 class ClavisPatron < ActiveRecord::Base
+  # Include default devise modules. Others available are:
+  # :confirmable, :lockable, :timeoutable and :omniauthable
+  # devise :database_authenticatable, :registerable, :recoverable, :rememberable, :trackable, :validatable
+  devise :database_authenticatable, :rememberable, :encryptable, :encryptor=>:sha1, :stretches=>10
+
+  alias_attribute :encrypted_password, :opac_secret
+  # alias_attribute :password_salt, :opac_secret
+
+  # Setup accessible (or protected) attributes for your model
+  # attr_accessible :email, :password, :password_confirmation, :remember_me
+  attr_accessible :opac_username, :opac_secret
+
   self.table_name='clavis.patron'
   self.primary_key='patron_id'
 
