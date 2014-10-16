@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140725095516) do
+ActiveRecord::Schema.define(:version => 20141012195147) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -64,6 +64,16 @@ ActiveRecord::Schema.define(:version => 20140725095516) do
     t.integer "library_id"
   end
 
+  create_table "casse_periodici", :id => false, :force => true do |t|
+    t.integer "collocazione_per",               :null => false
+    t.integer "catena"
+    t.string  "catena_string",    :limit => 8
+    t.string  "cassa",            :limit => 8,  :null => false
+    t.string  "annata",           :limit => 24
+    t.string  "note",             :limit => 64
+    t.integer "manifestation_id"
+  end
+
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
     t.integer "d_object_id"
     t.text    "collocation"
@@ -73,6 +83,12 @@ ActiveRecord::Schema.define(:version => 20140725095516) do
   end
 
   add_index "collocazioni_musicale", ["collocation"], :name => "collocazioni_musicale_idx"
+
+  create_table "collocazioni_periodici_civica", :id => false, :force => true do |t|
+    t.text    "collocazione"
+    t.string  "sequence1",        :limit => 128
+    t.integer "manifestation_id"
+  end
 
   create_table "d_objects", :force => true do |t|
     t.string   "filename",        :limit => 2048
@@ -248,13 +264,11 @@ ActiveRecord::Schema.define(:version => 20140725095516) do
 
   create_table "users", :force => true do |t|
     t.string   "email",                  :default => "", :null => false
-    t.string   "login",                  :default => "", :null => false
     t.string   "encrypted_password",     :default => "", :null => false
     t.string   "reset_password_token"
     t.datetime "reset_password_sent_at"
     t.datetime "remember_created_at"
-    t.string   "password_salt"
-    t.integer  "sign_in_count",          :default => 0
+    t.integer  "sign_in_count",          :default => 0,  :null => false
     t.datetime "current_sign_in_at"
     t.datetime "last_sign_in_at"
     t.string   "current_sign_in_ip"
