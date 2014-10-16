@@ -13,7 +13,8 @@ module ClavisManifestationsHelper
   end
 
   def clavis_manifestation_opac_preview(record)
-    %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{record.id}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
+    mid = record.class==ClavisManifestation ? record.id : record
+    %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
   def clavis_manifestations_shortlist(records)
