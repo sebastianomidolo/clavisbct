@@ -9,7 +9,7 @@ link_to(cm.id, cm.clavis_url)
 %>
 <%= cm.date_created.to_date %>
 
-<br/><%= link_to("cerca per created_by", shortlist_clavis_manifestations_path(:created_by=>0)) %>
+<br/><%= link_to("cerca per created_by", shortlist_clavis_manifestations_path(:created_by=>1)) %>
 
 <%= content_tag(:h3, 'Titoli suddivisi per bid source (solo bib_level m, c, s)') %>
 <%= content_tag(:div, clavis_manifestations_perbid) %>
