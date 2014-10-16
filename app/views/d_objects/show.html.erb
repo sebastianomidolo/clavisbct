@@ -14,7 +14,7 @@
   track=@d_object.get_tracklist.sample
   cnt=@d_object.get_tracklist.index(track)+1
   if @d_object.audioclip_exists?(cnt)
-    lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{track['title'].reverse}", %Q{http://#{request.host_with_port}#{d_object_path(@d_object, format: 'mp3', t: cnt)}}))
+    lista << content_tag(:li, link_to("#{track[:attributes]['position']}. <b>?</b>".html_safe, %Q{http://#{request.host_with_port}#{d_object_path(@d_object, format: 'mp3', t: cnt)}}))
   else
     lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
   end
@@ -30,6 +30,7 @@
 
   <% if @d_object.references.first.attachable_type=='ClavisManifestation' %>
     <div id="rivela_il_mistero" style="display:none">
+      <p>Puoi ascoltare tutto il CD in Biblioteca, o puoi prenderlo in prestito e portartelo a casa</p>
     <%= content_tag(:div, clavis_manifestation_opac_preview(@d_object.references.first.attachable)) %>
     <%= content_tag(:div, attachments_render(@d_object.references.first.attachable.attachments)) %>
     </div>
@@ -40,7 +41,7 @@
 setTimeout(function() {
 jQuery('#fra_pochi_secondi').fadeOut(1000);
 jQuery('#rivela_il_mistero').fadeIn(2000);
-}, 30000);
+}, 10000);
 </script>
 
 
