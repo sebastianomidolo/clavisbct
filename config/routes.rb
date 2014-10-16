@@ -1,5 +1,9 @@
 Clavisbct::Application.routes.draw do
 
+  devise_for :users
+
+  devise_for :clavis_patrons
+
   match 'jsonip' => 'home#jsonip'
 
   match 'obj/:id/:key' => 'd_objects#objshow'
@@ -20,6 +24,9 @@ Clavisbct::Application.routes.draw do
     member do
       get 'download_mp3'
     end
+    collection do
+      get 'digitalizzati'
+    end
   end
   resources :iss_articles
   resources :audio_visuals
@@ -36,7 +43,6 @@ Clavisbct::Application.routes.draw do
   resources :procultura_cards
   resources :procultura_folders
 
-  # devise_for :users
   resources :ordini do
     collection do
       get 'fatture'
