@@ -1,8 +1,17 @@
 class ClavisItemsController < ApplicationController
+  before_filter :authenticate_user!, only: 'showxxx'
+
   def index
     # render :text=>params[:clavis_item].inspect
     # return
     @clavis_item = ClavisItem.new(params[:clavis_item])
+    if user_signed_in?
+      @clavis_item.owner_library_id=2 if @clavis_item.owner_library_id.nil?
+      if @clavis_item.current_container.nil?
+        @clavis_item.current_container=user_session[:current_container]
+      end
+      user_session[:current_container]=@clavis_item.current_container
+    end
     @attrib=@clavis_item.attributes.collect {|a| a if not a.last.blank?}.compact
     toskip=["item_order_status", "mediapackage_size", "usage_count", "renewal_count", "notify_count", "discount_value"]
     @attrib.delete_if do |r|
@@ -25,13 +34,23 @@ class ClavisItemsController < ApplicationController
            end
       end
     end
-    cond = cond.join(" AND ")
-    @sql_conditions=cond
-    # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'*',:joins=>"join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')")
-    order_by = cond.blank? ? nil : 'cc.sort_text'
-    @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')", :order=>order_by)
+    if !params[:clavis_item].nil?
+      @attrib << ['title','']
+      @attrib << ['inventory_number','']
+      if user_signed_in?
+        @attrib << ['current_container', '']
+      end
+      cond = cond.join(" AND ")
+      @sql_conditions=cond
+      # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'*',:joins=>"join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')")
+      order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')", :order=>order_by)
+    else
+      @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
+    end
+
     respond_to do |format|
-      format.html { render layout: 'navbar' }
+      format.html
       format.json { render json: @clavis_items }
     end
   end
@@ -58,7 +77,31 @@ class ClavisItemsController < ApplicationController
       redirect_to @clavis_item.clavis_url and return if !params[:redir].blank?
     end
     respond_to do |format|
-      format.html # show.html.erb
+      format.html
+      format.js {
+        if user_signed_in? and !current_user.google_doc_key.nil?
+          @clavis_item.current_container=user_session[:current_container]
+          if @clavis_item.current_container.blank?
+            render :js=>"alert('Manca il numero del contenitore')"
+          else
+            if user_session[:google_session].nil?
+              config = Rails.configuration.database_configuration
+              username=config[Rails.env]["google_drive_login"]
+              passwd=config[Rails.env]["google_drive_passwd"]
+              session = GoogleDrive.login(username, passwd)
+            else
+              session=user_session[:google_session]
+              user_session[:session_usage_count] = 1 if user_session[:session_usage_count].nil?
+              user_session[:session_usage_count]+=1
+            end
+            s=session.spreadsheet_by_key(current_user.google_doc_key)
+            ws=s.worksheets.first
+            @clavis_item.save_in_google_drive(ws)
+            ws.save
+            user_session[:google_session]=session
+          end
+        end
+      }
       format.json { render :json => @clavis_item }
     end
   end

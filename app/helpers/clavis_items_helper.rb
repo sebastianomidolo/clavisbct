@@ -15,7 +15,7 @@ module ClavisItemsHelper
     # Eventuale link a qualcosa:
     # content_tag(:td, link_to('[presta]', r.clavis_url(:loan), :target=>'_blank'))
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, r.collocazione) +
+      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione, clavis_item_path(r))) +
                          content_tag(:td, r.item_media_type) +
                          content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
                          content_tag(:td, r.inventario),
@@ -25,6 +25,25 @@ module ClavisItemsHelper
     res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
+
+  def clavis_items_shortlist_signed_in(records, table_id='items_list')
+    return 'please sign in' if !user_signed_in?
+    return '' if records.size==0
+    res=[]
+    records.each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione, r, remote: true,
+                                                       onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')}),
+                                          id: "item_#{r.id}") +
+                         content_tag(:td, r.item_media_type) +
+                         content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
+                         content_tag(:td, r.inventario),
+                         {:data_view=>r.view})
+    end
+    res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{@clavis_item.current_container}", class: 'panel-heading')
+    res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
 
   def clavis_items_periodici_e_fatture(records)
     return '' if records.size==0
