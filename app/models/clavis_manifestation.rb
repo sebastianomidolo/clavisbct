@@ -23,6 +23,8 @@ class ClavisManifestation < ActiveRecord::Base
 
   has_many :ordini, foreign_key: 'manifestation_id'
 
+  has_many :clavis_consistency_notes, foreign_key: 'manifestation_id'
+
   def d_objects_set_access_rights(access_right)
     ActiveRecord::Base.transaction do
       self.d_objects.each do |o|
