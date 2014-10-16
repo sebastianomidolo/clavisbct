@@ -39,8 +39,8 @@ module SubjectsHelper
     end
 
     au=record.clavis_authority
-    if !au.nil? and !au.clavis_authority.nil?
-      res << content_tag(:div, content_tag(:div, content_tag(:h3, 'Soggetti usati in Clavis', class: 'panel-title'), class: 'panel-heading'), class: 'panel panel-alert')
+    if !au.nil? and !au.clavis_authority.nil? and record.heading.split('- ').size==1
+      res << content_tag(:div, content_tag(:div, content_tag(:h3, "La voce <b>#{record.heading}</b> è utilizzata in questi soggetti Clavis".html_safe, class: 'panel-title'), class: 'panel-heading'), class: 'panel panel-alert')
       res << content_tag(:div, subjects_clavis_authority_other_subjects(record), class: 'panel-body')
     end
 
