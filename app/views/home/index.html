@@ -1,3 +1,4 @@
+<!--
 <% content_tag(:h1, @msg) %>
 
 <%= link_to('Stampa segnaposto per libri in prestito', receipts_clavis_loans_url) %>
@@ -13,3 +14,16 @@
 <%= link_to('Naxos', 'http://naxosml.medialibrary.it/') %>
 
 
+-->
+
+<pre>
+Pagina di servizio a uso interno delle BCT
+</pre>
+
+
+<ul>
+  <%= content_tag(:li, link_to('Periodici Civica Centrale (collocazioni <b>Per.</b>)'.html_safe,
+      clavis_consistency_notes_path)) %>
+  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) %>
+  <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
+</ul>
