@@ -1,0 +1,46 @@
+\documentclass[a4paper,12pt]{article}
+
+% \usepackage[italian]{babel}
+\usepackage[utf8]{inputenc}
+
+\usepackage{hyperref}
+
+% \usepackage[tagged]{accessibility_meta}
+
+\begin{document}
+\raggedright
+\frenchspacing
+
+% \section{Catalogo dei libri parlati}
+% \section{Altra sezione}
+
+<%
+ res=[]
+ cnt=0
+ inputdata.each do |e|
+  next if e.titolo.nil?
+  cnt+=1
+
+  e.titolo.gsub!("{", '\\\{')
+  e.titolo.gsub!("%", '\\\%')
+
+  res << "\\par\\medskip"
+  if !e.first_mp3_filename.nil?
+   href=File.join('http://wwwbiblio.selfip.net/tbda',File.basename(e.zip_filepath))
+   # res << %Q{ -- \\href{http://clavisbct.comperio.it/talking_books/#{e.id}}{\\bf Scheda bibliografica}}
+   res << %Q{\\href{#{href}}{#{e.main_entry}#{e.titolo}}.}
+   res << "\\\\* Codice mp3: CD #{e.n}." if !e.cd.nil?
+   res << "\\\\* Codice cassette: #{e.n}, #{e.cassette} cassette." if !e.cassette.nil?
+   res << "{\\it #{e.abstract}}." if !e.abstract.blank?
+  else
+    # res << "\\par\\medskip {\\bf #{e.main_entry}}#{e.titolo}"
+    res << "{\\bf #{e.main_entry}}#{e.titolo}"
+    res << "\\\\* Collocazione: #{e.area_descrizione_fisica_tex}"
+    res << ".~--~Abstract:~{\\it #{e.abstract}}" if !e.abstract.blank?
+  end
+
+ end
+%>
+<%= res.join("\n") %>
+
+\end{document}
