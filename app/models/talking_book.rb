@@ -76,7 +76,8 @@ class TalkingBook < ActiveRecord::Base
     return nil if !patron.nil? and patron.loan_class!='@'
     if patron.nil?
       uid = ''
-      mid = "tb_#{self.id}_mid_#{self.manifestation_id}"
+      # mid = "tb_#{self.id}_mid_#{self.manifestation_id}"
+      mid = "tb_#{self.n.gsub(' ','').downcase}"
       config = Rails.configuration.database_configuration
       path = config[Rails.env]["libroparlato_download_area_basedir"]
     else
@@ -118,7 +119,7 @@ class TalkingBook < ActiveRecord::Base
       mp3.tag.title="traccia #{cnt} di #{totale}"
       mp3.tag.artist=self.intestatio
       mp3.tag.tracknum=cnt
-      mp3.tag.year=self.digitalizzato.year
+      mp3.tag.year=self.digitalizzato.year if !self.digitalizzato.nil?
       if patron.nil?
         mp3.tag2.TCOP="Biblioteche civiche torinesi"
       else
