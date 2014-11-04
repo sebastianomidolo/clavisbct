@@ -1,0 +1,7 @@
+<p id="notice"><%= notice %></p>
+
+<%= containers_cloud(@container) %>
+
+<%= content_tag(:h3, "Contenitore: #{@container.label} - Attualmente in #{@container.clavis_library.label}") %>
+<%= content_tag(:div, container_show(@container)) %>
+<%= link_to 'Elenco contenitori', containers_path %>

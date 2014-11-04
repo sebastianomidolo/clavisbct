@@ -1,0 +1,19 @@
+<%= content_tag(:h3, "Ci sono #{Container.count} contenitori contenenti in tutto #{ContainerItem.count} volumi") %>
+
+<table class='table'>
+<tr>
+<th>Etichetta</th>
+<th>Si trova in</th>
+<th>Numero volumi</th>
+</tr>
+
+
+<% @containers.each do |container| %>
+  <tr>
+    <td><%= link_to(container.label, container) %></td>
+    <td><%= link_to(container.clavis_library.nice_description, container.clavis_library.clavis_url) %></td>
+    <td><%= container.container_items.size %></td>
+  </tr>
+<% end %>
+</table>
+

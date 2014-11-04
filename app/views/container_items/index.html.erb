@@ -1,0 +1,21 @@
+
+<h2>Formato di visualizzazione provvisorio, non preoccupatevi</h2>
+
+<table class='table'>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% cnt=0 %>
+<% @container_items.each do |container| %>
+<% cnt+=1 %>
+  <tr>
+    <td><%= cnt %></td>
+    <td><%= link_to(container.label, containers_path(:label=>container.label)) %></td>
+    <td><%= container.item_title %></td>
+  </tr>
+<% end %>
+</table>
+
