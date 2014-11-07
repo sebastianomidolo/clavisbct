@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+   <head>
+      <title>Città di Torino - Biblioteche civiche torinesi - Servizio del libro parlato</title>
+          <META NAME="language" CONTENT="italian">
+<style>
+body {
+    background-color: linen;
+}
+h1,h2 {
+    color: maroon;
+    margin-left: 40px;
+} 
+.scheda_libro_parlato {
+   margin-bottom: 3em;
+   margin-left: 40px;
+}
+.scheda_libro_parlato h3 {
+  margin-bottom: 0px;
+}
+.scheda_libro_parlato p {
+  margin: 0px;
+}
+.scheda_libro_parlato div.codice {
+  margin: 0px;
+  font-weight: bold;
+  font-size: 16pt;
+}
+</style>
+</head>
+
+<body>
+<h1>LIBRI PARLATI DISPONIBILI PRESSO LE BIBLIOTECHE CIVICHE TORINESI</h1>
+<h2>Avvertenza</h2>
+
+<% @talking_books.each do |tb| %>
+ <%= talking_book_show_record(tb) %>
+<% end %>
+
+</body>
+</html>
+

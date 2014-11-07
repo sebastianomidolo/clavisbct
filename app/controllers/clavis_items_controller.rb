@@ -39,12 +39,14 @@ class ClavisItemsController < ApplicationController
       @attrib << ['inventory_number','']
       if user_signed_in?
         @attrib << ['current_container', '']
+        cond << 'label is not null' if @clavis_item.in_container=='1'
       end
       cond = cond.join(" AND ")
       @sql_conditions=cond
       # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'*',:joins=>"join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')")
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,cont.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id,manifestation_id)", :order=>order_by)
+      # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,cont.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
     end
