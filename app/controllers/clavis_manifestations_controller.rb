@@ -89,6 +89,9 @@ class ClavisManifestationsController < ApplicationController
     redirect_to cm.clavis_url and return if !params[:redir].blank?
     respond_to do |format|
       format.html
+      format.js {
+        @target_id=params[:target_id]
+      }
       format.xml {
         render xml: cm.export_to_metaopac
       }

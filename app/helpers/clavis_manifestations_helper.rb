@@ -12,6 +12,24 @@ module ClavisManifestationsHelper
     r.join.html_safe
   end
 
+  def clavis_manifestation_show_items(record)
+    res=[]
+    res << content_tag(:tr, content_tag(:th, 'Id biblioteca') +
+                       content_tag(:th, 'Item Id') +
+                       content_tag(:th, 'Collocazione') +
+                       content_tag(:th, 'Serie-Inventario') +
+                       content_tag(:th, 'Item media'))
+
+    record.clavis_items(order: [:owner_library_id,:inventory_value,:inventory_number]).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.owner_library_id) +
+                         content_tag(:td, r.id) +
+                         content_tag(:td, r.collocazione) +
+                         content_tag(:td, r.inventario) +
+                         content_tag(:td, r.item_media))
+    end
+    content_tag(:table, res.join.html_safe, width: '100%')
+  end
+
   def clavis_manifestation_opac_preview(record)
     mid = record.class==ClavisManifestation ? record.id : record
     %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe

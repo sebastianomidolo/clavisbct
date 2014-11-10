@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 module LatexPrint
   class PDF
     attr_accessor :latexcmd, :texinput
@@ -6,13 +7,15 @@ module LatexPrint
       erb = ERB.new(File.read(@template))
       @texinput = erb.result(binding)
       @texinput.gsub!("&", '\\\&')
+      @texinput.gsub!("«", '``')
+      @texinput.gsub!("»", "''")
     end
 
     def latexcmd
       "/usr/bin/pdflatex"
     end
 
-    def makepdf
+    def makepdf(times=1)
       tempdir = File.join(Rails.root.to_s, 'tmp', 'latex')
       tf = Tempfile.new("latex",tempdir)
       tex_file=tf.path + ".tex"
@@ -29,8 +32,12 @@ module LatexPrint
       fd.write(@texinput)
       fd.close
 
-      Kernel.system(self.latexcmd, '-interaction=batchmode', "-output-directory=#{tempdir}", tex_file)
-      x=eval("`/usr/bin/file #{pdf_file}`")
+      x=''
+      while(times>0) do
+        times-=1
+        Kernel.system(self.latexcmd, '-interaction=batchmode', "-output-directory=#{tempdir}", tex_file)
+        x=eval("`/usr/bin/file #{pdf_file}`")
+      end
       errors=[]
       if (/PDF document/ =~ x).nil?
         # puts "non pdf"
