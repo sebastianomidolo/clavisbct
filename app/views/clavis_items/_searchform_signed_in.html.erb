@@ -5,9 +5,11 @@
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
   <%= f.association :owner_library, collection: ClavisItem.owner_library, hint: 'Biblioteca proprietaria', include_blank: true, label: false %>
   <%= f.input :current_container, hint: 'Contenitore di destinazione (non viene usato come criterio di ricerca, <br/>ma serve esclusivamente per indicare in quale contenitore collocare i libri selezionati)'.html_safe, as: 'string', label: false, placeholder: 'contenitore' %>
+  <%= f.input :in_container, as: 'boolean', hint: 'Solo volumi nei contenitori', label: false %>
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
 
 <%= link_to('[vedi elenco su GoogleDrive]', "https://docs.google.com/spreadsheets/d/#{current_user.google_doc_key}", :target=>'_blank') if !current_user.google_doc_key.nil? %>
 
-<% end %>
+<%= link_to('[elenco contenitori]', containers_path) %>
 
+<% end %>
