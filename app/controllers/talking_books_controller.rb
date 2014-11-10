@@ -12,25 +12,33 @@ class TalkingBooksController < ApplicationController
     type=params[:digitalized]
     if type=='yes'
       logger.warn("type: solo digitalizzati")
-      cond << "digitalizzato notnull"
+      # cond << "digitalizzato notnull"
+      cond << "first_mp3_filename notnull"
     else
       logger.warn("type: tutti")
+    end
+
+    case params[:type]
+    when 'novita'
+      # cond << "data_collocazione notnull"
+      mesi = params[:mesi].blank? ? 12 : params[:mesi].to_i
+      mesi = 12 if mesi==0
+      cond << "data_collocazione > now() - interval '#{mesi} months'"
+    else
     end
 
     respond_to do |format|
       format.html {
         cond = cond.join(" AND ")
-        @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+        if params[:htmloutput]=='yes'
+          @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+          render :partial=>'talking_books/html_catalog'
+          return
+        else
+          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+        end
       }
       format.pdf {
-        case params[:type]
-        when 'novita'
-          # cond << "data_collocazione notnull"
-          mesi = params[:mesi].blank? ? 12 : params[:mesi].to_i
-          mesi = 12 if mesi==0
-          cond << "data_collocazione > now() - interval '#{mesi} months'"
-        else
-        end
         cond = cond.join(" AND ")
         @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
         pdf=TalkingBook.pdf_catalog(@talking_books)
@@ -75,10 +83,14 @@ class TalkingBooksController < ApplicationController
     end
 
     # Utente @clavis_patron autorizzato al download nella sessione corrente
-    zipfile=@talking_book.zip_filepath(@clavis_patron)
+    # zipfile=@talking_book.zip_filepath(@clavis_patron)
+    zipfile=@talking_book.zip_filepath(nil)
     if !File.exist?(zipfile)
       @talking_book.make_audio_zip(@clavis_patron)
     end
+    fd=File.open("/home/storage/download_libro_parlato_da_opac.log", "a")
+    fd.write("#{Time.now} - download #{File.basename(@talking_book.zip_filepath)} (record id: #{@talking_book.id}) per utente #{@clavis_patron.id}\n")
+    fd.close
     send_file(zipfile)
   end
 end

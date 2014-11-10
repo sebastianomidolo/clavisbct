@@ -1,4 +1,4 @@
-<%= content_tag(:h2, "Libro parlato - archivio access CB") %>
+<%= content_tag(:h2, "Biblioteche civiche torinesi - Catalogo del libro parlato") %>
 
 <%= form_tag(talking_books_url, :method=>:get) do %>
 
@@ -8,13 +8,26 @@
  checked = params[:digitalized]=='yes' ? true : false
  check_box_tag('digitalized', 'yes', checked)
 %>
-
 <%= label_tag(:digitalized, 'solo digitalizzati') %>
 
-<br/>
-<%= link_to('Lista libri con audio mp3', libriparlati_con_audio_clavis_manifestations_path(:colloc=>'CD')) %>
+<%=
+ checked = params[:htmloutput]=='yes' ? true : false
+ check_box_tag('htmloutput', 'yes', checked)
+%>
+<%= label_tag(:htmloutput, 'risultati in unica pagina html') %>
 
 <br/>
+<%=
+ checked = params[:type]=='novita' ? true : false
+ check_box_tag('type', 'novita', checked)
+%>
+
+<%= mesi = params[:mesi].blank? ? '12' : params[:mesi]
+    label_tag(:type, 'novita') %> degli ultimi
+<%= text_field_tag('mesi', mesi) %> mesi
+
+
+<% link_to('Lista libri con audio mp3', libriparlati_con_audio_clavis_manifestations_path(:colloc=>'CD')) %>
 
 <%= submit_tag('Cerca') %>
 

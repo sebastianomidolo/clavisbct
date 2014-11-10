@@ -1,18 +1,22 @@
 \documentclass[a4paper,12pt]{article}
 
+
+\usepackage{microtype}
+\DisableLigatures{encoding = *, family = * }
+
 % \usepackage[italian]{babel}
 \usepackage[utf8]{inputenc}
 
 \usepackage{hyperref}
 
-% \usepackage[tagged]{accessibility_meta}
+\usepackage[tagged,highstructure]{accessibility}
 
 \begin{document}
 \raggedright
 \frenchspacing
 
-% \section{Catalogo dei libri parlati}
-% \section{Altra sezione}
+\section*{Catalogo dei libri parlati}
+
 
 <%
  res=[]
@@ -24,21 +28,25 @@
   e.titolo.gsub!("{", '\\\{')
   e.titolo.gsub!("%", '\\\%')
 
-  res << "\\par\\medskip"
+  # res << "\\par\\medskip"
+  # res << "\\subsection*{Scheda numero #{cnt}}"
+  # res << "\\addcontentsline{toc}{subsection}{Scheda numero #{cnt}}"
+
+  href=nil
   if !e.first_mp3_filename.nil?
    href=File.join('http://wwwbiblio.selfip.net/tbda',File.basename(e.zip_filepath))
-   # res << %Q{ -- \\href{http://clavisbct.comperio.it/talking_books/#{e.id}}{\\bf Scheda bibliografica}}
-   res << %Q{\\href{#{href}}{#{e.main_entry}#{e.titolo}}.}
-   res << "\\\\* Codice mp3: CD #{e.n}." if !e.cd.nil?
-   res << "\\\\* Codice cassette: #{e.n}, #{e.cassette} cassette." if !e.cassette.nil?
-   res << "{\\it #{e.abstract}}." if !e.abstract.blank?
-  else
-    # res << "\\par\\medskip {\\bf #{e.main_entry}}#{e.titolo}"
-    res << "{\\bf #{e.main_entry}}#{e.titolo}"
-    res << "\\\\* Collocazione: #{e.area_descrizione_fisica_tex}"
-    res << ".~--~Abstract:~{\\it #{e.abstract}}" if !e.abstract.blank?
   end
+   # res << %Q{ -- \\href{http://clavisbct.comperio.it/talking_books/#{e.id}}{\\bf Scheda bibliografica}}
 
+  heading=%Q{#{e.main_entry}#{e.titolo}.}
+  res << "\\subsection*{#{heading}}"
+  res << "\\addcontentsline{toc}{subsection}{#{heading}}"
+  ad=[]
+  ad << "Codice mp3: CD #{e.n}." if !e.cd.nil?
+  ad << "Codice cassette: #{e.n}, #{e.cassette} cassette." if !e.cassette.nil?
+  ad << "{\\it #{e.abstract}}." if !e.abstract.blank?
+  res << ad.join("\\\\* ")
+  res << %Q{\\par\\medskip\\href{#{href}}{\\bf Scarica MP3}} if !href.nil?
  end
 %>
 <%= res.join("\n") %>

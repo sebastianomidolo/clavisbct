@@ -196,7 +196,7 @@ class TalkingBook < ActiveRecord::Base
     fd=File.open("/tmp/prova.tex","w")
     fd.write(lp.texinput)
     fd.close
-    lp.makepdf
+    lp.makepdf(3)
   end
 
   def TalkingBook.digitalizzati

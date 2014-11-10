@@ -42,6 +42,22 @@ module TalkingBooksHelper
     res
   end
 
+  def talking_book_show_record(record)
+    res = []
+    res << content_tag(:h3,%Q{#{record.main_entry}<em>#{record.titolo}</em>.}.html_safe)
+    href=nil
+    if !record.first_mp3_filename.nil?
+      href=File.join('http://wwwbiblio.selfip.net/tbda',File.basename(record.zip_filepath))
+    end
+    ad=[]
+    ad << "#{record.abstract}." if !record.abstract.blank?
+    ad << content_tag(:div, "Codice cd mp3: CD #{record.n}.", :class=>'codice') if !record.cd.nil?
+    ad << content_tag(:div, "Codice cassette: #{record.n}, #{record.cassette} cassette", :class=>'codice') if !record.cassette.nil?
+    ad << link_to("Scarica #{record.n}", href) if !href.nil?
+    res << content_tag(:p, ad.join("\n").html_safe)
+    content_tag(:div, res.join.html_safe,  :class=>'scheda_libro_parlato')
+  end
+
   def talking_book_opac_presentation(clavis_manifestation,authorized)
     record = clavis_manifestation.talking_book
     res=[]
