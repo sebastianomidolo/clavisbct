@@ -57,6 +57,17 @@ class ClavisItemsController < ApplicationController
     end
   end
 
+  def ricollocazioni
+    cond="section in ('BCT09','BCT10','BCT11','BCT12','BCT13','BCT14')"
+    # cond="section in ('BCT14')"
+    @sql_conditions=cond
+    @order_by = params[:sort] == 'dewey' ? 'dewey_collocation' : 'cc.sort_text'
+    @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100,
+                                        :select=>'item.*,r.*,cc.collocazione as full_collocation',
+                                        :joins=>"join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id)",
+                                        :order=>@order_by)
+  end
+
   def show
     headers['Access-Control-Allow-Origin'] = "*"
 

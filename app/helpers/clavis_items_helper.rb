@@ -26,17 +26,43 @@ module ClavisItemsHelper
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
+  def clavis_items_ricollocazioni(records, table_id='items_list')
+    return '' if records.size==0
+    res=[]
+    records.each do |r|
+      if @order_by=='dewey_collocation'
+        c1 = r.dewey_collocation
+        c2 = r.full_collocation
+      else
+        c1 = r.full_collocation
+        c2 = r.dewey_collocation
+      end
+      res << content_tag(:tr,
+                         content_tag(:td, c1) +
+                         content_tag(:td, c2) +
+                         content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
+                         content_tag(:td, r.inventario))
+    end
+    res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
+    res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
+
   def clavis_items_shortlist_signed_in(records, table_id='items_list')
     return 'please sign in' if !user_signed_in?
     return '' if records.size==0
     res=[]
     records.each do |r|
+      lnk=r.manifestation_id==0 ? r.item_media_type : link_to(r.item_media_type,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true) + "<br/>#{r.manifestation_id}".html_safe
+      container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       res << content_tag(:tr, content_tag(:td, link_to(r.collocazione, r, remote: true,
                                                        onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')}),
                                           id: "item_#{r.id}") +
-                         content_tag(:td, r.item_media_type) +
+                         content_tag(:td, lnk) +
                          content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
-                         content_tag(:td, r.inventario),
+                         content_tag(:td, r.inventario) +
+                         content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
     res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{@clavis_item.current_container}", class: 'panel-heading')
