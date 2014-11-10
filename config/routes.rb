@@ -1,5 +1,16 @@
 Clavisbct::Application.routes.draw do
 
+  resources :container_items
+
+  resources :clavis_libraries
+
+  resources :containers do
+    collection do
+      get 'barcodes'
+    end
+  end
+
+
   devise_for :users
 
   devise_for :clavis_patrons
@@ -72,6 +83,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_items do
     collection do
       get 'collocazioni'
+      get 'ricollocazioni'
     end
   end
 
