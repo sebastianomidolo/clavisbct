@@ -15,8 +15,11 @@ UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazi
 
 ALTER TABLE excel_files_tables.celdes_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type date using ("data pagamento"::date);
+
+set datestyle TO "DMY";
 ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type date using ("data pagamento"::date);
+
 COMMIT;
 
 CREATE TABLE public.serials_admin_table

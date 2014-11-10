@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20141012195147) do
+ActiveRecord::Schema.define(:version => 20141016104800) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -88,6 +88,22 @@ ActiveRecord::Schema.define(:version => 20141012195147) do
     t.text    "collocazione"
     t.string  "sequence1",        :limit => 128
     t.integer "manifestation_id"
+  end
+
+  create_table "container_items", :force => true do |t|
+    t.string  "label",               :limit => 16
+    t.integer "row_number"
+    t.integer "manifestation_id"
+    t.integer "item_id"
+    t.integer "consistency_note_id"
+    t.integer "library_id"
+    t.text    "item_title"
+    t.string  "google_doc_key"
+  end
+
+  create_table "containers", :force => true do |t|
+    t.string  "label",      :limit => 16
+    t.integer "library_id"
   end
 
   create_table "d_objects", :force => true do |t|
@@ -275,6 +291,7 @@ ActiveRecord::Schema.define(:version => 20141012195147) do
     t.string   "last_sign_in_ip"
     t.datetime "created_at",                             :null => false
     t.datetime "updated_at",                             :null => false
+    t.string   "google_doc_key"
   end
 
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
