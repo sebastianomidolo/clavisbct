@@ -4,7 +4,7 @@ class ClavisItem < ActiveRecord::Base
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
   :item_media, :collocation, :inventory_number, :manifestation_dewey,
-  :current_container
+  :current_container, :in_container
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
 
@@ -27,6 +27,7 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def inventario
+    return 'fuori catalogo' if self.manifestation_id==0
     "#{inventory_serie_id}-#{inventory_number}"
   end
 
@@ -67,6 +68,13 @@ class ClavisItem < ActiveRecord::Base
     @current_container=value.upcase.gsub(' ','')
   end
 
+  def in_container
+    @in_container
+  end
+
+  def in_container= value
+    @in_container=value
+  end
 
   def save_in_google_drive(ws)
     data=[]
