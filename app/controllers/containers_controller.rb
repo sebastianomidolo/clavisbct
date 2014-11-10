@@ -3,7 +3,7 @@ class ContainersController < ApplicationController
   # GET /containers.json
   def index
     if params[:label].blank?
-      @containers = Container.all(:order=>"replace(label,'SC','')::integer")
+      @containers = Container.all(:order=>"regexp_replace(label,'([A-Z]+)','')::integer")
     else
       @container = Container.find_by_label(params[:label])
       render action: 'show' and return

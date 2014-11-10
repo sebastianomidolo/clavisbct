@@ -1,7 +1,7 @@
 module ContainersHelper
   def containers_cloud(current_record)
     res=[]
-    Container.all(:order=>"replace(label,'SC','')::integer").each do |c|
+    Container.all(:order=>"regexp_replace(label,'([A-Z]+)','')::integer").each do |c|
       if c==current_record
         res << content_tag(:button, c.label, class: 'btn btn-default')
       else
