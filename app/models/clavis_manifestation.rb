@@ -59,6 +59,10 @@ class ClavisManifestation < ActiveRecord::Base
     self.title
   end
 
+  def kardex_adabas_2011_url
+    "http://10.106.68.96:9000/fascicoli?bid=#{self.bid}"
+  end
+
   def attachments_folders
     sql=%Q{SELECT DISTINCT folder,lower(folder) FROM clavis.manifestation m JOIN public.attachments a
       ON(a.attachable_type='ClavisManifestation' AND a.attachable_id=m.manifestation_id)
@@ -173,6 +177,10 @@ class ClavisManifestation < ActiveRecord::Base
 
   def clavis_url(mode=:show)
     ClavisManifestation.clavis_url(self.id,mode)
+  end
+
+  def kardex_adabas_issues_count
+    ClavisManifestation.connection.execute("SELECT count(*) from kardex_adabas where bid='#{self.bid}'")[0]['count'].to_i
   end
 
   def audioclips
@@ -428,7 +436,7 @@ class ClavisManifestation < ActiveRecord::Base
     sql=%Q{SELECT
       sat.id,sat.titolo,cm.title,cm.manifestation_id,cs.subscription_id,sat.numero_fattura,
         sat.importo_fattura,sat.fattura_o_nota_di_credito as tipodoc,sat.periodo,sat.formato,sat.note_interne,
-        sat.data_emissione,sat.data_pagamento,sat.prezzo,sat.commissione_sconto,
+        sat.data_emissione,sat.data_pagamento,sat.prezzo,sat.commissione_sconto,sat."CIG" as cig,
         sat.totale,sat.iva,sat.prezzo_finale,sat.numcopie,sat.ordnum,sat.ordanno,sat.ordprogressivo,
         cl.shortlabel as library,sat.stato,
   array_to_string(array_agg(ci.item_id || ' ' || ci.issue_status ||

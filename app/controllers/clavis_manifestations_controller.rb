@@ -165,4 +165,15 @@ class ClavisManifestationsController < ApplicationController
     end
   end
 
+  def check_adabas_kardex
+    headers['Access-Control-Allow-Origin'] = "*"
+    @cm=ClavisManifestation.find(params[:id])
+    respond_to do |format|
+      format.json { render :json => {
+          issues_in_adabas: @cm.kardex_adabas_issues_count,
+          url: @cm.kardex_adabas_2011_url
+        }}
+    end
+  end
+
 end

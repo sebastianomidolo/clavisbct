@@ -3,12 +3,18 @@
 
 module ClavisManifestationsHelper
   def clavis_manifestation_view(record)
-    config = Rails.configuration.database_configuration
     r=[]
     # lnk=content_tag(link_to(record.title, record.clavis_url))
     lnk=link_to(record.title, record.clavis_url(:opac))
     r << content_tag(:div, content_tag(:b, lnk))
-    r << content_tag(:div, clavis_issue_list(record))
+    if record.bib_level=='s'
+      r << content_tag(:div, record.bid)
+      if record.bid_source=='SBN'
+        ic=record.kardex_adabas_issues_count
+        r << content_tag(:div, link_to("Consulta Kardex Adabas 2011 (#{ic} fascicoli)",
+                                       record.kardex_adabas_2011_url)) if ic>0
+      end
+    end
     r.join.html_safe
   end
 
