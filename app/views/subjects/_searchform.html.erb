@@ -2,6 +2,8 @@
 <%= simple_form_for(@subject, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
   <%= f.input :heading, hint: 'parole da cercare', as: 'string', label: false, placeholder: 'parole nel soggetto' %>
 
+  <%= hidden_field_tag(:nolayout, true) if !params[:nolayout].blank? %>
+
   <%= f.input :clavis_subject_class, collection: Subject.clavis_subject_classes, include_blank: true, label: false,
        :input_html => {:onchange=>"submit()"}
     %>

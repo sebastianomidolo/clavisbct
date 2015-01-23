@@ -3,6 +3,7 @@ class HomeController < ApplicationController
 
   # before_filter :authenticate_user!
   def index
+    @pagetitle="ClavisBCT"
     @msg=Time.now
     # authenticate_user!
   end
@@ -26,6 +27,12 @@ class HomeController < ApplicationController
         join clavis.manifestation cm using(manifestation_id)
          order by lower(u.nota),cm.sort_text}
     @records=ActiveRecord::Base.connection.execute(sql)
+  end
+
+  def iccu_link
+    if !params[:bid].blank?
+      @url=ClavisManifestation.new(bid_source: 'SBN', bid: params[:bid]).iccu_opac_url
+    end
   end
 end
 

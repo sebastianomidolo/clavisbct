@@ -47,13 +47,13 @@ class OrdiniController < ApplicationController
   end
 
   def fatture
-    @library=ClavisLibrary.find(params[:library_id])
-    @ordine = Ordine.new(:library_id=>@library.id)
+    @library=ClavisLibrary.find(params[:library_id]) if !params[:library_id].blank?
     if params[:numero_fattura].blank?
-      @fatture=Ordine.fatture(@library.id)
+      @fatture=Ordine.fatture(@library)
     else
+      @ordine = Ordine.new(:library_id=>@library.id)
       @ordine.numero_fattura=params[:numero_fattura]
-      @ordini=ClavisManifestation.periodici_ordini(@ordine,params[:page],10)
+      @ordini=ClavisManifestation.periodici_ordini(@ordine,params[:page],100)
     end
   end
 

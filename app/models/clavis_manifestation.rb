@@ -5,7 +5,7 @@ include DigitalObjects
 include REXML
 
 class ClavisManifestation < ActiveRecord::Base
-  # attr_accessible :title, :body
+  attr_accessible :bid, :bid_source
   self.table_name = 'clavis.manifestation'
   self.primary_key = 'manifestation_id'
 
@@ -61,6 +61,13 @@ class ClavisManifestation < ActiveRecord::Base
 
   def kardex_adabas_2011_url
     "http://10.106.68.96:9000/fascicoli?bid=#{self.bid}"
+  end
+
+  def iccu_opac_url
+    return nil if !['SBN','SBNBCT'].include?(self.bid_source)
+    template="http://www.sbn.it/opacsbn/opaclib?db=solr_iccu&rpnquery=%2540attrset%2Bbib-1%2B%2540attr%2B1%253D1032%2B%2540attr%2B4%253D2%2B%2522IT%255C%255CICCU%255C%255C__POLO__%255C%255C__NUMERO__%2522&select_db=solr_iccu&nentries=1&rpnlabel=Preferiti&resultForward=opac%2Ficcu%2Ffull.jsp&searchForm=opac%2Ficcu%2Ferror.jsp&do_cmd=search_show_cmd&brief=brief&saveparams=false&&fname=none&from=1"
+    template.sub!('__POLO__',bid[0..2])
+    template.sub('__NUMERO__',numero=bid[3..9])
   end
 
   def attachments_folders

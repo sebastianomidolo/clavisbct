@@ -1,0 +1,25 @@
+<p id="notice"><%= notice %></p>
+
+<div>
+<%= content_tag(:span, content_tag(:b, @extra_card.collocazione)) %>
+<%= content_tag(:span, @extra_card.titolo) %>
+<%= content_tag(:div, @extra_card.serieinv) %>
+</div>
+<% link_to 'Back', extra_cards_path %>
+
+
+<% if !@extra_card.deleted? %>
+<%= link_to 'Modifica', edit_extra_card_path(@extra_card) %>
+<%= link_to 'Elimina scheda', @extra_card, method: :delete,
+   data: { confirm: "Confermi cancellazione #{@extra_card.collocazione}?" }
+%>
+<% else %>
+<h3>Scheda cancellata</h3>
+<%= link_to 'Richiama in vita questa scheda', @extra_card, method: :delete,
+   data: { confirm: "Confermi il richiamo in vita di questa scheda #{@extra_card.collocazione}?" }
+%>
+<% end %>
+
+<br/>
+<%= link_to 'Vedi pseudo scheda esemplare Clavis', clavis_item_path(@extra_card.clavis_item) if !@extra_card.clavis_item.nil?%>
+

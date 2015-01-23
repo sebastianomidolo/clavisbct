@@ -14,9 +14,12 @@ class TalkingBooksController < ApplicationController
       logger.warn("type: solo digitalizzati")
       # cond << "digitalizzato notnull"
       cond << "first_mp3_filename notnull"
-    else
-      logger.warn("type: tutti")
     end
+    type=params[:cdmp3]
+    if type=='yes'
+      cond << "cd notnull and digitalizzato notnull and da_inserire_in_informix='0'"
+    end
+
 
     case params[:type]
     when 'novita'

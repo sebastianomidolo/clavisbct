@@ -15,6 +15,7 @@ module ClavisManifestationsHelper
                                        record.kardex_adabas_2011_url)) if ic>0
       end
     end
+    r << content_tag(:div, link_to('opac.sbn.it', record.iccu_opac_url)) if !record.iccu_opac_url.nil?
     r.join.html_safe
   end
 

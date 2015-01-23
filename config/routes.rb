@@ -1,5 +1,8 @@
 Clavisbct::Application.routes.draw do
 
+  resources :extra_cards
+
+
   resources :container_items
 
   resources :clavis_libraries
@@ -9,7 +12,6 @@ Clavisbct::Application.routes.draw do
       get 'barcodes'
     end
   end
-
 
   devise_for :users
 
@@ -66,6 +68,7 @@ Clavisbct::Application.routes.draw do
       get 'testpdf'
       get 'attachments'
       get 'sbn_opac_redir'
+      get 'sbn_iccu_opac_redir'
       get 'check_adabas_kardex'
     end
     collection do
@@ -113,6 +116,8 @@ Clavisbct::Application.routes.draw do
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
   match '/metasearch' => 'metasearch#search'
   match '/redir' => 'metasearch#redir'
+
+  match '/iccu' => 'home#iccu_link'
 
   match '/spazioragazzi' => 'home#spazioragazzi'
 

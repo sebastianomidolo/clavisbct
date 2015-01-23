@@ -1,0 +1,21 @@
+<h1>Scheda extra Clavs (topografico)</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @extra_cards.each do |ec| %>
+  <tr>
+    <td><%= link_to ec.collocazione, ec %></td>
+    <td><%= link_to ec.titolo, ec %></td>
+    <td><%= link_to 'Edit', edit_extra_card_path(ec) %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Extra card', new_extra_card_path %>

@@ -5,6 +5,7 @@
    render :partial => 'searchform' if params[:nosearchform].blank?
   end
 %>
+
 <% content_tag(:div, @sql_conditions, class: 'panel panel-success') %>
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%=

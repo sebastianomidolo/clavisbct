@@ -17,21 +17,29 @@ class ClavisItemsController < ApplicationController
     @attrib.delete_if do |r|
       toskip.include?(r.first)
     end
-    # render :text=>@clavis_item.attributes
-    # return
+
     cond=[]
     @clavis_items=[]
     @attrib.each do |a|
       name,value=a
-      if name=='title'
+
+      case name
+      when 'title'
         ts=ClavisItem.connection.quote_string(value.split.join(' & '))
         cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
-      else if name=='manifestation_id'
-             cond << "manifestation_id=0" if value==1
-           else
-             ts=ClavisItem.connection.quote(value)
-             cond << "#{name}=#{ts}"
-           end
+      when 'manifestation_id'
+        cond << "manifestation_id=0" if value==1
+      when 'collocation'
+        if (@clavis_item.collocation =~ /\.$/).nil?
+          cond << "cc.collocazione = '#{@clavis_item.collocation}'"
+          @sql_conditions = "uguale a '#{@clavis_item.collocation}'"
+        else
+          cond << "cc.collocazione ~ '^#{@clavis_item.collocation}'"
+          @sql_conditions = "inizia con #{@clavis_item.collocation}"
+        end
+      else
+        ts=ClavisItem.connection.quote(value)
+        cond << "#{name}=#{ts}"
       end
     end
     if !params[:clavis_item].nil?
@@ -41,12 +49,11 @@ class ClavisItemsController < ApplicationController
         @attrib << ['current_container', '']
         cond << 'label is not null' if @clavis_item.in_container=='1'
       end
+      # cond << "cc.collocazione ~ '^#{params[:collocazione_inizia_per]}\\.'" if !params[:collocazione_inizia_per].blank?
       cond = cond.join(" AND ")
-      @sql_conditions=cond
-      # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'*',:joins=>"join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT')")
+      # @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
       @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,cont.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id,manifestation_id)", :order=>order_by)
-      # @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,cont.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
     end
@@ -58,7 +65,12 @@ class ClavisItemsController < ApplicationController
   end
 
   def ricollocazioni
-    cond="section in ('BCT09','BCT10','BCT11','BCT12','BCT13','BCT14')"
+    @clavis_item = ClavisItem.new(params[:clavis_item])
+    cond=[]
+    cond << "section in ('BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15')"
+    # cond << "section in ('BCT')"
+    cond << "dewey_collocation ~ '^#{params[:dewey_collocation]}'" if !params[:dewey_collocation].blank?
+    cond = cond.join(' AND ')
     # cond="section in ('BCT14')"
     @sql_conditions=cond
     @order_by = params[:sort] == 'dewey' ? 'dewey_collocation' : 'cc.sort_text'
@@ -109,7 +121,7 @@ class ClavisItemsController < ApplicationController
             end
             s=session.spreadsheet_by_key(current_user.google_doc_key)
             ws=s.worksheets.first
-            @clavis_item.save_in_google_drive(ws)
+            @usermessage=@clavis_item.save_in_google_drive(ws)
             ws.save
             user_session[:google_session]=session
           end

@@ -8,8 +8,15 @@
  checked = params[:digitalized]=='yes' ? true : false
  check_box_tag('digitalized', 'yes', checked)
 %>
-<%= label_tag(:digitalized, 'solo digitalizzati') %>
+<%= label_tag(:digitalized, 'solo digitalizzati scaricabili') %>
 
+<%=
+ checked = params[:cdmp3]=='yes' ? true : false
+ check_box_tag('cdmp3', 'yes', checked)
+%>
+<%= label_tag(:cdmp3, 'su cd') %>
+
+<br/>
 <%=
  checked = params[:htmloutput]=='yes' ? true : false
  check_box_tag('htmloutput', 'yes', checked)

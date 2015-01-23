@@ -51,8 +51,17 @@ module TalkingBooksHelper
     end
     ad=[]
     ad << "#{record.abstract}." if !record.abstract.blank?
-    ad << content_tag(:div, "Codice cd mp3: CD #{record.n}.", :class=>'codice') if !record.cd.nil?
-    ad << content_tag(:div, "Codice cassette: #{record.n}, #{record.cassette} cassette", :class=>'codice') if !record.cassette.nil?
+    ok=false
+    if !record.cd.nil? and record.da_inserire_in_informix=='0'
+      ad << content_tag(:div, "Codice cd mp3: CD #{record.n}.", :class=>'codice')
+      ok=true
+    end
+    if !record.cassette.nil?
+      ad << content_tag(:div, "Codice cassette: #{record.n}, #{record.cassette} cassette.", :class=>'codice')
+      ok=true
+    end
+    ad << content_tag(:div, "Collocazione da controllare: #{record.n} (id #{record.id})") if ok==false
+
     ad << link_to("Scarica #{record.n}", href) if !href.nil?
     res << content_tag(:p, ad.join("\n").html_safe)
     content_tag(:div, res.join.html_safe,  :class=>'scheda_libro_parlato')

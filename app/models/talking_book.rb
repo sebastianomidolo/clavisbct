@@ -11,7 +11,7 @@ class TalkingBook < ActiveRecord::Base
 
   def main_entry
     # self.intestatio.blank? ? "#{self.titolo}" : "#{self.intestatio}. "
-    self.intestatio.blank? ? "" : "#{self.intestatio}. "
+    self.intestatio.blank? ? "" : "#{self.intestatio.titleize}. "
   end
 
   def digitalized
@@ -205,6 +205,16 @@ class TalkingBook < ActiveRecord::Base
       ORDER BY chiave,ordine
     }
     TalkingBook.find_by_sql(sql)
+  end
+
+  def TalkingBook.updated_at
+    config = Rails.configuration.database_configuration
+    begin
+      File.mtime(config[Rails.env]["libroparlato_mdb_filename"]).to_date
+    rescue
+      logger.warn("Errore: #{$!}")
+      lastmode=Time.now.to_date
+    end
   end
 
   def self.loadhelper

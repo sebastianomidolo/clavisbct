@@ -1,0 +1,8 @@
+<%= form_tag do |f| %>
+<%= text_field_tag('bid', params[:bid], {size: 20}) %>
+<% end %>
+
+<% if !@url.nil? %>
+<%= content_tag(:h6, @url) %>
+<% end %>
+

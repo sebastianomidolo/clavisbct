@@ -3,25 +3,41 @@ module ClavisItemsHelper
     res=[]
     record.attributes.keys.each do |k|
       next if record[k].blank?
-      res << content_tag(:tr, content_tag(:td, k) +
-                         content_tag(:td, record[k]))
+      case k
+      when 'collocation'
+        txt = link_to(record[k], "/clavis_items?clavis_item%5Bcollocation%5D=#{record[k]}")
+      when 'manifestation_id'
+        txt = record[k]==0 ? 'FUORI CATALOGO' : link_to(record[k], clavis_manifestation_path(record[k]))
+      else
+        txt = record[k]
+      end
+      res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, txt))
     end
     res=content_tag(:table, res.join.html_safe)
   end
 
   def clavis_items_shortlist(records, table_id='items_list')
-    return '' if records.size==0
+    # return '' if records.size==0
     res=[]
     # Eventuale link a qualcosa:
     # content_tag(:td, link_to('[presta]', r.clavis_url(:loan), :target=>'_blank'))
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione, clavis_item_path(r))) +
-                         content_tag(:td, r.item_media_type) +
-                         content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
+      if r.home_library_id==-1
+        lnk=r.title
+        media = 'TOPOGRAFICO'
+      else
+        lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+        media = r.item_media_type
+        media << "</br>fuori catalogo" if r.manifestation_id==0
+      end
+      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione.sub(/^BCT\./,''), clavis_item_path(r))) +
+                         content_tag(:td, media.html_safe) +
+                         content_tag(:td, lnk.html_safe) +
                          content_tag(:td, r.inventario),
                          {:data_view=>r.view})
     end
-    res << content_tag(:div, "Trovati #{records.total_entries} esemplari", class: 'panel-heading')
+    # res << content_tag(:div, "Trovati #{records.total_entries} esemplari", class: 'panel-heading')
+    res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
     res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
@@ -40,6 +56,9 @@ module ClavisItemsHelper
       res << content_tag(:tr,
                          content_tag(:td, c1) +
                          content_tag(:td, c2) +
+                         content_tag(:td, r.custom_field1) +
+                         content_tag(:td, r.custom_field2) +
+                         content_tag(:td, r.custom_field3) +
                          content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
                          content_tag(:td, r.inventario))
     end
@@ -52,15 +71,44 @@ module ClavisItemsHelper
   def clavis_items_shortlist_signed_in(records, table_id='items_list')
     return 'please sign in' if !user_signed_in?
     return '' if records.size==0
+    topografico = params[:clavis_item][:collocation].blank? ? false : true
     res=[]
+    prec_catena=0
     records.each do |r|
-      lnk=r.manifestation_id==0 ? r.item_media_type : link_to(r.item_media_type,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true) + "<br/>#{r.manifestation_id}".html_safe
+      if r.home_library_id==-1
+        lnk=r.title.gsub("\r",'; ')
+        # url="http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&collocation=#{r.collocation}&section=BCT&item_title=#{lnk}&ser=#{r.inventory_serie_id}&inv=#{r.inventory_number}"
+        # lnk += "<br/>#{link_to('Inserisci in Clavis',url, :target=>'_blank')}"
+        if current_user.google_doc_key.nil?
+          mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
+        else
+          mlnk = 'TOPOGRAFICO'
+        end
+      else
+        lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+        mlnk=r.manifestation_id==0 ? r.item_media_type : link_to(r.item_media_type,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true) + "<br/>#{r.manifestation_id}".html_safe
+      end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
-      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione, r, remote: true,
-                                                       onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')}),
-                                          id: "item_#{r.id}") +
-                         content_tag(:td, lnk) +
-                         content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
+      colloc=r.collocazione.sub(/^BCT\./,'')
+      if current_user.google_doc_key.nil?
+        coll=link_to(colloc, clavis_item_path(r))
+        catena=colloc.split('.').last.to_i
+        if catena-prec_catena>1 and false
+          [prec_catena..catena-1].each do |num|
+            res << content_tag(:tr, content_tag(:td, num) +
+                               content_tag(:td, prec_catena) +
+                               content_tag(:td, catena) +
+                               content_tag(:td, '') +
+                               content_tag(:td, ''))
+          end
+          prec_catena=catena+1
+        end
+      else
+        coll=link_to(colloc, r, remote: true, onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')})
+      end
+      res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
+                         content_tag(:td, mlnk) +
+                         content_tag(:td, lnk.html_safe) +
                          content_tag(:td, r.inventario) +
                          content_tag(:td, container_link),
                          {:data_view=>r.view})

@@ -136,6 +136,17 @@ class ClavisManifestationsController < ApplicationController
     end
   end
 
+  # http://clavisbct.comperio.it/clavis_manifestations/BCT0025576/sbn_iccu_opac_redir
+  def sbn_iccu_opac_redir
+    cm=ClavisManifestation.find_by_bid(params[:id])
+    if cm.nil? or cm.iccu_opac_url.nil?
+      render :text=>"BID #{params[:id]} non trovato"
+      return
+    end
+    redirect_to cm.iccu_opac_url
+  end
+
+
   def libriparlati_con_audio
     @records=Attachment.libriparlati(params[:colloc])
     respond_to do |format|

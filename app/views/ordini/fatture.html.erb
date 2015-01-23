@@ -1,8 +1,9 @@
 
 
 <% if !@fatture.nil? %>
- <%= content_tag(:h3, "Ordini Celdes - periodici - fatture #{@library.shortlabel}") %>
- <%= ordini_fatture(@ordine,@fatture) %>
+ <%= content_tag(:h3, "Ordini Celdes - periodici - fatture #{(@library.shortlabel if !@library.nil?)}") %>
+ <%= ordini_fatture(@fatture) %>
+ <%= ordini_fatture_riepilogo(@fatture) %>
 <% else %>
  <%= content_tag(:h3, "Ordini Celdes - periodici - fattura numero #{@ordine.numero_fattura} per #{@library.shortlabel}") %>
  <%= will_paginate @ordini %>

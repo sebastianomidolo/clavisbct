@@ -1,3 +1,5 @@
+<%= render :partial => 'searchform_ricollocazioni' %>
+
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%=
    if @order_by=='dewey_collocation'

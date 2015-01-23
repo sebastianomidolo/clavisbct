@@ -9,6 +9,7 @@ module ClavisConsistencyNotesHelper
       res << content_tag(:tr, content_tag(:td, content_tag(:b, "Per.#{r.collocazione_per}"), :class=>'info') +
                          content_tag(:td, link_to(r.collocation, clavis_consistency_note_path(r.id),
                                                   :target=>'_blank')) +
+                         content_tag(:td, r.id,:style=>'width: 5%') +
                          content_tag(:td, r.text_note,:style=>'width: 20%') + casse +
                          content_tag(:td,
                                      link_to(title, ClavisManifestation.clavis_url(r.manifestation_id,:show), :target=>'_blank') + link_to('<br/><b>[opac]</b>'.html_safe, ClavisManifestation.clavis_url(r.manifestation_id,:opac), :target=>'_blank'),:style=>'width: 36%'))
@@ -47,7 +48,7 @@ module ClavisConsistencyNotesHelper
 
     out = []
     cm=record.clavis_manifestation
-    out << content_tag(:div, content_tag(:div, content_tag(:h3, "<b>Nota di consistenza</b> #{link_to(cm.title, cm.clavis_url, :target=>'_blank')}<br/><b>#{record.collocation}</b>".html_safe, class: 'panel-title'), class: 'panel-heading'), class: 'panel panel-info')
+    out << content_tag(:div, content_tag(:div, content_tag(:h3, "<b>Nota di consistenza</b> #{link_to(cm.title, clavis_manifestation_path(cm.id), :target=>'_blank')}<br/><b>#{record.collocation}</b>".html_safe, class: 'panel-title'), class: 'panel-heading'), class: 'panel panel-info')
     out << content_tag(:div, cn+clavis_consistency_note_casse(record), class: 'panel-body')
     out.join.html_safe
   end

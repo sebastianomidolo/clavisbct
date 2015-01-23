@@ -1,4 +1,4 @@
-<%= render :partial => 'title', :locals=>{:showlink=>true} %>
+<%= render :partial => 'title', :locals=>{:showlink=>true} if @embedded==false %>
 <%=
   txt="[#{@subject.clavis_subject_class}] #{@subject.to_html}"
 
@@ -17,7 +17,7 @@ content_tag(:div,
      content_tag(:div, txt.html_safe, class: 'panel-heading'), class: 'panel panel-default')
 %>
 
-<%= subject_related_terms(@subject) %>
+<%= subject_related_terms(@subject, @embedded) %>
 
 <% link_to 'Edit', edit_subject_path(@subject) %> <% link_to 'Back', subjects_path %>
 

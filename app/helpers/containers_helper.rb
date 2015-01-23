@@ -23,7 +23,7 @@ module ContainersHelper
       inventario=nil
       if i.manifestation_id!=prec_mid
         mtitle=i.manifestation_id == 0 ? '[fuori catalogo]' : i.clavis_manifestation.title
-        lnk_opac=link_to(mtitle, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')
+        lnk_opac=link_to(mtitle, clavis_manifestation_path(i.manifestation_id), target: '_blank')
       else
         lnk_opac = i.item_title
       end

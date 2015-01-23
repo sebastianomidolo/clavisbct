@@ -4,7 +4,8 @@ class ClavisItem < ActiveRecord::Base
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
   :item_media, :collocation, :inventory_number, :manifestation_dewey,
-  :current_container, :in_container
+  :current_container, :in_container, :dewey_collocation,
+  :home_library_id, :issue_number, :item_icon, :custom_field3
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
 
@@ -12,7 +13,17 @@ class ClavisItem < ActiveRecord::Base
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
   has_many :attachments, :as => :attachable
 
-
+  after_save do |r|
+    sql=%Q{SELECT * FROM clavis.collocazioni WHERE item_id=#{r.id}}
+    rc=r.connection.execute(sql).first
+    if rc.nil? and !r.collocazione.blank?
+      sql=%Q{INSERT INTO clavis.collocazioni(item_id,collocazione,sort_text)
+           (SELECT #{r.item_id}, #{r.connection.quote(r.collocation)},
+             espandi_collocazione(#{r.connection.quote(r.collocation)}))}
+      # r.connection.execute(sql)
+    end
+  end
+  
   def to_label
     if self.clavis_manifestation.nil?
       self.la_collocazione
@@ -27,7 +38,7 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def inventario
-    return 'fuori catalogo' if self.manifestation_id==0
+    # return 'fuori catalogo' if self.manifestation_id==0
     "#{inventory_serie_id}-#{inventory_number}"
   end
 
@@ -36,11 +47,15 @@ class ClavisItem < ActiveRecord::Base
     where="manifestation_id=#{self.manifestation_id} AND library_id=#{self.owner_library_id}"
     sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
          AND collocation = #{coll}}
+    puts sql
     r=ClavisConsistencyNote.find_by_sql(sql)
     return r if r.size==1
     sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
        AND collocation ~* #{coll} ORDER BY consistency_note_id}
-    r=ClavisConsistencyNote.find_by_sql(sql)
+    begin
+      r=ClavisConsistencyNote.find_by_sql(sql)
+    rescue
+    end
     return r if r.size!=0
     sql=%Q{SELECT * FROM clavis.consistency_note WHERE #{where}
        ORDER BY consistency_note_id}
@@ -76,18 +91,40 @@ class ClavisItem < ActiveRecord::Base
     @in_container=value
   end
 
+  def dewey_collocation
+    return @dewey_collocation if !@dewey_collocation.nil?
+    return nil if self.id.nil?
+    r=self.connection.execute("select dewey_collocation as c from ricollocazioni where item_id = #{self.id}").to_a
+    r.size==0 ? nil : r.first['c']
+  end
+
+  def dewey_collocation= value
+    @dewey_collocation=value
+  end
+
   def save_in_google_drive(ws)
     data=[]
     title=self.title.strip
+    msg=''
+    item_id = self.home_library_id == -1 ? 0 : self.item_id
     if self.item_media=='S'
+      cnt=0
       self.consistency_notes.each do |cn|
+        cnt+=1
         cn_colloc=cn.collocation==self.collocazione ? '' : cn.collocation
-        data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,self.item_id,cn.consistency_note_id,cn.text_note,cn_colloc,(cn.closed.to_i==1 ? 'Consistenza CHIUSA' : 'Consistenza APERTA')]
+        data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,item_id,cn.consistency_note_id,cn.text_note,cn_colloc,(cn.closed.to_i==1 ? 'Consistenza CHIUSA' : 'Consistenza APERTA')]
       end
+      msg="Periodico privo di consistenza (segnalare a ufficio periodici)" if cnt==0
     else
-      data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,self.item_id]
+      data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,item_id]
     end
-    ws.update_cells(ws.num_rows+1,1,data)
+    if data.size>0
+      ws.update_cells(ws.num_rows+1,1,data)
+      msg=data.size==1 ? "Inserito" : "Inseriti #{data.size} esemplari"
+    else
+      msg="#{msg} - Inserimento non effettuato"
+    end
+    msg + " #{data.inspect}"
   end
 
   def clavis_url(mode=:show)

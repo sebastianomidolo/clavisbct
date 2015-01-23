@@ -7,12 +7,18 @@ ALTER TABLE excel_files_tables.celdes_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type text using ("data pagamento"::text);
 ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type text using ("data pagamento"::text);
+COMMIT;
 
+BEGIN;
 UPDATE excel_files_tables.celdes_admin_report_ordini_con_dati_fatturazione set "data pagamento" = NULL
     WHERE "data pagamento"='';
+COMMIT;
+BEGIN;
 UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione set "data pagamento" = NULL
     WHERE "data pagamento"='';
+COMMIT;
 
+set datestyle TO "DMY";
 ALTER TABLE excel_files_tables.celdes_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type date using ("data pagamento"::date);
 
@@ -20,12 +26,27 @@ set datestyle TO "DMY";
 ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
    ALTER COLUMN "data pagamento" type date using ("data pagamento"::date);
 
+BEGIN;
+UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione SET numero = NULL WHERE numero='';
 COMMIT;
 
+
+BEGIN;
+ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+  ALTER COLUMN "numero" type integer using ("numero"::integer);
+
+UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione SET "totale articolo" = NULL
+  WHERE "totale articolo"='';
+ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+  ALTER COLUMN "totale articolo" type float using ("totale articolo"::float);
+
+COMMIT;
+
+set datestyle TO "DMY";
 CREATE TABLE public.serials_admin_table
 AS
 select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
- f."totale articolo" as importo_fattura,
+ f."totale articolo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
  "data pagamento"::date as data_pagamento,
@@ -52,7 +73,7 @@ select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
 UNION
 -- musicale
 select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
- f."totale articolo" as importo_fattura,
+ f."totale articolo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
  "data pagamento"::date as data_pagamento,
@@ -69,3 +90,4 @@ select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattur
 update public.serials_admin_table set fattura_o_nota_di_credito = upper(fattura_o_nota_di_credito);
 
 alter table serials_admin_table add column id serial primary key;
+update serials_admin_table set prezzo=null where prezzo='';

@@ -7,10 +7,13 @@
 <style>
 body {
     background-color: linen;
+    margin-left: 40px;
 }
 h1,h2 {
     color: maroon;
-    margin-left: 40px;
+}
+p {
+  font-size: 120%;
 } 
 .scheda_libro_parlato {
    margin-bottom: 3em;
@@ -31,8 +34,49 @@ h1,h2 {
 </head>
 
 <body>
-<h1>LIBRI PARLATI DISPONIBILI PRESSO LE BIBLIOTECHE CIVICHE TORINESI</h1>
+<h1>Città di Torino - Biblioteche civiche torinesi</h1>
+<h1>Catalogo dei libri parlati</h1>
+
+<% if params[:filename]=='ultimi-libri-parlati.html' %>
+<%= content_tag(:h1, "Novità a catalogo (negli ultimi #{params[:mesi]} mesi)") %>
 <h2>Avvertenza</h2>
+<p>Il presente catalogo riporta in ordine di ultimo inserimento le novità inserite negli ultimi 12 mesi.
+Le opere disponibili per il download on line sono seguite dal link "scarica (codice opera)".
+Per effettuare il download gli utenti certificati devono inserire username e password
+rilasciati al momento dell'iscrizione.
+</p>
+<% end %>
+
+<% if params[:filename]=='libri-parlati-scaricabili.html' %>
+<h1>Libri parlati scaricabili online</h1>
+<h2>Avvertenza</h2>
+<p>Il presente catalogo riporta in ordine alfabetico per autore le opere disponibii per il download on line.
+ Per effettuare il download gli utenti certificati devono cliccare sui link "Scarica (codice opera)"
+ e inserire username e password rilasciati al momento dell'iscrizione.
+</p>
+<% end %>
+
+<% if params[:filename]=='libri-parlati-cd.html' %>
+<h1>Libri parlati disponibili su CD</h1>
+<h2>Avvertenza</h2>
+<p>Il presente catalogo riporta in ordine alfabetico per autore le opere registrate su CD MP3.
+Le opere disponibili per il download on line sono seguite dal link "scarica (codice opera)".
+Per effettuare il download gli utenti certificati devono inserire username e password
+rilasciati al momento dell'iscrizione.
+</p>
+<% end %>
+
+<% if params[:filename]=='libri-parlati-completo.html' %>
+<h2>Avvertenza</h2>
+<p>Il presente catalogo riporta in ordine alfabetico per autore i libri parlati disponibili presso le
+Biblioteche civiche torinesi. Di alcune opere è possibile effettuare il download online
+cliccando sul link "scarica (codice opera)".
+Per effettuare il download gli utenti certificati devono inserire username e password
+rilasciati al momento dell'iscrizione.
+</p>
+<% end %>
+
+<%= content_tag(:h2, "aggiornato al #{TalkingBook.updated_at}") %>
 
 <% @talking_books.each do |tb| %>
  <%= talking_book_show_record(tb) %>

@@ -18,19 +18,20 @@
 
   <body>
 
-<% if user_signed_in? %>
-<% access_link=link_to "#{current_user.email} <b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete %>
-<% else %>
-<% access_link=link_to "Sign in", new_user_session_path
-   access_link=link_to "Log in", new_user_session_path
+<%
+access_link=[]
+if user_signed_in?
+ access_link << link_to(current_user.email, edit_user_registration_path)
+ access_link << link_to("<b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete)
+else
+ access_link << link_to("Entra", new_user_session_path)
+end
 %>
-<% end %>
-
-
 
     <div class="container">
 
       <!-- Static navbar -->
+<% if @embedded.nil? %>
       <div class="navbar navbar-default" role="navigation">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -55,7 +56,6 @@
                 <li><a href="/clavis_items">Cerca esemplari</a></li>
                 <li><a href="/ordini">Ordini periodici</a></li>
                 <li><a href="/verifica_consistenze">Verifica consistenze periodici</a></li>
-                <li><a href="/excel_files">Excel files</a></li>
 		<li><a href="/subjects">Soggettario BCT</a></li>
                 <li><a href="/clavis_items?clavis_item[owner_library_id]=2&clavis_item[item_status]=S&clavis_item[item_media]=F">Non trovato - da cercare (Centrale)</a></li>
 		<!--<li><a href="/clavis_manifestations/shortlist?digit=true">Titoli con digitalizzazioni</a></li> -->
@@ -68,13 +68,18 @@
             <li><a href="https://github.com/plataformatec/simple_form">Simple form</a></li>
             <li><a target="_blank" href="https://github.com/sebastianomidolo/clavisbct">Sources</a></li>
             <li><a target="_blank" href="http://getbootstrap.com/">Bootstrap</a></li>
-	    <%= content_tag(:li, access_link) %>
+            <% access_link.each do |l| %>
+             <%= content_tag(:li, l) %>
+            <% end %>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
+<% end %>
 
+<!--
        <p class="notice"><%= notice %></p>
        <p class="alert"><%= alert %></p>
+-->
 
       <!-- Main component for a primary marketing message or call to action -->
       <div class="jumbotron">

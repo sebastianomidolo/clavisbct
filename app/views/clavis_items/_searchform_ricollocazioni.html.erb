@@ -1,0 +1,7 @@
+
+
+<%= form_tag(ricollocazioni_clavis_items_path, method: 'get') do %>
+  <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
+  <%= submit_tag 'cerca', :class=>'btn btn-info' %>
+
+<% end %>

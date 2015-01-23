@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION public.compact_collocation(text,text,text,text,text) 
    set c [string trim $3]
    set d [string trim $4]
    set e [string trim $5]
-   if {$a!=""} {lappend res $a}
+   if {$a!="" && $a!="BCT"} {lappend res $a}
    if {$b!=""} {lappend res $b}
    if {$c!=""} {lappend res $c}
    if {$d!=""} {lappend res $d}

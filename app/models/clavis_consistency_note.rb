@@ -13,7 +13,7 @@ class ClavisConsistencyNote < ActiveRecord::Base
     if self.collocazione_per.nil?
       sql="SELECT * FROM clavis.periodici_in_casse WHERE consistency_note_id=#{self.consistency_note_id} ORDER BY column_number"
     else
-      sql="SELECT * FROM clavis.periodici_in_casse WHERE collocazione_per=#{self.collocazione_per} ORDER BY column_number"
+      sql="SELECT * FROM clavis.periodici_in_casse WHERE collocazione_per=#{self.collocazione_per} and (consistency_note_id is null or consistency_note_id=#{self.id}) ORDER BY column_number"
     end
     ClavisConsistencyNote.find_by_sql(sql)
   end
@@ -53,12 +53,13 @@ class ClavisConsistencyNote < ActiveRecord::Base
     doc2=response.body
 
 
-    fd.write("COPY clavis.periodici_in_casse(column_number,collocazione_per,consistenza,cassa,annata,note) FROM STDIN;\n")
+    fd.write("COPY clavis.periodici_in_casse(column_number,collocazione_per,consistenza,cassa,annata,note,consistency_note_id) FROM STDIN;\n")
     cnt=0
     CSV.parse(doc1.toutf8) do |row|
       cnt+=1
       next if cnt==1
       next if row.first.nil?
+      row[5]="\\N" if row[5].blank?
       fd.write("#{cnt}\t#{row.join("\t")}\n")
     end
     fd.write("\\.\n")

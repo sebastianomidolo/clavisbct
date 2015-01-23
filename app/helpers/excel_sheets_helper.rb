@@ -71,7 +71,9 @@ module ExcelSheetsHelper
             tdd << content_tag(:td, link_to(r[c.gsub('"','')],
                                             excel_sheet_path(sheet, :row=>r['excel_cell_row'])))
           else
-            tdd << content_tag(:td, r[c.gsub('"','')])
+            content = r[c.gsub('"','')]
+            content = link_to(content, content) if content =~ /^http/
+            tdd << content_tag(:td, content)
           end
         end
       end
@@ -103,6 +105,7 @@ module ExcelSheetsHelper
         lnk = link_to(content, d_objects_path(:filename=>content))
         res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, lnk))
       else
+        content = link_to(content, content) if content =~ /^http/
         res << content_tag(:tr, content_tag(:td, label) + content_tag(:td, content))
       end
     end

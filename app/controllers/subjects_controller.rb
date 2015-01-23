@@ -31,8 +31,17 @@ class SubjectsController < ApplicationController
   # GET /subjects/1
   # GET /subjects/1.json
   def show
-    @subject = Subject.find(params[:id])
+    if params[:clavis_authority_id].blank?
+      @subject = Subject.find(params[:id])
+    else
+      @subject = Subject.find_by_clavis_authority_id(params[:clavis_authority_id])
+      if @subject.nil?
+        @subject = Subject.find_by_sql("SELECT s.* FROM clavis.authority ca JOIN subjects s ON(s.heading=ca.full_text) WHERE ca.authority_id=#{params[:clavis_authority_id]} AND s.inbct").first
+      end
+      render :text=>'-' and return if @subject.nil? or @subject.inbct == false
+    end
     @pagetitle="Soggettario BCT: #{@subject.heading} "
+    @embedded = params[:embedded].blank? ? nil : true
     respond_to do |format|
       format.html # show.html.erb
       format.json { render json: @subject }
