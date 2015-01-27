@@ -67,9 +67,22 @@ class ClavisItemsController < ApplicationController
   def ricollocazioni
     @clavis_item = ClavisItem.new(params[:clavis_item])
     cond=[]
-    cond << "section in ('BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15')"
-    # cond << "section in ('BCT')"
-    cond << "dewey_collocation ~ '^#{params[:dewey_collocation]}'" if !params[:dewey_collocation].blank?
+    @sections=params[:sections]
+    @sort=params[:sort]
+    # render text:@sort and return
+    @dewey=params[:dewey_collocation]
+    s = @sections.blank? ? [] : @sections.collect {|x| ClavisItem.connection.quote x}
+    cond << "section in (#{s.join(',')})" if s.size>0
+    # render :text=>cond.inspect and return
+    if !@dewey.blank?
+      if (/^[0-9]/ =~ @dewey)==0
+        cond << "dewey_collocation ~ '^#{@dewey}'"
+      else
+        ts=ClavisItem.connection.quote_string(@dewey.split.join(' & '))
+        cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
+      end
+    end
+    cond << 'false' if cond==[]
     cond = cond.join(' AND ')
     # cond="section in ('BCT14')"
     @sql_conditions=cond
