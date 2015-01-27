@@ -13,17 +13,6 @@ class ClavisItem < ActiveRecord::Base
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
   has_many :attachments, :as => :attachable
 
-  after_save do |r|
-    sql=%Q{SELECT * FROM clavis.collocazioni WHERE item_id=#{r.id}}
-    rc=r.connection.execute(sql).first
-    if rc.nil? and !r.collocazione.blank?
-      sql=%Q{INSERT INTO clavis.collocazioni(item_id,collocazione,sort_text)
-           (SELECT #{r.item_id}, #{r.connection.quote(r.collocation)},
-             espandi_collocazione(#{r.connection.quote(r.collocation)}))}
-      # r.connection.execute(sql)
-    end
-  end
-  
   def to_label
     if self.clavis_manifestation.nil?
       self.la_collocazione
