@@ -217,11 +217,9 @@ ActiveRecord::Schema.define(:version => 20150127154628) do
   add_index "musicbrainz_artists_clavis_authorities", ["authority_id"], :name => "musicbrainz_artists_clavis_authorities_authority_id_idx"
   add_index "musicbrainz_artists_clavis_authorities", ["gid"], :name => "musicbrainz_artists_clavis_authorities_gid_idx"
 
-  create_table "open_shelf_items", :force => true do |t|
-    t.integer  "item_id"
-    t.integer  "created_by"
-    t.datetime "created_at", :null => false
-    t.datetime "updated_at", :null => false
+  create_table "open_shelf_items", :id => false, :force => true do |t|
+    t.integer "item_id",    :null => false
+    t.integer "created_by"
   end
 
   add_index "open_shelf_items", ["item_id"], :name => "index_open_shelf_items_on_item_id", :unique => true

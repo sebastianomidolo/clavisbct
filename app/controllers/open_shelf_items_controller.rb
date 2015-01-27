@@ -1,0 +1,2 @@
+class OpenShelfItemsController < ApplicationController
+end
