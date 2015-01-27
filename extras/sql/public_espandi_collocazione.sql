@@ -14,6 +14,27 @@ CREATE OR REPLACE FUNCTION public.espandi_collocazione(text) returns text AS
    return [join $res]
 ' language pltcl IMMUTABLE RETURNS NULL ON NULL INPUT;
 
-SELECT espandi_collocazione('BCT.1.A.5-7');
-SELECT espandi_collocazione('BCT.DVD.9');
-SELECT espandi_collocazione('BCT.DVD.245');
+
+CREATE OR REPLACE FUNCTION public.espandi_dewey(text) returns text AS
+  'set r [split $1 "."]
+   if {[lindex $r 2]==""} {
+     return [join [linsert $r 1 "00000000"] "."]
+   } else {
+     set res ""
+     set cnt 0
+     foreach v [split $r] {
+      set v [string trim $v]
+       incr cnt
+       if $cnt==1 {
+         lappend res $v
+         continue
+       }
+       if [string is alpha $v] {
+         lappend res $v
+       } else {
+         lappend res [format "%08s" $v]
+       }
+     }
+     return [join $res "."]
+   }
+' language pltcl IMMUTABLE RETURNS NULL ON NULL INPUT;

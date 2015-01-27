@@ -46,7 +46,7 @@ module ClavisItemsHelper
     return '' if records.size==0
     res=[]
     records.each do |r|
-      if @order_by=='dewey_collocation'
+      if @order_by=='r.sort_text'
         c1 = r.dewey_collocation
         c2 = r.full_collocation
       else

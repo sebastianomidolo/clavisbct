@@ -2,7 +2,7 @@
 
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%=
-   if @order_by=='dewey_collocation'
+   if @order_by=='r.sort_text'
      content_tag(:p, link_to("[passa a ordinamento per collocazione]",
        ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey)))
    else

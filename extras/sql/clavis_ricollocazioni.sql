@@ -6,7 +6,8 @@ select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
  ELSE
   upper(substr(trim(replace(mainentry.sort_text,'_','')),1,3))
  END as "dewey_collocation",
- mainentry.authority_id
+ mainentry.authority_id,
+ ''::text as sort_text
  from clavis.item ci
    join clavis.manifestation cm using(manifestation_id)
    left join clavis.l_authority_manifestation lam using(manifestation_id)
@@ -16,7 +17,10 @@ select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
    left join clavis.authority mainentry on (lam2.authority_id=mainentry.authority_id)
  where ci.owner_library_id=2;
 
+UPDATE ricollocazioni set sort_text=espandi_dewey(trim(dewey_collocation));
+
 CREATE INDEX ricollocazioni_item_id_ndx on ricollocazioni(item_id);
+CREATE INDEX ricollocazioni_sort_text_ndx on ricollocazioni(sort_text);
 CREATE INDEX ricollocazioni_class_id_ndx on ricollocazioni(class_id);
 CREATE INDEX ricollocazioni_authority_id_ndx on ricollocazioni(authority_id);
 
