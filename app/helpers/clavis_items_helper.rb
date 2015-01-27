@@ -45,20 +45,22 @@ module ClavisItemsHelper
   def clavis_items_ricollocazioni(records, table_id='items_list')
     return '' if records.size==0
     res=[]
+    prec_descr=''
     records.each do |r|
       if @order_by=='r.sort_text'
         c1 = r.dewey_collocation
         c2 = r.full_collocation
+        if r.descrittore!=prec_descr
+          res << content_tag(:tr, content_tag(:td, content_tag(:b, r.descrittore), {colspan:4}))
+          prec_descr=r.descrittore
+        end
       else
         c1 = r.full_collocation
         c2 = r.dewey_collocation
       end
       res << content_tag(:tr,
-                         content_tag(:td, c1) +
-                         content_tag(:td, c2) +
-                         content_tag(:td, r.custom_field1) +
-                         content_tag(:td, r.custom_field2) +
-                         content_tag(:td, r.custom_field3) +
+                         content_tag(:td, c1.html_safe) +
+                         content_tag(:td, c2.html_safe) +
                          content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
                          content_tag(:td, r.inventario))
     end

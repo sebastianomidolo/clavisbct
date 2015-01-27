@@ -88,8 +88,8 @@ class ClavisItemsController < ApplicationController
     @sql_conditions=cond
     @order_by = params[:sort] == 'dewey' ? 'r.sort_text' : 'cc.sort_text'
     @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100,
-                                        :select=>'item.*,r.*,cc.collocazione as full_collocation',
-                                        :joins=>"join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id)",
+                                        :select=>'item.*,ca.full_text as descrittore,r.*,cc.collocazione as full_collocation',
+                                        :joins=>"join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id) join clavis.authority ca on(ca.authority_id=r.class_id)",
                                         :order=>@order_by)
   end
 
