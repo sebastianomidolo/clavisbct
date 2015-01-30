@@ -2,6 +2,12 @@ Clavisbct::Application.routes.draw do
 
   resources :extra_cards
 
+  resources :open_shelf_items do
+    member do
+      get 'insert'
+      get 'delete'
+    end
+  end
 
   resources :container_items
 

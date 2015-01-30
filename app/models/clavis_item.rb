@@ -12,6 +12,7 @@ class ClavisItem < ActiveRecord::Base
   has_many :talking_books, :foreign_key=>'n', :primary_key=>'collocation'
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
   has_many :attachments, :as => :attachable
+  has_one :open_shelf_item, foreign_key:'item_id'
 
   def to_label
     if self.clavis_manifestation.nil?

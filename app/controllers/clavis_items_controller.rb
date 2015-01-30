@@ -79,17 +79,27 @@ class ClavisItemsController < ApplicationController
         cond << "dewey_collocation ~ '^#{@dewey}'"
       else
         ts=ClavisItem.connection.quote_string(@dewey.split.join(' & '))
-        cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
+        cond << "to_tsvector('simple', item.title) @@ to_tsquery('simple', '#{ts}')"
       end
     end
     cond << 'false' if cond==[]
+    # cond << "item.usage_count>1"
     cond = cond.join(' AND ')
     # cond="section in ('BCT14')"
     @sql_conditions=cond
-    @order_by = params[:sort] == 'dewey' ? 'r.sort_text' : 'cc.sort_text'
+    @order_by = @sort == 'dewey' ? 'r.sort_text' : 'cc.sort_text'
     @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100,
-                                        :select=>'item.*,ca.full_text as descrittore,r.*,cc.collocazione as full_collocation',
-                                        :joins=>"join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id) join clavis.authority ca on(ca.authority_id=r.class_id)",
+                                        :select=>'os.item_id as open_shelf_item_id, item.item_id,
+            item.inventory_serie_id,item.inventory_number,item.usage_count,item.item_status,
+              item.title as title,cm.edition_date,cm.publisher,cm.manifestation_id,
+            imt.value_label as item_status,
+             ca.full_text as descrittore,r.dewey_collocation,cc.collocazione as full_collocation',
+                                        :joins=>"join clavis.manifestation cm using(manifestation_id)
+             join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id)
+             join clavis.authority ca on(ca.authority_id=r.class_id)
+             join clavis.lookup_value imt on(imt.value_class='ITEMSTATUS' and imt.value_key=item_status
+                 and value_language='it_IT')
+             left join open_shelf_items os on (r.item_id=os.item_id)",
                                         :order=>@order_by)
   end
 

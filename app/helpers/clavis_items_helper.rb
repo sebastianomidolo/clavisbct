@@ -45,28 +45,37 @@ module ClavisItemsHelper
   def clavis_items_ricollocazioni(records, table_id='items_list')
     return '' if records.size==0
     res=[]
+    res << content_tag(:div, "#{records.total_entries} esemplari", class: 'panel-heading')
+    # res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
+
     prec_descr=''
     records.each do |r|
-      if @order_by=='r.sort_text'
-        c1 = r.dewey_collocation
+      if @sort=='dewey'
+        c1=r['dewey_collocation']
         c2 = r.full_collocation
         if r.descrittore!=prec_descr
-          res << content_tag(:tr, content_tag(:td, content_tag(:b, r.descrittore), {colspan:4}))
+          res << content_tag(:tr, content_tag(:td, content_tag(:b, r.descrittore), {colspan:5}))
           prec_descr=r.descrittore
         end
       else
         c1 = r.full_collocation
-        c2 = r.dewey_collocation
+        c2=r['dewey_collocation']
       end
+      c1+="<br/><b>#{r.usage_count}</b> prestit#{r.usage_count==1?'o':'i'}"
+      c2+="<br/>#{r.inventario}"
+
+      lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false)
       res << content_tag(:tr,
+                         content_tag(:td, r.item_status) +
                          content_tag(:td, c1.html_safe) +
                          content_tag(:td, c2.html_safe) +
-                         content_tag(:td, link_to(r.title, r.clavis_url(:show), :target=>'_blank')) +
-                         content_tag(:td, r.inventario))
+                         content_tag(:td, lnk, id:"item_#{r.item_id}", style:"width:10em") +
+                         content_tag(:td, link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id,:opac), :target=>'_blank'), style:"20em") +
+                         content_tag(:td, "<b>#{r.edition_date}</b><br/>#{r.publisher}".html_safe))
     end
-    res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
-    res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
-    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+    res=content_tag(:tbody, res.join.html_safe)
+    res=content_tag(:table, res, {:id=>table_id, class: 'table table-striped'})
+    # content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
 

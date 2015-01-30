@@ -1,11 +1,9 @@
 
-<p><a href="/sa">Ricerca esemplari per Scaffale Aperto</a></p>
-
 <%= form_tag(ricollocazioni_clavis_items_path, method: 'get') do %>
   <%= hidden_field_tag(:sort,@sort) %>
-  <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15'],
+  <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT'],
           @sections),
-       multiple:true, size:7, include_blank:false) %>
+       multiple:true, size:8, include_blank:false) %>
   <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
 
 
