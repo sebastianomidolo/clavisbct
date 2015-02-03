@@ -42,6 +42,7 @@ class ExtraCardsController < ApplicationController
   end
 
   def destroy
+    @clavis_item_id=@extra_card.clavis_item.item_id
     if @extra_card.deleted?
       @extra_card.deleted=false
       flash[:notice] = "Richiamata in vita"
@@ -50,7 +51,10 @@ class ExtraCardsController < ApplicationController
       flash[:notice] = "Scheda contrassegnata come cancellata"
     end
     @extra_card.save
-    respond_with(@extra_card)
+    respond_to do |format|
+      format.html { respond_with(@extra_card) }
+      format.js
+    end
   end
 
   private

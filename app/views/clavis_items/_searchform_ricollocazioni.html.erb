@@ -5,6 +5,8 @@
           @sections),
        multiple:true, size:8, include_blank:false) %>
   <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
+  <%= check_box_tag(:onshelf, params[:onshelf], params[:onshelf]) %>
+  <%= label_tag(:onshelf, 'Solo volumi su scaffale aperto') %>
 
 
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>

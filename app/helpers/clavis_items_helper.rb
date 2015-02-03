@@ -92,6 +92,8 @@ module ClavisItemsHelper
         # lnk += "<br/>#{link_to('Inserisci in Clavis',url, :target=>'_blank')}"
         if current_user.google_doc_key.nil?
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
+          mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
+                          method: :delete, data: { confirm: "Confermi cancellazione?" })
         else
           mlnk = 'TOPOGRAFICO'
         end
