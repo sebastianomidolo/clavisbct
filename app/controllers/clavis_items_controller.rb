@@ -65,7 +65,7 @@ class ClavisItemsController < ApplicationController
   end
 
   def ricollocazioni
-    @onshelf = params[:onshelf].blank? ? false : true
+    @onshelf = params[:onshelf]
     @clavis_item = ClavisItem.new(params[:clavis_item])
     cond=[]
     @sections=params[:sections]
@@ -83,7 +83,7 @@ class ClavisItemsController < ApplicationController
         cond << "to_tsvector('simple', item.title) @@ to_tsquery('simple', '#{ts}')"
       end
     end
-    joincond = @onshelf ? 'join' : 'left join'
+    joincond = @onshelf=='yes' ? 'join' : 'left join'
     cond << 'false' if cond==[]
     # cond << "item.usage_count>1"
     cond = cond.join(' AND ')
