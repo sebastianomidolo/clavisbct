@@ -31,8 +31,8 @@ class ClavisItemsController < ApplicationController
         cond << "manifestation_id=0" if value==1
       when 'collocation'
         if (@clavis_item.collocation =~ /\.$/).nil?
-          cond << "cc.collocazione = '#{@clavis_item.collocation}'"
-          @sql_conditions = "uguale a '#{@clavis_item.collocation}'"
+          cond << "cc.collocazione ~* '^#{@clavis_item.collocation}'"
+          @sql_conditions = "inizia con '#{@clavis_item.collocation}'"
         else
           cond << "cc.collocazione ~ '^#{@clavis_item.collocation}'"
           @sql_conditions = "inizia con #{@clavis_item.collocation}"
