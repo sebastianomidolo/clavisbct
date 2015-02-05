@@ -63,13 +63,15 @@ module ClavisItemsHelper
       end
       c1+="<br/><b>#{r.usage_count}</b> prestit#{r.usage_count==1?'o':'i'}"
       c2+="<br/>#{r.inventario}"
+      c2+="<br/>In deposito esterno: <b>#{r.contenitore}</b>" if !r.contenitore.blank?
 
+      in_opac=r.opac_visible==1 ? '' : '<b>non visibile in opac</b>'
       lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false)
       res << content_tag(:tr,
-                         content_tag(:td, r.item_status) +
+                         content_tag(:td, "#{r.item_status}<br/><b>#{r.loan_status}</b>".html_safe) +
                          content_tag(:td, c1.html_safe) +
                          content_tag(:td, c2.html_safe) +
-                         content_tag(:td, lnk, id:"item_#{r.item_id}", style:"width:10em") +
+                         content_tag(:td, "#{lnk}<br/>#{in_opac}".html_safe, id:"item_#{r.item_id}", style:"width:10em") +
                          content_tag(:td, link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id,:opac), :target=>'_blank'), style:"20em") +
                          content_tag(:td, "<b>#{r.edition_date}</b><br/>#{r.publisher}".html_safe))
     end
