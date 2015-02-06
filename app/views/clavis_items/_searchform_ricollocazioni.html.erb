@@ -1,13 +1,16 @@
 
 <%= form_tag(ricollocazioni_clavis_items_path, method: 'get') do %>
   <%= hidden_field_tag(:sort,@sort) %>
+  <%= check_box_tag(:formula,'1',@formula) %>
+  <%= label_tag(:formula, 'Su scaffale, non in prestito, non visibile da opac') %>
+  <br/>
+  <%= check_box_tag(:onshelf,'yes',@onshelf) %>
+  <%= label_tag(:onshelf, 'Solo volumi su scaffale aperto') %>
+  <br/>
   <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT'],
           @sections),
        multiple:true, size:8, include_blank:false) %>
   <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
-  <%= check_box_tag(:onshelf,'yes',@onshelf) %>
-  <%= label_tag(:onshelf, 'Solo volumi su scaffale aperto') %>
-
 
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 
