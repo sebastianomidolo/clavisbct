@@ -67,6 +67,7 @@ class ClavisItemsController < ApplicationController
   def ricollocazioni
     @onshelf = params[:onshelf]
     @formula = params[:formula]
+    @collocation = params[:collocation]
     @clavis_item = ClavisItem.new(params[:clavis_item])
     cond=[]
     @sections=params[:sections]
@@ -89,6 +90,7 @@ class ClavisItemsController < ApplicationController
     if @formula=='1'
       cond << "item.opac_visible='0' AND item.item_status='F' AND cit.item_id IS NULL AND item.item_media!='S' AND item.loan_status='A'"
     end
+    cond << "cc.collocazione ~* #{ClavisItem.connection.quote(@collocation)}" if !@collocation.blank?
     cond = cond.join(' AND ')
     @sql_conditions=cond
     @order_by = @sort == 'dewey' ? 'r.sort_text' : 'cc.sort_text'

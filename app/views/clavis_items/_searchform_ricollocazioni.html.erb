@@ -10,7 +10,9 @@
   <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT'],
           @sections),
        multiple:true, size:8, include_blank:false) %>
-  <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
+  Classe o parole nel titolo: <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
+<br/>
+  Filtro per collocazione: <%= text_field_tag :collocation, params[:collocation] %>
 
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 

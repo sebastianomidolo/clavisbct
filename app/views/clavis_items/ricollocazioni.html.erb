@@ -11,10 +11,10 @@
 <%=
    if @sort=='dewey'
      content_tag(:p, link_to("[passa a ordinamento per collocazione]",
-       ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula)))
+       ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation)))
    else
      content_tag(:p, link_to("[passa a ordinamento per Dewey]",
-       ricollocazioni_clavis_items_path(sections:@sections,sort:'dewey',dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula)))
+       ricollocazioni_clavis_items_path(sections:@sections,sort:'dewey',dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation)))
    end
 %>
 <%= clavis_items_ricollocazioni(@clavis_items) %>
