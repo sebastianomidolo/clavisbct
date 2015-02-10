@@ -128,7 +128,9 @@ module ClavisItemsHelper
                          content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
-    res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{@clavis_item.current_container}", class: 'panel-heading')
+    if !current_user.google_doc_key.nil?
+      res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{@clavis_item.current_container}", class: 'panel-heading')
+    end
     res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
