@@ -111,6 +111,14 @@ class ClavisItemsController < ApplicationController
              left join container_items cit on(cit.item_id=item.item_id)
              #{joincond} open_shelf_items os on (r.item_id=os.item_id)",
                                         :order=>@order_by)
+
+    respond_to do |format|
+      format.html
+      format.csv {
+        csv_data=@clavis_items.collect {|x| "#{x[:full_collocation]}\t#{x[:title].strip[0..32]}\t#{x[:inventory_number]}\t#{x[:item_id]}" }
+        send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=clavis_items.csv"
+      }
+    end
   end
 
   def show
