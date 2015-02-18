@@ -67,8 +67,14 @@ module ClavisItemsHelper
 
       in_opac=r.opac_visible==1 ? '' : '<b>non visibile in opac</b>'
       lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false)
+
+      item_info = "#{r.item_status}<br/><b>#{r.loan_status}</b>".html_safe
+      if user_signed_in? and [9].include?(current_user.id)
+        item_info = link_to(item_info, ClavisItem.clavis_url(r.item_id,:edit),:target=>'_blank')
+      end
+
       res << content_tag(:tr,
-                         content_tag(:td, "#{r.item_status}<br/><b>#{r.loan_status}</b>".html_safe) +
+                         content_tag(:td, item_info) +
                          content_tag(:td, c1.html_safe) +
                          content_tag(:td, c2.html_safe) +
                          content_tag(:td, "#{lnk}<br/>#{in_opac}".html_safe, id:"item_#{r.item_id}", style:"width:10em") +
