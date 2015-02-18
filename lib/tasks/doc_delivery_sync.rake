@@ -43,7 +43,10 @@ SELECT setval('public.d_objects_id_seq', (select max(id) FROM public.d_objects)+
   DObject.find_by_sql("select * from public.d_objects where id>#{lastid} and filename like 'doc_delivery/%' order by lower(filename)").each do |o|
     o.write_tags_from_filename
     mid=o.xmltag(:mid)
-    # puts "mid per #{o.id}: #{mid}"
+    mid.strip! if !mid.nil?
+    if !(/\A[-+]?\d+\z/ === mid)
+      mid=nil
+    end
     if o.parent_folder_with_metadata?
       folder = "\\N"
     else
