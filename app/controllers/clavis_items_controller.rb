@@ -88,7 +88,7 @@ class ClavisItemsController < ApplicationController
     joincond = @onshelf=='yes' ? 'join' : 'left join'
     cond << 'false' if cond==[]
     if @formula=='1'
-      cond << "item.opac_visible='0' AND item.item_status='F' AND cit.item_id IS NULL AND item.item_media!='S' AND item.loan_status='A'"
+      cond << "item.loan_class='B' AND item.opac_visible='0' AND item.item_status='F' AND cit.item_id IS NULL AND item.item_media!='S' AND item.loan_status='A'"
     end
     cond << "cc.collocazione ~* #{ClavisItem.connection.quote(@collocation)}" if !@collocation.blank?
     cond = cond.join(' AND ')
