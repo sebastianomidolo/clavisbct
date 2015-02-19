@@ -1,0 +1,19 @@
+
+<%= form_tag(clavis_authorities_path, method: 'get') do %>
+  <%= hidden_field_tag(:sort,@sort) %>
+  <%= select_tag(:authority_type, options_for_select(ClavisAuthority.list,
+      params[:authority_type]), :onchange=>'submit();') %>
+  <%= select_tag(:bidnotnull, options_for_select([['Tutte',nil],['Con BID',true],['Senza BID',false]],
+      params[:bidnotnull]), :onchange=>'submit();') %>
+  <%= submit_tag 'cerca', :class=>'btn btn-info' %>
+<% end %>
+
+
+<%= content_tag(:p, "Trovate #{@clavis_authorities.total_entries} voci con #{@sql_conditions}") %>
+
+
+<%= will_paginate @clavis_authorities, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, clavis_authorities_list(@clavis_authorities)) %>
+
+

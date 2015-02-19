@@ -33,4 +33,11 @@ class ClavisAuthority < ActiveRecord::Base
     r
   end
 
+  def ClavisAuthority.list
+    sql=%Q{SELECT lv.value_key AS authority_type,lv.value_label as label
+             FROM clavis.lookup_value lv WHERE value_language='it_IT' AND value_class = 'AUTHTYPE'
+              ORDER by value_label}
+    ClavisAuthority.connection.execute(sql).collect{|x| [x['label'],x['authority_type']]}
+  end
+
 end

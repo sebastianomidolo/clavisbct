@@ -2,6 +2,20 @@
 # lastmod 19 dicembre 2012
 
 class ClavisAuthoritiesController < ApplicationController
+
+  def index
+    cond=[]
+    cond << "authority_type=#{ClavisAuthority.connection.quote(params[:authority_type])}"
+    cond << "bid is not null" if params[:bidnotnull]=='true'
+    cond << "bid is null" if params[:bidnotnull]=='false'
+    cond = cond.join(' AND ')
+    order='sort_text'
+    @sql_conditions=cond
+    @clavis_authorities=ClavisAuthority.paginate(:conditions=>cond,per_page:400,
+                                               :page=>params[:page],
+                                               :order=>order)
+  end
+
   def info
     headers['Access-Control-Allow-Origin'] = "*"
     sql=%Q{SELECT r.value_label as rectype,t.value_label as authtype, a.bid_source,
