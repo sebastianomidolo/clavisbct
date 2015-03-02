@@ -42,7 +42,7 @@ module ClavisItemsHelper
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
-  def clavis_items_ricollocazioni(records, table_id='items_list')
+  def clavis_items_ricollocazioni(records,dest_section=nil)
     return '' if records.size==0
     res=[]
     res << content_tag(:div, "#{records.total_entries} esemplari", class: 'panel-heading')
@@ -62,11 +62,11 @@ module ClavisItemsHelper
         c2=r['dewey_collocation']
       end
       c1+="<br/><b>#{r.usage_count}</b> prestit#{r.usage_count==1?'o':'i'}"
-      c2+="<br/>#{r.inventario}"
+      c2+="<br/>#{r.serieinv}"
       c2+="<br/>In deposito esterno: <b>#{r.contenitore}</b>" if !r.contenitore.blank?
 
       in_opac=r.opac_visible==1 ? '' : '<b>non visibile in opac</b>'
-      lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false)
+      lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false, @dest_section)
 
       item_info = "#{r.item_status}<br/><b>#{r.loan_status}</b>".html_safe
       if user_signed_in? and [9].include?(current_user.id)
@@ -82,8 +82,7 @@ module ClavisItemsHelper
                          content_tag(:td, "<b>#{r.edition_date}</b><br/>#{r.publisher}".html_safe))
     end
     res=content_tag(:tbody, res.join.html_safe)
-    res=content_tag(:table, res, {:id=>table_id, class: 'table table-striped'})
-    # content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+    res=content_tag(:table, res, {class: 'table table-striped'})
   end
 
 

@@ -38,3 +38,22 @@ UPDATE clavis.authority SET subject_class='no label' WHERE authority_type = 's' 
 CREATE TABLE clavis.manifestation_creators AS (SELECT DISTINCT created_by FROM clavis.manifestation);
 
 ALTER TABLE clavis.item ALTER COLUMN inventory_serie_id DROP NOT NULL;
+
+
+-- Da rimuovere una volta che le sezioni siano state inserite in Clavis
+-- Vedi http://bctdoc.selfip.net/issues/237
+INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
+            VALUES ('VT','ITEMSECTION',2,'VT (Viaggi e turismo)');
+INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
+            VALUES ('NC','ITEMSECTION',2,'NC (Narrativa contemporanea)');
+INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
+            VALUES ('TL','ITEMSECTION',2,'TL (Tempo libero: cinema, teatro, musica, danza)');
+INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
+            VALUES ('BB','ITEMSECTION',2,'BB (Biblioteconomia e bibliografia)');
+
+
+alter table clavis.item add column openshelf boolean;
+update clavis.item set openshelf=true where item_id in (select item_id from open_shelf_items);
+create index clavis_item_openshelf on clavis.item(openshelf) where openshelf is not null;
+
+create index manifestation_edition_date on clavis.manifestation(edition_date);

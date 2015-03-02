@@ -1,24 +1,23 @@
 
 <p>
-<a href="/sa">Ricerca esemplari per Scaffale Aperto</a>
-<%= content_tag(:span, OpenShelfItem.count, id:'items_scaffale_aperto_count',class:'btn btn-info') %> esemplari
+<a href="/sa">Scaffale aperto</a>
+<%= content_tag(:span, link_to(OpenShelfItem.conta(@dest_section),open_shelf_items_path(os_section:@dest_section)), id:'items_scaffale_aperto_count',class:'btn btn-info') %>
+<%= content_tag(:span, @dest_section_label) %>
 </p>
 
-<%= render :partial => 'searchform_ricollocazioni' %>
+<%= render :partial => 'clavis_items/searchform_ricollocazioni' %>
 
 
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%=
    if @sort=='dewey'
-     content_tag(:p, link_to("[passa a ordinamento per collocazione]",
-       ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation)))
+     content_tag(:p, link_to("[passa a ordinamento per data di pubblicazione]",
+       ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation,dest_section:@dest_section)))
    else
      content_tag(:p, link_to("[passa a ordinamento per Dewey]",
-       ricollocazioni_clavis_items_path(sections:@sections,sort:'dewey',dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation)))
+       ricollocazioni_clavis_items_path(sections:@sections,sort:'dewey',dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation,dest_section:@dest_section)))
    end
 %>
-<%= clavis_items_ricollocazioni(@clavis_items) %>
-
-
+<%= clavis_items_ricollocazioni(@clavis_items,@dest_section) %>
 
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>

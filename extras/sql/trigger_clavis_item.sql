@@ -1,4 +1,4 @@
-DROP TRIGGER aggiorna_clavis_collocazioni ON clavis.item;
+-- DROP TRIGGER aggiorna_clavis_collocazioni ON clavis.item;
 DROP TRIGGER aggiorna_topografico_non_in_clavis ON public.topografico_non_in_clavis;
 
 CREATE OR REPLACE FUNCTION aggiorna_clavis_collocazioni() RETURNS trigger AS $$
