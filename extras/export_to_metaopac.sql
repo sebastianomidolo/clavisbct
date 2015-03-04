@@ -16,7 +16,6 @@ select xmlelement(
    xmlforest((xpath('//d010/sa/text()',unimarc::xml))[1] as isbn),
    xmlforest((xpath('//d011/sa/text()',unimarc::xml))[1] as issn),
    xmlforest((xpath('//d100/sa/text()',unimarc::xml))[1] as u100),
-   xmlforest((xpath('//d100/sa/text()',unimarc::xml))[1] as u100),
    xmlforest((xpath('//d101/sa/text()',unimarc::xml))[1] as u101),
    xmlforest((xpath('//d102/sa/text()',unimarc::xml))[1] as u102),
    xmlelement(name copie, c.copie),
