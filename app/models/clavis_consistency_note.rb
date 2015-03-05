@@ -2,7 +2,7 @@ class ClavisConsistencyNote < ActiveRecord::Base
   self.table_name='clavis.consistency_note'
   self.primary_key = 'consistency_note_id'
 
-  attr_accessible :collocazione_per
+  attr_accessible :collocazione_per, :text_note
 
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
 

@@ -10,6 +10,9 @@ class ClavisConsistencyNotesController < ApplicationController
     if !@clavis_consistency_note.collocazione_per.nil?
       cond << "cn.collocazione_per=#{@clavis_consistency_note.collocazione_per}"
     end
+    if !@clavis_consistency_note.text_note.nil?
+      cond << "cn.text_note ~* #{ClavisConsistencyNote.connection.quote(@clavis_consistency_note.text_note)}"
+    end
     cond = cond.size==0 ? '' : "AND #{cond.join(' AND ')}"
     sql=%Q{select cn.collocazione_per,cn.consistency_note_id,cn.collocation,cn.text_note,trim(cm.title) as title,
                 cm.manifestation_id,

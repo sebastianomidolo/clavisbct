@@ -2,6 +2,7 @@
 <%= simple_form_for(@clavis_consistency_note, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
   <% f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
   <% f.input :collocation, hint: 'collocazione', label: false, placeholder: 'collocazione' %>
+  <%= f.input :text_note, hint: 'nota di consistenza', as:'string', label: false, placeholder: 'nota di consistenza' %>
   <%= f.input :collocazione_per, hint: 'collocazione (numero)', label: false, placeholder: 'collocazione numerica' %>
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
 <% end %>
