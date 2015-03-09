@@ -71,59 +71,11 @@ class ClavisItemsController < ApplicationController
     @dest_section = params[:dest_section]
     @dest_section_label=OpenShelfItem.label(@dest_section)
     @clavis_item = ClavisItem.new(params[:clavis_item])
-    cond=[]
     @sections=params[:sections]
     @sort=params[:sort]
-    # render text:@sort and return
     @dewey=params[:dewey_collocation]
-    s = @sections.blank? ? [] : @sections.collect {|x| ClavisItem.connection.quote x}
-    cond << "section in (#{s.join(',')})" if s.size>0
-    # render :text=>cond.inspect and return
-    if !@dewey.blank?
-      if (/^[0-9]/ =~ @dewey)==0
-        cond << "dewey_collocation ~ '^#{@dewey}'"
-      else
-        ts=ClavisItem.connection.quote_string(@dewey.split.join(' & '))
-        cond << "to_tsvector('simple', item.title) @@ to_tsquery('simple', '#{ts}')"
-      end
-    end
 
-    if @onshelf=='yes'
-      cond << 'item.openshelf=true'
-      joincond = 'left join'
-      cond << "os.os_section=#{ClavisItem.connection.quote(@dest_section)}" if !@dest_section.blank?
-    else
-      joincond = 'left join'
-    end
-
-    cond << 'false' if cond==[]
-    if @formula=='1'
-      cond << "item.loan_class='B' AND item.opac_visible='0' AND item.item_status='F' AND cit.item_id IS NULL AND item.item_media!='S' AND item.loan_status='A'"
-    end
-    cond << "cc.collocazione ~* #{ClavisItem.connection.quote(@collocation)}" if !@collocation.blank?
-    cond = cond.join(' AND ')
-    @sql_conditions=cond
-    # @order_by = @sort == 'dewey' ? 'r.sort_text' : 'cc.sort_text'
-    @order_by = @sort == 'dewey' ? 'r.sort_text' : 'cm.edition_date desc, cc.sort_text'
-
-    @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100,
-                                        :select=>"os.item_id as open_shelf_item_id, item.item_id,
-            item.inventory_serie_id || '-' || item.inventory_number as serieinv,
-            item.inventory_serie_id,item.inventory_number,item.usage_count,item.item_status,
-              item.title as title,cm.edition_date,cm.publisher,cm.manifestation_id,
-            ist.value_label as item_status, lst.value_label as loan_status,
-            item.opac_visible, cit.label as contenitore,
-             ca.full_text as descrittore,r.dewey_collocation,cc.collocazione as full_collocation",
-                                        :joins=>"join clavis.manifestation cm using(manifestation_id)
-             join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id)
-             join clavis.authority ca on(ca.authority_id=r.class_id)
-             join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status
-                 and ist.value_language='it_IT')
-             join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status
-                 and lst.value_language='it_IT')
-             left join container_items cit on(cit.item_id=item.item_id)
-             #{joincond} open_shelf_items os on (r.item_id=os.item_id)",
-                                        :order=>@order_by)
+    @clavis_items = ClavisItem.items_ricollocati(params)
 
     respond_to do |format|
       format.html
