@@ -127,8 +127,6 @@ class DObject < ActiveRecord::Base
   def audioclip_filename(cnt=1)
     dir=File.dirname(File.join(self.audioclips_basedir, self.filename).sub('bm::',''))
     basename=File.basename(self.filename)
-    puts dir
-    puts basename
     f=File.join(dir, format("%03d%s", cnt, '.mp3'))
     puts "clip?: #{f}"
     fname = File.exists?(f) ? f : File.join(dir,basename)
@@ -142,7 +140,8 @@ class DObject < ActiveRecord::Base
     return [] if doc.root.name!='tracklist'
     res=[]
     doc.root.elements.each do |e|
-      res << {e.name => e.text, attributes: e.attributes, :audioclip=>self.audioclip_exists?}
+      cnt=e.attributes['position'].blank? ? nil : e.attributes['position'].to_i
+      res << {e.name => e.text, attributes: e.attributes, :audioclip=>self.audioclip_exists?(cnt)}
     end
     res
   end
