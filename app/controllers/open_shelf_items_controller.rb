@@ -28,6 +28,18 @@ class OpenShelfItemsController < ApplicationController
     end
   end
 
+  def titles
+    @class_id=params[:class_id]
+    @close = params[:close].blank? ? false : true
+    params[:onshelf]='yes'
+    @dest_section=params[:dest_section]=params[:os_section]
+    @clavis_items=ClavisItem.items_ricollocati(params)
+    @record={'dewey'=>ClavisAuthority.find(@class_id).full_text,'class_id'=>@class_id,'count'=>@clavis_items.total_entries}
+    respond_to do |format|
+      format.js
+    end
+  end
+
   private
   def set_open_shelf_item
     @clavis_item = ClavisItem.find(params[:id])

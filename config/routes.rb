@@ -7,6 +7,9 @@ Clavisbct::Application.routes.draw do
       get 'insert'
       get 'delete'
     end
+    collection do
+      get 'titles'
+    end
   end
 
   resources :container_items

@@ -36,24 +36,23 @@ module OpenShelfItemsHelper
     end
   end
 
-  def open_shelf_dewey_list(records)
+  def open_shelf_dewey_list(records,os_section)
     res=[]
     records.each do |r|
-      res << open_shelf_dewey_list_row(r)
+      res << open_shelf_dewey_list_row(r,os_section)
     end
     res=content_tag(:tbody, res.join("\n").html_safe)
     res=content_tag(:table, res, {class: 'table table-striped'})
   end
 
-  def open_shelf_dewey_list_row(r,titles=[])
+  def open_shelf_dewey_list_row(record,os_section=nil,clavis_items=[])
     res=[]
-    lnk = titles.size == 0 ? link_to(r['dewey'], titles_open_shelf_items_path(format:'js',class_id:r['class_id']) ,remote: true) : r['dewey']
+    dw = record['dewey']
+    lnk = clavis_items.size == 0 ? link_to(dw, titles_open_shelf_items_path(format:'js',class_id:record['class_id'],os_section:os_section) ,remote: true) : link_to(content_tag(:b, dw) + " [CHIUDI]", titles_open_shelf_items_path(format:'js',class_id:record['class_id'],os_section:os_section,close:true) ,remote: true)
     res << content_tag(:tr, content_tag(:td, lnk) +
-                content_tag(:td, r['count']), id:"class_#{r['class_id']}")
-    titles.each do |t|
-      # da completare:
-      res << content_tag(:tr, content_tag(:td, t))
-    end
+                       content_tag(:td, record['count']), id:"class_#{record['class_id']}")
+    res << content_tag(:tr, content_tag(:td, clavis_items_ricollocazioni(clavis_items,os_section)),
+                       id:"class_#{record['class_id']}_titles") if clavis_items.size>0
     res.join.html_safe
   end
 

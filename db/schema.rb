@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150127154628) do
+ActiveRecord::Schema.define(:version => 20150220083945) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -100,6 +100,8 @@ ActiveRecord::Schema.define(:version => 20150127154628) do
     t.text    "item_title"
     t.string  "google_doc_key"
   end
+
+  add_index "container_items", ["item_id"], :name => "container_items_item_id_ndx"
 
   create_table "containers", :force => true do |t|
     t.string  "label",      :limit => 16
@@ -218,8 +220,9 @@ ActiveRecord::Schema.define(:version => 20150127154628) do
   add_index "musicbrainz_artists_clavis_authorities", ["gid"], :name => "musicbrainz_artists_clavis_authorities_gid_idx"
 
   create_table "open_shelf_items", :id => false, :force => true do |t|
-    t.integer "item_id",    :null => false
+    t.integer "item_id",                  :null => false
     t.integer "created_by"
+    t.string  "os_section", :limit => 64
   end
 
   add_index "open_shelf_items", ["item_id"], :name => "index_open_shelf_items_on_item_id", :unique => true
@@ -300,6 +303,10 @@ ActiveRecord::Schema.define(:version => 20150127154628) do
   add_index "subjects", ["clavis_authority_id"], :name => "index_subjects_on_clavis_authority_id"
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
+
+  create_table "temp_intestazioni_mancanti", :id => false, :force => true do |t|
+    t.text "heading"
+  end
 
   create_table "temp_links", :id => false, :force => true do |t|
     t.integer "source_id"

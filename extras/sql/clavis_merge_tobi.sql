@@ -1,8 +1,11 @@
+-- ALTER TABLE clavis.item disable trigger aggiorna_clavis_collocazioni ;
+
 BEGIN;
 DROP TABLE da_inserire_in_clavis;
 COMMIT;
 
 DELETE FROM clavis.item WHERE home_library_id=-1;
+UPDATE topografico_non_in_clavis SET deleted=false WHERE deleted IS NULL;
 
 CREATE TABLE da_inserire_in_clavis AS
   SELECT t.owner_library_id,t.inventory_serie_id,t.inventory_number,
@@ -11,7 +14,7 @@ CREATE TABLE da_inserire_in_clavis AS
    t.note,t.note_interne,
    t.id as source_id
    FROM topografico_non_in_clavis t LEFT JOIN clavis.item
-   ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci IS NULL AND NOT t.deleted;
+   ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci IS NULL AND t.deleted=false;
 
 SELECT setval('clavis.item_item_id_seq', (SELECT MAX(item_id) FROM clavis.item)+1);
 INSERT INTO clavis.item(
@@ -50,3 +53,4 @@ CREATE INDEX collocazioni_idx ON clavis.collocazioni(collocazione);
 CREATE INDEX collocazioni_sort_text_idx ON clavis.collocazioni(sort_text);
 
 \i extras/sql/trigger_clavis_item.sql
+-- ALTER TABLE clavis.item enable trigger aggiorna_clavis_collocazioni ;
