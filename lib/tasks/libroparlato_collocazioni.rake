@@ -6,7 +6,8 @@
 desc 'Creazione tabella import_libroparlato_colloc per libro parlato'
 
 task :libroparlato_collocazioni => :environment do
-  sql=%Q{select * from d_objects where filename ~* 'libroparlato' order by filename;}
+  sql=%Q{select win_sortfilename(filename) as filename,id from d_objects where filename ~ '^libroparlato'
+          order by win_sortfilename(filename);}
 
   ttable='public.import_libroparlato_colloc'
   puts "DROP TABLE #{ttable};"
