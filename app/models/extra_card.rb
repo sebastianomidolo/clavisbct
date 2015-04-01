@@ -7,12 +7,17 @@ class ExtraCard < ActiveRecord::Base
 
   validates :titolo, :collocazione, presence: true
 
+  before_save :check_record
+
   def clavis_item
     ClavisItem.find_by_custom_field3_and_home_library_id(self.id.to_s,-1)
   end
 
   def serieinv
     "#{self.inventory_serie_id}-#{inventory_number}"
+  end
+  def check_record
+    self.deleted=false if self.deleted.nil?
   end
 
 end
