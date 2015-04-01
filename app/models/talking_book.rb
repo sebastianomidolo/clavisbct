@@ -5,9 +5,12 @@ require 'mp3info'
 class TalkingBook < ActiveRecord::Base
   self.table_name='libroparlato.catalogo'
   self.primary_key = 'id'
-  has_one :clavis_item, :foreign_key=>'collocation', :primary_key=>'n'
-  # has_one :clavis_manifestation, :through=>:clavis_item
   has_many :attachments, :as => :attachable
+
+  def clavis_item
+    sql="SELECT * FROM clavis.item WHERE section='LP' AND owner_library_id=29 AND collocation ~ '#{self.codice_opera}$' LIMIT 1"
+    ClavisItem.find_by_sql(sql).first
+  end
 
   def main_entry
     # self.intestatio.blank? ? "#{self.titolo}" : "#{self.intestatio}. "
