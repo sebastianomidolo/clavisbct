@@ -3,6 +3,10 @@ class ClavisAuthority < ActiveRecord::Base
 
   belongs_to :clavis_authority, :foreign_key=>:parent_id
 
+  def letterebct_person
+    sql=%Q{select p.* from clavis.authority ca join letterebct.people p on(ca.full_text=p.denominazione) where ca.authority_type='P' and ca.full_text=#{self.connection.quote(self.full_text)}}
+    self.connection.execute(sql).to_a.first
+  end
 
   def subjects(subject_class=nil)
     subject_class = subject_class.nil? ? '' : "AND s.clavis_subject_class='#{subject_class}'"

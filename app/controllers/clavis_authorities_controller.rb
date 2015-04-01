@@ -35,4 +35,12 @@ class ClavisAuthoritiesController < ApplicationController
       format.json { render :json => r.first }
     end
   end
+
+  def show
+    @ca=ClavisAuthority.find(params[:id])
+    r={}
+    r[:clavis_authority]=@ca
+    r[:letterebct]=@ca.letterebct_person
+    render xml:r.to_xml
+  end
 end
