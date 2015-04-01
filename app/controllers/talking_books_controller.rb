@@ -38,9 +38,23 @@ class TalkingBooksController < ApplicationController
           render :partial=>'talking_books/html_catalog'
           return
         else
-          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+          # @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page])
         end
       }
+      format.csv {
+        require 'csv'
+        cond = cond.join(" AND ")
+        @records = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+        csv_string = CSV.generate do |csv|
+          @records.each do |r|
+            barcode = r.clavis_item.nil? ? "da controllare" : r.clavis_item.barcode
+            csv << [barcode,r.n,r.digitalizzato]
+          end
+        end
+        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=libriparlati_scaricabili.csv"
+      }
+
       format.pdf {
         cond = cond.join(" AND ")
         @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
