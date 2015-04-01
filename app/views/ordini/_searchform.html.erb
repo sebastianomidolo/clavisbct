@@ -1,10 +1,16 @@
 
 <%= simple_form_for(@ordine, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
   <%= f.input :titolo, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
-  <%= f.input :numero_fattura, hint: 'numero fattura', as: 'string', label: false, placeholder: 'numero fattura' %>
+  <%= f.input :ordanno, collection: [
+       ['Ordini 2013', '2013'],
+       ['Ordini 2015', '2015'],
+      ], include_blank:false, label:false  %>
+
+  <%= f.input :numero_fattura, hint: 'numero di fattura o di nota di credito', as: 'string', label: false, placeholder: 'numero fattura o nota di credito' %>
   <%= f.association :clavis_library, collection: ClavisItem.owner_library, include_blank: true, label: false %>
   <%= f.input :issue_status, collection: [['Filtra per...',''],
        ['Senza manifestation_id', 'SM'],
+       ['Note di credito', 'NDC'],
        ['Non in Clavis', 'NIC'],
        ['Non in Clavis e non fatturato', 'NICNF'],
        ['Non in Clavis fatturato', 'NICF'],
@@ -27,7 +33,7 @@
 
 <% if !@ordine.library_id.nil? %>
 <%=
- text=link_to(' <b>fatture...</b>'.html_safe, fatture_ordini_path(library_id:@ordine.library_id))
+ text=link_to(' <b>fatture...</b>'.html_safe, fatture_ordini_path(library_id:@ordine.library_id,ordanno:@ordine.ordanno))
  javascript_tag("$('#ordine_library_id').parent().append('#{text}');")
 %>
 

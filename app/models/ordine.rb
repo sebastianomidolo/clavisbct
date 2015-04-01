@@ -7,15 +7,17 @@ class Ordine < ActiveRecord::Base
   belongs_to :clavis_library, :foreign_key=>:library_id
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
 
-  def Ordine.fatture(library)
-    cond=library.nil? ? '' : "library_id=#{library.id} and"
+  def Ordine.fatture(library,ordanno=nil)
+    cond=[]
+    cond << "numero_fattura is not null and fattura_o_nota_di_credito = 'F'"
+    cond << "library_id=#{library.id}" if !library.nil?
+    cond << "ordanno=#{ordanno}" if !ordanno.nil?
     sql=%Q{select library_id,numero_fattura,data_emissione,data_pagamento,
   sum(prezzo::float) as totale_fattura,count(*) as numero_titoli
   from serials_admin_table
-  where #{cond} numero_fattura is not null
-    and fattura_o_nota_di_credito = 'F'
+  where #{cond.join(' AND ')}
   group by library_id,numero_fattura,data_emissione,data_pagamento
-  order by library_id,data_emissione,numero_fattura}
+  order by library_id,data_emissione desc,numero_fattura desc}
     puts sql
     Ordine.connection.execute(sql).to_a
   end

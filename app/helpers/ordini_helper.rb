@@ -16,8 +16,8 @@ module OrdiniHelper
   def ordini_fatture(records)
     return '' if records.size==0
     res=[]
-    res << content_tag(:tr, content_tag(:td, 'Numero fattura') +
-                       content_tag(:td, 'Data emissione')+
+    res << content_tag(:tr, content_tag(:td, 'Data emissione') +
+                       content_tag(:td, 'Numero fattura')+
                        content_tag(:td, 'Data pagamento')+
                        content_tag(:td, 'Totale fattura')+
                        content_tag(:td, 'Library id')+
@@ -26,9 +26,10 @@ module OrdiniHelper
     records.each do |r|
       lid=r['library_id']
       lnk=link_to("#{r['numero_fattura']}", fatture_ordini_path(:library_id=>lid, :numero_fattura=>r['numero_fattura']))
-      res << content_tag(:tr, content_tag(:td, lnk) +
-                         content_tag(:td, r['data_emissione'])+
-                         content_tag(:td, r['data_pagamento'])+
+      data_pagamento = r['data_pagamento'].blank? ? '-' : r['data_pagamento'].to_date 
+      res << content_tag(:tr, content_tag(:td, r['data_emissione'].to_date)+
+                         content_tag(:td, lnk)+
+                         content_tag(:td, data_pagamento)+
                          content_tag(:td, r['totale_fattura'])+
                          content_tag(:td, lid)+
                          content_tag(:td, r['numero_titoli']))

@@ -3,6 +3,7 @@ class OrdiniController < ApplicationController
 
   def index
     @ordine=Ordine.new(params[:ordine])
+    @ordine.ordanno=Time.now.year if @ordine.ordanno.blank?
     @pagetitle="Ordini periodici"
     @pagetitle << " - #{@ordine.clavis_library.shortlabel}" if !@ordine.clavis_library.nil?
     cond=[]
@@ -17,6 +18,8 @@ class OrdiniController < ApplicationController
         cond << "sat.manifestation_id is null"
       when 'CES'
         cond << "sat.stato='Cessata'"
+      when 'NDC'
+        cond << "sat.fattura_o_nota_di_credito='N'"
       when 'RIT'
         cond << "sat.stato='In Ritardo'"
       when 'ARCPER'
@@ -37,9 +40,13 @@ class OrdiniController < ApplicationController
         cond << "issue_status='#{@ordine.issue_status}'"
       end
     end
-    cond = cond.join(" AND ")
-    @sql_conditions=cond
-    @ordini=ClavisManifestation.periodici_ordini(@ordine,params[:page],200,cond)
+    if params[:ordine].nil?
+      @ordini=[]
+    else
+      cond = cond.join(" AND ")
+      @sql_conditions=cond
+      @ordini=ClavisManifestation.periodici_ordini(@ordine,params[:page],200,cond)
+    end
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: @ordini }
@@ -48,8 +55,9 @@ class OrdiniController < ApplicationController
 
   def fatture
     @library=ClavisLibrary.find(params[:library_id]) if !params[:library_id].blank?
+    @ordanno=params[:ordanno]
     if params[:numero_fattura].blank?
-      @fatture=Ordine.fatture(@library)
+      @fatture=Ordine.fatture(@library,@ordanno)
     else
       @ordine = Ordine.new(:library_id=>@library.id)
       @ordine.numero_fattura=params[:numero_fattura]
