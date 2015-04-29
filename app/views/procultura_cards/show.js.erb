@@ -1,0 +1,9 @@
+<% if @close==false %>
+  $("#<%= @procultura_card.id -%>").replaceWith("<%=j procultura_cards_table_row(@procultura_card,true) -%>");
+<% else %>
+  $("#<%= @procultura_card.id -%>").replaceWith("<%=j procultura_cards_table_row(@procultura_card,false) -%>");
+  $("#image_<%= @procultura_card.id-%>").remove();
+<% end %>
+
+
+

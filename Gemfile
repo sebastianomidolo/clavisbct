@@ -76,3 +76,5 @@ gem 'roo'
 gem 'pdf-reader'
 
 gem 'rubyntlm'
+
+gem 'best_in_place', '~> 3.0.1'

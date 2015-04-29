@@ -1,6 +1,10 @@
 require 'RMagick'
 class ProculturaCard < ActiveRecord::Base
   self.table_name = 'procultura.cards'
+  attr_accessible :heading, :updated_by, :updated_at
+
+  belongs_to :updated_by, class_name: 'User', foreign_key: :updated_by
+
   belongs_to :folder, :class_name=>'ProculturaFolder'
   has_many :attachments, :as => :attachable
 
@@ -24,6 +28,11 @@ class ProculturaCard < ActiveRecord::Base
   def intestazione
     self.heading.blank? ? '(intestazione in fase di revisione)' : self.heading
   end
+  def updated_by_info
+    return '' if self.updated_by.nil?
+    self.updated_by.email
+  end
+
   def cached_filename(fmt)
     cpath=ProculturaCard.cachepath
     File.join(cpath, "#{self.id}.#{fmt}")
@@ -51,6 +60,35 @@ class ProculturaCard < ActiveRecord::Base
     end
     # puts outfile
     outfile
+  end
+
+  def minuscolizza_intestazione
+    puts "archivio: #{self.folder.archive.id}"
+    h=self.heading
+    puts h
+    wd=self.heading.split
+    case self.folder.archive.id
+    when 1,2
+      # (titoli e soggetti)
+      # => Solo l'iniziale maiuscola, il resto minuscolo
+      self.heading.capitalize
+    when 3
+      case wd.size
+      when 3
+
+      when 2
+        "due"
+      when 1
+        "uno"
+      else
+        "non so"
+      end
+    end
+  end
+
+
+  def minuscolizza_intestazione!
+    self.heading=self.minuscolizza_intestazione and self.save
   end
 
 

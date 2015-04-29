@@ -20,7 +20,7 @@ module ProculturaHelper
       lnk=procultura_make_link(procultura_folders_path(:archive_id=>e['id']))
       r << content_tag(:li, link_to(e['name'], lnk) + " (#{e['count']} schede)")
     end
-    content_tag(:h3, 'Attenzione: questa pagina non è ancora stata pubblicata ufficialmente sul sito delle Biblioteche Civiche Torinesi') + content_tag(:ul, r.join.html_safe)
+    content_tag(:ul, r.join.html_safe)
   end
 
   def procultura_cards_singole_schede(folder)
@@ -49,14 +49,51 @@ module ProculturaHelper
       ids=c['ids'].gsub(/\{|\}/,'')
       if c['count']=='1'
         lnk=procultura_make_link(procultura_card_path(ids))
-        r << content_tag(:li, link_to(c['heading'], lnk))
+        r << content_tag(:li, link_to(c['heading'], lnk, remote:true))
       else
         next if c['heading'].blank?
         lnk=procultura_make_link("/procultura_cards?ids=#{ids.gsub(',','+')}")
-        r << content_tag(:li, link_to(c['heading'], lnk) + " (#{c['count']} schede)")
+        r << content_tag(:li, link_to(c['heading'], lnk, remote:true) + " (#{c['count']} schede)")
       end
     end
     content_tag(:ol, r.join("\n").html_safe)
+  end
+
+  def procultura_cards_editable(folder)
+    r=[]
+    folder.cards.each do |c|
+      r << procultura_cards_table_row(c)
+    end
+    content_tag(:table, r.join("\n").html_safe)
+  end
+
+  def procultura_cards_table_row(record,add_image=false)
+    r=[]
+    bip=best_in_place(record, :heading, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                      ok_button_class:'btn btn-success',
+                      class:'btn btn-default',
+                      skip_blur:false,
+                      html_attrs:{size:record.heading.size}
+                      )
+    if add_image
+      bip=content_tag(:b, bip)
+      r << content_tag(:tr,
+                       content_tag(:td, link_to('chiudi', procultura_card_path(record, close:true), remote:true)) +
+                       content_tag(:td, bip) +
+                       content_tag(:td, record.updated_by_info),
+                       :id=>record.id)
+      img=image_tag(procultura_card_path(record, :format=>'jpg'))
+      r << content_tag(:tr,
+                       content_tag(:td, img, {colspan:2}),
+                       :id=>"image_#{record.id}")
+    else
+      r << content_tag(:tr,
+                       content_tag(:td, link_to(record.id, procultura_card_path(record), remote:true)) +
+                       content_tag(:td, bip) +
+                       content_tag(:td, record.updated_by_info),
+                       :id=>record.id)
+    end
+    r.join.html_safe
   end
 
   def procultura_folders(archive)
