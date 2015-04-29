@@ -186,10 +186,14 @@ class ExcelSheet < ActiveRecord::Base
       excel=Roo::Excel.new(self.excel_file.file_name) if excel.nil?
       sheet=excel.sheet(self.sheet_number)
       cnt=0
+      check_colname={}
       sheet.row(headings[:row]).each do |c|
         # puts "#{cnt}: #{c}"
         cnt+=1
-        @sql_columns << %Q{"#{self.normalize_column_name(c,cnt)}"}
+        colname=self.normalize_column_name(c,cnt)
+        check_colname[colname] = check_colname[colname].nil? ? 1 : check_colname[colname]+1
+        colname << "_#{check_colname[colname]}" if check_colname[colname]>1
+        @sql_columns << %Q{"#{colname}"}
         break if cnt>=headings[:numcols]
       end
       self.columns=@sql_columns
