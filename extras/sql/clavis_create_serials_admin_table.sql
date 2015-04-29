@@ -17,6 +17,7 @@ ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatt
    ALTER COLUMN "data pagamento" type text using ("data pagamento"::text);
 UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione_2014 set "data pagamento" = NULL
     WHERE "data pagamento"='';
+set datestyle TO "DMY";
    ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione_2014   
    ALTER COLUMN "data pagamento" type date using ("data pagamento"::date);
 COMMIT;
