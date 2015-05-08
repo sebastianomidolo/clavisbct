@@ -57,3 +57,4 @@ update clavis.item set openshelf=true where item_id in (select item_id from open
 create index clavis_item_openshelf on clavis.item(openshelf) where openshelf is not null;
 
 create index manifestation_edition_date on clavis.manifestation(edition_date);
+create index clavis_attachment_object_id on clavis.attachment (object_id);

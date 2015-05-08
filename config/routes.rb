@@ -103,6 +103,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_issues do
     collection do
       get 'check'
+      get 'lastin'
     end
   end
 

@@ -1,0 +1,10 @@
+<%=
+code=%Q{<div id="bct_lastin_lib_#{@library_id}_#{@limit}"></div>
+<script src="http://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=#{@library_id}&limit=#{@limit}&targetdiv=bct_lastin_lib_#{@library_id}_#{@limit}"></script>
+}
+content_tag(:textarea, code, class: 'form-control')
+%>
+
+<%= clavis_issues_show(@clavis_issues) %>
+
+

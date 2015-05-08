@@ -50,4 +50,14 @@ class ClavisIssuesController < ApplicationController
     end
   end
 
+  def lastin
+    @clavis_issues=ClavisIssue.lastin(params)
+    @library_id=params[:library_id]
+    @limit=params[:limit]
+    respond_to do |format|
+      format.html
+      format.js {@targetdiv=params[:targetdiv]}
+    end
+  end
+
 end
