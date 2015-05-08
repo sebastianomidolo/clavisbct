@@ -439,7 +439,11 @@ class ClavisManifestation < ActiveRecord::Base
     where = conditions=='' ? 'WHERE false' : 'WHERE'
     ordine_template.ordanno=2013 if ordine_template.ordanno.nil?
     year=ordine_template.ordanno
-    subscription_year=year.to_i + 1
+    if year=='2013'
+      subscription_year=year.to_i + 1
+    else
+      subscription_year=year.to_i
+    end
     sql=%Q{SELECT
       sat.id,sat.titolo,cm.title,cm.manifestation_id,cs.subscription_id,sat.numero_fattura,
         sat.importo_fattura,sat.fattura_o_nota_di_credito as tipodoc,sat.periodo,sat.formato,sat.note_interne,
