@@ -47,7 +47,7 @@ module TalkingBooksHelper
     res << content_tag(:h3,%Q{#{record.main_entry}<em>#{record.titolo}</em>.}.html_safe)
     href=nil
     if !record.first_mp3_filename.nil?
-      href=File.join('http://wwwbiblio.selfip.net/tbda',File.basename(record.zip_filepath))
+      href=File.join('http://bctwww.comperio.it/tbda',File.basename(record.zip_filepath))
     end
     ad=[]
     ad << "#{record.abstract}." if !record.abstract.blank?
