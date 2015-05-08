@@ -140,7 +140,6 @@ class DObjectsController < ApplicationController
     render :text=>@d_object.mime_type
   end
 
-
   def random_mp3
     @pagetitle='Traccia audio casuale'
     @d_object = Attachment.first(:conditions=>"attachment_category_id='E'", :order=>'random()').d_object
@@ -148,6 +147,9 @@ class DObjectsController < ApplicationController
     fname=@d_object.filename_with_path
     logger.warn("random_mp3 id #{@d_object.id} (#{fname})")
     @d_object['random']=true
-    render :action=>:show, :layout=>'navbar_nomenu'
+    respond_to do |format|
+      format.html {render :action=>:show, :layout=>'navbar_nomenu'}
+      format.js {@targetdiv=params[:targetdiv]}
+    end
   end
 end
