@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class ClavisItem < ActiveRecord::Base
   self.table_name='clavis.item'
   self.primary_key = 'item_id'
@@ -20,6 +21,10 @@ class ClavisItem < ActiveRecord::Base
     else
       "#{self.la_collocazione} (#{self.clavis_manifestation.title.strip})"
     end
+  end
+
+  def container
+    Container.find_by_label self.current_container
   end
 
   def view
@@ -92,30 +97,22 @@ class ClavisItem < ActiveRecord::Base
     @dewey_collocation=value
   end
 
-  def save_in_google_drive(ws)
-    data=[]
+  def save_in_container(user,container)
+    old_container=ContainerItem.find_by_item_id(self.id)
+    return "già presente in #{old_container.container.label}" if !old_container.nil?
+    return "contenitore #{container.label} chiuso, elemento non aggiunto" if container.closed?
     title=self.title.strip
-    msg=''
-    item_id = self.home_library_id == -1 ? 0 : self.item_id
-    if self.item_media=='S'
-      cnt=0
-      self.consistency_notes.each do |cn|
-        cnt+=1
-        cn_colloc=cn.collocation==self.collocazione ? '' : cn.collocation
-        data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,item_id,cn.consistency_note_id,cn.text_note,cn_colloc,(cn.closed.to_i==1 ? 'Consistenza CHIUSA' : 'Consistenza APERTA')]
-      end
-      msg="Periodico privo di consistenza (segnalare a ufficio periodici)" if cnt==0
-    else
-      data << [self.current_container,self.collocazione,self.inventario,title,self.manifestation_id,item_id]
-    end
-    if data.size>0
-      ws.update_cells(ws.num_rows+1,1,data)
-      msg=data.size==1 ? "Inserito" : "Inseriti #{data.size} esemplari"
-    else
-      msg="#{msg} - Inserimento non effettuato"
-    end
-    msg + " #{data.inspect}"
+    container_item = ContainerItem.new(
+                                       created_by:user.id,
+                                       manifestation_id:self.manifestation_id,
+                                       item_title:title,
+                                       container_id:container.id,
+                                       item_id:self.item_id
+                                       )
+    container_item.save
+    return "(#{container.label} contiene #{container.container_items.size} elementi)"
   end
+
 
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)
