@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150220083945) do
+ActiveRecord::Schema.define(:version => 20150429071827) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -74,6 +74,11 @@ ActiveRecord::Schema.define(:version => 20150220083945) do
     t.integer "manifestation_id"
   end
 
+  create_table "centrorete_clavis", :id => false, :force => true do |t|
+    t.integer "manifestation_id"
+    t.integer "id"
+  end
+
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
     t.integer "d_object_id"
     t.text    "collocation"
@@ -99,14 +104,20 @@ ActiveRecord::Schema.define(:version => 20150220083945) do
     t.integer "library_id"
     t.text    "item_title"
     t.string  "google_doc_key"
+    t.integer "created_by"
+    t.integer "container_id"
   end
 
   add_index "container_items", ["item_id"], :name => "container_items_item_id_ndx"
 
   create_table "containers", :force => true do |t|
-    t.string  "label",      :limit => 16
+    t.string  "label",      :limit => 16,                    :null => false
     t.integer "library_id"
+    t.boolean "closed",                   :default => false
+    t.integer "created_by"
   end
+
+  add_index "containers", ["label"], :name => "containers_label_idx", :unique => true
 
   create_table "d_objects", :force => true do |t|
     t.string   "filename",        :limit => 2048
@@ -123,6 +134,20 @@ ActiveRecord::Schema.define(:version => 20150220083945) do
   add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
+    t.integer "owner_library_id"
+    t.string  "inventory_serie_id", :limit => 128
+    t.integer "inventory_number"
+    t.text    "collocazione"
+    t.text    "titolo"
+    t.string  "login",              :limit => 40
+    t.date    "date_created"
+    t.date    "date_updated"
+    t.text    "note"
+    t.text    "note_interne"
+    t.integer "source_id"
+  end
+
+  create_table "da_inserire_in_clavis_copia", :id => false, :force => true do |t|
     t.integer "owner_library_id"
     t.string  "inventory_serie_id", :limit => 128
     t.integer "inventory_number"
@@ -344,7 +369,7 @@ ActiveRecord::Schema.define(:version => 20150220083945) do
     t.date     "ctime"
     t.date     "mtime"
     t.string   "login",              :limit => 40
-    t.boolean  "deleted"
+    t.boolean  "deleted",                           :default => false
     t.datetime "created_at"
     t.datetime "updated_at"
     t.integer  "created_by"
