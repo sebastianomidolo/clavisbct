@@ -1,4 +1,6 @@
 class ContainerItemsController < ApplicationController
+  before_filter :authenticate_user!, only: [:edit, :update, :new, :destroy]
+
   # GET /container_items
   # GET /container_items.json
   def index
@@ -76,11 +78,13 @@ class ContainerItemsController < ApplicationController
   # DELETE /container_items/1.json
   def destroy
     @container_item = ContainerItem.find(params[:id])
+    @container=@container_item.container
     @container_item.destroy
 
     respond_to do |format|
       format.html { redirect_to container_items_url }
       format.json { head :no_content }
+      format.js
     end
   end
 end

@@ -47,13 +47,13 @@ class ClavisItemsController < ApplicationController
       @attrib << ['inventory_number','']
       if user_signed_in?
         @attrib << ['current_container', '']
-        cond << 'label is not null' if @clavis_item.in_container=='1'
+        cond << 'containers.label is not null' if @clavis_item.in_container=='1'
       end
       # cond << "cc.collocazione ~ '^#{params[:collocazione_inizia_per]}\\.'" if !params[:collocazione_inizia_per].blank?
       cond = cond.join(" AND ")
       # @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,cont.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id,manifestation_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
     end
@@ -110,26 +110,12 @@ class ClavisItemsController < ApplicationController
     respond_to do |format|
       format.html
       format.js {
-        if user_signed_in? and !current_user.google_doc_key.nil?
+        if user_signed_in? and current_user.containers_enabled?
           @clavis_item.current_container=user_session[:current_container]
           if @clavis_item.current_container.blank?
-            render :js=>"alert('Manca il numero del contenitore')"
+            @usermessage="Manca il numero del contenitore"
           else
-            if user_session[:google_session].nil?
-              config = Rails.configuration.database_configuration
-              username=config[Rails.env]["google_drive_login"]
-              passwd=config[Rails.env]["google_drive_passwd"]
-              session = GoogleDrive.login(username, passwd)
-            else
-              session=user_session[:google_session]
-              user_session[:session_usage_count] = 1 if user_session[:session_usage_count].nil?
-              user_session[:session_usage_count]+=1
-            end
-            s=session.spreadsheet_by_key(current_user.google_doc_key)
-            ws=s.worksheets.first
-            @usermessage=@clavis_item.save_in_google_drive(ws)
-            ws.save
-            user_session[:google_session]=session
+            @usermessage=@clavis_item.save_in_container(current_user,Container.find_or_create_by_label(user_session[:current_container]))
           end
         end
       }

@@ -6,6 +6,11 @@ class User < ActiveRecord::Base
          :recoverable, :rememberable, :trackable, :validatable
   attr_accessible :email, :password, :password_confirmation, :remember_me
 
+  def containers_enabled?
+    config = Rails.configuration.database_configuration
+    config[Rails.env]["container_users"].include?(self.id)
+  end
+
   def User.googledrive_session
     config = Rails.configuration.database_configuration
     username=config[Rails.env]["google_drive_login"]

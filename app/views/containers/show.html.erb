@@ -1,7 +1,17 @@
 <p id="notice"><%= notice %></p>
 
-<%= containers_cloud(@container) %>
-
-<%= content_tag(:h3, "Contenitore: #{@container.label} - Attualmente in #{@container.clavis_library.label}") %>
-<%= content_tag(:div, container_show(@container)) %>
 <%= link_to 'Elenco contenitori', containers_path %>
+
+<%
+ bip1=best_in_place(@container, :label, ok_button:'Salva', cancel_button:'Annulla modifiche', ok_button_class:'btn btn-success', class:'btn btn-default')
+ bip2=best_in_place(@container, :library_id, as: :select, collection: ClavisLibrary.library_select, class: 'btn')
+ bip3=best_in_place(@container, :closed, as: :checkbox, collection: {false: "Aperto", true: "Chiuso"},class:'btn btn-info')
+%>
+
+<%= content_tag(:div, "Etichetta del contenitore: #{bip1} #{bip3}".html_safe) %>
+<%= content_tag(:div, "Il contenitore si trova in: #{bip2}".html_safe) %>
+
+<%= content_tag(:div, container_info(@container)) %>
+<%= content_tag(:div, container_show(@container)) %>
+
+<%= button_to 'Aggiungi elementi', clavis_items_path(dest:'a'), method: 'get', class: 'btn btn-info' %>

@@ -23,6 +23,10 @@ class ClavisLibrary < ActiveRecord::Base
     "#{host}/index.php?page=Library.LibraryViewPage&id=#{id}"
   end
 
-
+  def ClavisLibrary.library_select
+    sql=%Q{select library_id as key,label from clavis.library
+      where library_status='A' AND library_internal='1' order by label}
+    self.connection.execute(sql).collect {|i| [i['key'],i['label']]}
+  end
   
 end

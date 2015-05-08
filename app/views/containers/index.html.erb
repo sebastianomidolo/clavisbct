@@ -1,18 +1,20 @@
-<%= content_tag(:h3, "Ci sono #{Container.count} contenitori contenenti in tutto #{ContainerItem.count} volumi") %>
+
+<%= link_to('Aggiungi contenitore', new_container_path, :class=>'btn') %>
 
 <table class='table'>
 <tr>
 <th>Etichetta</th>
-<th>Si trova in</th>
 <th>Numero volumi</th>
+<th>Si trova in</th>
+<th>Aperto/Chiuso</th>
 </tr>
 
-
-<% @containers.each do |container| %>
+<% Container.lista.each do |container| %>
   <tr>
     <td><%= link_to(container.label, container) %></td>
-    <td><%= link_to(container.clavis_library.nice_description, container.clavis_library.clavis_url) %></td>
-    <td><%= container.container_items.size %></td>
+    <td><%= container.numvol %></td>
+    <td><%= container.description %></td>
+    <td><%= best_in_place(container, :closed, as: :checkbox, collection: {false: "Aperto", true: "Chiuso"},class:'btn btn-default') %></td>
   </tr>
 <% end %>
 </table>
