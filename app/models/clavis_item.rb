@@ -99,7 +99,7 @@ class ClavisItem < ActiveRecord::Base
 
   def save_in_container(user,container)
     old_container=ContainerItem.find_by_item_id(self.id)
-    return "già presente in #{old_container.container.label}" if !old_container.nil?
+    return "già presente in #{old_container.inspect}" if !old_container.nil?
     return "contenitore #{container.label} chiuso, elemento non aggiunto" if container.closed?
     title=self.title.strip
     container_item = ContainerItem.new(
