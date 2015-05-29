@@ -1,0 +1,29 @@
+<%
+ info_r=@bct_person.info_lettere_ricevute
+%>
+
+
+<table>
+
+ <% if !info_i.nil?
+ info_i=@bct_person.info_lettere_inviate
+
+
+ %>
+  <tr><td><%= link_to info_i,bct_letters_path(:mittente_id=>@bct_person.id) -%></td></tr>
+  <tr><td><%= "Destinatari: #{@bct_person.info_destinatari}" -%></td></tr>
+ <% end %>
+
+ <% if !info_r.nil? %>
+  <tr><td><%= link_to info_r,bct_letters_path(:destinatario_id=>@bct_person.id) -%></td></tr>
+  <tr><td><%= "Mittenti: #{@bct_person.info_mittenti}" -%></td></tr>
+ <% end %>
+
+ <% if info_i.nil? and info_r.nil? %><tr><td><%= "Nessun documento (autore da cancellare?)" -%></td></tr><% end %>
+
+</table>
+
+
+
+
+

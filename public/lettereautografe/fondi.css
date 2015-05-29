@@ -1,0 +1,75 @@
+/*
+ * lastmod 30 novembre 2009
+ * lastmod  9 marzo 2009
+ */
+
+.lista_autori {
+  border: solid teal;
+}
+
+.lista_lettere {
+  width: 99%;
+}
+
+
+.singola_lettera {
+  width: 99%;
+  border: 1px outset red;
+  padding: 2px;
+}
+
+
+.singola_lettera th {
+ text-align: right;
+ vertical-align: top;
+ width: 20%;
+ color: orange;
+ padding: 1px;
+}
+
+.singola_lettera td {
+ text-align: left;
+ font-size: 120%;
+}
+
+.quadro_generico {
+  border: solid #cdcdcd;
+  border-width: 1px;
+  padding: 1em;
+}
+
+.tavola_luoghi {
+  width: 70%;
+}
+
+.tavola_luoghi th {
+ text-align: left;
+ width: 90%;
+}
+
+.tavola_luoghi td {
+ text-align: right;
+ font-size: 120%;
+}
+
+.logged_tabnav a.active {
+ background: red;
+ border-bottom: 3px solid #FFFFFF;
+}
+
+.main_tabnav a.active {
+ background: red;
+ border-bottom: 3px solid #FFFFFF;
+}
+
+.permalink {
+ font-size: 60%;
+}
+
+.fondo_corrente {
+/* border-right: 1px solid red;
+ border-bottom: 1px solid red;
+*/
+ border-left: 4px solid red;
+ padding-left: 2px;
+}

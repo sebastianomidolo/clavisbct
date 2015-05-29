@@ -1,0 +1,54 @@
+<% if !@bct_letter.mittente.nil? %>
+<tr>
+ <th>Mittente</th>
+ <td class="persona"><%= link_to(@bct_letter.mittente.denominazione, bct_person_path(@bct_letter.mittente)) -%></td>
+</tr>
+<% end %>
+
+<% if !@bct_letter.destinatario.nil? -%>
+<tr>
+ <th>Destinatario</th>
+ <td class="persona"><%= link_to(@bct_letter.destinatario.denominazione, bct_person_path(@bct_letter.destinatario)) -%></td>
+</tr>
+<% end -%>
+
+<% if !bct_letters_datazione(@bct_letter).nil? %>
+ <tr><th>Data</th><td><%= bct_letters_datazione(@bct_letter)-%></td></tr>
+<% end %>
+
+<% if !@bct_letter.placefrom.nil? -%>
+<tr>
+  <th>Scritta a</th>
+  <td class="luogo"><%= @bct_letter.placefrom.denominazione -%></td>
+</tr>
+<% end -%>
+
+<% if !@bct_letter.placeto.nil? -%>
+<tr>
+ <th>Ricevuta a</th>
+ <td class="luogo"><%= @bct_letter.placeto.denominazione -%></td>
+</tr>
+<% end -%>
+
+<!-- Verificare se e come inserire la "Tipologia" della lettera (il concetto non mi è chiaro) -->
+
+
+<% if @bct_letter.argomento!=nil -%>
+<tr><th>Argomento</th><td><b><%= "#{@bct_letter.argomento}"-%></b></td></tr>
+<% end -%>
+
+<% if @bct_letter.nota!=nil -%>
+<tr><th>Note</th><td><%= "#{@bct_letter.nota}"-%></td></tr>
+<% end -%>
+
+<%= content_tag(:tr, content_tag(:th, 'Allegati') + content_tag(:td, @bct_letter.allegati)) if !@bct_letter.allegati.blank? %>
+
+<tr><th>Fondo</th><td><%= "#{@bct_letter.bct_fondo.to_label}"-%></td></tr>
+
+<%= content_tag(:tr, content_tag(:th, 'Provenienza') + content_tag(:td, @bct_letter.provenienza)) if !@bct_letter.provenienza.blank? %>
+
+
+<%= content_tag(:tr, content_tag(:th, 'PDF') + content_tag(:td, bct_letters_letter_link_to_pdf(@bct_letter))) if !@bct_letter.pdf.blank? %>
+
+<tr><th></th><td><%= link_to("link a questa scheda", bct_letter_path(@bct_letter), {:title=>'permalink',:class=>'permalink'})-%></td></tr>
+

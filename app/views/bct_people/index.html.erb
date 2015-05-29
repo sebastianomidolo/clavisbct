@@ -1,0 +1,34 @@
+<div class="quadro_generico">
+
+ <table class="lista_persone">
+
+  <tr style="text-align: left">
+   <td>
+    <%= 
+       fondo=@fondo_corrente.nil? ? '' : " (<b>Fondo #{@fondo_corrente.denominazione}</b>)"
+       "#{@bct_people.total_entries} mittenti/destinatari#{fondo}".html_safe
+    %>
+<%= render :partial=>'/bct_people/searchbox' %>
+   </td>
+  </tr>
+
+
+  <tr style="text-align: left">
+   <td>
+    <%= will_paginate @bct_people, :previous_label=>'&laquo; Indietro', :inner_window=>1, :outer_window=>1,
+        :next_label=>"Avanti &raquo;"
+    %>
+   </td>
+  </tr>
+
+  <table class="singola_persona">
+  <% @bct_people.each do |person| %>
+      <%= render :partial=>'singola_persona', locals:{:bct_person=>person} %>
+    </td>
+  <% end %>
+  </table>
+
+ </table>
+
+</div>
+
