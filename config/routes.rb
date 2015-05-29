@@ -1,5 +1,13 @@
 Clavisbct::Application.routes.draw do
 
+  resources :bct_letters do
+    collection do
+      get 'random_letter'
+    end
+  end
+  resources :bct_people
+  resources :bct_places
+
   resources :extra_cards
 
   resources :open_shelf_items do
@@ -54,7 +62,12 @@ Clavisbct::Application.routes.draw do
   resources :audio_visuals
 
 
-  resources :sp_bibliographies
+  resources :sp_bibliographies do
+    member do
+      get 'cover_image'
+    end
+  end
+
   resources :sp_sections
   resources :sp_items
 

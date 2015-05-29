@@ -35,4 +35,9 @@ class SpBibliographiesController < ApplicationController
     render :layout=>params[:layout] if !params[:layout].blank?
   end
 
+  def cover_image
+    b=SpBibliography.find(params[:id])
+    send_file(b.cover_image, :type=>'image/jpeg; charset=binary', :disposition => 'inline')
+  end
+
 end

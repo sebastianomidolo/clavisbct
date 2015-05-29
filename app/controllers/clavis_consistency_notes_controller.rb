@@ -43,7 +43,7 @@ join clavis.manifestation cm using(manifestation_id)
        where cn.library_id=2 AND manifestation_id=#{mid} and
        (cn.collocazione_per=pc.collocazione_per or cn.consistency_note_id=pc.consistency_note_id);}
     @clavis_consistency_note=ClavisConsistencyNote.find_by_sql(sql).first
-    render :text=>'' and return if @consistency_note.nil?
+    render :text=>'' and return if @clavis_consistency_note.nil?
     respond_to do |f|
       f.html
       f.js  {render :layout=>false}

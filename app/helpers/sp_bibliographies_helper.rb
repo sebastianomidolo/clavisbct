@@ -27,6 +27,10 @@ module SpBibliographiesHelper
     res.join.html_safe
   end
 
+  def sp_bibliography_cover_image(record)
+    image_tag(cover_image_sp_bibliography_path(record)) if !record.cover_image.nil?
+  end
+
   def sp_bibliography_short_description(record)
     return '' if record.html_description.blank?
     res=SpBibliography.sanifica_html(record.html_description)

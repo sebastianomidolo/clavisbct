@@ -22,6 +22,11 @@ class SpBibliography < ActiveRecord::Base
     File.join(SenzaParola::sp_sourcedir, self.id)
   end
 
+  def cover_image
+    f=File.join(self.sourcedir, 'Img', 'formato_latex-img_pp.jpg')
+    File.exists?(f) ? f : nil
+  end
+
   def sync_sections
     sections=SenzaParola::sp_read_section_info(self.id)
     if sections.nil?
@@ -143,6 +148,7 @@ class SpBibliography < ActiveRecord::Base
         puts "Errore: scheda #{sp_item.item_id} della bibliografia #{sp_item.bibliography_id} priva di descrizione bibliografica"
         next
       end
+      sp_item.sortkey = sp_item.bibdescr if sp_item.sortkey.blank?
       sp_item.sortkey=sp_item.sortkey[0..511]
       if sp_item.created_at.nil?
         fname=File.join(sourcedir, item_id)
