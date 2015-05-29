@@ -14,12 +14,12 @@ module OpenShelfItemsHelper
       os_section = ''
     end
 
-    if user_signed_in? and [1,2,3,6,9,12,13].include?(current_user.id)
+    if user_signed_in? and [6,9,12,17].include?(current_user.id)
       if deleted
         disabled = dest_section.blank? ? true : false
         lnk = link_to('Aggiungi', insert_open_shelf_item_path(item_id, format:'js', dest_section:dest_section), title:"Aggiungi a scaffale aperto #{dest_section}", class: 'btn btn-primary', remote: true, disabled:disabled, onclick: %Q{$('#item_#{item_id}').html('<b>inserimento...</b>')})
       else
-        if open_shelf_item.created_by == current_user.id
+        if [open_shelf_item.created_by,12,17].include?(current_user.id)
           disabled = false
           btn_text = 'Togli'
         else

@@ -19,7 +19,7 @@ class ClavisIssue < ActiveRecord::Base
      FROM clavis.issue i JOIN clavis.item ci USING(issue_id,manifestation_id)
         JOIN clavis.manifestation cm USING(manifestation_id)
         LEFT JOIN clavis.attachment ca ON(ca.object_type='Manifestation' AND ca.object_id=cm.manifestation_id)
-      WHERE ci.owner_library_id=#{library_id} AND issue_status IN ('A','U')
+      WHERE ci.owner_library_id=#{library_id} AND issue_status = 'U'
          AND ci.issue_arrival_date IS NOT NULL
       ORDER BY ci.issue_arrival_date DESC, cm.sort_text #{limit};
    }
