@@ -85,7 +85,8 @@ INSERT INTO public.attachments
    from import_libroparlato_colloc lp join clavis.item ci
   on(replace(lp.collocation,'CD ','')=replace(ci.collocation,'CD ',''))
    join d_objects o on(lp.d_object_id=o.id)
-   where section='LP' and owner_library_id=29 and ci.manifestation_id!=0
+   where section='LP' and owner_library_id=29 and ci.manifestation_id NOT IN (0,449004)
+     and ci.item_status='F'
         and o.mime_type='audio/mpeg; charset=binary'
   );
 
