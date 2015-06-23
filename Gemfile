@@ -78,3 +78,5 @@ gem 'pdf-reader'
 gem 'rubyntlm'
 
 gem 'best_in_place', '~> 3.0.1'
+
+gem 'marc', '~> 1.0.0'
