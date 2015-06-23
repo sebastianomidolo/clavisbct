@@ -63,8 +63,17 @@ class BctLettersController < ApplicationController
   end
 
   def update
-    @bct_letter.update_attributes(params[:bct_letter])
-    respond_with(@bct_letter)
+    respond_to do |format|
+      params[:bct_letter][:updated_by]=current_user
+      params[:bct_letter][:updated_at]=Time.now
+      if @bct_letter.update_attributes(params[:bct_letter])
+        format.html { respond_with(@bct_letter) }
+        format.json { respond_with_bip(@bct_letter) }
+      else
+        format.html { render :action => "edit" }
+        format.json { respond_with_bip(@bct_letter) }
+      end
+    end
   end
 
   #def destroy

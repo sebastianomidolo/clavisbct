@@ -206,3 +206,18 @@ p { margin-top: 5px; }
 /*input.search { border: 1px solid #ccc; padding: 4px; width: 160px; }*/
 .comment { background: #FFF; color: #808080; padding: 10px; margin: 0 0 10px 0; border-top: 1px solid #ccc; }
 .commentsbox { background: #FFF; color: #808080; padding: 10px; margin: 0 0 10px 0; border-top: 1px solid #ccc; }
+
+.button {
+	cursor: pointer;
+	border: 1px solid;
+	padding: 2px;
+	width: 10cm;
+	display: block;
+}
+
+.button_ok {
+	cursor: pointer;
+	border: 1px solid;
+	padding: 2px;
+	background-color: #5F4;
+}

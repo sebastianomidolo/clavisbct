@@ -52,3 +52,12 @@
 
 <tr><th></th><td><%= link_to("link a questa scheda", bct_letter_path(@bct_letter), {:title=>'permalink',:class=>'permalink'})-%></td></tr>
 
+<% if user_signed_in? %>
+<% 
+    bip=best_in_place(@bct_letter, :descrizione_fisica, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                      ok_button_class:'button_ok',
+                      class:'button',
+                      skip_blur:false)
+%>
+  <tr><th>Descrizione fisica</th><td><%= bip %></td></tr>
+<% end %>

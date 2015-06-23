@@ -1,7 +1,13 @@
+
 <%= simple_form_for(@bct_letter) do |f| %>
   <%= f.error_notification %>
 
   <div class="form-inputs">
+    <%= f.input :data, as: 'string' %>
+    <%= f.input :nota_data %>
+    <%= f.association :bct_fondo %>
+    <%= f.input :argomento, as: 'string' %>
+    <%= f.input :nota, as: 'string' %>
   </div>
 
   <div class="form-actions">
