@@ -20,8 +20,7 @@ class Container < ActiveRecord::Base
     sql=%Q{SELECT c.id,c.label,c.closed,l.library_id,l.label AS description,count(i) AS numvol
       FROM containers c LEFT JOIN clavis.library l USING(library_id) LEFT JOIN container_items i ON(c.id=i.container_id)
         GROUP BY c.id,c.label,c.closed,l.library_id,l.label
-        ORDER BY regexp_replace(c.label,'([A-Z]+)','')::integer DESC}
-    puts sql
+        ORDER BY substr(c.label,0,2), regexp_replace(c.label,'([A-Z]+)','')::integer DESC}
     Container.find_by_sql(sql)
   end
 
