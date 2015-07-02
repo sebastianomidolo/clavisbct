@@ -1,6 +1,7 @@
 class BctLettersController < ApplicationController
   before_filter :set_bct_letter, only: [:show, :edit, :update, :destroy]
-  before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  # before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
 
@@ -33,7 +34,11 @@ class BctLettersController < ApplicationController
     else
       conditions="#{params[:person_id].to_i} IN (mittente_id,destinatario_id)"
     end
-    order= conditions.size==0 ? nil : 'letters.data, people.denominazione'
+    if user_signed_in?
+      order= 'letters.id'
+    else
+      order= conditions.size==0 ? nil : 'letters.data, people.denominazione'
+    end
     @bct_letters=BctLetter.paginate :page => params[:page], :per_page => 10,
     :include=>[:bct_fondo,:placeto,:placefrom,:mittente,:destinatario], :conditions=>conditions,
     :conditions=>conditions,

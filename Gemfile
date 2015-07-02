@@ -72,6 +72,7 @@ gem 'will_paginate-bootstrap'
 gem 'musicbrainz'
 
 gem 'roo'
+gem 'roo-xls'
 
 gem 'pdf-reader'
 

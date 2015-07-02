@@ -32,18 +32,37 @@
 
 <!-- Verificare se e come inserire la "Tipologia" della lettera (il concetto non mi è chiaro) -->
 
+<% if user_signed_in? %>
+<%
+    bip=best_in_place(@bct_letter, :argomento, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                      ok_button_class:'button_ok',
+                      type: :textarea, class: :button,
+                      skip_blur:false)
+%>
+   <tr><th>Argomento</th><td><%= bip %></td></tr>
+<% else %>
+ <% if @bct_letter.argomento!=nil -%>
+  <tr><th>Argomento</th><td><b><%= "#{@bct_letter.argomento}"-%></b></td></tr>
+ <% end %>
+<% end %>
 
-<% if @bct_letter.argomento!=nil -%>
-<tr><th>Argomento</th><td><b><%= "#{@bct_letter.argomento}"-%></b></td></tr>
-<% end -%>
-
-<% if @bct_letter.nota!=nil -%>
-<tr><th>Note</th><td><%= "#{@bct_letter.nota}"-%></td></tr>
+<% if user_signed_in? %>
+<%
+    bip=best_in_place(@bct_letter, :nota, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                      ok_button_class:'button_ok',
+                      type: :textarea, class: :button,
+                      skip_blur:false)
+%>
+   <tr><th>Note</th><td><%= bip %></td></tr>
+<% else %>
+ <% if @bct_letter.nota!=nil -%>
+ <tr><th>Note</th><td><%= "#{@bct_letter.nota}"-%></td></tr>
+ <% end -%>
 <% end -%>
 
 <%= content_tag(:tr, content_tag(:th, 'Allegati') + content_tag(:td, @bct_letter.allegati)) if !@bct_letter.allegati.blank? %>
 
-<tr><th>Fondo</th><td><%= "#{@bct_letter.bct_fondo.to_label}"-%></td></tr>
+<tr><th>Fondo</th><td><%= "#{@bct_letter.bct_fondo.to_label} - <b>ID lettera: #{@bct_letter.id}</b>".html_safe-%></td></tr>
 
 <%= content_tag(:tr, content_tag(:th, 'Provenienza') + content_tag(:td, @bct_letter.provenienza)) if !@bct_letter.provenienza.blank? %>
 

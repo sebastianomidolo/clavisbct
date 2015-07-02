@@ -17,8 +17,7 @@ module BctLettersHelper
   end
 
   def bct_letters_letter_link_to_pdf(letter)
-    url="http://bctwww.comperio.it/lettereautografe/4.pdf"
-    link_to('pdf',url,:target=>'_new')
+    link_to("vedi l'immagine",letter.pdflink,:target=>'_new')
   end
 
   def bct_letters_menu_orizzontale
@@ -63,7 +62,7 @@ module BctLettersHelper
     p = person.luoghi_invio.size
     if p==1
       @bct_letter=BctLetter.find_by_mittente_id(person)
-      return "Una lettera scritta a #{person.luoghi_invio.first.denominazione} #{render(:partial=>'/bct_letters/show')}".html_safe
+      res = "Una lettera scritta a #{person.luoghi_invio.first.denominazione} #{render(:partial=>'/bct_letters/show')}".html_safe
     else
       res = link_to("#{l} lettere", bct_letters_path(:mittente_id=>person.id)) + " scritte in #{p} luoghi:"
     end
@@ -80,7 +79,7 @@ module BctLettersHelper
     p = person.luoghi_ricezione.size
     if p==1
       @bct_letter=BctLetter.find_by_destinatario_id(person)
-      return "Una lettera ricevuta a #{person.luoghi_ricezione.first.denominazione} #{render(:partial=>'/bct_letters/show')}".html_safe
+      res= "Una lettera ricevuta a #{person.luoghi_ricezione.first.denominazione} #{render(:partial=>'/bct_letters/show')}".html_safe
     else
       res = link_to("#{l} lettere", bct_letters_path(:destinatario_id=>person.id)) + " ricevute in #{p} luoghi:"
     end

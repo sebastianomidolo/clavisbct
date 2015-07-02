@@ -11,8 +11,29 @@ class BctLetter < ActiveRecord::Base
   belongs_to :placeto, :class_name=>'BctPlace'
   belongs_to :bct_fondo, :foreign_key=>'fondo_id'
 
+  before_save :check_record
+
   def ladata
     self.data.nil? ? self.nota_data : self.data
+  end
+
+  def pdflink
+    "http://bctwww.comperio.it/lettereautografe/#{self.id}.pdf"
+  end
+
+  def pdf_filename
+    config = Rails.configuration.database_configuration
+    dir=config[Rails.env]["lettereautografe_basedir"]
+    "#{File.join(dir, self.id.to_s)}.pdf"
+  end
+
+  def check_record
+    if File.exists?(self.pdf_filename)
+      self.pdf=true
+    else
+      self.pdf=false
+    end
+    true
   end
 
   def BctLetter.random_letter_with_abstract

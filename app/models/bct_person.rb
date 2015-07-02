@@ -41,11 +41,13 @@ class BctPerson < ActiveRecord::Base
     self.mittenti.collect{|p| p.denominazione}.join(' ; ')
   end
 
-  def BctPerson.lista_con_lettere(page=1,conditions='',per_page=40)
+  def BctPerson.lista_con_lettere(page=1,conditions='',per_page)
     cond=conditions.blank? ? '' : "WHERE #{conditions}"
+    order = 'count(l.id) desc,lower(p.denominazione)'
+    order = 'lower(p.denominazione)'
     sql=%Q{SELECT p.id,p.denominazione, count(l.id) AS "numdocs" FROM #{BctPerson.table_name} p
             LEFT JOIN #{BctLetter.table_name} l ON(p.id IN (l.mittente_id,l.destinatario_id)) #{cond}
-            GROUP BY p.id,p.denominazione HAVING count(l.id)>0 ORDER BY count(l.id) desc,lower(p.denominazione)}
+            GROUP BY p.id,p.denominazione HAVING count(l.id)>0 ORDER BY #{order}}
     self.paginate_by_sql(sql, per_page:per_page, page:page)
   end
 

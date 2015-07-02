@@ -1,6 +1,7 @@
 class BctPeopleController < ApplicationController
   before_filter :set_bct_person, only: [:show, :edit, :update, :destroy]
-  before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  # before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
   layout 'lettereautografe'
@@ -10,10 +11,10 @@ class BctPeopleController < ApplicationController
   def index
     @bct_person = BctPerson.new(params[:bct_person])
     @bct_person.denominazione='' if @bct_person.denominazione.nil?
-    per_page=19
+    per_page=100
     cond=[]
     @searchterm=@bct_person.denominazione.downcase
-    cond << "lower(denominazione) LIKE '#{@searchterm}'" if !@searchterm.blank?
+    cond << "denominazione ~* '#{@searchterm}'" if !@searchterm.blank?
     cond << "fondo_id=#{@fondo_corrente.id}" if !@fondo_corrente.nil?
     @bct_people=BctPerson.lista_con_lettere(params[:page], cond.join(' AND '), per_page)
     @persists_form=params[:persists_form]
