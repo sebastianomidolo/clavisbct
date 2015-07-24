@@ -1,7 +1,7 @@
 class BctLettersController < ApplicationController
   before_filter :set_bct_letter, only: [:show, :edit, :update, :destroy]
-  # before_filter :authenticate_user!, only: [:edit, :update, :destroy]
-  before_filter :authenticate_user!
+  before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  # before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
 
@@ -87,7 +87,8 @@ class BctLettersController < ApplicationController
   #end
 
   def random_letter
-    @bct_letter=BctLetter.random_letter_with_abstract
+    # @bct_letter=BctLetter.random_letter_with_abstract
+    @bct_letter=BctLetter.random_letter_with_pdf
   end
 
   private

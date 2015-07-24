@@ -39,5 +39,8 @@ class BctLetter < ActiveRecord::Base
   def BctLetter.random_letter_with_abstract
     BctLetter.find_by_sql("SELECT * FROM #{BctLetter.table_name} WHERE length(argomento)>10 ORDER BY random() LIMIT 1").first
   end
+  def BctLetter.random_letter_with_pdf
+    BctLetter.find_by_sql("SELECT * FROM #{BctLetter.table_name} WHERE pdf ORDER BY random() LIMIT 1").first
+  end
 
 end
