@@ -416,6 +416,15 @@ class ClavisManifestation < ActiveRecord::Base
     self.connection.execute("SELECT created_by FROM clavis.manifestation_creators ORDER BY created_by").collect{|x| x['created_by']}
   end
 
+  def containers_info
+    sql=%Q{select cit.item_title as consistenza, c.label as contenitore, cl.description as deposito,
+          ci.loan_alert_note as note, ci.item_id as item_id, c.prenotabile, ci.issue_description
+         from clavis.item ci join container_items cit using(item_id,manifestation_id)
+       join containers c on(cit.container_id=c.id) join clavis.library cl on(cl.library_id=c.library_id)
+       where ci.manifestation_id=#{self.id} ORDER BY cit.row_number,cit.item_title}
+    ClavisManifestation.find_by_sql(sql)
+  end
+
   def self.clavis_subscription_url(id)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
@@ -437,13 +446,8 @@ class ClavisManifestation < ActiveRecord::Base
     end
     conditions=conditions.flatten.join(" AND ")
     where = conditions=='' ? 'WHERE false' : 'WHERE'
-    ordine_template.ordanno=2013 if ordine_template.ordanno.nil?
-    year=ordine_template.ordanno
-    if year=='2013'
-      subscription_year=year.to_i + 1
-    else
-      subscription_year=year.to_i
-    end
+    ordine_template.anno_fornitura=2015 if ordine_template.anno_fornitura.nil?
+    subscription_year=ordine_template.anno_fornitura
     sql=%Q{SELECT
       sat.id,sat.titolo,cm.title,cm.manifestation_id,cs.subscription_id,sat.numero_fattura,
         sat.importo_fattura,sat.fattura_o_nota_di_credito as tipodoc,sat.periodo,sat.formato,sat.note_interne,
@@ -460,8 +464,8 @@ class ClavisManifestation < ActiveRecord::Base
   LEFT JOIN clavis.manifestation cm USING(manifestation_id)
   LEFT JOIN clavis.item ci ON (ci.manifestation_id=cm.manifestation_id AND ci.issue_year='#{subscription_year}'
              AND ci.owner_library_id=sat.library_id)
-  LEFT JOIN clavis.invoice i ON(i.invoice_id=ci.invoice_id)
-  LEFT JOIN clavis.subscription cs ON(cs.manifestation_id=cm.manifestation_id
+    LEFT JOIN clavis.invoice i ON(i.invoice_id=ci.invoice_id)
+    LEFT JOIN clavis.subscription cs ON(cs.manifestation_id=cm.manifestation_id
               AND cs.library_id=sat.library_id AND cs.year=#{subscription_year})
    #{where} #{conditions}
 GROUP BY

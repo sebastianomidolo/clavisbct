@@ -187,4 +187,13 @@ class ClavisManifestationsController < ApplicationController
     end
   end
 
+  def containers
+    @cm=ClavisManifestation.find(params[:id])
+    @container_items=@cm.containers_info
+    respond_to do |format|
+      format.html
+      format.js
+    end
+  end
+
 end

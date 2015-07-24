@@ -43,6 +43,22 @@ join clavis.manifestation cm using(manifestation_id)
        where cn.library_id=2 AND manifestation_id=#{mid} and
        (cn.collocazione_per=pc.collocazione_per or cn.consistency_note_id=pc.consistency_note_id);}
     @clavis_consistency_note=ClavisConsistencyNote.find_by_sql(sql).first
+
+    if @clavis_consistency_note.nil?
+      sql=%Q{select cit.item_title as consistenza, c.label as contenitore, cl.description as deposito,
+          ci.loan_alert_note as note, ci.item_id as item_id, c.prenotabile, ci.issue_description
+         from clavis.item ci join container_items cit using(item_id,manifestation_id)
+       join containers c on(cit.container_id=c.id) join clavis.library cl on(cl.library_id=c.library_id)
+       where ci.manifestation_id=#{mid} ORDER BY cit.row_number,cit.item_title}
+      @container_items=ContainerItem.find_by_sql(sql)
+      # render :text=>'' and return
+      render :text=>'' and return if @container_items==[]
+      respond_to do |f|
+        f.html {render :action=>'/container_items_show'}
+        f.js  {render :action=>'/container_items_show', :layout=>false}
+      end
+      return
+    end
     render :text=>'' and return if @clavis_consistency_note.nil?
     respond_to do |f|
       f.html

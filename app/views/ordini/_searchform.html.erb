@@ -1,13 +1,14 @@
 
 <%= simple_form_for(@ordine, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
   <%= f.input :titolo, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
-  <%= f.input :ordanno, collection: [
-       ['Ordini 2013', '2013'],
-       ['Ordini 2015', '2015'],
-      ], include_blank:false, label:false  %>
+  <%= f.input :anno_fornitura, hint: 'anno di fornitura', collection: [
+       ['2014', '2014'],
+       ['2015', '2015'],
+      ], include_blank:false, label:false, :input_html => {:onchange => 'submit()'} %>
 
   <%= f.input :numero_fattura, hint: 'numero di fattura o di nota di credito', as: 'string', label: false, placeholder: 'numero fattura o nota di credito' %>
-  <%= f.association :clavis_library, collection: ClavisItem.owner_library, include_blank: true, label: false %>
+  <%= f.association :clavis_library, collection: ClavisItem.owner_library,
+       include_blank: true, label: false, :input_html => {:onchange => 'submit()'}  %>
   <%= f.input :issue_status, collection: [['Filtra per...',''],
        ['Senza manifestation_id', 'SM'],
        ['Note di credito', 'NDC'],
@@ -25,7 +26,7 @@
        ['In ritardo (per Celdes)', 'RIT'],
        ['Importato da archivio_periodici.txt', 'ARCPER'],
        ['Cessata', 'CES']],
-       include_blank: false, label:false  %>
+       include_blank: false, label:false, :input_html => {:onchange => 'submit()'} %>
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
   <%= link_to('azzera',ordini_path) %>
 <% end %>
@@ -33,7 +34,7 @@
 
 <% if !@ordine.library_id.nil? %>
 <%=
- text=link_to(' <b>fatture...</b>'.html_safe, fatture_ordini_path(library_id:@ordine.library_id,ordanno:@ordine.ordanno))
+ text=link_to(' <b>fatture...</b>'.html_safe, fatture_ordini_path(library_id:@ordine.library_id,year:@ordine.anno_fornitura))
  javascript_tag("$('#ordine_library_id').parent().append('#{text}');")
 %>
 

@@ -25,7 +25,7 @@ module OrdiniHelper
 
     records.each do |r|
       lid=r['library_id']
-      lnk=link_to("#{r['numero_fattura']}", fatture_ordini_path(:library_id=>lid, :numero_fattura=>r['numero_fattura']))
+      lnk=link_to("#{r['numero_fattura']}", fatture_ordini_path(:library_id=>lid, :numero_fattura=>r['numero_fattura'], :year=>r['data_emissione'].to_date.year))
       data_pagamento = r['data_pagamento'].blank? ? '-' : r['data_pagamento'].to_date 
       res << content_tag(:tr, content_tag(:td, r['data_emissione'].to_date)+
                          content_tag(:td, lnk)+

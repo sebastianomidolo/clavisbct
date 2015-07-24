@@ -1,9 +1,10 @@
 class OrdiniController < ApplicationController
   layout 'navbar'
+  before_filter :authenticate_user!
 
   def index
     @ordine=Ordine.new(params[:ordine])
-    @ordine.ordanno=Time.now.year if @ordine.ordanno.blank?
+    @ordine.anno_fornitura=Time.now.year if @ordine.anno_fornitura.blank?
     @pagetitle="Ordini periodici"
     @pagetitle << " - #{@ordine.clavis_library.shortlabel}" if !@ordine.clavis_library.nil?
     cond=[]
@@ -55,9 +56,8 @@ class OrdiniController < ApplicationController
 
   def fatture
     @library=ClavisLibrary.find(params[:library_id]) if !params[:library_id].blank?
-    @ordanno=params[:ordanno]
     if params[:numero_fattura].blank?
-      @fatture=Ordine.fatture(@library,@ordanno)
+      @fatture=Ordine.fatture(@library,params[:year])
     else
       @ordine = Ordine.new(:library_id=>@library.id)
       @ordine.numero_fattura=params[:numero_fattura]

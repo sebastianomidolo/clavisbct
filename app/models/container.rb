@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 class Container < ActiveRecord::Base
-  attr_accessible :item_title, :closed, :label, :library_id
+  attr_accessible :item_title, :closed, :label, :library_id, :prenotabile
 
   has_many :container_items, order: 'row_number',include: [:clavis_item,:clavis_manifestation]
   belongs_to :clavis_library, foreign_key: :library_id, primary_key: :library_id
 
   validates :label, presence: true, uniqueness: true
   validates :clavis_library, presence: true
+
+  validates :label, format: { with: /\A[A-Z]+\d+\Z/,
+    message: "deve iniziare con lettere maiuscole e finire con un numero" }
 
   def info
     "#{self.label}, #{self.closed? ? 'Chiuso' : 'Aperto'}, #{self.clavis_library.description}"

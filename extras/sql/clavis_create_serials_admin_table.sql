@@ -1,4 +1,4 @@
-BEGIN;
+\BEGIN;
 DROP TABLE public.serials_admin_table;
 COMMIT;
 
@@ -77,12 +77,18 @@ ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatt
   ADD COLUMN "data pagamento" date;
 COMMIT;
 
+BEGIN;
+UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+  SET "data pagamento"=NULL WHERE "data pagamento"='';
+COMMIT;
+
+
 update excel_files_tables.celdes_admin_report_ordini_con_dati_fatturazione set prezzo=NULL where prezzo='';
 
 set datestyle TO "DMY";
 CREATE TABLE public.serials_admin_table
 AS
-select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
+select 2015 as anno_fornitura,g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
  f."prezzo"::double precision as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
@@ -107,9 +113,10 @@ select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
      and g.abbvolal=f.abbvolal
     )
    join biblioteche_celdes b on(b.label=g.destinatario)
+
 UNION
 -- BCT 2014
-select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
+select 2014 as anno_fornitura,g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
  f."totale articolo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
@@ -134,9 +141,10 @@ select g.titolo, cc.manifestation_id,b.library_id,f.numero as numero_fattura,
      and g.abbvolal=f.abbvolal
     )
    join biblioteche_celdes b on(b.label=g.destinatario)
+
 UNION
 -- musicale
-select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
+select 2015 as anno_fornitura,o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
  f."prezzo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
@@ -150,9 +158,10 @@ select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattur
     left join excel_files_tables.ordini_periodici_musicale cc using(titolo)
     left join excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
      f using(titolo)
+
 UNION
 -- musicale 2014
-select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
+select 2014 as anno_fornitura,o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
  f."totale articolo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
  "data fattura / nota credito"::date as data_emissione,
@@ -165,7 +174,9 @@ select o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattur
   from excel_files_tables.celdes_musicale_admin_report_ordini_2014 o
     left join excel_files_tables.ordini_periodici_musicale cc using(titolo)
     left join excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione_2014
-     f using(titolo);
+     f using(titolo)
+;
+
 
 update public.serials_admin_table set fattura_o_nota_di_credito = upper(fattura_o_nota_di_credito);
 

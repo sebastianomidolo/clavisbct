@@ -1,0 +1,5 @@
+<% html=container_items_list(@container_items).html_safe %>
+jQuery('.panel-title a',jQuery('#issues').parent()).text('Fascicoli (click per maggiori informazioni)');
+<% if !html.blank? %>
+jQuery('#items').after('<p>Materiale in deposito esterno (verificare la prenotabilità nella colonna "Prenotabile")<%= html -%></p>');
+<% end %>

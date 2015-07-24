@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150611075025) do
+ActiveRecord::Schema.define(:version => 20150703125720) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -111,10 +111,11 @@ ActiveRecord::Schema.define(:version => 20150611075025) do
   add_index "container_items", ["item_id"], :name => "container_items_item_id_ndx"
 
   create_table "containers", :force => true do |t|
-    t.string  "label",      :limit => 16,                    :null => false
+    t.string  "label",       :limit => 16,                    :null => false
     t.integer "library_id"
-    t.boolean "closed",                   :default => false
+    t.boolean "closed",                    :default => false
     t.integer "created_by"
+    t.boolean "prenotabile"
   end
 
   add_index "containers", ["label"], :name => "containers_label_idx", :unique => true
@@ -283,6 +284,7 @@ ActiveRecord::Schema.define(:version => 20150611075025) do
   add_index "ricollocazioni", ["sort_text"], :name => "ricollocazioni_sort_text_ndx"
 
   create_table "serials_admin_table", :force => true do |t|
+    t.integer "anno_fornitura"
     t.text    "titolo"
     t.integer "manifestation_id"
     t.integer "library_id"
@@ -328,6 +330,20 @@ ActiveRecord::Schema.define(:version => 20150611075025) do
   add_index "subjects", ["clavis_authority_id"], :name => "index_subjects_on_clavis_authority_id"
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
+
+  create_table "temp_import_erasmo_bibrecords", :id => false, :force => true do |t|
+    t.string "id",     :limit => 8,  :null => false
+    t.string "leader", :limit => 24
+  end
+
+  create_table "temp_import_erasmo_unimarc_tags", :id => false, :force => true do |t|
+    t.string "bibrecord_id", :limit => 8, :null => false
+    t.string "marctag",      :limit => 3
+    t.string "indicator1",   :limit => 1
+    t.string "indicator2",   :limit => 1
+    t.xml    "subfields"
+    t.text   "content"
+  end
 
   create_table "temp_intestazioni_mancanti", :id => false, :force => true do |t|
     t.text "heading"
@@ -394,5 +410,10 @@ ActiveRecord::Schema.define(:version => 20150611075025) do
 
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["reset_password_token"], :name => "index_users_on_reset_password_token", :unique => true
+
+  create_table "xml_import_erasmo", :id => false, :force => true do |t|
+    t.integer "id"
+    t.xml     "record"
+  end
 
 end

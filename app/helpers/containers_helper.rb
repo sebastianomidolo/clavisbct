@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 module ContainersHelper
   def containers_cloud(current_record)
     res=[]
@@ -22,8 +23,11 @@ module ContainersHelper
       cnt += 1
       inventario=nil
       if i.manifestation_id!=prec_mid
-        lnk_opac = i.clavis_item.title
-        # lnk_opac=link_to(mtitle, clavis_manifestation_path(i.manifestation_id), target: '_blank')
+        if i.manifestation_id!=0
+          lnk_opac="#{link_to(i.clavis_item.title, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(i.item_id,:show), target: '_blank')}"
+        else
+          lnk_opac = i.clavis_item.title
+        end
       else
         lnk_opac = '-'
       end
@@ -65,7 +69,7 @@ module ContainersHelper
                          content_tag(:td, link_to(delete_button.html_safe, i, remote:true, method: :delete,
                           confirm: "Confermi rimozione del volume #{i.collocazione}?")) +
                          content_tag(:td, lnk_item) +
-                         content_tag(:td, lnk_opac) +
+                         content_tag(:td, lnk_opac.html_safe) +
                          content_tag(:td, bip) +
                          content_tag(:td, inventario) +
                          content_tag(:td, lnk_consistenza), id: "item_#{i.id}")
@@ -81,5 +85,27 @@ module ContainersHelper
     end
     content_tag(:div, msg.html_safe, id: "container_info_#{record.id}")
   end
+
+  def container_items_list(records)
+    res=[]
+    cnt=0
+    res << content_tag(:tr, content_tag(:td, 'Consistenza') +
+                       content_tag(:td, '') +
+                       content_tag(:td, 'Contenitore') +
+                       content_tag(:td, 'Deposito') +
+                       content_tag(:td, 'Prenotabile') +
+                       content_tag(:td, 'Note'))
+    records.each do |r|
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, r.consistenza) +
+                         content_tag(:td, r.issue_description) +
+                         content_tag(:td, r.contenitore) +
+                         content_tag(:td, content_tag(:b, r.deposito)) +
+                         content_tag(:td, (r.prenotabile? ? 'sì' : 'no') ) +
+                         content_tag(:td, "#{r.note} item_id: #{r.item_id}"))
+    end
+    cnt==0? '' : content_tag(:table, res.join.html_safe, :class=>'table table-striped')
+  end
+
 end
 

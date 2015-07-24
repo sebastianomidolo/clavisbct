@@ -92,6 +92,7 @@ Clavisbct::Application.routes.draw do
       get 'sbn_opac_redir'
       get 'sbn_iccu_opac_redir'
       get 'check_adabas_kardex'
+      get 'containers'
     end
     collection do
       get 'shortlist'

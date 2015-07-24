@@ -224,7 +224,7 @@ module ClavisManifestationsHelper
         items_info[issue_status]=[] if items_info[issue_status].nil?
         items_info[issue_status] << [item_id,giorni_ritardo,data_arrivo,atteso_per]
         if invoice_id!='0'
-          fatture << %Q{<div class="alert alert-success">#{link_to("Fattura in Clavis", "http://sbct.comperio.it/index.php?page=Acquisition.InvoiceViewPage&id=#{invoice_id}", class: 'alert-link', target: '_blank')} su esemplare #{link_to(item_id,ClavisItem.clavis_url(item_id,:edit))} (#{hstatus[issue_status]})</div>}
+          # fatture << %Q{<div class="alert alert-success">#{link_to("Fattura in Clavis", "http://sbct.comperio.it/index.php?page=Acquisition.InvoiceViewPage&id=#{invoice_id}", class: 'alert-link', target: '_blank')} su esemplare #{link_to(item_id,ClavisItem.clavis_url(item_id,:edit))} (#{hstatus[issue_status]})</div>}
         end
       end
       items_info.each_pair do |k,v|

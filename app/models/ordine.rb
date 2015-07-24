@@ -1,17 +1,17 @@
 class Ordine < ActiveRecord::Base
   self.table_name='serials_admin_table'
-  attr_accessible :titolo, :library_id, :ordanno, :numero_fattura, :issue_status
+  attr_accessible :titolo, :library_id, :ordanno, :numero_fattura, :issue_status, :anno_fornitura
 
   attr_accessor :issue_status
 
   belongs_to :clavis_library, :foreign_key=>:library_id
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
 
-  def Ordine.fatture(library,ordanno=nil)
+  def Ordine.fatture(library,anno_emissione=nil)
     cond=[]
     cond << "numero_fattura is not null and fattura_o_nota_di_credito = 'F'"
     cond << "library_id=#{library.id}" if !library.nil?
-    cond << "ordanno=#{ordanno}" if !ordanno.nil?
+    cond << "date_part('year',data_emissione)=#{anno_emissione}" if !anno_emissione.nil?
     sql=%Q{select library_id,numero_fattura,data_emissione,data_pagamento,
   sum(prezzo::float) as totale_fattura,count(*) as numero_titoli
   from serials_admin_table
