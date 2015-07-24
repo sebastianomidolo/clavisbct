@@ -8,6 +8,7 @@ class ClavisAuthoritiesController < ApplicationController
     cond << "authority_type=#{ClavisAuthority.connection.quote(params[:authority_type])}"
     cond << "bid is not null" if params[:bidnotnull]=='true'
     cond << "bid is null" if params[:bidnotnull]=='false'
+    cond << "authority_rectype = #{ClavisAuthority.connection.quote(params[:rectype])}" if !params[:rectype].blank?
     cond = cond.join(' AND ')
     order='sort_text'
     @sql_conditions=cond

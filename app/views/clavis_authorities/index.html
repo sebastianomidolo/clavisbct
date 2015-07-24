@@ -5,6 +5,9 @@
       params[:authority_type]), :onchange=>'submit();') %>
   <%= select_tag(:bidnotnull, options_for_select([['Tutte',nil],['Con BID',true],['Senza BID',false]],
       params[:bidnotnull]), :onchange=>'submit();') %>
+  <%= select_tag(:rectype, options_for_select([['-',nil],['Termine apicale','k'],['Termine non preferito','y'],
+                  ['Etichetta di nodo','z'],['Termine accettato','x']],
+      params[:rectype]), :onchange=>'submit();') %>
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 <% end %>
 
