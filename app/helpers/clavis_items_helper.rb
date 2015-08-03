@@ -128,7 +128,7 @@ module ClavisItemsHelper
       end
       res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
                          content_tag(:td, mlnk) +
-                         content_tag(:td, lnk.html_safe) +
+                         content_tag(:td, lnk.html_safe + "<br/>#{r.issue_description}".html_safe) +
                          content_tag(:td, r.inventario) +
                          content_tag(:td, container_link),
                          {:data_view=>r.view})
