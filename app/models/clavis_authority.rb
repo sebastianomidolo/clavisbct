@@ -2,6 +2,7 @@ class ClavisAuthority < ActiveRecord::Base
   self.table_name = 'clavis.authority'  
 
   belongs_to :clavis_authority, :foreign_key=>:parent_id
+  has_many :bncf_terms, primary_key:'full_text', foreign_key:'term'
 
   def letterebct_person
     sql=%Q{select p.* from clavis.authority ca join letterebct.people p on(ca.full_text=p.denominazione) where ca.authority_type='P' and ca.full_text=#{self.connection.quote(self.full_text)}}

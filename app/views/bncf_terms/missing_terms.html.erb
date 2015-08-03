@@ -1,0 +1,2 @@
+<%= content_tag(:p, "Voci di tipo 'A' usate come termine singolo in soggetti, non presenti in Nuovo soggettario") %>
+<%= bncf_terms_missing_terms(BncfTerm.missingTerms(@starts_with)) %>

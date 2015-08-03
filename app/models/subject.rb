@@ -1,6 +1,8 @@
 class Subject < ActiveRecord::Base
   attr_accessible :heading, :clavis_subject_class, :inbct
 
+  has_many :bncf_terms, foreign_key:'term', primary_key:'heading'
+
   has_many :clavis_l_authority_manifestations, :foreign_key=>'authority_id', :primary_key=>'clavis_authority_id'
   has_many :clavis_manifestations, :through=>:clavis_l_authority_manifestations, :order=>'sort_text'
   belongs_to :clavis_authority

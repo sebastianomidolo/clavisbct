@@ -50,6 +50,13 @@ Clavisbct::Application.routes.draw do
 
   resources :subjects
 
+  resources :bncf_terms do
+    collection do
+      get 'obsolete_terms'
+      get 'missing_terms'
+    end
+  end
+
   resources :talking_books do
     member do
       get 'download_mp3'

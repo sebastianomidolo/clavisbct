@@ -9,7 +9,10 @@
      if !au.nil?
        txt << "" + link_to(" [Clavis (#{au.authority_type})]", ClavisAuthority.clavis_url(au.id), :target=>'_blank') 
      end
-     txt << content_tag(:p, 'Presente nel soggettario') if @subject.inbct
+     txt << " Nuovo soggettario: #{bncf_terms_links(@subject.bncf_terms)}".html_safe if !@subject.bncf_terms.first.nil?
+     txt << content_tag(:p, 'Presente nel soggettario BCT') if @subject.inbct
+     # txt << content_tag(:p, "Nuovo soggettario di Firenze: #{bncf_terms_links(@subject.bncf_terms)}".html_safe) if !@subject.bncf_terms.first.nil?
+
    end
 
    txt << content_tag(:p, @subject.scope_note) if !@subject.scope_note.nil?

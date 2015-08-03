@@ -38,7 +38,14 @@ class SubjectsController < ApplicationController
       if @subject.nil?
         @subject = Subject.find_by_sql("SELECT s.* FROM clavis.authority ca JOIN subjects s ON(s.heading=ca.full_text) WHERE ca.authority_id=#{params[:clavis_authority_id]} AND s.inbct").first
       end
-      render :text=>'-' and return if @subject.nil? or @subject.inbct == false
+      if @subject.nil? or @subject.inbct == false
+        @bncf_term=ClavisAuthority.find(params[:clavis_authority_id]).bncf_terms.first
+        if !@bncf_term.nil?
+          render :template=>'bncf_terms/show' and return 
+        else
+          render :text=>"Niente di pertinente alla voce di authority #{params[:clavis_authority_id]}" and return if @subject.nil? or @subject.inbct == false
+        end
+      end
     end
     @pagetitle="Soggettario BCT: #{@subject.heading} "
     @embedded = params[:embedded].blank? ? nil : true

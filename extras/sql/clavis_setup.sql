@@ -58,3 +58,10 @@ create index clavis_item_openshelf on clavis.item(openshelf) where openshelf is 
 
 create index manifestation_edition_date on clavis.manifestation(edition_date);
 create index clavis_attachment_object_id on clavis.attachment (object_id);
+
+create or replace view soggetti_non_presenti_in_nuovo_soggettario as
+  select s.subject_class,s.authority_id as subject_id,ca.authority_id,ca.full_text as heading
+  from clavis.authority ca left join bncf_terms ns on(ns.term=ca.full_text)
+  join clavis.authority s on (s.parent_id=ca.authority_id AND s.full_text=ca.full_text)
+   where ca.authority_type = 'A' and ca.authority_rectype in ('k','x')
+   and not ca.full_text ~ ',' and ns is null order by ca.sort_text;
