@@ -2,11 +2,12 @@
 module LatexPrint
   class PDF
     attr_accessor :latexcmd, :texinput
-    def initialize(name, inputdata=[])
+    def initialize(name, inputdata=[], replace_amp=true)
       @template=File.join(Rails.root.to_s,'extras','latex_templates',"#{name}.tex.erb")
       erb = ERB.new(File.read(@template))
       @texinput = erb.result(binding)
-      @texinput.gsub!("&", '\\\&')
+      @texinput.gsub!("&", '\\\&') if replace_amp
+      @texinput.gsub!("_", ' ')
       @texinput.gsub!("«", '``')
       @texinput.gsub!("»", "''")
     end

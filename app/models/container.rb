@@ -2,7 +2,7 @@
 class Container < ActiveRecord::Base
   attr_accessible :item_title, :closed, :label, :library_id, :prenotabile
 
-  has_many :container_items, order: 'row_number',include: [:clavis_item,:clavis_manifestation]
+  has_many :container_items, order: 'item_title',include: [:clavis_item,:clavis_manifestation]
   belongs_to :clavis_library, foreign_key: :library_id, primary_key: :library_id
 
   validates :label, presence: true, uniqueness: true

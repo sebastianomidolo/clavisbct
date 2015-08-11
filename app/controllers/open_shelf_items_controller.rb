@@ -5,7 +5,23 @@ class OpenShelfItemsController < ApplicationController
 
   def index
     @os_section=params[:os_section]
-    @records=OpenShelfItem.dewey_list(@os_section)
+    respond_to do |format|
+      format.html {
+        @records=OpenShelfItem.dewey_list(@os_section)
+      }
+      format.pdf {
+        filename="lista_di_estrazione_sezione_#{@os_section}.pdf"
+        @records=OpenShelfItem.openshelf_list(@os_section)
+
+        lp=LatexPrint::PDF.new('openshelf_list', @records, false)
+        pdf=lp.makepdf
+
+        send_data(pdf,
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
+      }
+    end
+
   end
 
   def insert

@@ -63,6 +63,7 @@ module ClavisItemsHelper
       end
       c1+="<br/><b>#{r.usage_count}</b> prestit#{r.usage_count==1?'o':'i'}"
       c2+="<br/>#{r.serieinv}"
+      c2+="<br/><b>N #{r.vedetta[0..3]}</b>" if r.os_section=='NC'
       c2+="<br/>In deposito esterno: <b>#{r.contenitore}</b>" if !r.contenitore.blank?
 
       in_opac=r.opac_visible==1 ? '' : '<b>non visibile in opac</b>'

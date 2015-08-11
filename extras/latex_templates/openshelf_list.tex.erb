@@ -1,0 +1,45 @@
+% Lista di items per controlli a magazzino Civica Centrale
+% 5 agosto 2015
+
+\documentclass[a4paper,11pt]{article}
+
+% \usepackage[utf8]{inputenc}
+
+% Impostazione per stampante ufficio informazioni
+\hoffset=-22mm
+% \voffset=-28mm
+
+
+\usepackage{supertabular}
+\begin{document}
+
+\begin{center}
+
+
+
+\tablehead{%
+  \hline Destinazione&Titolo&Magazzino&ManifestationId\\ \hline
+  }
+
+
+\tabletail{\hline}
+
+
+
+\begin{supertabular}{l|l|l|l}
+<%
+ res=[]
+ inputdata.each do |e|
+  e.title.gsub!("{", '\\\{')
+  e.title.gsub!("%", '\\\%')
+  e.title.gsub!("&", '\\\&')
+  res << "{\\bf N #{e.new_collocation}} & #{e.title[0..38]} & #{e.old_collocation} & #{e.manifestation_id} \\\\ \\hline"
+ end
+%>
+<%= res.join("\n") %>
+
+\end{supertabular}
+\end{center}
+ 
+
+\end{document}

@@ -205,7 +205,7 @@ class ClavisItem < ActiveRecord::Base
             item.inventory_serie_id,item.inventory_number,item.usage_count,item.item_status,
               item.title as title,cm.edition_date,cm.publisher,cm.manifestation_id,
             ist.value_label as item_status, lst.value_label as loan_status,
-            item.opac_visible, cit.label as contenitore,
+            item.opac_visible, cit.label as contenitore, r.vedetta, os.os_section,
              ca.full_text as descrittore,r.dewey_collocation,cc.collocazione as full_collocation",
                                         :joins=>"join clavis.manifestation cm using(manifestation_id)
              join ricollocazioni r using(item_id) join clavis.collocazioni cc using(item_id)
