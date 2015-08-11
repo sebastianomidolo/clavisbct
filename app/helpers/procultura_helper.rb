@@ -23,11 +23,12 @@ module ProculturaHelper
     content_tag(:ul, r.join.html_safe)
   end
 
-  def procultura_cards_singole_schede(folder)
+  def procultura_cards_singole_schede(folder_or_array_of_cards)
+    cards = folder_or_array_of_cards.class==ProculturaFolder ? folder_or_array_of_cards.cards : folder_or_array_of_cards
     r=[]
     cnt=0
     prec=nil
-    folder.cards.each do |c|
+    cards.each do |c|
       cnt=0 if prec!=c.intestazione
       cnt+=1
       # lnk=procultura_make_link(procultura_card_path(c, :format=>:png))
@@ -59,9 +60,10 @@ module ProculturaHelper
     content_tag(:ol, r.join("\n").html_safe)
   end
 
-  def procultura_cards_editable(folder)
+  def procultura_cards_editable(folder_or_array_of_cards)
     r=[]
-    folder.cards.each do |c|
+    cards = folder_or_array_of_cards.class==ProculturaFolder ? folder_or_array_of_cards.cards : folder_or_array_of_cards
+    cards.each do |c|
       r << procultura_cards_table_row(c)
     end
     content_tag(:table, r.join("\n").html_safe)
@@ -120,4 +122,5 @@ module ProculturaHelper
   def procultura_link_to_image(record,format)
     "http://#{request.host_with_port}#{procultura_card_path(record, {:format=>format})}"
   end
+
 end

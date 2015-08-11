@@ -8,12 +8,12 @@ class ProculturaCardsController < ApplicationController
       q = params[:q].blank? ? '' : params[:q]
       ts=ProculturaCard.connection.quote_string(q.split.join(' & '))
       cond="to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}')"
-      @procultura_cards=ProculturaCard.paginate(conditions:cond,page:params[:page],per_page:10)
+      @procultura_cards=ProculturaCard.paginate(conditions:cond,page:params[:page],per_page:100,order:'lower(heading)')
     else
       k=ids.split.collect {|i| i.to_i}
       @procultura_cards=ProculturaCard.find(k, :order=>'filepath')
     end
-    render :layout=>nil
+    # render :layout=>nil
   end
 
   def show

@@ -1,3 +1,11 @@
+<%= @procultura_cards.count %>
 <% @procultura_cards.each do |c| %>
- <%= content_tag(:div, render(:partial=>'show', :locals=>{:card=>c})) %>
+ <% content_tag(:div, render(:partial=>'show', :locals=>{:card=>c})) %>
+<% end %>
+
+
+<% if params[:reqfrom].blank? and signed_in? %>
+ <%= content_tag(:div, procultura_cards_editable(@procultura_cards)) %>
+<% else %>
+ <%= content_tag(:div, procultura_cards_singole_schede(@procultura_cards)) %>
 <% end %>

@@ -1,0 +1,6 @@
+
+<%= form_tag("/procultura_cards", method: "get") do %>
+  <%= label_tag(:q, "Ricerca per parole:") %>
+  <%= text_field_tag(:q) %>
+  <%= submit_tag("Cerca") %>
+<% end %>
