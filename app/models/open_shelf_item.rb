@@ -24,8 +24,21 @@ class OpenShelfItem < ActiveRecord::Base
       join clavis.authority ca on(ca.authority_id=r.class_id)
       #{wherecond}
       GROUP by r.class_id,ca.class_code,ca.full_text order by espandi_dewey(ca.class_code);}
-    # puts sql
+    puts sql
     OpenShelfItem.connection.execute(sql).to_a
+  end
+
+  def OpenShelfItem.openshelf_list(dest_section)
+    criterio = dest_section=='NC' ? 'r.vedetta' : 'r.dewey_collocation'
+    sql=%Q{SELECT ci.manifestation_id,ci.title,#{criterio} as "new_collocation",
+         compact_collocation(ci."section",ci.collocation,
+          ci.specification,ci.sequence1,ci.sequence2) as old_collocation
+        FROM open_shelf_items os JOIN clavis.item ci USING(item_id)
+           JOIN ricollocazioni r USING(item_id)
+        WHERE os.os_section=#{self.connection.quote(dest_section)}
+         ORDER BY #{criterio};}
+    puts sql
+    OpenShelfItem.find_by_sql(sql)
   end
 
   def OpenShelfItem.conta(os_section=nil)
