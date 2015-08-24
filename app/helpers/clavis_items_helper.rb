@@ -22,6 +22,7 @@ module ClavisItemsHelper
     # Eventuale link a qualcosa:
     # content_tag(:td, link_to('[presta]', r.clavis_url(:loan), :target=>'_blank'))
     records.each do |r|
+      container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       if r.home_library_id==-1
         lnk=r.title
         media = 'TOPOGRAFICO'
@@ -29,11 +30,15 @@ module ClavisItemsHelper
         lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
         media = r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
+        media << "</br><em>#{r.item_status}</em>"
+        lnk << "</br><b>non visibile in opac</b>".html_safe if r.opac_visible!=1
+        lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
       end
       res << content_tag(:tr, content_tag(:td, link_to(r.collocazione.sub(/^BCT\./,''), clavis_item_path(r))) +
                          content_tag(:td, media.html_safe) +
                          content_tag(:td, lnk.html_safe) +
-                         content_tag(:td, r.inventario),
+                         content_tag(:td, r.inventario) +
+                         content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
     # res << content_tag(:div, "Trovati #{records.total_entries} esemplari", class: 'panel-heading')

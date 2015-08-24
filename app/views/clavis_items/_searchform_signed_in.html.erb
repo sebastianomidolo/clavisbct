@@ -15,5 +15,6 @@
   <%= link_to('Inserisci esemplare', new_extra_card_path) %>
 <% end %>
 
+<%= link_to('scarica barcodes', params.merge(format:'csv')) if @clavis_items.count>1 %>
 
 <% end %>

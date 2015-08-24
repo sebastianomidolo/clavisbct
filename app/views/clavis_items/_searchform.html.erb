@@ -14,6 +14,9 @@
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
 
   <%= button_to_function("mostra tutti i campi di ricerca", "$('#mostra_tutti_i_campi').hide();$('.control-group','#new_clavis_item').show();", id: "mostra_tutti_i_campi", class: "btn btn-success") if @attrib.size>0 %>
+
+<%= link_to('scarica barcodes', params.merge(format:'csv')) if @clavis_items.count>1 %>
+
 <% end %>
 
 

@@ -53,13 +53,19 @@ class ClavisItemsController < ApplicationController
       cond = cond.join(" AND ")
       # @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
     end
 
     respond_to do |format|
       format.html
+      format.csv {
+        page=params[:page].blank? ? '' : "_pagina_#{params[:page]}"
+        fname = "barcodes#{page}.csv"
+        csv_data=@clavis_items.collect {|x| x.barcode}
+        send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
+      }
       format.json { render json: @clavis_items }
     end
   end
