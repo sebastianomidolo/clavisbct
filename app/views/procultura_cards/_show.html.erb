@@ -1,4 +1,5 @@
 <%= content_tag(:h3, card.heading) %>
+<%= content_tag(:p, "Ordinamento alfabetico: <b>#{card.sort_text}</b>".html_safe) %>
 <%=
 link_to(image_tag(procultura_link_to_image(card,:png),:width=>'550',:alt=>'Scansione della scheda catalografica'), procultura_link_to_image(card,:pdf), :title=>'Scansione della scheda catalografica')
 %>

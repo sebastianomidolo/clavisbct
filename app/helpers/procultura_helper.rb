@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 module ProculturaHelper
 
   def procultura_archivi_old
@@ -77,6 +76,13 @@ module ProculturaHelper
                       skip_blur:false,
                       html_attrs:{size:record.heading.size}
                       )
+    bip2=best_in_place(record, :sort_text, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                      ok_button_class:'btn btn-success',
+                      class:'btn btn-warning',
+                      skip_blur:false,
+                      html_attrs:{size:record.heading.size}
+                      )
+
     if add_image
       bip=content_tag(:b, bip)
       r << content_tag(:tr,
@@ -91,7 +97,8 @@ module ProculturaHelper
     else
       r << content_tag(:tr,
                        content_tag(:td, link_to(record.id, procultura_card_path(record), remote:true)) +
-                       content_tag(:td, bip) +
+                       # content_tag(:td, bip + "<br/>chiave ordinamento: <b>#{record.sort_text}</b>".html_safe) +
+                       content_tag(:td, bip + "<br/>chiave ordinamento: <b>#{bip2}</b>".html_safe) +
                        content_tag(:td, record.updated_by_info),
                        :id=>record.id)
     end
