@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150703125720) do
+ActiveRecord::Schema.define(:version => 20150811093355) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -63,6 +63,20 @@ ActiveRecord::Schema.define(:version => 20150703125720) do
     t.text    "label"
     t.integer "library_id"
   end
+
+  create_table "bncf_terms", :id => false, :force => true do |t|
+    t.integer "id",                        :null => false
+    t.integer "bncf_id"
+    t.string  "category",   :limit => 21
+    t.string  "term",       :limit => 128
+    t.string  "rdftype",    :limit => 10
+    t.integer "parent_id"
+    t.text    "definition"
+    t.string  "termtype",   :limit => 12
+  end
+
+  add_index "bncf_terms", ["id"], :name => "bncf_terms_id_ndx", :unique => true
+  add_index "bncf_terms", ["term"], :name => "bncf_terms_term_ndx"
 
   create_table "casse_periodici", :id => false, :force => true do |t|
     t.integer "collocazione_per",               :null => false
@@ -274,6 +288,7 @@ ActiveRecord::Schema.define(:version => 20150703125720) do
     t.integer "item_id"
     t.integer "class_id"
     t.text    "dewey_collocation"
+    t.text    "vedetta"
     t.integer "authority_id"
     t.text    "sort_text"
   end

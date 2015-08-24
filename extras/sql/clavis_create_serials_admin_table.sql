@@ -1,4 +1,4 @@
-\BEGIN;
+BEGIN;
 DROP TABLE public.serials_admin_table;
 COMMIT;
 

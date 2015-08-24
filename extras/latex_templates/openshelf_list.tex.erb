@@ -33,7 +33,7 @@
   e.title.gsub!("{", '\\\{')
   e.title.gsub!("%", '\\\%')
   e.title.gsub!("&", '\\\&')
-  res << "{\\bf N #{e.new_collocation}} & #{e.title[0..38]} & #{e.old_collocation} & #{e.manifestation_id} \\\\ \\hline"
+  res << "{\\bf #{e.os_section} #{e.new_collocation}} & #{e.title[0..38]} & #{e.old_collocation} & #{e.manifestation_id} \\\\ \\hline"
  end
 %>
 <%= res.join("\n") %>

@@ -8,9 +8,9 @@ select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
  END as "dewey_collocation",
 
  CASE WHEN mainentry is null THEN
-  upper(substr(trim(regexp_replace(regexp_replace(cm.sort_text,        '(,[ A-Z]*)$',''),'\'|_|\\*|,','')),1,4))
+  upper(substr(trim(regexp_replace(regexp_replace(cm.sort_text,        '(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4))
  ELSE
-  upper(substr(trim(regexp_replace(regexp_replace(mainentry.sort_text, '(,[ A-Z]*)$',''),'\'|_|\\*|,','')),1,4))
+  upper(substr(trim(regexp_replace(regexp_replace(mainentry.sort_text, '(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4))
  END as "vedetta",
 
  mainentry.authority_id,

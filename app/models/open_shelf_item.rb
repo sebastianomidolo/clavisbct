@@ -30,14 +30,14 @@ class OpenShelfItem < ActiveRecord::Base
 
   def OpenShelfItem.openshelf_list(dest_section)
     criterio = dest_section=='NC' ? 'r.vedetta' : 'r.dewey_collocation'
-    sql=%Q{SELECT ci.manifestation_id,ci.title,#{criterio} as "new_collocation",
+    sql=%Q{SELECT os.os_section, ci.manifestation_id,ci.title,#{criterio} as "new_collocation",
          compact_collocation(ci."section",ci.collocation,
           ci.specification,ci.sequence1,ci.sequence2) as old_collocation
         FROM open_shelf_items os JOIN clavis.item ci USING(item_id)
            JOIN ricollocazioni r USING(item_id)
         WHERE os.os_section=#{self.connection.quote(dest_section)}
          ORDER BY #{criterio};}
-    puts sql
+    # puts sql
     OpenShelfItem.find_by_sql(sql)
   end
 
