@@ -16,7 +16,7 @@ CREATE TABLE da_inserire_in_clavis AS
    FROM topografico_non_in_clavis t LEFT JOIN clavis.item
    ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci IS NULL AND t.deleted=false;
 
-SELECT setval('clavis.item_item_id_seq', (SELECT MAX(item_id) FROM clavis.item)+1);
+SELECT setval('clavis.item_item_id_seq', (SELECT MAX(item_id) FROM clavis.item)+1000);
 INSERT INTO clavis.item(
    manifestation_id,home_library_id,owner_library_id,inventory_serie_id,inventory_number,
    collocation,title,item_media,issue_number,item_icon,
