@@ -1,0 +1,69 @@
+\documentclass[a4paper,12pt]{article}
+
+% 9 etichette per pagina
+
+% \usepackage[italian]{babel}
+\usepackage[utf8]{inputenc}
+
+% \usepackage[boxed]{ticket}
+% \usepackage[crossmark,cutmark]{ticket}
+
+% \usepackage[circlemark,emptycrossmark]{ticket}
+\usepackage[circlemark,emptycrossmark,rowmode,boxed]{ticket}
+% \usepackage[circlemark,emptycrossmark]{ticket}
+
+% \usepackage[cutmark]{ticket}
+% \usepackage{rotating}
+
+% tdf START
+\unitlength=1mm
+
+% Queste impostazioni vanno bene per la mia Brother
+% A video risulta tagliato a sinistra e in alto, ma in stampa funziona
+% e anzi permette di risparmiare due tagli
+% \hoffset=-22mm
+% \voffset=-36mm
+
+% Impostazione per stampante ufficio informazioni
+\hoffset=-22mm
+\voffset=-28mm
+
+
+\ticketNumbers{3}{3}
+\ticketSize{68}{90} % in unitlength
+\ticketDistance{0}{0} % in unitlength
+% tdf END
+
+\renewcommand{\ticketdefault}{%no background
+}
+
+\newcommand{\card}[6]{\ticket{%
+    \put(1,82){\parbox{62mm}{\raggedleft\Large{\textbf{ #1 }}}}%
+    \put(4,72){\parbox[t]{62mm}{\normalsize\raggedright #2}}%
+    \put(4,40){\parbox{62mm}{\normalsize\raggedright #3}}%
+    \put(4,32){\parbox{62mm}{\normalsize\raggedright #4}}%
+    \put(4,22){\parbox{62mm}{\normalsize\raggedright #5}}%
+    \put(4,12){\parbox{62mm}{\normalsize\raggedright #6}}%
+ }}
+
+% \crop
+
+\begin{document}
+
+<%
+ res=[]
+ inputdata.each do |e|
+  # e.collocazione.sub!(/^BCT\./, '')
+  e.title.gsub!("{", '\\\{')
+  e.title.gsub!("%", '\\\%')
+  title=e.title[0..150]
+  collocation = e.collocazione.size>18 ? "\\normalsize #{e.collocazione}" : e.collocazione
+  res << "\\card{#{collocation}}{#{title}}{\\em Ultima modifica: #{I18n.l e.date_updated.to_date}}{#{e.barcode}}{#{e.item_status}}{#{e.inventario}}"
+ end
+%>
+<%= res.join("\n") %>
+
+
+ 
+
+\end{document}

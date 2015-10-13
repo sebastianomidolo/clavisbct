@@ -1,10 +1,10 @@
 class ProculturaFoldersController < ApplicationController
-  layout 'navbar'
+  layout 'procultura'
   before_filter :authenticate_user!, only: [:update]
 
   def index
     archive_id=params[:archive_id]
-    logger.warn("reqfrom: #{params[:reqfrom]}")
+    # logger.warn("reqfrom: #{params[:reqfrom]}")
     if !archive_id.blank?
       @procultura_archive=ProculturaArchive.find(archive_id)
       @partial='lista'

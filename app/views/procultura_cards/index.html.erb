@@ -1,6 +1,8 @@
 <%= @procultura_cards.count %>
 <% @procultura_cards.each do |c| %>
- <% content_tag(:div, render(:partial=>'show', :locals=>{:card=>c})) %>
+ <%
+  # content_tag(:div, render(:partial=>'show', :locals=>{:card=>c}))
+  %>
 <% end %>
 
 

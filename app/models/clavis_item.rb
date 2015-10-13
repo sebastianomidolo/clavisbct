@@ -4,9 +4,10 @@ class ClavisItem < ActiveRecord::Base
   self.primary_key = 'item_id'
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
-  :item_media, :collocation, :inventory_number, :manifestation_dewey,
-  :current_container, :in_container, :dewey_collocation,
-  :home_library_id, :issue_number, :item_icon, :custom_field3
+  :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
+  :current_container, :in_container, :dewey_collocation, :barcode,
+  :home_library_id, :issue_number, :item_icon, :custom_field3,
+  :rfid_code, :actual_library_id
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
 
@@ -14,6 +15,8 @@ class ClavisItem < ActiveRecord::Base
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id
   has_many :attachments, :as => :attachable
   has_one :open_shelf_item, foreign_key:'item_id'
+
+  before_save :check_record
 
   def to_label
     if self.clavis_manifestation.nil?
@@ -113,6 +116,16 @@ class ClavisItem < ActiveRecord::Base
     return "(#{container.label} contiene #{container.container_items.size} elementi)"
   end
 
+  def check_record
+    if self.clavis_manifestation.nil?
+      cm=ClavisManifestation.new({manifestation_id:self.manifestation_id,title:self.title})
+      cm.save
+    end
+    if self.item_media.nil?
+      # F = Monografia
+      self.item_media='F'
+    end
+  end
 
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)

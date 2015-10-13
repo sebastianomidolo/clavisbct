@@ -20,7 +20,7 @@ module DigitalObjects
 
   def get_fulltext_from_pdf
     return nil if (/^application\/pdf/ =~ self.mime_type).nil?
-    puts "ok"
+    # puts "ok"
     begin
       reader=PDF::Reader.new(self.filename_with_path)
     rescue
@@ -87,12 +87,14 @@ module DigitalObjects
   end
 
   def digital_object_read_metadata
+    fm=FileMagic.mime
     fname = File.join(digital_objects_mount_point,filename)
     fstat = File.stat(fname)
-    puts fstat.inspect
-    puts "id: #{id}"
-    puts self.attributes
-    self.bfilesize = File.size(fname)
+    self.mime_type = fm.file(fname)
+    self.bfilesize = fstat.size
+    self.f_ctime = fstat.ctime
+    self.f_mtime = fstat.mtime
+    self.f_atime = fstat.atime
   end
 
   def libroparlato_audioclip_basename(ext='mp3')

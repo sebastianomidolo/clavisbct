@@ -9,8 +9,13 @@ class DObject < ActiveRecord::Base
   attr_accessible :filename, :access_right_id, :mime_type, :tags
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
+  before_save :check_filesystem
 
-  def read_metadata
+  def check_filesystem
+    self.digital_object_read_metadata
+  end
+
+  def read_metadata_da_cancellare
     self.digital_object_read_metadata
     puts self.mime_type
     puts "filesize: #{bfilesize}"
@@ -132,6 +137,22 @@ class DObject < ActiveRecord::Base
     fname = File.exists?(f) ? f : File.join(dir,basename)
     puts "audioclip per #{self.id} traccia #{cnt}: #{fname}"
     fname
+  end
+
+  def edit_tags(hash)
+    doc=REXML::Document.new(self.tags)
+    # puts "in edit_tags, prima: #{doc.to_s}"
+    hash.each_pair do |k,v|
+      t=k.to_s
+      el = doc.root.elements[t]
+      # puts "el: #{el.class} => '#{el.to_s}'"
+      doc.root.elements.delete(el) if !el.nil?
+      el=REXML::Element.new(t)
+      el.add_text(v)
+      doc.root.elements << el
+    end
+    # puts "in edit_tags, dopo: #{doc.to_s}"
+    self.tags=doc.to_s
   end
 
   def get_tracklist

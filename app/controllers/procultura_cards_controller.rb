@@ -1,18 +1,34 @@
 class ProculturaCardsController < ApplicationController
-  layout 'navbar'
+  layout 'procultura'
+
   before_filter :authenticate_user!, only: [:edit, :update]
 
   def index
     ids=params[:ids]
     if ids.blank?
-      q = params[:q].blank? ? '' : params[:q]
-      ts=ProculturaCard.connection.quote_string(q.split.join(' & '))
-      cond="to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}')"
-      @procultura_cards=ProculturaCard.paginate(conditions:cond,page:params[:page],per_page:100,order:'lower(heading)')
+      if params[:lettera].blank?
+        q = params[:q].blank? ? '' : params[:q]
+        q.gsub!('&', ' ')
+        ts=ProculturaCard.connection.quote_string(q.split.join(' & '))
+        cond="to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}')"
+        params[:per_page]=1000
+      else
+        cond="sort_text ~* '^#{params[:lettera]}'"
+        params[:per_page]=99999
+      end
+      cond << "AND a.id=#{params[:archive_id]}" if !params[:archive_id].blank?
+      @procultura_cards=ProculturaCard.lista_alfabetica(cond, params)
     else
       k=ids.split.collect {|i| i.to_i}
       @procultura_cards=ProculturaCard.find(k, :order=>'filepath')
     end
+
+    #if !params[:reqfrom].blank?
+    #  render :partial=>@partial
+    #else
+    #  render :template=>"procultura_folders/#{@partial}"
+    #end
+
     # render :layout=>nil
   end
 

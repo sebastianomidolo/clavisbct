@@ -22,6 +22,7 @@ module ClavisItemsHelper
     # Eventuale link a qualcosa:
     # content_tag(:td, link_to('[presta]', r.clavis_url(:loan), :target=>'_blank'))
     records.each do |r|
+      # next if !r.respond_to?('label')
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       if r.home_library_id==-1
         lnk=r.title

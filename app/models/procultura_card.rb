@@ -114,4 +114,12 @@ class ProculturaCard < ActiveRecord::Base
     config[Rails.env]['procultura_cache']
   end
 
+  def self.lista_alfabetica(conditions, params)
+    sql=%{select c.*,a.name as archive_name, f.label as folder_label, f.id as folder_id
+     from procultura.cards c join procultura.folders f on (f.id=c.folder_id)
+       join procultura.archives a on(a.id=f.archive_id) where #{conditions} order by lower(c.sort_text)}
+    # ProculturaCard.paginate(conditions:conditions,page:params[:page],per_page:params[:per_page],order:'lower(sort_text)')
+    ProculturaCard.paginate_by_sql(sql,page:params[:page],per_page:params[:per_page])
+  end
+
 end

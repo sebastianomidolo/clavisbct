@@ -50,12 +50,13 @@ class ClavisItemsController < ApplicationController
         cond << 'containers.label is not null' if @clavis_item.in_container=='1'
       end
       # cond << "cc.collocazione ~ '^#{params[:collocazione_inizia_per]}\\.'" if !params[:collocazione_inizia_per].blank?
+      cond << "date_updated between now() - interval '#{params[:days]} days' and now()" if !params[:days].blank?
       cond = cond.join(" AND ")
       # @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>135, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
-      @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE item_id=0", :page=>1);
+      @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end
 
     respond_to do |format|
@@ -65,6 +66,13 @@ class ClavisItemsController < ApplicationController
         fname = "barcodes#{page}.csv"
         csv_data=@clavis_items.collect {|x| x.barcode}
         send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
+      }
+      format.pdf {
+        filename="#{@clavis_items.size}_segnaposto.pdf"
+        lp=LatexPrint::PDF.new('labels', @clavis_items)
+        send_data(lp.makepdf,
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
       }
       format.json { render json: @clavis_items }
     end
@@ -128,6 +136,24 @@ class ClavisItemsController < ApplicationController
       format.json { render :json => @clavis_item }
     end
   end
+
+  def sync
+    @clavis_item=ClavisItem.new(params[:i])
+    @clavis_item.id=params[:id]
+    if ClavisItem.exists?(params[:id])
+      @clavis_item=ClavisItem.find(params[:id])
+    else
+      @clavis_item.item_icon=''
+      @clavis_item.issue_number=0
+      @clavis_item.section=@clavis_item.section.split.first
+      @clavis_item.save
+    end
+    respond_to do |format|
+      format.html
+      format.js
+    end
+  end
+
 
   def periodici_e_fatture
     year=params[:year].blank? ? '2014' : params[:year]

@@ -1,2 +1,7 @@
 <%= content_tag(:div, excel_sheet_breadcrumbs(@excel_sheet,@view_number)) %>
 <%= content_tag(:div, excel_sheet_row(@excel_sheet, params[:row].to_i)) %>
+
+
+<% if @excel_sheet.sql_tablename=='excel_files_tables.bioiconografico' %>
+Scansione scheda bioiconografico... (non ancora)
+<% end %>

@@ -1,0 +1,10 @@
+<%= simple_form_for(@bio_iconografico_card, method:'get') do |f| %>
+  <div class="form-inputs">
+   <%= f.input :tags, as: 'hidden' %>
+   <%= f.input :intestazione, as: 'string', input_html: {size: 40} %>
+   <%= f.input :numero, as: 'integer', label:'Numero scheda' %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Cerca' %>
+  </div>
+<% end %>

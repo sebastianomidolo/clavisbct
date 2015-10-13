@@ -47,6 +47,12 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :bio_iconografico_cards do
+    collection do
+      get 'upload'
+      post 'upload'
+    end
+  end
 
   resources :subjects
 
@@ -115,6 +121,9 @@ Clavisbct::Application.routes.draw do
   end
 
   resources :clavis_items do
+    member do
+      get 'sync'
+    end
     collection do
       get 'collocazioni'
       get 'ricollocazioni'

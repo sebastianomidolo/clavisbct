@@ -65,3 +65,10 @@ create or replace view soggetti_non_presenti_in_nuovo_soggettario as
   join clavis.authority s on (s.parent_id=ca.authority_id AND s.full_text=ca.full_text)
    where ca.authority_type = 'A' and ca.authority_rectype in ('k','x')
    and not ca.full_text ~ ',' and ns is null order by ca.sort_text;
+
+create or replace view bio_iconografico_cards as
+  select id,(xpath('//r/l/text()',tags))[1]::char as lettera,
+    (xpath('//r/n/text()',tags))[1]::text::integer as numero,
+        (xpath('//r/intestazione/text()',tags))[1] as intestazione
+  from d_objects where type = 'BioIconograficoCard';
+

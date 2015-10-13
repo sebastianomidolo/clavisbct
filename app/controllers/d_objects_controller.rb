@@ -2,6 +2,8 @@ require 'RMagick'
 
 class DObjectsController < ApplicationController
   layout 'navbar'
+  before_filter :authenticate_user!, only: [:upload]
+
 
   def index
     cond=[]
@@ -18,6 +20,20 @@ class DObjectsController < ApplicationController
     respond_to do |format|
       format.html # index.html.erb
       format.json { render json: @d_objects }
+    end
+  end
+
+  def upload
+    @backend=params[:backend]
+    if request.method=="POST"
+      if @backend.camelcase.constantize.new.respond_to?('save_new_record')
+        @backend.camelcase.constantize.new.send('save_new_record', params)
+      end
+    else
+      @d_object = DObject.new
+    end
+    if !@backend.blank?
+      render template:"d_objects/#{@backend}_upload"
     end
   end
 

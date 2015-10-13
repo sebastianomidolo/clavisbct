@@ -17,7 +17,7 @@ module ProculturaHelper
     r=[]
     ProculturaArchive.list.each do |e|
       lnk=procultura_make_link(procultura_folders_path(:archive_id=>e['id']))
-      r << content_tag(:li, link_to(e['name'], lnk) + " (#{e['count']} schede)")
+      r << content_tag(:li, link_to("Schede del catalogo " + e['name'].downcase, lnk) + " (#{e['count']})")
     end
     content_tag(:ul, r.join.html_safe)
   end
@@ -37,7 +37,12 @@ module ProculturaHelper
       else
         text="#{c.intestazione} (#{cnt})"
       end
-      r << content_tag(:li, link_to(text, lnk, {:rel=>'lightbox [procultura]', :title=>text}))
+      if c.respond_to?('archive_name')
+        spec=" <b>[#{c.archive_name} #{link_to(c.folder_label, procultura_folder_path(c.folder_id))}]</b>"
+      else
+        spec=''
+      end
+      r << content_tag(:li, link_to(text, lnk, {:rel=>'lightbox [procultura]', :title=>text})+spec.html_safe)
       prec=c.intestazione
     end
     content_tag(:ol, r.join("\n").html_safe)
@@ -128,6 +133,22 @@ module ProculturaHelper
 
   def procultura_link_to_image(record,format)
     "http://#{request.host_with_port}#{procultura_card_path(record, {:format=>format})}"
+  end
+
+  def procultura_menu_orizzontale(archive_id=nil)
+    r=[]
+    links=[['Cerca',procultura_folders_path]]
+    if !archive_id.blank?
+      BioIconograficoCard.lettere.each do |l|
+        links << [l,procultura_cards_path(lettera:l,archive_id:archive_id)]
+      end
+    end
+    links.each do |v|
+      t,l=v
+      lnk=link_to(t,l)
+      r << content_tag(:li, lnk)
+    end
+    content_tag(:ul, r.join.html_safe)
   end
 
 end

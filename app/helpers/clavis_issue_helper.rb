@@ -20,7 +20,11 @@ module ClavisIssueHelper
         alt="__TITLE__"
         property="image"
     /></a></div>}
+    prec_mid=''
     issues.each do |i|
+      next if i.attachment_id.nil?
+      next if prec_mid==i.manifestation_id
+      prec_mid=i.manifestation_id
       img=imgtemplate.sub("__NUMFILE__", i.attachment_id)
       img=img.sub("__MANIFESTATION__", i.manifestation_id.to_s)
       img=img.gsub("__TITLE__", i.title)

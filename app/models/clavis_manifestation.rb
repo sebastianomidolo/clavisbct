@@ -5,7 +5,7 @@ include DigitalObjects
 include REXML
 
 class ClavisManifestation < ActiveRecord::Base
-  attr_accessible :bid, :bid_source
+  attr_accessible :bid, :bid_source, :manifestation_id, :title
   self.table_name = 'clavis.manifestation'
   self.primary_key = 'manifestation_id'
 

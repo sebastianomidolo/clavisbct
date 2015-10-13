@@ -25,6 +25,7 @@ module ContainersHelper
       if i.manifestation_id!=prec_mid
         if i.manifestation_id!=0
           lnk_opac="#{link_to(i.clavis_item.title, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(i.item_id,:show), target: '_blank')}"
+          # lnk_opac='x'
         else
           lnk_opac = i.clavis_item.title
         end

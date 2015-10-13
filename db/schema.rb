@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150811093355) do
+ActiveRecord::Schema.define(:version => 20150923104912) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -62,6 +62,35 @@ ActiveRecord::Schema.define(:version => 20150811093355) do
   create_table "biblioteche_celdes", :id => false, :force => true do |t|
     t.text    "label"
     t.integer "library_id"
+  end
+
+  create_table "bioiconografico", :id => false, :force => true do |t|
+    t.integer "id"
+    t.integer "seqnum"
+    t.string  "intestazione",        :limit => 1240
+    t.string  "luogo_nascita",       :limit => 80
+    t.string  "data_nascita",        :limit => 80
+    t.string  "luogo_morte",         :limit => 80
+    t.string  "data_morte",          :limit => 80
+    t.text    "luoghi_di_soggiorno"
+    t.string  "esistenza_in_vita",   :limit => 80
+    t.text    "qualificazioni"
+    t.string  "var1",                :limit => 220
+    t.string  "var2",                :limit => 180
+    t.string  "var3",                :limit => 80
+    t.string  "var4",                :limit => 180
+    t.string  "var5",                :limit => 80
+    t.text    "luoghi_visitati"
+    t.string  "link_scheda",         :limit => 180
+    t.text    "note"
+    t.string  "altri_link",          :limit => 1240
+    t.string  "sigla_operatore",     :limit => 60
+    t.integer "num_scatola"
+  end
+
+  create_table "bioiconografico_images", :id => false, :force => true do |t|
+    t.integer "id"
+    t.string  "filename", :limit => 240
   end
 
   create_table "bncf_terms", :id => false, :force => true do |t|
@@ -143,10 +172,12 @@ ActiveRecord::Schema.define(:version => 20150811093355) do
     t.datetime "f_mtime"
     t.datetime "f_atime"
     t.integer  "access_right_id", :limit => 2
+    t.string   "type",            :limit => 32
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
   add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
+  add_index "d_objects", ["type"], :name => "index_d_objects_on_type"
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
     t.integer "owner_library_id"

@@ -1,0 +1,5 @@
+<%= content_tag(:div, "Scheda: <b>#{@bio_iconografico_card.numero_scheda}</b>".html_safe) %>
+
+<%= content_tag(:div, "Intestazione: <b>#{@bio_iconografico_card.intestazione}</b>".html_safe) %>
+
+<%= image_tag(bio_iconografico_card_path(@bio_iconografico_card, :format=>'jpg', :size=>'375x516')) %>

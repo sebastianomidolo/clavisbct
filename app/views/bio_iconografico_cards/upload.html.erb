@@ -1,0 +1,11 @@
+<h2>Bio iconografico - caricamento scheda digitalizzata</h2>
+
+<%= form_tag({action: :upload}, multipart: true) do %>
+ <br/><%= file_field_tag 'filename' %>
+  <%= hidden_field_tag 'lettera', params[:lettera] %>
+  <%= submit_tag 'Salva' %>
+<% end %>
+
+
+<%= render :partial=>'show' if !@bio_iconografico_card.id.nil? %>
+
