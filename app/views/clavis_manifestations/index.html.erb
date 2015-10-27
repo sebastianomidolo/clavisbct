@@ -7,7 +7,7 @@ Ultimo record inserito:
 cm=ClavisManifestation.last
 link_to(cm.id, cm.clavis_url)
 %>
-<%= cm.date_created.to_date %>
+<%= cm.date_created.to_date if !cm.date_created.nil? %>
 
 <br/><%= link_to("cerca per created_by", shortlist_clavis_manifestations_path(:created_by=>1)) %>
 

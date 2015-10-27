@@ -67,8 +67,15 @@ create or replace view soggetti_non_presenti_in_nuovo_soggettario as
    and not ca.full_text ~ ',' and ns is null order by ca.sort_text;
 
 create or replace view bio_iconografico_cards as
-  select id,(xpath('//r/l/text()',tags))[1]::char as lettera,
+  select id,(xpath('//r/l/text()',tags))[1]::varchar as lettera,
     (xpath('//r/n/text()',tags))[1]::text::integer as numero,
         (xpath('//r/intestazione/text()',tags))[1] as intestazione
   from d_objects where type = 'BioIconograficoCard';
 
+
+create or replace view soggetti_mso_duplicati as
+select c1.authority_id as mso_id,c1.subject_class as mso_class,c1.full_text as intestazione,
+  c2.authority_id as other_id,c2.subject_class as other_class
+  from clavis.authority c1 join clavis.authority c2
+ on(c1.full_text=c2.full_text and c1.subject_class!=c2.subject_class) 
+  where c1.subject_class='MSO' AND c2.subject_class !='MSO';

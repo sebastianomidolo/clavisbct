@@ -1,5 +1,8 @@
 Clavisbct::Application.routes.draw do
 
+  resources :bio_iconografico_topics
+
+
   resources :bct_letters do
     collection do
       get 'random_letter'

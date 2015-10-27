@@ -30,7 +30,7 @@ module ProculturaHelper
     cards.each do |c|
       cnt=0 if prec!=c.intestazione
       cnt+=1
-      # lnk=procultura_make_link(procultura_card_path(c, :format=>:png))
+      # lnk=procultura_make_link(procultura_card_path(c, :format=>:jpg))
       lnk="http://clavisbct.comperio.it/procultura_cards/#{c.id}.jpg"
       if cnt==1
         text=c.intestazione
@@ -38,7 +38,7 @@ module ProculturaHelper
         text="#{c.intestazione} (#{cnt})"
       end
       if c.respond_to?('archive_name')
-        spec=" <b>[#{c.archive_name} #{link_to(c.folder_label, procultura_folder_path(c.folder_id))}]</b>"
+        spec=" <b>[#{c.archive_name} #{link_to(c.folder_label, procultura_make_link(procultura_folder_path(c.folder_id)))}]</b>"
       else
         spec=''
       end
@@ -70,7 +70,7 @@ module ProculturaHelper
     cards.each do |c|
       r << procultura_cards_table_row(c)
     end
-    content_tag(:table, r.join("\n").html_safe)
+    content_tag(:table, content_tag(:tbody, r.join("\n").html_safe), :class=>'table table-striped')
   end
 
   def procultura_cards_table_row(record,add_image=false)
@@ -83,29 +83,37 @@ module ProculturaHelper
                       )
     bip2=best_in_place(record, :sort_text, ok_button:'Salva', cancel_button:'Annulla modifiche',
                       ok_button_class:'btn btn-success',
-                      class:'btn btn-warning',
+                      class:'btn btn-info',
                       skip_blur:false,
                       html_attrs:{size:record.heading.size}
                       )
+
+
+    if !record.updated_at.nil? and ((Time.now - record.updated_at).to_i < 180)
+      classe='success'
+    else
+      classe=''
+    end
 
     if add_image
       bip=content_tag(:b, bip)
       r << content_tag(:tr,
                        content_tag(:td, link_to('chiudi', procultura_card_path(record, close:true), remote:true)) +
                        content_tag(:td, bip) +
+                       content_tag(:td, "<b>#{bip2}</b>".html_safe) +
                        content_tag(:td, record.updated_by_info),
-                       :id=>record.id)
+                       :id=>record.id, class:classe)
       img=image_tag(procultura_card_path(record, :format=>'jpg'))
       r << content_tag(:tr,
-                       content_tag(:td, img, {colspan:2}),
+                       content_tag(:td, img, {colspan:4}),
                        :id=>"image_#{record.id}")
     else
       r << content_tag(:tr,
                        content_tag(:td, link_to(record.id, procultura_card_path(record), remote:true)) +
-                       # content_tag(:td, bip + "<br/>chiave ordinamento: <b>#{record.sort_text}</b>".html_safe) +
-                       content_tag(:td, bip + "<br/>chiave ordinamento: <b>#{bip2}</b>".html_safe) +
+                       content_tag(:td, bip) +
+                       content_tag(:td, "<b>#{bip2}</b>".html_safe) +
                        content_tag(:td, record.updated_by_info),
-                       :id=>record.id)
+                       :id=>record.id, class:classe)
     end
     r.join.html_safe
   end

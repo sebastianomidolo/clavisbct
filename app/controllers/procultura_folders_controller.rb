@@ -1,5 +1,6 @@
 class ProculturaFoldersController < ApplicationController
-  layout 'procultura'
+  # layout 'procultura'
+  layout 'navbar'
   before_filter :authenticate_user!, only: [:update]
 
   def index

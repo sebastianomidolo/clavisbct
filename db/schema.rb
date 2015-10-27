@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20150923104912) do
+ActiveRecord::Schema.define(:version => 20151023113340) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -62,6 +62,10 @@ ActiveRecord::Schema.define(:version => 20150923104912) do
   create_table "biblioteche_celdes", :id => false, :force => true do |t|
     t.text    "label"
     t.integer "library_id"
+  end
+
+  create_table "bio_iconografico_topics", :force => true do |t|
+    t.xml "tags"
   end
 
   create_table "bioiconografico", :id => false, :force => true do |t|
@@ -377,43 +381,6 @@ ActiveRecord::Schema.define(:version => 20150923104912) do
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
 
-  create_table "temp_import_erasmo_bibrecords", :id => false, :force => true do |t|
-    t.string "id",     :limit => 8,  :null => false
-    t.string "leader", :limit => 24
-  end
-
-  create_table "temp_import_erasmo_unimarc_tags", :id => false, :force => true do |t|
-    t.string "bibrecord_id", :limit => 8, :null => false
-    t.string "marctag",      :limit => 3
-    t.string "indicator1",   :limit => 1
-    t.string "indicator2",   :limit => 1
-    t.xml    "subfields"
-    t.text   "content"
-  end
-
-  create_table "temp_intestazioni_mancanti", :id => false, :force => true do |t|
-    t.text "heading"
-  end
-
-  create_table "temp_links", :id => false, :force => true do |t|
-    t.integer "source_id"
-    t.integer "target_id"
-    t.integer "linked_id"
-    t.string  "linktype",  :limit => 20
-    t.text    "s1"
-    t.text    "s2"
-    t.text    "heading"
-    t.text    "linknote"
-    t.integer "seq"
-  end
-
-  create_table "temp_subjects", :id => false, :force => true do |t|
-    t.text    "s1"
-    t.text    "s2"
-    t.string  "linktype", :limit => 20
-    t.integer "seq"
-  end
-
   create_table "topografico_non_in_clavis", :force => true do |t|
     t.text     "bid"
     t.integer  "id_copia"
@@ -456,10 +423,5 @@ ActiveRecord::Schema.define(:version => 20150923104912) do
 
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["reset_password_token"], :name => "index_users_on_reset_password_token", :unique => true
-
-  create_table "xml_import_erasmo", :id => false, :force => true do |t|
-    t.integer "id"
-    t.xml     "record"
-  end
 
 end

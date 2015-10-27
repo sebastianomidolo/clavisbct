@@ -30,7 +30,7 @@ class ProculturaCard < ActiveRecord::Base
   end
   def updated_by_info
     return '' if self.updated_by.nil?
-    self.updated_by.email
+    "#{self.updated_by.email} #{self.updated_at.to_date}"
   end
 
   def cached_filename(fmt)

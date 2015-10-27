@@ -23,11 +23,11 @@ module ContainersHelper
       cnt += 1
       inventario=nil
       if i.manifestation_id!=prec_mid
+        title = i.clavis_item.nil? ? '?' : i.clavis_item.title
         if i.manifestation_id!=0
-          lnk_opac="#{link_to(i.clavis_item.title, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(i.item_id,:show), target: '_blank')}"
-          # lnk_opac='x'
+          lnk_opac="#{link_to(title, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(i.item_id,:show), target: '_blank')}"
         else
-          lnk_opac = i.clavis_item.title
+          lnk_opac = title
         end
       else
         lnk_opac = '-'

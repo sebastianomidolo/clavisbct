@@ -1,5 +1,6 @@
 class ProculturaCardsController < ApplicationController
-  layout 'procultura'
+  # layout 'procultura'
+  layout 'navbar'
 
   before_filter :authenticate_user!, only: [:edit, :update]
 
@@ -23,13 +24,9 @@ class ProculturaCardsController < ApplicationController
       @procultura_cards=ProculturaCard.find(k, :order=>'filepath')
     end
 
-    #if !params[:reqfrom].blank?
-    #  render :partial=>@partial
-    #else
-    #  render :template=>"procultura_folders/#{@partial}"
-    #end
-
-    # render :layout=>nil
+    if !params[:reqfrom].blank?
+      render partial:'index'
+    end
   end
 
   def show
