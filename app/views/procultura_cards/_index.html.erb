@@ -1,0 +1,10 @@
+<%= render partial:'searchform' %>
+
+<% if @procultura_cards.size==0 and !params[:q].blank? %>
+ <%= content_tag(:div,
+   "Nessuna scheda corrisponde al criterio di ricerca impostato: \"<b>#{params[:q]}</b>\"".html_safe,
+    style:"padding:1em") %>
+<% else %>
+ <%= content_tag(:div, procultura_cards_singole_schede(@procultura_cards), style:"padding:1em") %>
+<% end %>
+
