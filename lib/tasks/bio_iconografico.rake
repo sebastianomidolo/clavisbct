@@ -62,6 +62,7 @@ task :bio_iconografico => :environment do
       end
 
       b.lettera=File.basename(b.filename)[0]
+      b.lettera='TEMP'
       b.save
       puts "#{cnt} id #{b.id} => #{b.intestazione}"
     end

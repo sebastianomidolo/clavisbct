@@ -1,4 +1,5 @@
 <h2>Bio iconografico - caricamento scheda digitalizzata</h2>
+<%= content_tag(:h2, "Lettera #{params[:lettera]}", style:"font-size:140%") %>
 
 <%= form_tag({action: :upload}, multipart: true) do %>
  <br/><%= file_field_tag 'filename' %>

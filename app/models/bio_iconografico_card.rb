@@ -5,6 +5,7 @@ class BioIconograficoCard < DObject
   :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
   before_save :check_record
 
+
   def check_record
     self.access_right_id=0
     mp=self.digital_objects_mount_point
@@ -37,7 +38,7 @@ class BioIconograficoCard < DObject
     BioIconograficoCard.absolute_filepath
   end
 
-  def save_new_record(params)
+  def save_new_record(params,creator)
     uploaded_io = params[:filename]
     fname=uploaded_io.original_filename
     mp=self.digital_objects_mount_point
@@ -57,8 +58,8 @@ class BioIconograficoCard < DObject
     else
       lettera='A'
     end
-    self.tags={l:lettera,
-      intestazione:'nuova scheda'}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
+    self.tags={l:lettera,user:creator.id.to_s,
+      intestazione:''}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
     self.save
     self
   end
@@ -151,6 +152,11 @@ class BioIconograficoCard < DObject
       order by lettera, numero, lower(intestazione::text)}
     # self.find_by_sql(sql)
     self.paginate_by_sql(sql, :per_page=>50, :page=>params[:page])
+  end
+
+  def self.editors
+    # Creare un array di user_id di utenti autorizzati a modificare le schede BioIconografico
+    return [1,2,3]
   end
 
 end

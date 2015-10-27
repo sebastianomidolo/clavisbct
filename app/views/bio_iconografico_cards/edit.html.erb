@@ -1,4 +1,6 @@
 <h3>Modifica scheda repertorio bio-iconografico</h3>
+<%= content_tag(:h2, "Lettera #{params[:lettera]}", style:"font-size:140%") %>
+
 
 <%= link_to(image_tag(bio_iconografico_card_path(@bio_iconografico_card, :format=>'jpg', :size=>'400x600')), bio_iconografico_card_path(@bio_iconografico_card, format:'jpg')) %>
 

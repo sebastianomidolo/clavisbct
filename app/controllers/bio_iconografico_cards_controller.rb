@@ -24,7 +24,7 @@ class BioIconograficoCardsController < ApplicationController
       if uploaded_io.nil?
         render :template=>'bio_iconografico_cards/file_non_specificato'
       else
-        @bio_iconografico_card=BioIconograficoCard.new.save_new_record(params)
+        @bio_iconografico_card=BioIconograficoCard.new.save_new_record(params,current_user)
         render :action=>:edit
       end
     else
