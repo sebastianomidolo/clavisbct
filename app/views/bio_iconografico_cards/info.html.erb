@@ -1,0 +1,9 @@
+
+<%= content_tag(:div, "Totale files: #{BioIconograficoCard.count}") %>
+
+
+<%= content_tag(:div, "Spazio occupato: #{number_to_human_size(BioIconograficoCard.total_filesize, precision:3)}") %>
+<%= content_tag(:div, "Spazio occupato (bytes): #{BioIconograficoCard.total_filesize}") %>
+<%= content_tag(:div, "Media per file: #{BioIconograficoCard.total_filesize/BioIconograficoCard.count} bytes") %>
+
+<%= content_tag(:div, bio_iconografico_cards_list(@doppi)) %>

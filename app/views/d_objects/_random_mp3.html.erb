@@ -1,0 +1,65 @@
+<%=
+  lista=[]
+  track=@d_object.get_tracklist.sample
+  cnt=@d_object.get_tracklist.index(track)+1
+  if @d_object.audioclip_exists?(cnt)
+    title=@guess ? "<b>?</b>" : track['title']
+    if @guess
+    lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{title}".html_safe, %Q{http://#{request.host_with_port}#{d_object_path(@d_object, format: 'mp3', t: cnt)}}))
+    end
+  else
+    lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
+  end
+  lista = lista.join.html_safe
+  content_tag(:div, content_tag(:ul, lista, :style=>'list-style: none'))
+%>
+
+<% if @d_object.references.first.attachable_type=='ClavisManifestation' %>
+ <% if @guess %>
+  <div id="rivela_il_mistero" style="display:none">
+  <p>Puoi ascoltare il CD in Biblioteca oppure prenderlo in prestito</p>
+  <%= content_tag(:div, clavis_manifestation_opac_preview(@d_object.references.first.attachable)) %>
+  <%= content_tag(:div, attachments_render(@d_object.references.first.attachable.attachments)) %>
+  </div>
+  <div id="fra_pochi_secondi">
+   Fra pochi secondi ti dirò di che brano si tratta...
+  </div>
+  <script>
+   setTimeout(function() {
+    jQuery('#fra_pochi_secondi').fadeOut(1000);
+    jQuery('#rivela_il_mistero').fadeIn(2000);
+   }, 10000);
+  </script>
+ <% else %>
+  <% @cm=@d_object.references.first.attachable %>
+
+
+  <%
+    cover=clavis_manifestation_cover(@cm)
+    url="http://#{request.host_with_port}#{random_mp3_d_objects_path(format:'js',targetdiv:'fromclavisbct')}"
+    lnk=image_tag("http://bct.comperio.it/sites/torino/assets/Uploads/search_images/lightbox-next.png",
+     alt:'Next audio clip',class:'img-rounded')
+    link=link_to(lnk,url,remote:true,title:'Prossimo album')
+  %>
+
+  <%= content_tag(:div, cover, style:'padding: 1em') %>
+  <%= content_tag(:div, link, style:'position: relative; left: 150px; top: -100px') %>
+
+
+ <div style='padding-left: 1em; padding-bottom: 1em'>
+  <%=
+     link_to(@cm.title,@cm.clavis_url(:opac),target:'_new',style:'font-weight: bold') +
+       content_tag(:div, @cm.publisher)
+  %>
+ </div>
+
+  <% content_tag(:div, clavis_manifestation_opac_preview(@d_object.references.first.attachable)) %>
+  <%= content_tag(:div, attachments_render(@d_object.references.first.attachable.attachments,false)) %>
+
+<script src="http://clavisbct.comperio.it/player.js" type="text/javascript"></script>
+
+ <% end %>
+<% end %>
+
+
+

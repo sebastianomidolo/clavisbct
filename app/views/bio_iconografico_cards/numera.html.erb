@@ -1,0 +1,6 @@
+<% if @bio_iconografico_cards.respond_to?('total_pages') %>
+<%= content_tag(:div, "Totale schede da numerare: #{@bio_iconografico_cards.total_entries}") %>
+<%= will_paginate @bio_iconografico_cards, renderer: BootstrapPagination::Rails %>
+<% end %>
+<%= bio_iconografico_cards_editable_list(@bio_iconografico_cards) %>
+

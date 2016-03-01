@@ -1,0 +1,6 @@
+
+<% @users.each do |u| %>
+
+<%= content_tag(:div, "#{u.email}-#{u.id} #{u.roles.collect {|r| r.name + r.id.to_s}.join(',')}") %>
+
+<% end %>
