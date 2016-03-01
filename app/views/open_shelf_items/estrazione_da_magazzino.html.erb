@@ -1,0 +1,34 @@
+
+<% if @section.nil? %>
+
+<%= form_tag(estrazione_da_magazzino_open_shelf_items_path, method: 'get', class:'form-horizontal') do %>
+   <%= select_tag(:dest_section, options_for_select(OpenShelfItem.sections, @dest_section),
+       multiple:false, size:1, include_blank:false, class:'btn') %>
+  <br/><span class='text-warning'>
+   Numero di volumi da trattare</span> <%= text_field_tag :per_page,40,style:'background-color:transparent' %>
+   <br/><%= check_box_tag :escludi_in_prestito, true, false %>
+  <%= label_tag(:escludi_in_prestito, 'Escludi i libri in prestito') %>
+   <br/><%= check_box_tag :escludi_ricollocati, true, true %>
+  <%= label_tag(:escludi_ricollocati, 'Escludi i libri già ricollocati') %>
+   <br/>Filtra per parole nel titolo: <%= text_field_tag :qs %>
+
+  <br/><%= submit_tag 'Procedi', class:'btn btn-info' %>
+<% end %>
+
+<div style='background-image: url("/piopio.jpg"); height: 300px; padding: 2em; padding-left: 5em'>
+
+
+</div>
+<% else %>
+<% totale=OpenShelfItem.conta(@section,@escludi_in_prestito,@qs,@escludi_ricollocati) %>
+<%=
+ info=@escludi_in_prestito.nil? ? '' : " (esclusi i libri in prestito)"
+ content_tag(:h2, "Sezione <b>#{@section}</b> - #{totale} volumi#{info}".html_safe)
+%>
+
+<%= content_tag(:div, open_shelf_items_estrazione_da_magazzino_index(@records,@section,@page,@per_page,@verb,@escludi_in_prestito,@qs,@escludi_ricollocati)) %>
+
+<%= content_tag(:div, open_shelf_items_estrazione_da_magazzino(@records,@verb)) %>
+
+<%= content_tag(:div, open_shelf_items_paginate(@page,@per_page,@section,@verb,@escludi_in_prestito,@qs,@escludi_ricollocati).html_safe) if @records.size>10 %>
+<% end %>
