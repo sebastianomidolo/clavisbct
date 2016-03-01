@@ -10,7 +10,7 @@ from http://www.free-css-templates.com
 }
 
 body { 
-	font: .8em Verdana, Arial, Sans-Serif; 
+	font: 1.5em Verdana, Arial, Sans-Serif; 
 	line-height: 1.6em; 
 	margin: 0
 }
@@ -25,8 +25,8 @@ body {
 	background: #FFF url(images/top.jpg) repeat-x top;
 	height: 81px;
 }
-#top h1 { padding: 10px 0 0 25px; color: #FFF; font-size: 160%; background: transparent;}
-#top h2 { padding: 0px 0 0 25px; color: #aaa; font-size: 80%; background: transparent;}
+#top h1 { padding: 10px 0 0 25px; color: #FFF; font-size: 100%; background: transparent;}
+#top h2 { padding: 0px 0 0 25px; color: #aaa; font-size: 90%; background: transparent;}
 
 #top h1 A { 
 /* color: #D3FFFF; */
@@ -125,7 +125,6 @@ color: #fff;
 	background: #FFF;
 	margin-right: 8px;
 	color: #666;
-	
 } 
 
 #main #rightside .box {
@@ -136,11 +135,13 @@ color: #fff;
 }
 
 #main #rightside h2 {
-	font: bold 1.0em Arial, Arial, Sans-Serif; 
-    background: #CDCDCD url(images/greyc.gif) no-repeat top right;
-	height: 18px;
-	padding: 3px;
-	color: #777;
+    font: bold 1.0em Arial, Arial, Sans-Serif; 
+    /* background: #CDCDCD url(images/greyc.gif) no-repeat top right; */
+    background: #AFA;
+    height: 22px;
+    padding: 1px;
+    color: #777;
+    font-size: 100%;
 }
 
 

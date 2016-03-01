@@ -2,6 +2,26 @@
   <%= f.error_notification %>
 
   <div class="form-inputs">
+   <%= f.input :intestazione, as: 'string', input_html: {size: 40} %>
+
+   <%= f.input :note, as: 'string', input_html: {size: 80} %>
+
+   <%= f.input :var1, as: 'string', input_html: {size: 80} %>
+   <%= f.input :var2, as: 'string', input_html: {size: 80} %>
+   <%= f.input :var3, as: 'string', input_html: {size: 80} %>
+   <%= f.input :var4, as: 'string', input_html: {size: 80} %>
+   <%= f.input :var5, as: 'string', input_html: {size: 80} %>
+   <%= f.input :luogo_nascita, input_html: {size: 40} %>
+   <%= f.input :luogo_morte, input_html: {size: 40} %>
+   <%= f.input :data_nascita, input_html: {size: 40} %>
+   <%= f.input :data_morte, input_html: {size: 40} %>
+   <%= f.input :esistenza_in_vita, input_html: {size: 40} %>
+   <%= f.input :qualificazioni, as: 'text', input_html: {rows: 4} %>
+   <%= f.input :luoghi_di_soggiorno, input_html: {size: 40} %>
+   <%= f.input :luoghi_visitati, input_html: {size: 40} %>
+   <%= f.input :altri_link, as: 'text', input_html: {rows: 8}, label:'Collegamenti esterni' %>
+
+
   </div>
 
   <div class="form-actions">

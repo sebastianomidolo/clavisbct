@@ -1,5 +1,23 @@
-<p id="notice"><%= notice %></p>
+<%= render :partial=>'show' %>
+<% if can? :edit, self %>
+ <%= content_tag(:div, link_to('Modifica...', edit_bio_iconografico_topic_path)) %>
+<% end %>
+
+<%= content_tag(:div, @bio_iconografico_topic.tags) %>
 
 
-<%= link_to 'Edit', edit_bio_iconografico_topic_path(@bio_iconografico_topic) %> |
-<%= link_to 'Back', bio_iconografico_topics_path %>
+
+<br/>
+<% if @bio_iconografico_topic.clavis_authorities.size==0 %>
+ <b>Non presente in Clavis</b>
+<% else %>
+<br/>In Clavis:
+<%= clavis_authorities_list(@bio_iconografico_topic.clavis_authorities) %>
+<% end %>
+
+
+<%= bio_iconografico_cards_list(@bio_iconografico_topic.bio_iconografico_cards) %>
+
+<%= bio_iconografico_cards_editable_list(@bio_iconografico_topic.bio_iconografico_cards) %>
+
+

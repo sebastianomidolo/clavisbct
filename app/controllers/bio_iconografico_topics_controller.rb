@@ -1,10 +1,23 @@
 class BioIconograficoTopicsController < ApplicationController
+  layout 'bio_iconografico'
+  load_and_authorize_resource
+
   before_filter :set_bio_iconografico_topic, only: [:show, :edit, :update, :destroy]
+  before_filter :authenticate_user!, only: [:edit,:update,:destroy]
 
   respond_to :html
 
   def index
-    @bio_iconografico_topics = BioIconograficoTopic.all
+    if params[:lettera].blank?
+      @show_searchbox = true
+      if params[:bio_iconografico_topic].blank?
+        @bio_iconografico_topic=BioIconograficoTopic.new
+        @bio_iconografico_topic.tags={}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
+      else
+        @bio_iconografico_topic=BioIconograficoTopic.new(params[:bio_iconografico_topic])
+      end
+    end
+    @bio_iconografico_topics=BioIconograficoTopic.list(params,@bio_iconografico_topic)
     respond_with(@bio_iconografico_topics)
   end
 

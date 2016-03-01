@@ -1,5 +1,8 @@
 class BioIconograficoTopic < ActiveRecord::Base
-  attr_accessible :tags
+  attr_accessible :intestazione, :lettera, :numero, :note, :var1, :var2, :var3, :var4, :var5,
+  :qualificazioni, :seqnum, :data_nascita, :data_morte, :luogo_nascita, :luogo_morte, :altri_link,
+  :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
+
 
   has_many :attachments, :as => :attachable
   has_many :bio_iconografico_cards, :through => :attachments, :source => :d_object
@@ -67,5 +70,45 @@ class BioIconograficoTopic < ActiveRecord::Base
   def var3() self.xmltag('var3') end
   def var4() self.xmltag('var4') end
   def var5() self.xmltag('var5') end
+
+  def clavis_authorities
+    sql=%Q{select * from clavis.authority where full_text=#{BioIconograficoTopic.connection.quote(self.intestazione)}}
+    ClavisAuthority.find_by_sql(sql)
+  end
+
+  def self.list(params, bio_iconografico_topic=nil)
+    cond = []
+    if bio_iconografico_topic.nil?
+      cond << "c.lettera=#{self.connection.quote(params[:lettera])}"
+      if !params[:numero].blank?
+        cond << "c.numero>=#{self.connection.quote(params[:numero])}"
+      end
+    else
+      t=bio_iconografico_topic
+      cond << "t.intestazione ~* #{self.connection.quote(t.intestazione)}" if !t.intestazione.blank?
+    end
+    if cond.size>0
+      cond = "WHERE #{cond.join(" and ")}"
+    else
+      return []
+    end
+    sql=%Q{select t.id,t.tags,tv.intestazione,count(*)
+      from bio_iconografico_topics_view tv join bio_iconografico_topics t using(id)
+        join attachments a on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id)
+        join bio_iconografico_cards c
+          on (c.id = a.d_object_id)
+        join d_objects o on(o.id=c.id)
+      #{cond}
+      group by t.id,tv.intestazione
+      order by lower(intestazione)}
+    # self.find_by_sql(sql)
+    puts sql
+    self.paginate_by_sql(sql, :per_page=>50, :page=>params[:page])
+  end
+
+  def self.editors
+    # Creare un array di user_id di utenti autorizzati a modificare le schede BioIconografico
+    return [9,15,23]
+  end
 
 end

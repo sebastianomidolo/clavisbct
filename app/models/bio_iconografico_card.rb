@@ -3,8 +3,40 @@ class BioIconograficoCard < DObject
   attr_accessible :intestazione, :lettera, :numero, :note, :var1, :var2, :var3, :var4, :var5,
   :qualificazioni, :seqnum, :data_nascita, :data_morte, :luogo_nascita, :luogo_morte, :altri_link,
   :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
-  before_save :check_record
+  before_save :check_record, :bio_iconografico_topic
 
+  def bio_iconografico_topic
+    return nil if self.id.nil?
+    sql=%Q{SELECT t.* FROM
+      bio_iconografico_topics t join attachments a
+        on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id and a.d_object_id=#{self.id})
+    }
+    t=BioIconograficoTopic.find_by_sql(sql).first
+    if !t.nil?
+      if !self.intestazione.blank? and self.intestazione!=t.intestazione
+        t.intestazione=self.intestazione
+        t.save
+      end
+      return t
+    end
+
+    return if self.intestazione.blank?
+
+    sql=%Q{select * from bio_iconografico_topics_view where intestazione=#{self.connection.quote(self.intestazione)}}
+    puts sql
+    t=BioIconograficoTopic.find_by_sql(sql).first
+    if t.nil?
+      puts "creazione per intestazione #{self.intestazione}"
+      t=BioIconograficoTopic.new
+      t.intestazione=self.intestazione
+      t.save
+    end
+    
+    sql=%Q{INSERT INTO attachments(d_object_id,attachable_id,attachable_type) VALUES
+           (#{self.id},#{t.id},'BioIconograficoTopic')}
+    BioIconograficoTopic.connection.execute(sql)
+    t
+  end
 
   def check_record
     self.access_right_id=0
@@ -18,11 +50,10 @@ class BioIconograficoCard < DObject
       puts "Esiste già un record (#{}) con nome #{self.filename}, per quello che sto salvando uso il nome univoco #{fn}"
     end
 
-
     sfn=File.join(mp, fn)
     FileUtils.mkdir_p(File.dirname(sfn))
     if !File.exists?(sfn)
-      # puts "sposto il file nella posizione canonica"
+      puts "sposto il file nella posizione canonica"
       of=File.join(mp, self.filename)
       FileUtils.mv(of, sfn)
     end
@@ -40,24 +71,22 @@ class BioIconograficoCard < DObject
 
   def save_new_record(params,creator)
     uploaded_io = params[:filename]
-    fname=uploaded_io.original_filename
+    # fname=uploaded_io.original_filename
+    fname="#{SecureRandom.urlsafe_base64}.jpg"
     mp=self.digital_objects_mount_point
 
-    full_filename=File.join(mp, 'upload', fname)
-    filename = full_filename.sub(mp,'')
-    r=BioIconograficoCard.find_by_filename(filename)
-    return r if !r.nil?
+    full_filename=File.join(mp, 'bct','bio_iconografico', 'upload', fname)
+
+    # filename = full_filename.sub(mp,'')
+    #r=BioIconograficoCard.find_by_filename(filename)
+    #return r if !r.nil?
 
     File.open(full_filename, 'wb') do |file|
       file.write(uploaded_io.read)
     end
     full_filename.sub!(mp,'')
     self.filename=full_filename
-    if BioIconograficoCard.lettere.include?(params[:lettera])
-      lettera=params[:lettera] 
-    else
-      lettera='A'
-    end
+    lettera=params[:lettera] 
     self.tags={l:lettera,user:creator.id.to_s,
       intestazione:''}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
     self.save
@@ -69,11 +98,6 @@ class BioIconograficoCard < DObject
     self.numero=params[:numero]
     self.numero='33'
     self.intestazione=params[:intestazione]
-  end
-
-  def clavis_authorities
-    sql=%Q{select * from clavis.authority where full_text=#{BioIconograficoCard.connection.quote(self.intestazione)}}
-    ClavisAuthority.find_by_sql(sql)
   end
 
   def intestazione=(t) self.edit_tags(intestazione:t) end
@@ -134,6 +158,11 @@ class BioIconograficoCard < DObject
       if !params[:numero].blank?
         cond << "b.numero>=#{self.connection.quote(params[:numero])}"
       end
+      if !params[:range].blank?
+        from,to=params[:range].split('-')
+        cond << "b.numero between #{from} and #{to}"
+        
+      end
     else
       b=bio_iconografico_card
       # cond << "b.intestazione::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
@@ -149,14 +178,41 @@ class BioIconograficoCard < DObject
     sql=%Q{select b.*,o.tags,o.filename
       from bio_iconografico_cards b join d_objects o using(id)
       #{cond}
-      order by lettera, numero, lower(intestazione::text)}
-    # self.find_by_sql(sql)
-    self.paginate_by_sql(sql, :per_page=>50, :page=>params[:page])
+      order by lettera, numero}
+    pp=params[:per_page].blank? ? 50 : params[:per_page]
+    self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
   end
 
-  def self.editors
-    # Creare un array di user_id di utenti autorizzati a modificare le schede BioIconografico
-    return [1,2,3]
+  def self.conta(params={})
+    sql="select count(*) from bio_iconografico_cards where lettera = '#{params[:lettera]}'"
+    self.connection.execute(sql).first['count']
+  end
+
+  #def self.editors
+  #  # Creare un array di user_id di utenti autorizzati a modificare le schede BioIconografico
+  #  # return [9,15,23]
+  #  return []
+  #end
+
+  def self.senza_numero(params={})
+    sql=%Q{select * from  bio_iconografico_cards b join d_objects o using(id)
+     where length(lettera)!=1 OR numero is null
+      order by id}
+    pp=params[:per_page].blank? ? 50 : params[:per_page]
+    self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
+  end
+
+  def self.senza_intestazione(params={})
+    sql=%Q{select * from  bio_iconografico_cards b join d_objects o using(id)
+     where length(lettera)!=1 OR numero is null
+      order by id}
+    pp=params[:per_page].blank? ? 50 : params[:per_page]
+    self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
+  end
+
+  def self.total_filesize
+    sql="select sum(bfilesize) as size from bio_iconografico_cards b join d_objects o using (id)"
+    self.connection.execute(sql).first['size'].to_i
   end
 
 end

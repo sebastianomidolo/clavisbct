@@ -3,6 +3,8 @@
    <%= f.input :tags, as: 'hidden' %>
    <%= f.input :intestazione, as: 'string', input_html: {size: 40} %>
    <%= f.input :numero, as: 'integer', label:'Numero scheda' %>
+   <% f.input :lettera, collection: BioIconograficoCard.lettere, include_blank: true, label: false %>
+
   </div>
   <div class="form-actions">
     <%= f.button :submit, value: 'Cerca' %>

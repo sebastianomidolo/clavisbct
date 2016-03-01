@@ -1,21 +1,7 @@
-<h1>Listing bio_iconografico_topics</h1>
+<% content_tag(:div, "Presenti #{BioIconograficoCard.count} schede") %>
 
-<table>
-  <tr>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
-
-<% @bio_iconografico_topics.each do |bio_iconografico_topic| %>
-  <tr>
-    <td><%= link_to 'Show', bio_iconografico_topic %></td>
-    <td><%= link_to 'Edit', edit_bio_iconografico_topic_path(bio_iconografico_topic) %></td>
-    <td><%= link_to 'Destroy', bio_iconografico_topic, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-  </tr>
+<% if @bio_iconografico_topics.respond_to?('total_pages') %>
+<%= will_paginate @bio_iconografico_topics, renderer: BootstrapPagination::Rails %>
 <% end %>
-</table>
 
-<br />
-
-<%= link_to 'New Bio iconografico topic', new_bio_iconografico_topic_path %>
+<%= bio_iconografico_topics_list(@bio_iconografico_topics) %>

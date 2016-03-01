@@ -1,5 +1,16 @@
 <%= content_tag(:div, "Scheda: <b>#{@bio_iconografico_card.numero_scheda}</b>".html_safe) %>
 
-<%= content_tag(:div, "Intestazione: <b>#{@bio_iconografico_card.intestazione}</b>".html_safe) %>
+
+<%=
+ t=@bio_iconografico_card.bio_iconografico_topic
+ if !t.nil?
+  if BioIconograficoTopic.editors.include?(current_user.id)
+   lnk=link_to(t.intestazione, bio_iconografico_topic_path(t))
+  else
+   lnk=t.intestazione
+  end
+  content_tag(:div, "Intestazione: <b>#{lnk}</b>".html_safe)
+ end
+%>
 
 <%= image_tag(bio_iconografico_card_path(@bio_iconografico_card, :format=>'jpg', :size=>'375x516')) %>

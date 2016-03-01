@@ -1,7 +1,9 @@
 class BioIconograficoCardsController < ApplicationController
   layout 'bio_iconografico'
-  before_filter :set_bio_iconografico_card, only: [:show, :edit, :update]
-  before_filter :authenticate_user!, only: [:edit,:update,:upload]
+  before_filter :set_bio_iconografico_card, only: [:show, :edit, :update, :destroy]
+  before_filter :authenticate_user!, only: [:edit,:update,:upload,:numera,:index,:destroy]
+  load_and_authorize_resource except: [:show]
+
 
   respond_to :html
 
@@ -32,18 +34,40 @@ class BioIconograficoCardsController < ApplicationController
     end
   end
 
+  def info
+    sql=%Q{select o.* from bio_iconografico_cards b join d_objects o using(id) where b.id in (select unnest(array_agg(id)) as ids from bio_iconografico_cards where numero>0 group by lettera,numero having count(*)>1) order by lettera,numero}
+    @doppi=BioIconograficoCard.find_by_sql(sql)
+  end
+
+  def numera
+    @bio_iconografico_cards = BioIconograficoCard.senza_numero(params)
+    render layout:'navbar'
+  end
+
+  def intesta
+    @bio_iconografico_cards = BioIconograficoCard.senza_intestazione(params)
+    render layout:'navbar'
+  end
+
+
   def edit
   end
 
   def update
-    flash[:notice] = "Modifiche non salvate"
-    @bio_iconografico_card.update_attributes(params[:bio_iconografico_card])
-    # @bio_iconografico_card.save
-    # respond_with(@bio_iconografico_card)
-
-    params[:numero]=@bio_iconografico_card.numero
-    @bio_iconografico_cards=BioIconograficoCard.list(params)
-    render :action=>'index'
+    # flash[:notice] = "Modifiche non salvate"
+    respond_to do |format|
+      if @bio_iconografico_card.update_attributes(params[:bio_iconografico_card])
+        format.html {
+          params[:numero]=@bio_iconografico_card.numero
+          @bio_iconografico_cards=BioIconograficoCard.list(params)
+          render :action=>'index'
+        }
+        format.json { respond_with_bip(@bio_iconografico_card) }
+      else
+        format.html { render :action => "edit" }
+        format.json { respond_with_bip(@bio_iconografico_card) }
+      end
+    end
   end
 
   def show
@@ -65,6 +89,10 @@ class BioIconograficoCardsController < ApplicationController
     end
   end
 
+  def delete
+    @bio_iconografico_card.destroy
+    redirect_to bio_iconografico_cards_path(:lettera=>@bio_iconografico_card.lettera), notice: 'Cancellazione effettuata' 
+  end
 
   private
     def set_bio_iconografico_card
