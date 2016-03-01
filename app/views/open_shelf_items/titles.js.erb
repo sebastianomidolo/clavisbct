@@ -1,6 +1,6 @@
 <% if @close==false %>
- $("#class_<%= @class_id -%>").replaceWith('<%=j open_shelf_dewey_list_row(@record,@os_section,@clavis_items) -%>');
+ $("#class_<%= @class_id -%>").replaceWith('<%=j open_shelf_dewey_list_row(@record,@dest_section,@clavis_items) -%>');
 <% else %>
- $("#class_<%= @class_id -%>").replaceWith('<%=j open_shelf_dewey_list_row(@record,@os_section) -%>');
+ $("#class_<%= @class_id -%>").replaceWith('<%=j open_shelf_dewey_list_row(@record,@dest_section) -%>');
  $("#class_<%= @class_id-%>_titles").remove();
 <% end %>

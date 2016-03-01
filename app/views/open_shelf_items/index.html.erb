@@ -1,4 +1,4 @@
 <%= content_tag(:div,
-   "Scaffale Aperto <b>#{OpenShelfItem.label(@os_section)}</b> - #{OpenShelfItem.conta(@os_section)} titoli".html_safe) %>
+   "Scaffale Aperto <b>#{OpenShelfItem.label(@dest_section)}</b> - #{OpenShelfItem.conta(@dest_section)} titoli".html_safe) %>
 
-<%= content_tag(:div, open_shelf_dewey_list(@records,@os_section)) %>
+<%= content_tag(:div, open_shelf_dewey_list(@records,@dest_section)) %>

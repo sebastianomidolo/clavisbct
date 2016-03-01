@@ -1,4 +1,4 @@
-$("#item_<%= @open_shelf_item_id -%>").html('<%= open_shelf_item_toggle(@clavis_item,false,@dest_section) -%>');
-$("#items_scaffale_aperto_count").html('<%= OpenShelfItem.conta(@dest_section) -%>');
+$("#item_<%= @open_shelf_item_id -%>").html('<%= open_shelf_item_toggle(@clavis_item,false,@sections,@dest_section).html_safe -%>');
+$("#items_scaffale_aperto_count").html('<%= OpenShelfItem.conta(@dest_section,nil,nil,nil) -%>');
 
 
