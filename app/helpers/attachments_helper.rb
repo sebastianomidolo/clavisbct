@@ -1,12 +1,12 @@
 module AttachmentsHelper
 
-  def attachments_render(attachments)
+  def attachments_render(attachments, show_category=true)
     ct =attachments.group_by {|a| a.attachment_category_id}
     res=[]
 
     ct.each_pair do |category,allegati|
       # res << content_tag(:div, content_tag(:h2, attachment_category(category)))
-      res << content_tag(:p, attachment_category(category))
+      res << content_tag(:p, attachment_category(category)) if show_category
       att=allegati.group_by {|a| a.folder}
       att.keys.sort.each do |k|
         res << content_tag(:div, content_tag(:b, k.capitalize)) if !k.nil? and !k.gsub(/CD/,'').blank?

@@ -32,7 +32,7 @@
 
 <!-- Verificare se e come inserire la "Tipologia" della lettera (il concetto non mi è chiaro) -->
 
-<% if user_signed_in? %>
+<% if can? :update, BctLetter %>
 <%
     bip=best_in_place(@bct_letter, :argomento, ok_button:'Salva', cancel_button:'Annulla modifiche',
                       ok_button_class:'button_ok',
@@ -46,7 +46,7 @@
  <% end %>
 <% end %>
 
-<% if user_signed_in? %>
+<% if can? :update, BctLetter %>
 <%
     bip=best_in_place(@bct_letter, :nota, ok_button:'Salva', cancel_button:'Annulla modifiche',
                       ok_button_class:'button_ok',
@@ -71,7 +71,7 @@
 
 <tr><th></th><td><%= link_to("link a questa scheda", bct_letter_path(@bct_letter), {:title=>'permalink',:class=>'permalink'})-%></td></tr>
 
-<% if user_signed_in? %>
+<% if can? :update, BctLetter %>
 <% 
     bip=best_in_place(@bct_letter, :descrizione_fisica, ok_button:'Salva', cancel_button:'Annulla modifiche',
                       ok_button_class:'button_ok',

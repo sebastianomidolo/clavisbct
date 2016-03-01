@@ -1,20 +1,36 @@
 begin; drop table ricollocazioni; commit;
 create table ricollocazioni as
+
 select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
  CASE WHEN mainentry is null THEN
-  upper(substr(trim(replace(cm.sort_text,'_','')),1,3))
+   CASE WHEN up_mainentry is null THEN
+     upper(substr(trim(replace(cm.sort_text,'_','')),1,3))
+   ELSE
+     upper(substr(trim(replace(up_mainentry.sort_text,'_','')),1,3))
+   END
  ELSE
   upper(substr(trim(replace(mainentry.sort_text,'_','')),1,3))
  END as "dewey_collocation",
 
  CASE WHEN mainentry is null THEN
-  upper(substr(trim(regexp_replace(regexp_replace(cm.sort_text,        '(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4))
- ELSE
+   CASE WHEN up_mainentry is null THEN
+    upper(substr(trim(regexp_replace(regexp_replace(cm.sort_text,'(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4)) 
+   ELSE
+    upper(substr(trim(regexp_replace(regexp_replace(up_mainentry.sort_text,'(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4)) 
+   END
+
+ ELSE 
   upper(substr(trim(regexp_replace(regexp_replace(mainentry.sort_text, '(,[ A-Z]*)$',''),E'\'|_|\\*|,','')),1,4))
  END as "vedetta",
 
- mainentry.authority_id,
+ CASE WHEN up_mainentry is null THEN
+   mainentry.authority_id
+ ELSE
+   up_mainentry.authority_id 
+ END as authority_id,
+
  ''::text as sort_text
+
  from clavis.item ci
    join clavis.manifestation cm using(manifestation_id)
    left join clavis.l_authority_manifestation lam using(manifestation_id)
@@ -22,7 +38,16 @@ select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
    left join clavis.l_authority_manifestation lam2 on(cm.manifestation_id=lam2.manifestation_id
          and lam2.link_type = 700)
    left join clavis.authority mainentry on (lam2.authority_id=mainentry.authority_id)
- where ci.owner_library_id=2;
+   left join clavis.l_manifestation up_man on(up_man.manifestation_id_down=cm.manifestation_id)
+
+   left join clavis.l_authority_manifestation lam3 on(up_man.manifestation_id_up=lam3.manifestation_id
+         and lam3.link_type = 700)
+
+   left join clavis.authority up_mainentry on (lam3.authority_id=up_mainentry.authority_id)
+
+ where ci.owner_library_id=2
+;
+
 
 UPDATE ricollocazioni set sort_text=espandi_dewey(trim(dewey_collocation));
 

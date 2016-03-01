@@ -1,1 +1,7 @@
-jQuery("#<%= @targetdiv -%>").html("<%=j render :template=>'d_objects/show' -%>");
+jQuery("#<%= @targetdiv -%>").html("<%=j render :partial=>'d_objects/random_mp3' -%>");
+// alert("<%= @targetdiv -%>");
+if (typeof window.YAHOO != "undefined") {
+ window.YAHOO.MediaPlayer.addTracks();
+}
+
+

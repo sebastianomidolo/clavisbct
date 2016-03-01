@@ -13,6 +13,13 @@ class AudioVisualsController < ApplicationController
       ts=AudioVisual.connection.quote_string(@audio_visual.send(f).split.join(' & '))
       cond << "to_tsvector('simple', #{f}) @@ to_tsquery('simple', '#{ts}')"
     end
+    if params[:coll].blank?
+      cond << "collocazione is not null"
+    else
+      if params[:coll]=='false'
+        cond << "collocazione is null"
+      end
+    end
     cond = cond.join(" AND ")
     @audio_visuals = AudioVisual.paginate(:conditions=>cond,:per_page=>300,:page=>params[:page], :order=>'espandi_collocazione(collocazione)')
     respond_to do |format|

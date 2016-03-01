@@ -6,7 +6,8 @@ switch $TG_op {
     "UPDATE" {
        	# elog NOTICE "aggiornamento da [array get OLD]";
 	# elog NOTICE "diventa [array get NEW]";
-	set cmd "UPDATE clavis.collocazioni AS cc SET collocazione=ci.collocation, \
+	set cmd "UPDATE clavis.collocazioni AS cc \
+  SET collocazione= public.compact_collocation(ci.\"section\",ci.collocation,ci.specification,ci.sequence1,ci.sequence2), \
 	   sort_text=public.espandi_collocazione(ci.collocation) FROM clavis.item ci \
 	     WHERE cc.item_id=$NEW(item_id) AND ci.item_id=cc.item_id"
 	# elog NOTICE $cmd

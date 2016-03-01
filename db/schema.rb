@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20151023113340) do
+ActiveRecord::Schema.define(:version => 20160121125111) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -71,24 +71,26 @@ ActiveRecord::Schema.define(:version => 20151023113340) do
   create_table "bioiconografico", :id => false, :force => true do |t|
     t.integer "id"
     t.integer "seqnum"
-    t.string  "intestazione",        :limit => 1240
-    t.string  "luogo_nascita",       :limit => 80
-    t.string  "data_nascita",        :limit => 80
-    t.string  "luogo_morte",         :limit => 80
-    t.string  "data_morte",          :limit => 80
+    t.string  "intestazione",         :limit => 1240
+    t.string  "luogo_nascita",        :limit => 80
+    t.string  "data_nascita",         :limit => 80
+    t.string  "data_nascita_stringa", :limit => 9
+    t.string  "luogo_morte",          :limit => 80
+    t.string  "data_morte",           :limit => 80
+    t.string  "data_morte_stringa",   :limit => 9
     t.text    "luoghi_di_soggiorno"
-    t.string  "esistenza_in_vita",   :limit => 80
+    t.string  "esistenza_in_vita",    :limit => 80
     t.text    "qualificazioni"
-    t.string  "var1",                :limit => 220
-    t.string  "var2",                :limit => 180
-    t.string  "var3",                :limit => 80
-    t.string  "var4",                :limit => 180
-    t.string  "var5",                :limit => 80
+    t.string  "var1",                 :limit => 220
+    t.string  "var2",                 :limit => 180
+    t.string  "var3",                 :limit => 80
+    t.string  "var4",                 :limit => 180
+    t.string  "var5",                 :limit => 80
     t.text    "luoghi_visitati"
-    t.string  "link_scheda",         :limit => 180
+    t.string  "link_scheda",          :limit => 180
     t.text    "note"
-    t.string  "altri_link",          :limit => 1240
-    t.string  "sigla_operatore",     :limit => 60
+    t.string  "altri_link",           :limit => 1240
+    t.string  "sigla_operatore",      :limit => 60
     t.integer "num_scatola"
   end
 
@@ -333,31 +335,18 @@ ActiveRecord::Schema.define(:version => 20151023113340) do
   add_index "ricollocazioni", ["item_id"], :name => "ricollocazioni_item_id_ndx"
   add_index "ricollocazioni", ["sort_text"], :name => "ricollocazioni_sort_text_ndx"
 
-  create_table "serials_admin_table", :force => true do |t|
-    t.integer "anno_fornitura"
-    t.text    "titolo"
-    t.integer "manifestation_id"
-    t.integer "library_id"
-    t.integer "numero_fattura"
-    t.float   "importo_fattura"
-    t.text    "CIG"
-    t.string  "fattura_o_nota_di_credito", :limit => 1
-    t.date    "data_emissione"
-    t.date    "data_pagamento"
-    t.text    "prezzo"
-    t.text    "commissione_sconto"
-    t.text    "totale"
-    t.text    "iva"
-    t.text    "prezzo_finale"
-    t.integer "numcopie"
-    t.integer "ordnum"
-    t.integer "ordanno"
-    t.integer "ordprogressivo"
-    t.text    "periodo"
-    t.text    "stato"
-    t.text    "formato"
-    t.text    "note_interne"
+  create_table "roles", :force => true do |t|
+    t.string "name", :null => false
   end
+
+  add_index "roles", ["name"], :name => "roles_names_idx", :unique => true
+
+  create_table "roles_users", :id => false, :force => true do |t|
+    t.integer "role_id"
+    t.integer "user_id"
+  end
+
+  add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
 
   create_table "subject_subject", :id => false, :force => true do |t|
     t.integer "s1_id",                  :null => false
@@ -380,6 +369,43 @@ ActiveRecord::Schema.define(:version => 20151023113340) do
   add_index "subjects", ["clavis_authority_id"], :name => "index_subjects_on_clavis_authority_id"
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
+
+  create_table "temp_import_areaonlus", :id => false, :force => true do |t|
+    t.text    "oid"
+    t.text    "isbn"
+    t.string  "bid",              :limit => 10
+    t.integer "manifestation_id"
+    t.string  "sbam_oid",         :limit => 12
+  end
+
+  create_table "temp_import_sbam", :id => false, :force => true do |t|
+    t.text "bid"
+    t.text "oid"
+    t.text "isbn"
+  end
+
+  create_table "temp_intestazioni_mancanti", :id => false, :force => true do |t|
+    t.text "heading"
+  end
+
+  create_table "temp_links", :id => false, :force => true do |t|
+    t.integer "source_id"
+    t.integer "target_id"
+    t.integer "linked_id"
+    t.string  "linktype",  :limit => 20
+    t.text    "s1"
+    t.text    "s2"
+    t.text    "heading"
+    t.text    "linknote"
+    t.integer "seq"
+  end
+
+  create_table "temp_subjects", :id => false, :force => true do |t|
+    t.text    "s1"
+    t.text    "s2"
+    t.string  "linktype", :limit => 20
+    t.integer "seq"
+  end
 
   create_table "topografico_non_in_clavis", :force => true do |t|
     t.text     "bid"

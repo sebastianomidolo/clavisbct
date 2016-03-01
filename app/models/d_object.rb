@@ -10,6 +10,10 @@ class DObject < ActiveRecord::Base
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
   before_save :check_filesystem
+  after_destroy do |record|
+    puts "record con id #{record.id} - cancellare file #{record.filename_with_path}"
+    File.delete record.filename_with_path
+  end
 
   def check_filesystem
     self.digital_object_read_metadata

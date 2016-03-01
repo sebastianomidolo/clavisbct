@@ -54,6 +54,10 @@ module ClavisItemsHelper
     res << content_tag(:div, "#{records.total_entries} esemplari", class: 'panel-heading')
     # res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
 
+    if records.total_entries>100 and !@class_id.blank?
+      res << content_tag(:span, link_to("Tutti (non funziona per ora) - class_id #{@class_id}",titles_open_shelf_items_path(format:'html',class_id:@class_id,dest_section:dest_section)))
+    end
+    sections=OpenShelfItem.sections.collect {|x| x.last }
     prec_descr=''
     records.each do |r|
       if @sort=='dewey'
@@ -69,23 +73,24 @@ module ClavisItemsHelper
       end
       c1+="<br/><b>#{r.usage_count}</b> prestit#{r.usage_count==1?'o':'i'}"
       c2+="<br/>#{r.serieinv}"
-      c2+="<br/><b>N #{r.vedetta[0..3]}</b>" if r.os_section=='NC'
+      c2+="<br/><b>#{r.vedetta[0..3]}</b>" if r.os_section=='CCNC'
       c2+="<br/>In deposito esterno: <b>#{r.contenitore}</b>" if !r.contenitore.blank?
 
       in_opac=r.opac_visible==1 ? '' : '<b>non visibile in opac</b>'
-      lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false, @dest_section)
+      lnk=open_shelf_item_toggle(r.item_id, r.open_shelf_item_id.nil? ? true : false, sections, @dest_section)
 
       item_info = "#{r.item_status}<br/><b>#{r.loan_status}</b>".html_safe
-      if user_signed_in? and [9].include?(current_user.id)
-        item_info = link_to(item_info, ClavisItem.clavis_url(r.item_id,:edit),:target=>'_blank')
+      # if user_signed_in? and [4,9].include?(current_user.id)
+      if can? :ricollocazioni, ClavisItem
+        item_info = link_to(item_info, ClavisItem.clavis_url(r.item_id,:show),:target=>'_blank')
       end
 
       res << content_tag(:tr,
                          content_tag(:td, item_info) +
                          content_tag(:td, c1.html_safe) +
                          content_tag(:td, c2.html_safe) +
-                         content_tag(:td, "#{lnk}<br/>#{in_opac}".html_safe, id:"item_#{r.item_id}", style:"width:10em") +
-                         content_tag(:td, link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id,:opac), :target=>'_blank'), style:"20em") +
+                         content_tag(:td, "#{lnk}<br/>#{in_opac}".html_safe, id:"item_#{r.item_id}", style:"width:22em") +
+                         content_tag(:td, link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id,:show), :target=>'_blank'), style:"20em") +
                          content_tag(:td, "<b>#{r.edition_date}</b><br/>#{r.publisher}".html_safe))
     end
     res=content_tag(:tbody, res.join.html_safe)
@@ -190,6 +195,18 @@ module ClavisItemsHelper
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
+  def clavis_item_info(record)
+    return '' if record.item_info.nil?
+    info=record.item_info
+    t=''
+    if !info['os_section'].blank?
+      t="Scaffale aperto - sezione #{info['os_section']}"
+    else
+      t="In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}"
+    end
+    content_tag(:span, content_tag(:b, t),style:'margin-left: 180px')
   end
 
 end

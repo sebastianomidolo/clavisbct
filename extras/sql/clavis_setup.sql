@@ -18,6 +18,8 @@ CREATE INDEX item_owner_library_id_idx ON clavis.item(owner_library_id);
 CREATE INDEX item_section_idx ON clavis.item("section");
 CREATE INDEX item_specification_idx ON clavis.item(specification);
 
+CREATE INDEX rfid_code_idx ON clavis.item(rfid_code);
+
 CREATE TABLE clavis.uni856 AS
   SELECT manifestation_id,
   (xpath('//d856/su/text()',unimarc::xml))[1]::varchar(128) AS url,
@@ -41,15 +43,18 @@ ALTER TABLE clavis.item ALTER COLUMN inventory_serie_id DROP NOT NULL;
 
 
 -- Da rimuovere una volta che le sezioni siano state inserite in Clavis
--- Vedi http://bctdoc.selfip.net/issues/237
+-- Vedi http://bctdoc.comperio.it/issues/237
+-- Rimosso 29 gennaio 2016:
+/*
 INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
-            VALUES ('VT','ITEMSECTION',2,'VT (Viaggi e turismo)');
+            VALUES ('CCVT','ITEMSECTION',2,'CCVT (Viaggi e turismo)');
 INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
-            VALUES ('NC','ITEMSECTION',2,'NC (Narrativa contemporanea)');
+            VALUES ('CCNC','ITEMSECTION',2,'CCNC (Narrativa contemporanea)');
 INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
-            VALUES ('TL','ITEMSECTION',2,'TL (Tempo libero: cinema, teatro, musica, danza)');
-INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
-            VALUES ('BB','ITEMSECTION',2,'BB (Biblioteconomia e bibliografia)');
+            VALUES ('CCTL','ITEMSECTION',2,'CCTL (Tempo libero: cinema, teatro, musica, danza)');
+*/
+-- INSERT INTO clavis.library_value(value_key,value_class,value_library_id,value_label)
+--            VALUES ('BB','ITEMSECTION',2,'BB (Biblioteconomia e bibliografia)');
 
 
 alter table clavis.item add column openshelf boolean;
@@ -68,9 +73,13 @@ create or replace view soggetti_non_presenti_in_nuovo_soggettario as
 
 create or replace view bio_iconografico_cards as
   select id,(xpath('//r/l/text()',tags))[1]::varchar as lettera,
-    (xpath('//r/n/text()',tags))[1]::text::integer as numero,
-        (xpath('//r/intestazione/text()',tags))[1] as intestazione
+    (xpath('//r/n/text()',tags))[1]::text::integer as numero
   from d_objects where type = 'BioIconograficoCard';
+
+
+create or replace view bio_iconografico_topics_view as
+  select id,(xpath('//r/intestazione/text()',tags))[1]::text as intestazione
+  from bio_iconografico_topics;
 
 
 create or replace view soggetti_mso_duplicati as
@@ -79,3 +88,5 @@ select c1.authority_id as mso_id,c1.subject_class as mso_class,c1.full_text as i
   from clavis.authority c1 join clavis.authority c2
  on(c1.full_text=c2.full_text and c1.subject_class!=c2.subject_class) 
   where c1.subject_class='MSO' AND c2.subject_class !='MSO';
+
+

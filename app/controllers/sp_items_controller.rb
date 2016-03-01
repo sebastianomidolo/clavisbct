@@ -1,4 +1,9 @@
 class SpItemsController < ApplicationController
+
+  def ricollocati_a_scaffale_aperto
+    @sp_items=SpItem.ricollocati_a_scaffale_aperto
+  end
+
   def show
     if params[:id]=='random'
       @sp_item=SpItem.find_by_sql('select * from sp.sp_items order by random() limit 1').first

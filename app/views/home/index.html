@@ -29,10 +29,16 @@ Pagina di servizio a uso interno delle BCT
  <% if current_user.containers_enabled? %>
   <%= content_tag(:li, link_to('Gestione scatole e contenitori fuori sede', containers_path)) %>
  <% end %>
+<% if can? :ricollocazioni, ClavisItem %>
   <%= content_tag(:li, link_to('Scaffale aperto', '/sa')) %>
+<% end %>
+<% if can? :ricolloca_scaffale_aperto, OpenShelfItem %>
+  <%= content_tag(:li, link_to('Ricollocazioni', 'http://clavisbct.comperio.it/open_shelf_items/estrazione_da_magazzino')) %>
+<% end %>
   <% content_tag(:li, link_to('Elenco provvisorio in formato CSV sale consultazione Centrale', 'http://456.selfip.net/consultazione.csv')) %>
 <% else %>
   <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
   <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) %>
+  <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 <% end %>
 </ul>

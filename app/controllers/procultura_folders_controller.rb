@@ -2,6 +2,8 @@ class ProculturaFoldersController < ApplicationController
   # layout 'procultura'
   layout 'navbar'
   before_filter :authenticate_user!, only: [:update]
+  load_and_authorize_resource only: :update
+
 
   def index
     archive_id=params[:archive_id]

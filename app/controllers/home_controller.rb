@@ -1,5 +1,7 @@
 class HomeController < ApplicationController
   layout 'navbar'
+  # before_filter :authenticate_user!, only: 'bidcr'
+
 
   # before_filter :authenticate_user!
   def index
@@ -16,6 +18,22 @@ class HomeController < ApplicationController
 
   def periodici_musicale_in_ritardo
   end
+
+  def test
+    render :text=>File.read('/home/storage/preesistente/static/changelog_test.html'), :layout=>true
+  end
+
+
+  def bidcr
+    u=ActiveRecord::Base.connection.quote(params[:user])
+    d=params[:days].to_i
+    bid_source = params[:bid_source].blank? ? '' : " AND bid_source='#{params[:bid_source]}'"
+    sql=%Q{select title,bid,bid_source,date_created,date_updated from clavis.manifestation where created_by = #{u} and date_created>now()-interval '#{d} days' #{bid_source} order by date_created}
+    @records=ActiveRecord::Base.connection.execute(sql).to_a
+    sql=%Q{select date_trunc('hour',date_created) as date_created,count(*) from clavis.manifestation where created_by = #{u} and date_created>now()-interval '#{d} days' group by date_trunc('hour',date_created) order by date_created}
+    @sommario=ActiveRecord::Base.connection.execute(sql).to_a
+  end
+
 
   def spazioragazzi
     render :text=>File.read('/tmp/indexfile.html')

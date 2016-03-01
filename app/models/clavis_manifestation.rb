@@ -290,6 +290,13 @@ class ClavisManifestation < ActiveRecord::Base
     connection.execute(sql).to_a
   end
 
+  def cover_id
+    sql=%Q{SELECT attachment_id FROM clavis.attachment WHERE object_type='Manifestation' AND object_id=#{self.id}}
+    r=self.connection.execute(sql).to_a.first
+    return nil if r.nil?
+    r['attachment_id'].to_i
+  end
+
   # http://www.germane-software.com/software/rexml/docs/tutorial.html
   def export_to_metaopac
     # puts "export_to_metaopac: #{self.id}"

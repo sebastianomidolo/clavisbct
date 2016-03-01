@@ -63,4 +63,47 @@ ci.issue_arrival_date_expected as previsto
                 :class=>'table-responsive')
   end
 
+  def bidcr(records)
+    res=[]
+    cnt=0
+    res << content_tag(:tr, content_tag(:td, content_tag(:b, "")) +
+                         content_tag(:td, 'titolo') +
+                         content_tag(:td, 'bid') +
+                         content_tag(:td, 'bid_source') +
+                         content_tag(:td, 'date_created') +
+                         content_tag(:td, 'date_updated'))
+    records.each do |r|
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}")) +
+                         content_tag(:td, r['title']) +
+                         content_tag(:td, r['bid']) +
+                         content_tag(:td, r['bid_source']) +
+                         content_tag(:td, r['date_created']) +
+                         content_tag(:td, r['date_updated']))
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+  end
+  def bidcr_sommario(records)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, 'Ora di creazione') +
+                         content_tag(:td, 'Conteggio'))
+    cnt=0
+    tot=0
+    records.each do |r|
+      count=r['count'].to_i
+      tot+=count
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, r['date_created']) +
+                         content_tag(:td, count))
+    end
+    res << content_tag(:tr, content_tag(:td, content_tag(:b,'Totale record creati')) + content_tag(:td, tot), class:'danger')
+    res << content_tag(:tr, content_tag(:td, content_tag(:b,'Media oraria')) + content_tag(:td, tot/cnt), class:'danger') if cnt>0
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+    
+  end
+
+
+
 end

@@ -1,7 +1,16 @@
 
 <p>
 <a href="/sa">Scaffale aperto</a>
-<%= content_tag(:span, link_to(OpenShelfItem.conta(@dest_section),open_shelf_items_path(os_section:@dest_section)), id:'items_scaffale_aperto_count',class:'btn btn-info') %>
+<%
+if @dest_section.blank?
+ @lnk="Totale volumi inseriti <b>#{OpenShelfItem.conta(nil,nil,nil,nil)}</b>".html_safe
+ @class=''
+  else
+ @lnk=link_to(OpenShelfItem.conta(@dest_section,nil,nil,nil),open_shelf_items_path(dest_section:@dest_section))
+ @class='btn btn-info'
+end
+%>
+<%= content_tag(:span, @lnk, id:'items_scaffale_aperto_count',class:@class) %>
 <%= content_tag(:span, @dest_section_label) %>
 </p>
 
@@ -11,10 +20,10 @@
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%=
    if @sort=='dewey'
-     content_tag(:p, link_to("[passa a ordinamento per data di pubblicazione]",
+     content_tag(:p, link_to("[passa a ordinamento per collocazione a magazzino]",
        ricollocazioni_clavis_items_path(sections:@sections,dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation,dest_section:@dest_section)))
    else
-     content_tag(:p, link_to("[passa a ordinamento per Dewey]",
+     content_tag(:p, link_to("[passa a ordinamento per Dewey (scaffale aperto)]",
        ricollocazioni_clavis_items_path(sections:@sections,sort:'dewey',dewey_collocation:@dewey,onshelf:@onshelf,formula:@formula,collocation:@collocation,dest_section:@dest_section)))
    end
 %>

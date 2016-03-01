@@ -287,5 +287,22 @@ module ClavisManifestationsHelper
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
+  def clavis_manifestation_cover(cm)
+    return '' if cm.cover_id.nil?
+    imgtemplate=%Q{<div class="cover-wrapper">
+<a class="cover" property="url" href="opac/detail/view/sbct:catalog:__MANIFESTATION__" title="__TITLE__">
+    <div class="cover-overlay adjust-size"> </div>
+    <div class="cover-border left"> </div>
+    <img title="__TITLE__"
+        src="http://sbct.comperio.it/index.php?file=__NUMFILE__"
+        alt="__TITLE__"
+        property="image"
+    /></a></div>}
+    img=imgtemplate.sub("__NUMFILE__", cm.cover_id.to_s)
+    img=img.sub("__MANIFESTATION__", cm.manifestation_id.to_s)
+    img=img.gsub("__TITLE__", cm.title)
+    content_tag(:span, img.html_safe)
+  end
 
 end
+

@@ -4,6 +4,8 @@ class BctLettersController < ApplicationController
   # before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
+  load_and_authorize_resource
+
 
   layout 'lettereautografe'
 

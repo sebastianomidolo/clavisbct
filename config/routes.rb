@@ -20,6 +20,8 @@ Clavisbct::Application.routes.draw do
     end
     collection do
       get 'titles'
+      get 'estrazione_da_magazzino'
+      get 'conteggio'
     end
   end
 
@@ -34,6 +36,9 @@ Clavisbct::Application.routes.draw do
   end
 
   devise_for :users
+  scope "/minad" do
+    resources :users
+  end
 
   devise_for :clavis_patrons
 
@@ -54,6 +59,10 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'upload'
       post 'upload'
+      get 'numera'
+      get 'intesta'
+      delete 'delete'
+      get 'info'
     end
   end
 
@@ -85,7 +94,11 @@ Clavisbct::Application.routes.draw do
   end
 
   resources :sp_sections
-  resources :sp_items
+  resources :sp_items do
+    collection do
+      get 'ricollocati_a_scaffale_aperto'
+    end
+  end
 
   match '/uni856' => 'home#uni856'
   match '/verifica_consistenze' => 'clavis_consistency_notes#index'
@@ -126,6 +139,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_items do
     member do
       get 'sync'
+      get 'info'
     end
     collection do
       get 'collocazioni'
@@ -160,6 +174,9 @@ Clavisbct::Application.routes.draw do
   match '/metasearch' => 'metasearch#search'
   match '/redir' => 'metasearch#redir'
 
+  match '/test' => 'home#test'
+  match '/bidcr' => 'home#bidcr'
+
   match '/iccu' => 'home#iccu_link'
 
   match '/spazioragazzi' => 'home#spazioragazzi'
@@ -167,6 +184,8 @@ Clavisbct::Application.routes.draw do
   match '/sa' => 'clavis_items#ricollocazioni'
 
   match '/pmr' => 'home#periodici_musicale_in_ritardo'
+
+  match '/cipes' => 'cipes_cedo_records#index'
 
   root :to => 'home#index'
 end

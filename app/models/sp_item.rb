@@ -18,4 +18,18 @@ class SpItem < ActiveRecord::Base
   def collocazioni
     self.collciv
   end
+
+  def senza_parola_item_path
+    "http://biblio.comune.torino.it/ProgettiCivica/SenzaParola/typo.cgi?id=#{self.bibliography_id}&skid=#{self.item_id}&rm=edit"
+  end
+
+  def SpItem.ricollocati_a_scaffale_aperto
+    sql=%Q{select ci.custom_field1 as ex_collocazione,ci.section,ci.collocation,spi.*,
+           spb.title as bibliography_title from sp.sp_items spi join clavis.item ci
+        on (spi.collciv=substr(custom_field1,4))
+       join sp.sp_bibliographies spb on(spb.id=spi.bibliography_id) where ci.section ~ '^CC'
+      and ci.owner_library_id=2 order by spb.title, spi.sortkey}
+    # SpItem.connection.execute(sql).to_a
+    SpItem.find_by_sql(sql)
+  end
 end

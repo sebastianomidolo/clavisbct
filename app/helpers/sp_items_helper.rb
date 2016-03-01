@@ -34,5 +34,19 @@ module SpItemsHelper
     content_tag(:table, res.join.html_safe)
   end
 
+  def sp_items_ricollocati_a_scaffale_aperto(sp_items)
+    res=[]
+    sp_items.each do |i|
+      res << content_tag(:tr, content_tag(:td,
+                                          link_to(i.bibdescr, i.senza_parola_item_path,target:'_new'),
+                                          style:'width:50%') +
+                         content_tag(:td, i.ex_collocazione) +
+                         content_tag(:td, i.section) +
+                         content_tag(:td, i.collocation) +
+                         content_tag(:td, i.bibliography_title))
+    end
+    content_tag(:table, res.join.html_safe, class:'table table-striped')
+  end
+
 
 end

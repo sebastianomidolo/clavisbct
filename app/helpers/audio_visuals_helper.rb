@@ -4,12 +4,13 @@ module AudioVisualsHelper
     records.each do |r|
       colloc=r.collocazione.blank? ? 'non collocato' : r.collocazione.gsub(' ','')
       res << content_tag(:tr, content_tag(:td, colloc) +
+                         content_tag(:td, r.tipologia) +
                          content_tag(:td, link_to(r.titolo, audio_visual_path(r))) +
                          content_tag(:td, r.autore) +
                          content_tag(:td, r.interpreti))
 
     end
-    content_tag(:table, res.join.html_safe)
+    content_tag(:table, res.join.html_safe, class:'table')
   end
 
   def audio_visual_show(record,show_clavis_manifestations=true)

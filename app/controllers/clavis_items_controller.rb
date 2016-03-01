@@ -1,5 +1,6 @@
 class ClavisItemsController < ApplicationController
   before_filter :authenticate_user!, only: 'showxxx'
+  load_and_authorize_resource only: [:ricollocazioni]
 
   def index
     # render :text=>params[:clavis_item].inspect
@@ -37,6 +38,10 @@ class ClavisItemsController < ApplicationController
           cond << "cc.collocazione ~ '^#{@clavis_item.collocation}'"
           @sql_conditions = "inizia con #{@clavis_item.collocation}"
         end
+      when 'rfid_code'
+        if !@clavis_item.rfid_code.nil?
+          cond << (@clavis_item.rfid_code=='1' ? "rfid_code !=''" : "(rfid_code is null OR rfid_code='')")
+        end
       else
         ts=ClavisItem.connection.quote(value)
         cond << "#{name}=#{ts}"
@@ -52,7 +57,7 @@ class ClavisItemsController < ApplicationController
       # cond << "cc.collocazione ~ '^#{params[:collocazione_inizia_per]}\\.'" if !params[:collocazione_inizia_per].blank?
       cond << "date_updated between now() - interval '#{params[:days]} days' and now()" if !params[:days].blank?
       cond = cond.join(" AND ")
-      # @sql_conditions=cond
+      @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
       @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>135, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
@@ -81,6 +86,7 @@ class ClavisItemsController < ApplicationController
   def ricollocazioni
     @onshelf = params[:onshelf]
     @formula = params[:formula]
+    @formula2 = params[:formula2]
     @collocation = params[:collocation]
     @dest_section = params[:dest_section]
     @dest_section_label=OpenShelfItem.label(@dest_section)
@@ -137,12 +143,34 @@ class ClavisItemsController < ApplicationController
     end
   end
 
+  def info
+    @clavis_item=ClavisItem.find(params[:id])
+    respond_to do |format|
+      format.html
+      format.js
+    end
+  end
+
   def sync
     @clavis_item=ClavisItem.new(params[:i])
     @clavis_item.id=params[:id]
+    new_item_status=ClavisItem.item_status_label_to_key(@clavis_item.item_status)
+    new_loan_status=ClavisItem.loan_status_label_to_key(@clavis_item.loan_status)
+    new_section=ClavisItem.section_label_to_key(@clavis_item.section,@clavis_item.owner_library_id)
+    new_custom_field1=@clavis_item.custom_field1
+    new_collocation=@clavis_item.collocation
     if ClavisItem.exists?(params[:id])
       @clavis_item=ClavisItem.find(params[:id])
+      @clavis_item.item_status=new_item_status
+      @clavis_item.loan_status=new_loan_status
+      @clavis_item.section=new_section
+      @clavis_item.collocation=new_collocation
+      @clavis_item.custom_field1=new_custom_field1
+      @clavis_item.save if @clavis_item.changed?
     else
+      @clavis_item.item_status=new_item_status
+      @clavis_item.loan_status=new_loan_status
+      @clavis_item.section=new_section
       @clavis_item.item_icon=''
       @clavis_item.issue_number=0
       @clavis_item.section=@clavis_item.section.split.first

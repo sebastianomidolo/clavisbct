@@ -6,14 +6,14 @@
 pf=@pf
 txt="#{pf.archive.name}"
 x=link_to(txt, procultura_make_link(procultura_folders_path(:archive_id=>pf.archive.id)))
-if params[:reqfrom].blank? and signed_in?
+if params[:reqfrom].blank? and (can? :edit, ProculturaFolder)
  content_tag(:h3, x + " - cassetto #{best_in_place(@pf,:label,ok_button_class:'btn btn-success',ok_button:'Salva',cancel_button:'Annulla modifiche',class:'btn btn-default')}".html_safe)
 else
  content_tag(:h3, x + " - cassetto #{@pf.label}")
 end
 %>
 
-<% if params[:reqfrom].blank? and signed_in? %>
+<% if params[:reqfrom].blank? and (can? :edit, ProculturaCard) %>
  <%= content_tag(:div, procultura_cards_editable(@pf)) %>
 <% else %>
  <%= content_tag(:div, procultura_cards_singole_schede(@pf)) %>

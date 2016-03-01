@@ -5,8 +5,8 @@ class ClavisItem < ActiveRecord::Base
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
-  :current_container, :in_container, :dewey_collocation, :barcode,
-  :home_library_id, :issue_number, :item_icon, :custom_field3,
+  :current_container, :in_container, :dewey_collocation, :barcode, :loan_status,
+  :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
   :rfid_code, :actual_library_id
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
@@ -127,6 +127,13 @@ class ClavisItem < ActiveRecord::Base
     end
   end
 
+  def item_info
+    sql=%Q{select c.*,os.*,l.label as nomebib from clavis.item ci left join container_items i on(i.item_id=ci.item_id) left join containers c on(c.id=i.container_id) left join clavis.library l on(l.library_id=c.library_id) left join open_shelf_items os on(os.item_id=ci.item_id) where ci.item_id = #{self.id}}
+    r=ActiveRecord::Base.connection.execute(sql).first
+    return nil if (r['label'].nil? and r['os_section'].nil?)
+    r
+  end
+
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)
   end
@@ -140,6 +147,9 @@ class ClavisItem < ActiveRecord::Base
     end
     if mode==:edit
       r="#{host}/index.php?page=Catalog.ItemInsertPage&id=#{item_id}"
+    end
+    if mode==:ricolloca
+      r="#{host}/index.php?page=Catalog.ItemInsertPage&bctricolloca=1&id=#{item_id}"
     end
     if mode==:loan
       r="#{host}/index.php?page=Circulation.NewLoan&itemId=#{item_id}"
@@ -183,6 +193,28 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).to_a
   end
 
+  def ClavisItem.item_status_label_to_key(label)
+    sql="select value_label,value_key from clavis.lookup_value where value_class = 'ITEMSTATUS' and value_language='it_IT' and value_label=#{self.connection.quote(label)}"
+    res=self.connection.execute(sql).first
+    res.nil? ? nil : res['value_key']
+  end
+
+  def ClavisItem.loan_status_label_to_key(label)
+    label.gsub!(/\(|\)$/, '')
+    sql="select value_label,value_key from clavis.lookup_value where value_class = 'LOANSTATUS' and value_language='it_IT' and value_label=#{self.connection.quote(label)}"
+    res=self.connection.execute(sql).first
+    res.nil? ? nil : res['value_key']
+  end
+
+  def ClavisItem.section_label_to_key(label,library_id)
+    library_id=library_id.to_i
+    label=self.connection.quote(label)
+    sql=%Q{select value_key from clavis.library_value WHERE value_class='ITEMSECTION'
+           and value_library_id=#{library_id} and value_label=#{label}}
+    res=self.connection.execute(sql).first
+    res.nil? ? nil : res['value_key']
+  end
+
   def ClavisItem.items_ricollocati(params)
     cond=[]
     dewey=params[:dewey_collocation]
@@ -207,10 +239,15 @@ class ClavisItem < ActiveRecord::Base
     if params[:formula]=='1'
       cond << "item.loan_class='B' AND item.opac_visible='0' AND item.item_status='F' AND cit.item_id IS NULL AND item.item_media!='S' AND item.loan_status='A'"
     end
+    if params[:formula2]=='1'
+      cond << "item.item_status!='F'"
+    end
+
     cond << "cc.collocazione ~* #{ClavisItem.connection.quote(params[:collocation])}" if !params[:collocation].blank?
 
     cond = cond.join(' AND ')
-    order_by = params[:sort] == 'dewey' ? 'r.sort_text' : 'cm.edition_date desc, cc.sort_text'
+    # order_by = params[:sort] == 'dewey' ? 'r.sort_text' : 'cm.edition_date desc, cc.sort_text'
+    order_by = params[:sort] == 'dewey' ? 'r.sort_text' : 'cc.sort_text'
 
     ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>100,
                                         :select=>"os.item_id as open_shelf_item_id, item.item_id,

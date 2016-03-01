@@ -11,7 +11,9 @@ task :cipes_cedo_import => :environment do
 
   sourcefile="/home/seb/tmp/cipes/dump_cipes_20151126.sql"
   outfile="/home/seb/tmp/cipes/cipes_postgresql.sql"
-  SKIP_TABLES=[]
+  SKIP_TABLES=[
+               'b_parole'
+              ]
 
   def setsqlvars
     %Q{SET standard_conforming_strings TO false;
@@ -30,13 +32,11 @@ SET SEARCH_PATH TO cipes;
     do_create_table=lambda do |msql|
       tablename=msql.first.split[2].gsub("\`",'')
 
-      # fdo.write(msql.join("\n"));fdo.write("\n")
-
       tablename.downcase!
       return nil if SKIP_TABLES.include?(tablename)
       puts "create table '#{tablename}'"
       msql.shift; msql.pop
-      # puts "da #{msql.join("\n")}"
+
       attr=[]
       msql.each do |l|
         l.strip!
@@ -93,6 +93,7 @@ SET SEARCH_PATH TO cipes;
 
     fdo.write(setsqlvars)
 
+    current_table=''
     fdr.each_line do |line|
       cnt+=1
       if !(i=/^CREATE TABLE / =~ line).nil?
@@ -112,13 +113,17 @@ SET SEARCH_PATH TO cipes;
       end
       if !(i=/^INSERT INTO / =~ line).nil?
         tabname,sql=do_insert.call(line.chomp)
-        puts "insert per tabname #{tabname}"
+        current_table=tabname
+        # puts "insert per tabname #{tabname}"
         if !sql.nil?
           fdo.write(sql)
           fdo.write("\n")
           insert_cnt+=1
         end
       end
+      next if current_table.blank?
+      puts "current_table: #{current_table}"
+
       if !(i=/^\(/ =~ line).nil?
         line.gsub!("'0000-00-00 00:00:00'","NULL")
         fdo.write(line)

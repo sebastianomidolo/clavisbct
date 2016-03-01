@@ -3,6 +3,14 @@ class Attachment < ActiveRecord::Base
   belongs_to :d_object
   belongs_to :attachment_category
 
+
+  def save
+    # disabilitato
+  end
+  def delete
+    # disabilitato
+  end
+
   def Attachment.set_position_not_working(attachable_id)
     sql=%Q{CREATE VIEW view_dobs as
 select o.filename,o.id,a.position from attachments a join d_objects o

@@ -1,12 +1,14 @@
 # -*- mode: ruby;-*-
 
-desc 'Importazione dati unimarc da Erasmo'
+desc 'Importazione dati unimarc da Erasmo (dismesso)'
 
 task :erasmo_import => :environment do
   config = Rails.configuration.database_configuration
   dbname=config[Rails.env]["database"]
   username=config[Rails.env]["username"]
 
+  puts "non usato, non usare"
+  exit
 
   def create_import_tables
     sql=%Q{

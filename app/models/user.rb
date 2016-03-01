@@ -6,7 +6,16 @@ class User < ActiveRecord::Base
   devise :database_authenticatable,:registerable, :recoverable, :rememberable, :trackable, :validatable
   # devise :database_authenticatable, :recoverable, :rememberable, :trackable, :validatable
 
-  attr_accessible :email, :password, :password_confirmation, :remember_me
+  attr_accessible :email, :password, :password_confirmation, :remember_me, :encrypted_password, :created_at, :updated_at
+
+  has_and_belongs_to_many :roles
+
+
+
+  def role?(role)
+    return !!self.roles.find_by_name(role.to_s.camelize)
+  end
+
 
   def containers_enabled?
     config = Rails.configuration.database_configuration

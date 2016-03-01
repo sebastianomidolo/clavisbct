@@ -157,14 +157,20 @@ class DObjectsController < ApplicationController
   end
 
   def random_mp3
+    headers['Access-Control-Allow-Origin'] = "*"
     @pagetitle='Traccia audio casuale'
-    @d_object = Attachment.first(:conditions=>"attachment_category_id='E'", :order=>'random()').d_object
+    # @d_object = Attachment.first(:conditions=>"attachment_category_id='E'", :order=>'random()').d_object
+    sql=%Q{select a.* from attachments a join clavis.attachment ca on(a.attachable_id=ca.object_id)
+        and ca.object_type='Manifestation' and a.attachable_type='ClavisManifestation'
+        and a.attachment_category_id='E' order by random() limit 1}
+    @d_object = Attachment.find_by_sql(sql).first.d_object
+
     # @d_object = DObject.find(5403645)
     fname=@d_object.filename_with_path
     logger.warn("random_mp3 id #{@d_object.id} (#{fname})")
-    @d_object['random']=true
+    @guess = params[:guess].blank? ? false : true
     respond_to do |format|
-      format.html {render :action=>:show, :layout=>'navbar_nomenu'}
+      format.html {render :layout=>'navbar_nomenu'}
       format.js {@targetdiv=params[:targetdiv]}
     end
   end

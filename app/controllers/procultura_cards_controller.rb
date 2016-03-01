@@ -3,6 +3,7 @@ class ProculturaCardsController < ApplicationController
   layout 'navbar'
 
   before_filter :authenticate_user!, only: [:edit, :update]
+  load_and_authorize_resource only: [:update]
 
   def index
     ids=params[:ids]
