@@ -1,0 +1,8 @@
+<%= content_tag(:h3, "Interfaccia sperimentale di ricerca sulla #{link_to('Banca dati CeDo del Cipes', 'http://www.cipespiemonte.it/cedo/')}".html_safe) %>
+<%= render partial:'searchform' %>
+<% if @cipes_cedo_records.respond_to?('total_entries') %>
+<%= content_tag(:h2, "Trovate #{@cipes_cedo_records.total_entries} notizie bibliografiche") %>
+<%= will_paginate @cipes_cedo_records, renderer: BootstrapPagination::Rails %>
+<%= content_tag(:div, render(partial:'record_list')) %>
+<% end %>
+

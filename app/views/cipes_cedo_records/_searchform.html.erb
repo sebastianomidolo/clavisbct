@@ -1,0 +1,4 @@
+<%= form_tag('/cipes', :method=>:get) do %>
+Termini di ricerca: <%= text_field_tag('qs', params[:qs]) %>
+<%= submit_tag('Cerca') %>
+<% end %>
