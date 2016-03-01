@@ -81,3 +81,6 @@ gem 'rubyntlm'
 gem 'best_in_place', '~> 3.0.1'
 
 gem 'marc', '~> 1.0.0'
+
+# Uso la 1.12 perché dalla 1.13 richiede ruby 2.0 che non voglio per ora utilizzare
+gem 'cancancan', '1.12'
