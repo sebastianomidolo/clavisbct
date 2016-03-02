@@ -50,6 +50,7 @@
  presi=0
  inputdata.each do |e|
    e['titolo'].gsub!("&", '\\\&')
+   e['titolo'].gsub!("%", '\\\%')
    status=e['loan_status']=='A' ? '' : e['loan_status_label'][0..12]
    if e['section']==e['os_section']
      presi+=1
