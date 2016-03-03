@@ -72,7 +72,7 @@ module OpenShelfItemsHelper
         if r['os_section']!=r['section']
           item_info = "#{r['os_section']} #{r['collocazione_scaffale_aperto']}"
           titolo = link_to("#{r['titolo']}", ClavisItem.clavis_url(r['item_id']),class:'',:target=>'_blank')
-          coll = "<b>#{r['collocazione_magazzino']}</b><br/>#{r['item_status_label']}/#{r['loan_status_label']}".html_safe
+          coll = "<b>#{r['collocazione_magazzino']}</b><br/>#{r['item_status_label']}/#{r['loan_status_label']}<br/>#{r['loan_class_label']}".html_safe
           res << content_tag(:tr,
                              content_tag(:td, content_tag(:b, r['section']), style:'width:10%') +
                              content_tag(:td, coll, style:'width:20%') +
@@ -173,37 +173,53 @@ module OpenShelfItemsHelper
     res << %Q{<input name="per_page" type="hidden" value="#{per_page}" />}
     res << %Q{<input name="dest_section" type="hidden" value="#{section}" />}
     res << %Q{<input name="verb" type="hidden" value="#{verb}" />}
-    # res << %Q{<input name="qs" type="hidden" value="#{text_filter}" />}
-    res << %Q{Filtra per parole nel titolo: #{text_field_tag :qs, text_filter}}
-    if !escludi_in_prestito.blank?
-      res << %Q{<input name="escludi_in_prestito" type="hidden" value="#{escludi_in_prestito}" />}
-    end
-    if !escludi_ricollocati.blank?
-      res << %Q{<input name="escludi_ricollocati" type="hidden" value="#{escludi_ricollocati}" />}
-    end
-    res << %Q{<select name="page" size="1" onchange="submit()">}
+    res << %Q{#{check_box_tag :escludi_in_prestito, true, escludi_in_prestito}}
+    res << %Q{#{label_tag(:escludi_in_prestito, 'Escludi i libri in prestito')}}
+    res << %Q{<br/>#{check_box_tag :escludi_ricollocati, true, escludi_ricollocati}}
+    res << %Q{#{label_tag(:escludi_ricollocati, 'Escludi i libri già ricollocati')}}
+    res << %Q{<br/>Filtra per parole nel titolo: #{text_field_tag :qs, text_filter}}
+
     totale=OpenShelfItem.conta(section, escludi_in_prestito, text_filter, escludi_ricollocati)
-    num_pages=totale/per_page+1
-    cnt=1
-    (1..num_pages).each do |p|
-      sel = p==page ? %Q{ selected="selected"} : ''
-      from=(p-1)*per_page+1
-      to = p*per_page < totale ? p*per_page : totale
-      res << %Q{<option value="#{p}"#{sel}>#{cnt}: #{from}-#{to}</option>}
-      cnt+=1
-      # links << link_to(p, estrazione_da_magazzino_open_shelf_items_path(dest_section:section,page:p,per_page:per_page))
+    if (totale%per_page)==0
+      num_pages=totale/per_page
+    else
+      num_pages=totale/per_page+1
     end
-    res << "</select></form>"
+    # num_pages=totale/per_page
+    # res << "totale #{totale} num_pages: #{num_pages}"
+
+    cnt=1
+    if num_pages>1
+      res << %Q{<select name="page" size="1" onchange="submit()">}
+      (1..num_pages).each do |p|
+        sel = p==page ? %Q{ selected="selected"} : ''
+        from=(p-1)*per_page+1
+        to = p*per_page < totale ? p*per_page : totale
+        res << %Q{<option value="#{p}"#{sel}>#{cnt}: #{from}-#{to}</option>}
+        cnt+=1
+        # links << link_to(p, estrazione_da_magazzino_open_shelf_items_path(dest_section:section,page:p,per_page:per_page))
+      end
+      res << "</select>"
+    end
+    res << "</form>"
   end
 
   def open_shelf_items_riepilogo_ricollocazione
     return '' if !can? :manage, OpenShelfItem
     res=[]
-    sql=%Q{select date_trunc('hour', event_date) as "Data e ora",count(*) as "Numero volumi"
-  from clavis.changelog
-    join open_shelf_items os on(os.item_id=object_id)
-  where user_id = 578 and event_type='B' and object_class='Item'
- GROUP BY date_trunc('hour', event_date) order by date_trunc('hour', event_date)}
+    sql=%Q{WITH summary AS (
+   select os.item_id,cl.event_date
+     FROM open_shelf_items os JOIN clavis.changelog cl
+      on(os.item_id=cl.object_id and cl.user_id=578 and cl.event_type='B' and object_class='Item')
+  )
+    SELECT date_trunc('hour', t1.event_date) as "Data e ora",count(*) as "Numero volumi"
+      FROM summary AS t1
+        LEFT OUTER JOIN summary AS t2 ON (t1.item_id = t2.item_id)
+        AND (t1.event_date > t2.event_date)
+      WHERE t2.item_id IS NULL
+        GROUP BY date_trunc('hour', t1.event_date)
+        ORDER BY date_trunc('hour', t1.event_date)}
+
     prec_giorno=''
     totale_g_p=totale_g_m=0
     totale_m=totale_p=0

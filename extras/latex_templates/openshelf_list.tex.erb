@@ -5,12 +5,16 @@
 % \usepackage[a4paper]{geometry}
 
 
-\usepackage[a4paper, top=20mm, bottom=0mm, left=4.5cm, right=1.25in]{geometry}
+\usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
 
 \usepackage{fancyhdr}
 \setlength{\headheight}{1pt}
 \pagestyle{fancy}
 
+
+% \textwidth=20cm
+
+% \rhead{Prova \LaTeX}
 
 \usepackage[utf8]{inputenc}
 % \usepackage{multicol}
@@ -24,12 +28,18 @@
 % \voffset=-28mm
 
 
+\textheight=28cm
+
+
 \usepackage{supertabular}
 \begin{document}
 
-
 \lhead{Elenco libri da prendere a magazzino}
+\lfoot{}
+\cfoot{}
+\rfoot{}
 
+<%= "\\rhead{Stampa: #{Time.now.to_date}}" %>
 
 % \pagestyle{empty}
 

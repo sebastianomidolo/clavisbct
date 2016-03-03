@@ -49,7 +49,7 @@ class OpenShelfItem < ActiveRecord::Base
       order_by = 'espandi_dewey(collocazione_scaffale_aperto),item_id'
     end
     extra_cond = []
-    extra_cond << "loan_status='A' AND item_status='F'" if !escludi_in_prestito.blank?
+    extra_cond << "loan_status='A' AND item_status='F' AND loan_class='B'" if !escludi_in_prestito.blank?
     extra_cond << "section!=os_section" if !escludi_ricollocati.blank?
     if !text_filter.blank?
       ts=OpenShelfItem.connection.quote_string(text_filter.split.join(' & '))
@@ -78,7 +78,7 @@ class OpenShelfItem < ActiveRecord::Base
       ts=OpenShelfItem.connection.quote_string(text_filter.split.join(' & '))
       extra_cond << " AND to_tsvector('simple', titolo) @@ to_tsquery('simple', '#{ts}')"
     end
-    extra_cond << " AND loan_status='A' AND item_status='F'" if !escludi_in_prestito.blank?
+    extra_cond << " AND loan_status='A' AND item_status='F' AND loan_class='B'" if !escludi_in_prestito.blank?
     extra_cond << " AND os_section!=section" if !escludi_ricollocati.blank?
     sql=%Q{SELECT count(*) FROM clavis.view_estrazione_da_magazzino
          WHERE os_section=#{self.connection.quote(os_section)} #{extra_cond}}
