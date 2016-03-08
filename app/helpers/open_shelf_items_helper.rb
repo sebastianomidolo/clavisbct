@@ -229,7 +229,7 @@ module OpenShelfItemsHelper
     ActiveRecord::Base.connection.execute(sql).to_a.each do |r|
       tempo=r['Data e ora']
       ora = tempo[11..12].to_i
-      if ora > 14
+      if ora > 13
         colore=colore_p
       else
         colore=colore_m
@@ -244,7 +244,7 @@ module OpenShelfItemsHelper
                            style:"background-color: #eab92d")
         totale_m=totale_p=0
       end
-      if ora > 14
+      if ora > 13
         totale_p+=volumi
         totale_g_p+=volumi
       else
