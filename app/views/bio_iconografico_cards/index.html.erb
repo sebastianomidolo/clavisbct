@@ -1,7 +1,8 @@
 <% if params[:lettera].blank? %>
 <%= content_tag(:div, "Totale schede inserite: #{BioIconograficoCard.count}") %>
 <% else %>
-<%= content_tag(:div, "Schede per la lettera #{params[:lettera]}: #{BioIconograficoCard.conta(params)}") %>
+<%= info = params[:numero].blank? ? '' : " (a partire dalla numero #{params[:numero]})"
+ content_tag(:div, "<b>#{BioIconograficoCard.conta(params)}</b> schede per la lettera #{params[:lettera]}#{info}".html_safe) %>
 <% end %>
 
 <% if flash[:notice] %>

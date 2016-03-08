@@ -58,9 +58,7 @@ class BioIconograficoCardsController < ApplicationController
     respond_to do |format|
       if @bio_iconografico_card.update_attributes(params[:bio_iconografico_card])
         format.html {
-          params[:numero]=@bio_iconografico_card.numero
-          @bio_iconografico_cards=BioIconograficoCard.list(params)
-          render :action=>'index'
+          redirect_to controller: 'bio_iconografico_cards', action: 'index', lettera:@bio_iconografico_card.lettera, numero:@bio_iconografico_card.numero
         }
         format.json { respond_with_bip(@bio_iconografico_card) }
       else

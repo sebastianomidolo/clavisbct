@@ -22,7 +22,8 @@ task :import_from_clavis => :environment do
      'create_serials_admin_table',
      'ricollocazioni',
      'merge_tobi',
-     'views'
+     'views',
+     'export_bioicon'
     ].each do |fname|
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")
       # cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"
