@@ -1,5 +1,7 @@
 #!/bin/sh
 
+/usr/bin/rsync -avz /home/seb/BCT/wca22014/linux64/LP2mog/upload_libroparlato/ /home/storage/preesistente/libroparlato
+
 (cd /home/ror/bctaudio; RAILS_ENV=production  /usr/local/bin/rake mdb_export)
 (cd /home/ror/bctaudio; RAILS_ENV=development /usr/local/bin/rake mdb_export)
 
