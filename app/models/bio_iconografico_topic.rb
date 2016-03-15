@@ -71,6 +71,10 @@ class BioIconograficoTopic < ActiveRecord::Base
   def var4() self.xmltag('var4') end
   def var5() self.xmltag('var5') end
 
+  def to_label
+    self.intestazione
+  end
+
   def clavis_authorities
     sql=%Q{select * from clavis.authority where full_text=#{BioIconograficoTopic.connection.quote(self.intestazione)}}
     ClavisAuthority.find_by_sql(sql)
