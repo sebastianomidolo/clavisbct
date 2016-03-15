@@ -97,8 +97,19 @@ class DObjectsController < ApplicationController
     end
     ack=DngSession.access_control_key(params,request)
     if ack!=params[:ac]
-      # render :text=>params[:ac], :content_type=>'text/plain'
-      render :template=>'d_objects/show_restricted'
+      respond_to do |format|
+        format.html {
+          render :template=>'d_objects/show_restricted'
+        }
+        format.mp3 {
+          if @d_object.audioclip_exists?
+            fname=@d_object.libroparlato_audioclip_filename
+          else
+            fname=@d_object.filename_with_path
+          end
+          send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
+        }
+      end
       return
     end
     log="#{Time.new}|objshow|#{@d_object.id}|#{request.remote_ip}|dng_user=#{params[:dng_user]}"
