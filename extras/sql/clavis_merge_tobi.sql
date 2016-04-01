@@ -7,6 +7,8 @@ COMMIT;
 DELETE FROM clavis.item WHERE home_library_id=-1;
 UPDATE topografico_non_in_clavis SET deleted=false WHERE deleted IS NULL;
 
+
+/*
 CREATE TABLE da_inserire_in_clavis AS
   SELECT t.owner_library_id,t.inventory_serie_id,t.inventory_number,
    t.collocazione,t.titolo,login,
@@ -15,6 +17,26 @@ CREATE TABLE da_inserire_in_clavis AS
    t.id as source_id
    FROM topografico_non_in_clavis t LEFT JOIN clavis.item
    ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci IS NULL AND t.deleted=false;
+*/
+
+CREATE TABLE da_inserire_in_clavis AS
+  SELECT t.owner_library_id,t.inventory_serie_id,t.inventory_number,
+   t.collocazione,t.titolo,login,
+   t.ctime as date_created,t.mtime as date_updated,
+   t.note,t.note_interne,
+   t.id as source_id
+   FROM topografico_non_in_clavis t LEFT JOIN clavis.item
+   ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci IS NULL AND t.deleted=false
+UNION
+  SELECT t.owner_library_id,t.inventory_serie_id,t.inventory_number,
+   t.collocazione,t.titolo,login,
+   t.ctime as date_created,t.mtime as date_updated,
+   t.note,t.note_interne,
+   t.id as source_id
+   FROM topografico_non_in_clavis t JOIN clavis.item
+   ci USING(owner_library_id,inventory_number,inventory_serie_id) WHERE ci.collocation!=t.collocazione
+   AND t.deleted=false;
+
 
 SELECT setval('clavis.item_item_id_seq', (SELECT MAX(item_id) FROM clavis.item)+1000);
 INSERT INTO clavis.item(
@@ -37,7 +59,7 @@ INSERT INTO clavis.item(
 CREATE UNIQUE INDEX item_custom_field3 ON clavis.item(custom_field3) WHERE home_library_id=-1 AND custom_field3 notnull;
 
 BEGIN;
-DROP TABLE clavis.collocazioni;
+-- DROP TABLE clavis.collocazioni;
 COMMIT;
 
 CREATE TABLE clavis.collocazioni AS
