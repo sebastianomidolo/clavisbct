@@ -1,4 +1,4 @@
-DROP VIEW clavis.view_estrazione_da_magazzino;
+-- DROP VIEW clavis.view_estrazione_da_magazzino;
 CREATE OR REPLACE VIEW clavis.view_estrazione_da_magazzino AS
   select os.item_id,os.os_section,ci.item_status,ist.value_label as item_status_label,
       ci.loan_status, lst.value_label as loan_status_label,ci.section,

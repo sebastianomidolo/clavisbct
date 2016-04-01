@@ -41,8 +41,8 @@ pg_dump -n cr_acquisti -U informhop bctaudio_development | psql clavisbct_develo
 # 10 gennaio 2014:
 (cd /home/ror/clavisbct; sh extras/export_to_bctaudio.sh > /home/sites/456.selfip.net/html/export_bctaudio.xml)
 
-# 16 gennaio 2014:
-(cd /home/ror/clavisbct; ./extras/create_musicbrainz_artists_clavis_authorities.sh)
+# 16 gennaio 2014: (eliminato dal 16 marzo 2016, visto che non veniva usato)
+# (cd /home/ror/clavisbct; ./extras/create_musicbrainz_artists_clavis_authorities.sh)
 
 # 1 aprile 2014, eliminato 19 gennaio 2015:
 # /bin/rm -rf /home/sites/456.selfip.net/html/clavis/mn

@@ -118,7 +118,10 @@ module ClavisItemsHelper
         end
       else
         lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
-        mlnk=r.manifestation_id==0 ? r.item_media_type : link_to(r.item_media_type,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true) + "<br/>#{r.manifestation_id}".html_safe
+        media = r.item_media_type
+        media << "</br>fuori catalogo" if r.manifestation_id==0
+        media << "</br><em>#{r.item_status}</em>"
+        mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       colloc=r.collocazione.sub(/^BCT\./,'')

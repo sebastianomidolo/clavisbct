@@ -54,8 +54,8 @@ COMMIT;
 
 
 BEGIN;
-ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
-  ALTER COLUMN "numero" type integer using ("numero"::integer);
+--ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+--  ALTER COLUMN "numero" type integer using ("numero"::integer);
 COMMIT;
 
 /*
@@ -73,13 +73,13 @@ COMMIT;
 /* patch temporanea in attesa che venga aggiunta la colonna "data pagamento" */
 
 BEGIN;
-ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
-  ADD COLUMN "data pagamento" date;
+--ALTER TABLE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+--  ADD COLUMN "data pagamento" date;
 COMMIT;
 
 BEGIN;
-UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
-  SET "data pagamento"=NULL WHERE "data pagamento"='';
+-- UPDATE excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
+--  SET "data pagamento"=NULL WHERE "data pagamento"='';
 COMMIT;
 
 
@@ -144,6 +144,7 @@ select 2014 as anno_fornitura,g.titolo, cc.manifestation_id,b.library_id,f.numer
 
 UNION
 -- musicale
+/*
 select 2015 as anno_fornitura,o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
  f."prezzo" as importo_fattura,"CIG",
  "fattura / nota credito"::char(1) as fattura_o_nota_di_credito,
@@ -158,8 +159,9 @@ select 2015 as anno_fornitura,o.titolo, cc.manifestation_id, 3 as library_id, f.
     left join excel_files_tables.ordini_periodici_musicale cc using(titolo)
     left join excel_files_tables.celdes_musicale_admin_report_ordini_con_dati_fatturazione
      f using(titolo)
-
 UNION
+*/
+
 -- musicale 2014
 select 2014 as anno_fornitura,o.titolo, cc.manifestation_id, 3 as library_id, f.numero as numero_fattura,
  f."totale articolo" as importo_fattura,"CIG",
