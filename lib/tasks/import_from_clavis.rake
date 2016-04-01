@@ -19,7 +19,6 @@ task :import_from_clavis => :environment do
      'view_prestiti',
      'view_digitalizzati',
      'setup',
-     'create_serials_admin_table',
      'ricollocazioni',
      'merge_tobi',
      'views',
