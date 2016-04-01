@@ -1,0 +1,13 @@
+<script type="text/javascript">
+ var word_array = [
+<% BioIconograficoTopic.all(limit:20,order:'random()').each do |t| %>
+  {text: "<%= j t.intestazione -%>", weight: <%= t.id / 100 -%>, link: "<%= bio_iconografico_topic_path(t.id) -%>"},
+<% end %>
+ ];
+ $(function() {
+  $("#topics_cloud_div").jQCloud(word_array);
+ });
+</script>
+<div id="topics_cloud_div" style="width: 750px; height: 550px;"></div>
+
+

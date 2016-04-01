@@ -4,7 +4,7 @@
 <%=
  t=@bio_iconografico_card.bio_iconografico_topic
  if !t.nil?
-  if BioIconograficoTopic.editors.include?(current_user.id)
+  if can? :edit, BioIconograficoTopic
    lnk=link_to(t.intestazione, bio_iconografico_topic_path(t))
   else
    lnk=t.intestazione

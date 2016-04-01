@@ -3,7 +3,6 @@ class BioIconograficoTopic < ActiveRecord::Base
   :qualificazioni, :seqnum, :data_nascita, :data_morte, :luogo_nascita, :luogo_morte, :altri_link,
   :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
 
-
   has_many :attachments, :as => :attachable
   has_many :bio_iconografico_cards, :through => :attachments, :source => :d_object
   
@@ -108,11 +107,6 @@ class BioIconograficoTopic < ActiveRecord::Base
     # self.find_by_sql(sql)
     puts sql
     self.paginate_by_sql(sql, :per_page=>50, :page=>params[:page])
-  end
-
-  def self.editors
-    # Creare un array di user_id di utenti autorizzati a modificare le schede BioIconografico
-    return [9,15,23]
   end
 
 end
