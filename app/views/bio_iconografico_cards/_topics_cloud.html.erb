@@ -1,13 +1,19 @@
-<script type="text/javascript">
- var word_array = [
-<% BioIconograficoTopic.all(limit:20,order:'random()').each do |t| %>
-  {text: "<%= j t.intestazione -%>", weight: <%= t.id / 100 -%>, link: "<%= bio_iconografico_topic_path(t.id) -%>"},
-<% end %>
- ];
- $(function() {
-  $("#topics_cloud_div").jQCloud(word_array);
- });
-</script>
-<div id="topics_cloud_div" style="width: 750px; height: 550px;"></div>
+<link rel="stylesheet" type="text/css" href="/jqcloud.css" />
 
+<%
+ @tag_cloud=BioIconograficoTopic.limit(10).order("RANDOM()").collect do |t|
+  {text: t.intestazione, weight: t.id / 100, link: bio_iconografico_topic_path(t.id)}
+ end
+%>
+
+<script type="text/javascript">
+  var word_array =  <%= raw @tag_cloud.to_json %> ;
+  $(function() {
+    // When DOM is ready, select the container element and call
+    // the jQCloud method, passing the array of words as the first argument.
+    $("#topics_cloud_div").jQCloud(word_array);
+  });
+</script>
+
+<div class="container" id="topics_cloud_div" style="width: 1000px; height: 250px; margin-left: 20px;" align="center"></div>
 

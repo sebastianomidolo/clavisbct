@@ -104,6 +104,8 @@ class BioIconograficoCard < DObject
   def lettera=(t) self.edit_tags(l:t) end
   def numero=(t) self.edit_tags(n:t) end
 
+  def size=(t) self.edit_tags(size:t) end
+
   def altri_link=(t) self.edit_tags(altri_link:t) end
   def data_morte=(t) self.edit_tags(data_morte:t) end
   def data_nascita=(t) self.edit_tags(data_nascita:t) end
@@ -125,6 +127,8 @@ class BioIconograficoCard < DObject
   def intestazione() self.xmltag('intestazione') end
   def lettera() self.xmltag('l') end
   def numero() self.xmltag('n') end
+
+  def size() self.xmltag('size') end
 
   def altri_link() self.xmltag('altri_link') end
   def data_morte() self.xmltag('data_morte') end

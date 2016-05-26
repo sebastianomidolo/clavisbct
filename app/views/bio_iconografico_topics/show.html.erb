@@ -1,5 +1,5 @@
 <%= render :partial=>'show' %>
-<% if can? :edit, self %>
+<% if can? :edit, BioIconograficoTopic %>
  <%= content_tag(:div, link_to('Modifica...', edit_bio_iconografico_topic_path)) %>
 <% end %>
 
@@ -16,7 +16,9 @@
 <% end %>
 
 
-<%= bio_iconografico_cards_list(@bio_iconografico_topic.bio_iconografico_cards) %>
+<%
+# bio_iconografico_cards_list(@bio_iconografico_topic.bio_iconografico_cards)
+%>
 
 <%= bio_iconografico_cards_editable_list(@bio_iconografico_topic.bio_iconografico_cards) %>
 
