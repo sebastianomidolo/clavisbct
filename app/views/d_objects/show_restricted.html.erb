@@ -11,3 +11,7 @@
   <%= content_tag(:div, link_to('Scarica documento in formato Word',d_object_path(@d_object, :format=>'doc'))) %>
  <% end %>
 <% end %>
+
+<% if can? :manage, DObject %>
+<%= link_to('Carica su Omeka', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>
+<% end %>
