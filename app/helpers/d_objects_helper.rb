@@ -1,3 +1,4 @@
+
 module DObjectsHelper
   def d_object_show(record)
     res=[]
@@ -142,5 +143,17 @@ module DObjectsHelper
 
     lista.size==0 ? nil : lista.join.html_safe
   end
-    
+
+  def d_object_show_folder_content(record)
+    fname=record.filename_with_path
+    dirname=File.dirname(fname)
+    res=[]
+    cnt=0
+    Dir.glob(File.join(dirname,"*.*")).sort.each do |f|
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, "#{cnt} - #{File.basename(f)}"))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
 end
