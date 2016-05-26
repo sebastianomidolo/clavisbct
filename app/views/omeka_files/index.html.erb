@@ -1,0 +1,10 @@
+
+<%= content_tag(:div, "Files caricati su Omeka: #{OmekaFile.count}") %>
+
+
+<ul>
+<% OmekaFile.all.each do |f| %>
+<%= content_tag(:li,f.original_filename + " #{f.omeka_item.title}") %>
+<% end %>
+</ul>
+

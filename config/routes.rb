@@ -1,7 +1,12 @@
 Clavisbct::Application.routes.draw do
 
   resources :bio_iconografico_topics
-
+  resources :omeka_files, only:[:index,:upload] do
+    collection do
+      get 'upload'
+      post 'upload'
+    end
+  end
 
   resources :bct_letters do
     collection do

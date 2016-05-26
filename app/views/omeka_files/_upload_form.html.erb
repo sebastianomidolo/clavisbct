@@ -1,0 +1,10 @@
+
+<%= form_tag(upload_omeka_files_path) do -%>
+  <div>
+  <%= text_field_tag 'item_title', nil, placeholder: "Titolo dell'item" %>
+<br/>  Collezione: <%= select_tag 'collection', options_for_select(OmekaCollection.all.collect {|c| [c.title,c.id]}) %>
+  <br/><%= check_box_tag 'load_folder' %>Includi tutti i files contenuti nella cartella
+  <%= hidden_field_tag 'd_object_id', @d_object.id %>
+  </div>
+  <div><%= submit_tag 'Invio' %></div>
+<% end -%>
