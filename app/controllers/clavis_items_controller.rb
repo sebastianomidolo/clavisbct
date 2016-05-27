@@ -130,7 +130,7 @@ class ClavisItemsController < ApplicationController
     respond_to do |format|
       format.html
       format.js {
-        if user_signed_in? and current_user.containers_enabled?
+        if can? :manage, Container
           @clavis_item.current_container=user_session[:current_container]
           if @clavis_item.current_container.blank?
             @usermessage="Manca il numero del contenitore"

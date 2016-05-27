@@ -109,7 +109,7 @@ module ClavisItemsHelper
         lnk=r.title.gsub("\r",'; ')
         # url="http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&collocation=#{r.collocation}&section=BCT&item_title=#{lnk}&ser=#{r.inventory_serie_id}&inv=#{r.inventory_number}"
         # lnk += "<br/>#{link_to('Inserisci in Clavis',url, :target=>'_blank')}"
-        if !current_user.containers_enabled?
+        if can? :manage, ExtraCard
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
                           method: :delete, data: { confirm: "Confermi cancellazione?" })
@@ -125,7 +125,9 @@ module ClavisItemsHelper
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       colloc=r.collocazione.sub(/^BCT\./,'')
-      if !current_user.containers_enabled?
+      if can? :manage, Container
+        coll=link_to(colloc, r, remote: true, onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')})
+      else
         coll=link_to(colloc, clavis_item_path(r))
         catena=colloc.split('.').last.to_i
         if catena-prec_catena>1 and false
@@ -138,8 +140,6 @@ module ClavisItemsHelper
           end
           prec_catena=catena+1
         end
-      else
-        coll=link_to(colloc, r, remote: true, onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')})
       end
       res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
                          content_tag(:td, mlnk) +
@@ -148,7 +148,7 @@ module ClavisItemsHelper
                          content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
-    if current_user.containers_enabled?
+    if can? :manage, Container
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{clink} (fare click sulla collocazione per inserire il volume corrispondente nel contenitore)".html_safe, class: 'panel-heading')
     end

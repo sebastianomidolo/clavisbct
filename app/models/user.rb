@@ -10,16 +10,8 @@ class User < ActiveRecord::Base
 
   has_and_belongs_to_many :roles
 
-
-
   def role?(role)
     return !!self.roles.find_by_name(role.to_s.camelize)
-  end
-
-
-  def containers_enabled?
-    config = Rails.configuration.database_configuration
-    config[Rails.env]["container_users"].include?(self.id)
   end
 
   def User.googledrive_session

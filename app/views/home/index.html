@@ -26,7 +26,7 @@ Pagina di servizio a uso interno delle BCT
   <%= content_tag(:li, link_to('Periodici Civica Centrale (collocazioni <b>Per.</b>)'.html_safe,
       clavis_consistency_notes_path)) %>
   <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) %>
- <% if current_user.containers_enabled? %>
+ <% if can? :manage, Container %>
   <%= content_tag(:li, link_to('Gestione scatole e contenitori fuori sede', containers_path)) %>
  <% end %>
 <% if can? :ricollocazioni, ClavisItem %>

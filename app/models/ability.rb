@@ -20,7 +20,6 @@ class Ability
       can :manage, [BioIconograficoTopic,BioIconograficoCard]
     end
 
-
     if user.role?('bct_letter_manager')
       can :manage, BctLetter
     else
@@ -41,11 +40,6 @@ class Ability
       can :toggle_item, OpenShelfItem, :created_by => user.id
     end
 
-    if user.role?('casse_in_deposito')
-      # can :manage, [Container, ContainerItem]
-      can :manage, [Container]
-    end
-
     if user.role?('ricolloca_scaffale_aperto')
       can :ricolloca_scaffale_aperto, OpenShelfItem
       can :estrazione_da_magazzino, OpenShelfItem
@@ -54,6 +48,14 @@ class Ability
     if user.role?('d_object_manager')
       can :manage, DObject
       can :upload, OmekaFile
+    end
+
+    if user.role?('extra_card_manager')
+      can :manage, ExtraCard
+    end
+
+    if user.role?('container_manager')
+      can :manage, Container
     end
 
   end

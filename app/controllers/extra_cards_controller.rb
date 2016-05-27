@@ -3,6 +3,8 @@
 class ExtraCardsController < ApplicationController
   before_filter :set_extra_card, only: [:show, :edit, :update, :destroy]
   before_filter :authenticate_user!, only: [:show, :edit, :update, :destroy]
+  load_and_authorize_resource except: [:show, :index]
+
 
   respond_to :html
 
