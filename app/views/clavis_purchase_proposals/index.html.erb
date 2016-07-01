@@ -1,0 +1,10 @@
+<%= render :partial => 'searchform' %>
+
+<%= @clavis_purchase_proposals.total_entries %>
+
+<%= will_paginate @clavis_purchase_proposals, renderer: BootstrapPagination::Rails %>
+
+<%= clavis_purchase_proposals_list(@clavis_purchase_proposals) %>
+
+
+

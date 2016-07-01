@@ -1,0 +1,3 @@
+class ClavisPurchaseProposalStatus < ClavisLookupValue
+end
+

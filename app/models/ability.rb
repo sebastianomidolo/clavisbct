@@ -58,5 +58,9 @@ class Ability
       can :manage, Container
     end
 
+    if user.role?('clavis_purchase_proposal_manager')
+      can :manage, ClavisPurchaseProposal
+    end
+
   end
 end
