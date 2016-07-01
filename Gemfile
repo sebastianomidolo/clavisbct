@@ -62,7 +62,7 @@ gem 'ruby-mp3info'
 # gem 'google-api-client'
 # gem "gdata", "~> 1.1.2"
 
-gem 'google_drive'
+# gem 'google_drive'
 
 gem 'simple_form'
 
@@ -87,3 +87,4 @@ gem 'cancancan', '1.12'
 
 gem 'jqcloud-rails'
 
+gem 'composite_primary_keys', '5.0.14'

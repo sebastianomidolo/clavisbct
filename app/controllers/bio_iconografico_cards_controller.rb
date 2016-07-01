@@ -14,7 +14,11 @@ class BioIconograficoCardsController < ApplicationController
         @bio_iconografico_card=BioIconograficoCard.new
         @bio_iconografico_card.tags={}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
       else
-        @bio_iconografico_card=BioIconograficoCard.new(params[:bio_iconografico_card])
+        logger.warn "ok cards - lettera blank here: #{params['bio_iconografico_card']['intestazione']}"
+        @bio_iconografico_card=BioIconograficoCard.new
+        @bio_iconografico_card.tags={}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
+        @bio_iconografico_card.intestazione=params['bio_iconografico_card']['intestazione']
+        @bio_iconografico_card.numero=params['bio_iconografico_card']['numero']
       end
     end
     @bio_iconografico_cards=BioIconograficoCard.list(params,@bio_iconografico_card)
