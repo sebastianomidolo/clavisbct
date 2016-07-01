@@ -62,7 +62,8 @@ class ClavisLoan < ActiveRecord::Base
   owner_library_id=#{library_id}
     #{ldb}
    and loan_date_end isnull
-   and item_media in ('F','H')
+   AND NOT collocazione ~ '^CC' AND NOT collocazione ~ '^BCT.DVD.'
+   -- and item_media in ('F','H')
   order by section, espandi_collocazione(collocazione),
    specification, sequence1, sequence2;}
     # puts sql
