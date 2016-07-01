@@ -32,6 +32,10 @@ class ClavisPatron < ActiveRecord::Base
     "#{s} #{self.name} #{self.lastname}"
   end
 
+  def to_label
+    "#{self.name} #{self.lastname}"    
+  end
+
   # Attualmente considero abilitati al servizio libro parlato gli utenti contenuti
   # nello scaffale numero 1929 (assurdo, ma funziona)
   def autorizzato_al_servizio_lp
