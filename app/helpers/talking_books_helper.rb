@@ -63,7 +63,7 @@ module TalkingBooksHelper
     ad << content_tag(:div, "Collocazione da controllare: #{record.n} (id #{record.id})") if ok==false
 
     ad << link_to("Scarica #{record.n}", href) if !href.nil?
-    res << content_tag(:p, ad.join("\n").html_safe)
+    res << content_tag(:div, ad.join("\n").html_safe)
     content_tag(:div, res.join.html_safe,  :class=>'scheda_libro_parlato')
   end
 
