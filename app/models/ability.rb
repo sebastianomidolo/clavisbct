@@ -62,5 +62,18 @@ class Ability
       can :manage, ClavisPurchaseProposal
     end
 
+    if user.role?('clavis_loan_manager')
+      can :manage, ClavisLoan
+    end
+
+    if user.role?('clavis_loan_goethe')
+      can :view_goethe_loans, ClavisLoan
+    end
+
+    if user.role?('closed_stack_item_requests_manager')
+      can :manage, ClosedStackItemRequest
+    end
+
+
   end
 end

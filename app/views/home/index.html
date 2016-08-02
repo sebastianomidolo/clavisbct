@@ -38,6 +38,11 @@ Pagina di servizio a uso interno delle BCT
 
   <%= content_tag(:li, link_to('Ricerca proposte acquisto utenti opac', clavis_purchase_proposals_path)) if can? :manage, ClavisPurchaseProposal %>
 
+  <%= content_tag(:li, link_to('Interrogazione prestiti', clavis_loans_path)) if can? :manage, ClavisLoan %>
+  <%= content_tag(:li, link_to('Interrogazione prestiti Goethe Institut', view_goethe_loans_clavis_loans_path)) if can? :view_goethe_loans, ClavisLoan %>
+
+  <%= content_tag(:li, link_to('Closed stack items requests', closed_stack_item_requests_path)) if can? :manage, ClosedStackItemRequest %>
+
 
 <% else %>
   <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>

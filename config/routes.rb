@@ -144,6 +144,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_loans do
     collection do
       get 'receipts'
+      get 'view_goethe_loans'
     end
   end
 
@@ -155,6 +156,7 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'collocazioni'
       get 'ricollocazioni'
+      post 'closed_stack_item_request'
     end
   end
 
@@ -177,6 +179,12 @@ Clavisbct::Application.routes.draw do
   resources :clavis_authorities do
     collection do
       get 'info'
+    end
+  end
+
+  resources :closed_stack_item_requests, only: [:index] do
+    collection do
+      get 'check'
     end
   end
 

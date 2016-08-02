@@ -32,7 +32,11 @@ class ClavisItemsController < ApplicationController
         cond << "manifestation_id=0" if value==1
       when 'collocation'
         if (@clavis_item.collocation =~ /\.$/).nil?
-          cond << "cc.collocazione ~* '^#{@clavis_item.collocation}'"
+          if @clavis_item.collocation.count(' ')>0
+            cond << "cc.collocazione = upper(replace('#{@clavis_item.collocation.squeeze(' ')}',' ','.'))"
+          else
+            cond << "cc.collocazione ~* '^#{@clavis_item.collocation}'"
+          end
           @sql_conditions = "inizia con '#{@clavis_item.collocation}'"
         else
           cond << "cc.collocazione ~ '^#{@clavis_item.collocation}'"
@@ -59,7 +63,7 @@ class ClavisItemsController < ApplicationController
       cond = cond.join(" AND ")
       @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>135, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>135, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end
@@ -216,6 +220,24 @@ class ClavisItemsController < ApplicationController
     respond_to do |format|
       format.json { render :json => res }
     end
+  end
+
+  def closed_stack_item_request
+    headers['Access-Control-Allow-Origin'] = "*"
+    cm=ClavisManifestation.find(params[:manifestation_id])
+    patron=ClavisPatron.find_by_opac_username(params[:dng_user])
+    dng_session=DngSession.find_by_params_and_request(params,request)
+    library_id=params[:library_id]
+    s,i=params[:inventario].split('-')
+    item=ClavisItem.find_by_home_library_id_and_inventory_serie_id_and_inventory_number(library_id,s,i)
+    logger.warn("richiesta_a_magazzino #{cm.title}")
+    logger.warn("richiesta_a_magazzino #{patron.lastname}")
+    logger.warn("richiesta_a_magazzino #{patron.opac_username}")
+    logger.warn("richiesta_a_magazzino #{dng_session.inspect}")
+    logger.warn("richiesta_a_magazzino #{item.id}")
+    logger.warn("richiesta_a_magazzino #{item.title}")
+    ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
+    render json:{status:'ok', requests:ClosedStackItemRequest.count}
   end
 
 end

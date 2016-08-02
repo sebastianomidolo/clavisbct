@@ -1,0 +1,43 @@
+\documentclass[a4paper,11pt]{article}
+
+% \usepackage[a4paper]{geometry}
+
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{1pt}
+\pagestyle{fancy}
+
+
+% \textwidth=20cm
+
+% \rhead{Prova \LaTeX}
+
+\usepackage[utf8]{inputenc}
+
+
+\begin{document}
+
+
+\pagestyle{empty}
+
+<%
+ res=[]
+ patron=inputdata[0]
+ dng_session=inputdata[1]
+
+ res << "Utente: #{patron.lastname}\\\\"
+ patron.closed_stack_item_requests(dng_session,60).each do |e|
+  item=ClavisItem.find(e.item_id)
+  res << "#{item.to_label}\\\\" 
+ end
+%>
+<%= res.join("\n") %>
+
+
+
+
+
+
+\end{document}

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# lastmod 21 febbraio 2013
 
 class ClavisPatron < ActiveRecord::Base
   # Include default devise modules. Others available are:
@@ -105,6 +104,21 @@ class ClavisPatron < ActiveRecord::Base
     else
       Time.now >= scadenza
     end
+  end
+
+  def closed_stack_item_requests
+    time_limit = "request_time-now() > interval '60 minutes ago'"
+    sql=%Q{SET timezone to 'UTC'; SELECT DISTINCT ir.* FROM closed_stack_item_requests ir
+        JOIN dng_sessions s ON(ir.dng_session_id=s.id)
+              WHERE #{time_limit} ORDER BY request_time;}
+    ClosedStackItemRequest.find_by_sql(sql)
+  end
+  def closed_stack_item_request_pdf(dng_session)
+    inputdata=[]
+    inputdata << self
+    inputdata << dng_session
+    lp=LatexPrint::PDF.new('closed_stack_item_request', inputdata)
+    lp.makepdf
   end
 
 end

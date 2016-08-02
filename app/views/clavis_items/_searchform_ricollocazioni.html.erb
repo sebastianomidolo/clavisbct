@@ -10,9 +10,9 @@
    <%= check_box_tag(:onshelf,'yes',@onshelf) %>
    <%= label_tag(:onshelf, 'Solo volumi su scaffale aperto') %>
    <br/>
-   <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT'],
+   <%= select_tag(:sections, options_for_select(['BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT'],
           @sections),
-       multiple:true, size:8, include_blank:false) %>
+       multiple:true, size:9, include_blank:false) %>
   <% end %>
   Classe o parole nel titolo: <%= text_field_tag :dewey_collocation, params[:dewey_collocation] %>
 <br/>
