@@ -1,0 +1,10 @@
+<%= content_tag(:p, "Richieste a magazzino - utente #{params[:dng_user]}") %>
+
+<% if @dng_session.nil? %>
+ Utente non loggato
+<% else %>
+<%= content_tag(:div, "Session_id: #{@dng_session.id}") %>
+<%= content_tag(:div, closed_stack_item_requests_list(@dng_session)) %>
+ok
+
+<% end %>
