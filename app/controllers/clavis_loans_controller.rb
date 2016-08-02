@@ -2,6 +2,14 @@
 
 class ClavisLoansController < ApplicationController
   layout 'navbar'
+  load_and_authorize_resource only: [:index, :view_goethe_loans_xxx]
+
+  def index
+  end
+
+  def view_goethe_loans
+    @clavis_loans=ClavisLoan.loans_by_supplier(269, params[:page], 40, 'p.loan_date_begin desc')
+  end
 
   def receipts
     ActiveRecord::Base.connection.execute("SET DateStyle TO ISO, DMY; SET timezone TO 'GMT-1';")

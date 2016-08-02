@@ -70,4 +70,11 @@ class ClavisLoan < ActiveRecord::Base
     return ClavisLoan.find_by_sql(sql)
   end
 
+  def ClavisLoan.loans_by_supplier(supplier_id, page=1, per_page=30, order=nil)
+    order = order.nil? ? '' : "ORDER BY #{order}"
+    sql=%Q{SELECT l.*, p.*, ci.title, ci.manifestation_id FROM clavis.view_prestiti2 p
+             JOIN clavis.loan l using(loan_id) JOIN clavis.item ci on (ci.item_id=l.item_id)
+         WHERE supplier_id=#{supplier_id.to_i} AND p.loan_date_begin NOTNULL #{order}}
+    ClavisLoan.paginate_by_sql(sql, per_page:per_page, page:page)
+  end
 end

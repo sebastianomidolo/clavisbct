@@ -32,6 +32,7 @@ module ClavisItemsHelper
         media = r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
         media << "</br><em>#{r.item_status}</em>"
+        media << "</br><b>#{r.loan_status}</b>"
         lnk << "</br><b>non visibile in opac</b>".html_safe if r.opac_visible!=1
         lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
       end
@@ -121,6 +122,7 @@ module ClavisItemsHelper
         media = r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
         media << "</br><em>#{r.item_status}</em>"
+        media << "</br><b>#{r.loan_status}</b>"
         mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe

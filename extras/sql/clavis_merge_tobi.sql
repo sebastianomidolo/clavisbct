@@ -67,6 +67,17 @@ CREATE TABLE clavis.collocazioni AS
     sequence1,sequence2) AS collocazione, ''::text as sort_text
    FROM clavis.item;
 
+UPDATE clavis.collocazioni
+  SET collocazione = trim(regexp_replace(collocazione, '\\(.*',''), '. ')
+   WHERE collocazione ~ '\\(';
+
+UPDATE clavis.collocazioni SET collocazione = replace(collocazione, ' ','.') WHERE collocazione ~ '^LP';
+
+UPDATE clavis.collocazioni SET collocazione=upper(collocazione) WHERE collocazione ~* '^per';
+UPDATE clavis.collocazioni SET collocazione=replace(collocazione, ' ', '.') WHERE collocazione ~ '^PER';
+
+-- UPDATE clavis.collocazioni SET sort_text = espandi_collocazione(collocazione) where sort_text ~ '\\(';
+
 DELETE FROM clavis.collocazioni WHERE collocazione='';
 UPDATE clavis.collocazioni SET sort_text = espandi_collocazione(collocazione);
 

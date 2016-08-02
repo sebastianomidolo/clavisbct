@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160121125111) do
+ActiveRecord::Schema.define(:version => 20160726141245) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -20,6 +20,40 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
   end
 
   add_index "access_rights", ["label"], :name => "access_rights_label_idx", :unique => true
+
+  create_table "adabas_2011_registro_inventari", :id => false, :force => true do |t|
+    t.string  "bid",                  :limit => 10
+    t.string  "biblio",               :limit => 6
+    t.string  "serie",                :limit => 3
+    t.string  "inv",                  :limit => 10
+    t.string  "collocazione",         :limit => 160
+    t.text    "isbd"
+    t.text    "note"
+    t.string  "data_inserimento",     :limit => 10
+    t.string  "schedone",             :limit => 75
+    t.text    "val_euro"
+    t.text    "valore"
+    t.string  "d_ser_prec",           :limit => 10
+    t.string  "segn_prec",            :limit => 82
+    t.string  "sezione_acq",          :limit => 12
+    t.date    "data_ord"
+    t.integer "num_ord"
+    t.integer "prezzo_totale_lire"
+    t.string  "codforn",              :limit => 9
+    t.string  "stato_ord",            :limit => 2
+    t.string  "note_ord",             :limit => 75
+    t.string  "note_forn",            :limit => 75
+    t.string  "tipo_acquisto",        :limit => 2
+    t.decimal "prezzo_previsto_euro",                :precision => 10, :scale => 2
+    t.integer "library_id"
+    t.integer "supplier_id"
+  end
+
+  add_index "adabas_2011_registro_inventari", ["biblio"], :name => "registro_inventari_biblio_idx"
+  add_index "adabas_2011_registro_inventari", ["bid"], :name => "registro_inventari_bid_idx"
+  add_index "adabas_2011_registro_inventari", ["codforn"], :name => "registro_inventari_codforn_idx"
+  add_index "adabas_2011_registro_inventari", ["data_ord"], :name => "registro_inventari_data_ord_idx"
+  add_index "adabas_2011_registro_inventari", ["serie"], :name => "registro_inventari_serie_idx"
 
   create_table "archivio_periodici", :id => false, :force => true do |t|
     t.text    "title"
@@ -128,6 +162,14 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
     t.integer "id"
   end
 
+  create_table "closed_stack_item_requests", :force => true do |t|
+    t.integer  "item_id",                           :null => false
+    t.integer  "patron_id",                         :null => false
+    t.integer  "dng_session_id",                    :null => false
+    t.boolean  "printed",        :default => false, :null => false
+    t.datetime "request_time"
+  end
+
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
     t.integer "d_object_id"
     t.text    "collocation"
@@ -186,20 +228,6 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
   add_index "d_objects", ["type"], :name => "index_d_objects_on_type"
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
-    t.integer "owner_library_id"
-    t.string  "inventory_serie_id", :limit => 128
-    t.integer "inventory_number"
-    t.text    "collocazione"
-    t.text    "titolo"
-    t.string  "login",              :limit => 40
-    t.date    "date_created"
-    t.date    "date_updated"
-    t.text    "note"
-    t.text    "note_interne"
-    t.integer "source_id"
-  end
-
-  create_table "da_inserire_in_clavis_copia", :id => false, :force => true do |t|
     t.integer "owner_library_id"
     t.string  "inventory_serie_id", :limit => 128
     t.integer "inventory_number"
@@ -348,6 +376,32 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
 
   add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
 
+  create_table "serials_admin_table", :force => true do |t|
+    t.integer "anno_fornitura"
+    t.text    "titolo"
+    t.integer "manifestation_id"
+    t.integer "library_id"
+    t.integer "numero_fattura"
+    t.float   "importo_fattura"
+    t.text    "CIG"
+    t.string  "fattura_o_nota_di_credito", :limit => 1
+    t.date    "data_emissione"
+    t.date    "data_pagamento"
+    t.text    "prezzo"
+    t.text    "commissione_sconto"
+    t.text    "totale"
+    t.text    "iva"
+    t.text    "prezzo_finale"
+    t.integer "numcopie"
+    t.integer "ordnum"
+    t.integer "ordanno"
+    t.integer "ordprogressivo"
+    t.text    "periodo"
+    t.text    "stato"
+    t.text    "formato"
+    t.text    "note_interne"
+  end
+
   create_table "subject_subject", :id => false, :force => true do |t|
     t.integer "s1_id",                  :null => false
     t.integer "s2_id",                  :null => false
@@ -378,11 +432,20 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
     t.string  "sbam_oid",         :limit => 12
   end
 
+  create_table "temp_import_librinlinea", :id => false, :force => true do |t|
+    t.text   "isbn"
+    t.string "bid",  :limit => 10
+  end
+
+  add_index "temp_import_librinlinea", ["bid"], :name => "temp_import_librinlinea_idx", :unique => true
+
   create_table "temp_import_sbam", :id => false, :force => true do |t|
-    t.text "bid"
     t.text "oid"
     t.text "isbn"
+    t.text "bid"
   end
+
+  add_index "temp_import_sbam", ["bid"], :name => "temp_import_sbam_idx", :unique => true
 
   create_table "temp_intestazioni_mancanti", :id => false, :force => true do |t|
     t.text "heading"
@@ -398,6 +461,17 @@ ActiveRecord::Schema.define(:version => 20160121125111) do
     t.text    "heading"
     t.text    "linknote"
     t.integer "seq"
+  end
+
+  create_table "temp_prestiti_goethe", :id => false, :force => true do |t|
+    t.integer  "item_id"
+    t.integer  "loan_id"
+    t.string   "loan_status",     :limit => 1
+    t.string   "value_label"
+    t.datetime "loan_date_begin"
+    t.datetime "loan_date_end"
+    t.integer  "renew_count"
+    t.float    "giorni"
   end
 
   create_table "temp_subjects", :id => false, :force => true do |t|

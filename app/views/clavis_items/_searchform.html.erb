@@ -2,10 +2,10 @@
 <%= simple_form_for(@clavis_item, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
   <% f.input :manifestation_dewey, hint: 'classificazione dewey', placeholder: 'scrivi qui' %>
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
-  <%= f.input :collocation, hint: 'collocazione', label: false, placeholder: 'collocazione' %>
+  <%= f.input :collocation, hint: 'collocazione (inserire la collocazione con spazio al posto del punto per avere la ricerca puntuale, esempio: 509 d 35)', label: false, placeholder: 'collocazione' %>
   <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
-  <%= f.association :owner_library, collection: ClavisItem.owner_library, hint: 'Biblioteca proprietaria', include_blank: true, label: false %>
+  <%= f.association :home_library, collection: ClavisItem.owner_library, hint: 'Biblioteca di gestione', include_blank: true, label: false %>
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],

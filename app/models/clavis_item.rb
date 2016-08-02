@@ -10,6 +10,7 @@ class ClavisItem < ActiveRecord::Base
   :rfid_code, :actual_library_id
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
+  belongs_to :home_library, class_name: 'ClavisLibrary', foreign_key: 'home_library_id'
 
   has_many :talking_books, :foreign_key=>'n', :primary_key=>'collocation'
   belongs_to :clavis_manifestation, :foreign_key=>:manifestation_id

@@ -15,6 +15,18 @@ SELECT l.patron_id, clavis.collocazione(ci.section, ci.collocation, ci.specifica
   FROM clavis.loan l join clavis.item ci using(item_id)
        join clavis.patron p on(p.patron_id=l.patron_id);
 
+
+
+CREATE OR REPLACE VIEW clavis.view_prestiti2 as
+SELECT ci.item_id,cl.loan_id, cl.loan_status, ls.value_label as loan_status_label,
+ cl.loan_date_begin, cl.loan_date_end, cl.renew_count,
+  extract(days from cl.loan_date_end - cl.loan_date_begin) as giorni
+FROM
+    clavis.loan cl JOIN clavis.item ci USING(item_id)
+     JOIN clavis.lookup_value ls
+       ON(cl.loan_status=ls.value_key AND value_class ~ 'LOANSTATUS' AND value_language='it_IT')
+WHERE cl.loan_status!='H';
+
 /*
 SELECT collocazione,title,espandi_collocazione(collocazione)
 from clavis.view_prestiti

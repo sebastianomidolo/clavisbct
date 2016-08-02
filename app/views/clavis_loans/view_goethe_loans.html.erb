@@ -1,0 +1,10 @@
+<h3>Consultazione prestiti Sezione <em>Goethe Institut</em></h3>
+
+
+<%= content_tag(:h2, "#{@clavis_loans.total_entries} prestiti") %>
+<%= will_paginate @clavis_loans, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, clavis_loans_view(@clavis_loans)) %>
+
+
+

@@ -17,6 +17,7 @@ UPDATE clavis.item SET issue_status = NULL WHERE issue_status NOTNULL AND issue_
 CREATE INDEX item_owner_library_id_idx ON clavis.item(owner_library_id);
 CREATE INDEX item_section_idx ON clavis.item("section");
 CREATE INDEX item_specification_idx ON clavis.item(specification);
+CREATE INDEX item_supplier_id_idx ON clavis.item(supplier_id);
 
 CREATE INDEX rfid_code_idx ON clavis.item(rfid_code);
 
