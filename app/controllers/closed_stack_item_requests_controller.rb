@@ -1,11 +1,26 @@
 class ClosedStackItemRequestsController < ApplicationController
   layout 'navbar'
-  before_filter :set_dng_session, only: [:index, :check]
+  before_filter :set_dng_session, only: [:index, :check, :item_delete]
 
   load_and_authorize_resource only: [:index]
 
   def index
 
+  end
+
+  def item_delete
+    headers['Access-Control-Allow-Origin'] = "*"
+    respond_to do |format|
+      format.html {render :text=>'cancellazione solo via js'}
+      format.js {
+        @target_div=params[:target_div]
+        ir=ClosedStackItemRequest.find(params[:id])
+        logger.warn("destroy_closed_stack_item_request #{ir.id}")
+        ir.destroy if !@dng_session.nil?
+        # render template:'closed_stack_item_requests/deleted_ok'
+        render template:'closed_stack_item_requests/check'
+      }
+    end
   end
 
   def check

@@ -101,6 +101,7 @@ Clavisbct::Application.routes.draw do
   resources :sp_bibliographies do
     member do
       get 'cover_image'
+      get 'check_items'
     end
   end
 
@@ -108,6 +109,9 @@ Clavisbct::Application.routes.draw do
   resources :sp_items do
     collection do
       get 'ricollocati_a_scaffale_aperto'
+    end
+    member do
+      get 'info'
     end
   end
 
@@ -157,6 +161,7 @@ Clavisbct::Application.routes.draw do
       get 'collocazioni'
       get 'ricollocazioni'
       post 'closed_stack_item_request'
+      get 'fifty_years'
     end
   end
 
@@ -182,7 +187,10 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :closed_stack_item_requests, only: [:index] do
+  resources :closed_stack_item_requests, only: [:index,:show] do
+    member do
+      get 'item_delete'
+    end
     collection do
       get 'check'
     end

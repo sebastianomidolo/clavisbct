@@ -4,7 +4,7 @@
  Utente non loggato
 <% else %>
 <%= content_tag(:div, "Session_id: #{@dng_session.id}") %>
-<%= content_tag(:div, closed_stack_item_requests_list(@dng_session)) %>
+<%= content_tag(:div, closed_stack_item_requests_list(@dng_session,@target_div)) %>
 ok
 
 <% end %>

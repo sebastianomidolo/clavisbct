@@ -4,6 +4,6 @@ function load_js(filepath) {
     document.body.appendChild(s);
 }
 load_js('http://clavisbct.comperio.it/assets/application.js');
-jQuery("#<%= @target_div -%>").html('<%= content_tag(:div, closed_stack_item_requests_list(@dng_session)).html_safe -%>');
+jQuery("#<%= @target_div -%>").html('<%= content_tag(:div, closed_stack_item_requests_list(@dng_session, @target_div)).html_safe -%>');
 
 

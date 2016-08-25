@@ -3,7 +3,9 @@
 % \usepackage[a4paper]{geometry}
 
 
-\usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
+% \usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
+
+\usepackage[a6paper, landscape, left=20pt, right=20pt]{geometry}
 
 \usepackage{fancyhdr}
 \setlength{\headheight}{1pt}
@@ -18,6 +20,7 @@
 
 
 \begin{document}
+\raggedright
 
 
 \pagestyle{empty}
@@ -27,10 +30,11 @@
  patron=inputdata[0]
  dng_session=inputdata[1]
 
- res << "Utente: #{patron.lastname}\\\\"
- patron.closed_stack_item_requests(dng_session,60).each do |e|
+ res << "Utente: #{patron.lastname}\\hfill Data: #{Time.now.to_date}\\\\\\bigskip"
+ patron.closed_stack_item_requests().each do |e|
   item=ClavisItem.find(e.item_id)
-  res << "#{item.to_label}\\\\" 
+  res << "\\bigskip{\\bf\\Large{#{item.la_collocazione}}}" 
+  res << "#{item.title[0..40]}\\\\" 
  end
 %>
 <%= res.join("\n") %>
