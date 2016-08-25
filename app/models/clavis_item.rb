@@ -270,4 +270,14 @@ class ClavisItem < ActiveRecord::Base
                                         :order=>order_by)
   end
 
+  def ClavisItem.fifty_years
+    sql=%Q{SELECT ci.barcode,ci.manifestation_id,ci.item_id,cm.edition_date,ci.volume_text, substr(ci.title, 1, 80) as title
+ FROM clavis.item ci join clavis.manifestation cm using(manifestation_id)
+ WHERE
+  edition_date between 1 and date_part('year', now())-50 and loan_class='B' and ci.owner_library_id=2
+   and ci.item_media='F' and not ci.volume_text ~* '(ristampa|rist).*[12][0-9]{3}'
+  order by cm.edition_date, ci.item_id}
+    ClavisItem.find_by_sql(sql)
+  end
+
 end

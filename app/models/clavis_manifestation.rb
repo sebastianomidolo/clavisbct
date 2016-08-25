@@ -190,6 +190,51 @@ class ClavisManifestation < ActiveRecord::Base
     ClavisManifestation.connection.execute("SELECT count(*) from kardex_adabas where bid='#{self.bid}'")[0]['count'].to_i
   end
 
+  def collocazioni_e_siglebib_per_senzaparola
+    sql=%Q{SELECT cc.collocazione,
+      array_to_string(array_agg(DISTINCT spl.sp_library_code ORDER BY spl.sp_library_code),',') as siglebib
+         FROM clavis.manifestation cm JOIN clavis.item ci
+          ON(cm.manifestation_id=ci.manifestation_id AND ci.opac_visible='1' AND ci.item_status IN ('F','G','K','V'))
+        JOIN clavis.library l ON(l.library_id=ci.home_library_id)
+            JOIN sp.sp_libraries spl ON(spl.clavis_library_id=l.library_id)
+            JOIN clavis.collocazioni cc USING(item_id)
+           WHERE cm.manifestation_id=#{self.id}
+        GROUP BY cm.manifestation_id,cc.collocazione
+           ORDER BY espandi_collocazione(cc.collocazione);}
+    puts sql
+    res={}
+    collciv=[]
+    self.connection.execute(sql).to_a.each do |r|
+      c=r['collocazione']
+      puts r.inspect
+      if r['siglebib']=='Q'
+        collciv << c
+        next
+      end
+      res[c]=[] if res[c].nil?
+      res[c] << r['siglebib']
+    end
+    res['collciv'] = collciv
+    res['colldec'] = []
+    siglebib=[]
+    res.each_pair do |k,v|
+      next if k=='collciv' or k=='colldec'
+      puts "k: #{k}: #{v}"
+      res['colldec'] << k
+      siglebib << v[0]
+      # siglebib << v.join
+      puts "siglebib: #{siglebib} (v: #{v.inspect})"
+    end
+    res['sigle']=siglebib.join(',').split(',').uniq.sort.join
+    if res['sigle']==''
+      res['colldec']=nil
+    else
+      res['colldec']=res['colldec'].join(', ')
+    end
+    res['collciv']=res['collciv'].join(', ')
+    res
+  end
+
   def audioclips
     cm=self
     storage_dir=DigitalObjects.digital_objects_mount_point
@@ -397,6 +442,50 @@ class ClavisManifestation < ActiveRecord::Base
      join libroparlato.catalogo tb on(tb.n=replace(ci.collocation,'CD ','')) where ci.section='LP'
       AND cm.manifestation_id=#{self.id}}
     TalkingBook.find_by_sql(sql).first
+  end
+
+  def to_isbd
+    res=[]
+    unixml=REXML::Document.new(self.unimarc.sub(%Q{<?xml version=\"1.0\"?>},''))
+    elements=unixml.first.elements
+    titolo=elements['d200/sa'].text
+
+    luogo=elements['d210/sa'].text
+    editore=elements['d210/sc'].text if !elements['d210/sc'].nil?
+    anno=elements['d210/sd'].text
+
+    
+
+    misura=elements['d215/sd'].text.sub(/\.$/,'')
+    
+    res << self.title.strip
+    # res << " / #{elements['d200/sf'].text}" if !elements['d200/sf'].nil?
+    res << "#{luogo} : #{editore}, #{anno}"
+    # res << "#{pagine} : #{illustrazioni}, #{misura}"
+
+    # Collazione
+    coll=''
+    # Pagine:
+    coll << elements['d215/sa'].text if !elements['d215/sa'].blank?
+    # Illustrazioni:
+    coll << " : #{elements['d215/sc']}" if !elements['d215/sc'].blank?
+    # Misura:
+    coll << ", #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
+    res << coll if !coll.blank?
+    res=res.join('. - ')
+    # Collana:
+    sql=%Q{select cm.title,lm.link_sequence from clavis.l_manifestation lm
+   join clavis.manifestation cm on(lm.link_type=410 and lm.manifestation_id_down=cm.manifestation_id)
+    where lm.manifestation_id_up=#{self.id};}
+    r=ClavisManifestation.connection.execute(sql).to_a.first
+    if !r.nil?
+      collana=r['title']
+      numseq=r['link_sequence']
+      res << ". - (#{collana}"
+      res << " ; #{numseq.strip}" if !numseq.blank?
+      res << ")"
+    end
+    res
   end
 
   def self.clavis_url(id,mode=:show)

@@ -25,14 +25,14 @@ module ClavisManifestationsHelper
                        content_tag(:th, 'Item Id') +
                        content_tag(:th, 'Collocazione') +
                        content_tag(:th, 'Serie-Inventario') +
-                       content_tag(:th, 'Item media'))
+                       content_tag(:th, 'Item status'))
 
     record.clavis_items(order: [:owner_library_id,:inventory_value,:inventory_number]).each do |r|
       res << content_tag(:tr, content_tag(:td, r.owner_library_id) +
                          content_tag(:td, r.id) +
                          content_tag(:td, r.collocazione) +
                          content_tag(:td, r.inventario) +
-                         content_tag(:td, r.item_media))
+                         content_tag(:td, r.item_status))
     end
     content_tag(:table, res.join.html_safe, width: '100%')
   end

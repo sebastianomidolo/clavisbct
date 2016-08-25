@@ -229,7 +229,15 @@ class ClavisItemsController < ApplicationController
     dng_session=DngSession.find_by_params_and_request(params,request)
     library_id=params[:library_id]
     s,i=params[:inventario].split('-')
-    item=ClavisItem.find_by_home_library_id_and_inventory_serie_id_and_inventory_number(library_id,s,i)
+    if i.blank?
+      collocazione=params[:collocazione].gsub(' ', '.')
+      logger.warn("richiesta_a_magazzino senza inventario, collocazione: #{collocazione}")
+      sql=%Q{SELECT ci.* FROM clavis.collocazioni cc JOIN clavis.item ci USING(item_id)
+         WHERE cc.collocazione=#{ClavisItem.connection.quote(collocazione)}}
+      item=ClavisItem.find_by_sql(sql).first
+    else
+      item=ClavisItem.find_by_home_library_id_and_inventory_serie_id_and_inventory_number(library_id,s,i)
+    end
     logger.warn("richiesta_a_magazzino #{cm.title}")
     logger.warn("richiesta_a_magazzino #{patron.lastname}")
     logger.warn("richiesta_a_magazzino #{patron.opac_username}")
@@ -238,6 +246,10 @@ class ClavisItemsController < ApplicationController
     logger.warn("richiesta_a_magazzino #{item.title}")
     ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
     render json:{status:'ok', requests:ClosedStackItemRequest.count}
+  end
+
+  def fifty_years
+    @clavis_items=ClavisItem.fifty_years
   end
 
 end

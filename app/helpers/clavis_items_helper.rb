@@ -214,4 +214,19 @@ module ClavisItemsHelper
     content_tag(:span, content_tag(:b, t),style:'margin-left: 180px')
   end
 
+  def clavis_items_simple_list(records)
+    res=[]
+    records.each do |r|
+      lnk_cm=link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id, :show), :target=>'_blank')
+      lnk_ci=link_to("item #{r.item_id}", r.clavis_url(:edit), :target=>'_blank')
+
+      res << content_tag(:tr, content_tag(:td, r.edition_date) +
+                         content_tag(:td, lnk_cm) +
+                         content_tag(:td, lnk_ci) +
+                         content_tag(:td, r.volume_text))
+    end
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
 end

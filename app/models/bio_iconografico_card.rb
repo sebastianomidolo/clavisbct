@@ -96,7 +96,6 @@ class BioIconograficoCard < DObject
   def update_xml_from_params(params)
     self.lettera=params[:lettera]
     self.numero=params[:numero]
-    self.numero='33'
     self.intestazione=params[:intestazione]
   end
 
