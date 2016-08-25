@@ -1,0 +1,19 @@
+<h1>Test page</h1>
+
+<% if !@sp_item.nil? %>
+ <%= content_tag(:div, @sp_item.inspect) %>
+
+ <%= content_tag(:div, "Sezione: #{@sp_item.collciv}") %>
+
+ <% cm=@sp_item.clavis_manifestation %>
+ <% if !cm.nil? %>
+  <%= content_tag(:div, "BID da Clavis: #{cm.bid}") %>
+  <%= content_tag(:div, "Titolo da Clavis (#{cm.id}): #{cm.title}") %>
+  <%= content_tag(:div, clavis_manifestation_view(cm)) %>
+ <% else %>
+  Non trovato in Clavis
+ <% end %>
+<% else %>
+ <%= content_tag(:div, "Scheda SenzaParola #{params[:id]} non ancora presente in ClavisBCT") %>
+<% end %>
+

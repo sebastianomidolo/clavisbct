@@ -25,4 +25,24 @@ class SpItemsController < ApplicationController
     @css_id='bibliografie'
     render :layout=>params[:layout] if !params[:layout].blank?
   end
+
+  def info
+    # headers['Access-Control-Allow-Origin'] = "*"
+    @target_div="clavisbct_response"
+    @sp_item=SpItem.find_by_item_id(params[:id])
+    if @sp_item.nil?
+      @sp_item=SpItem.new(collciv:params[:collciv],sbn_bid:params[:sbn_bid])
+      if !@sp_item.collciv.blank?
+        @sp_item.collciv.gsub!(' ', '.')
+      end
+    end
+    if !@sp_item.nil?
+      @clavis_manifestation=@sp_item.clavis_manifestation
+    end
+    respond_to do |format|
+      format.html
+      format.js
+    end
+  end
+
 end

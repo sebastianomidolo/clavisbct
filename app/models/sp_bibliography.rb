@@ -27,6 +27,10 @@ class SpBibliography < ActiveRecord::Base
     File.exists?(f) ? f : nil
   end
 
+  def senza_parola_bibliography_path
+    "http://biblio.comune.torino.it:8080/ProgettiCivica/SenzaParola/typo.cgi?id=#{self.id}&rm=list"
+  end
+
   def sync_sections
     sections=SenzaParola::sp_read_section_info(self.id)
     if sections.nil?

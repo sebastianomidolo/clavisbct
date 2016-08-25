@@ -40,6 +40,39 @@ module SpBibliographiesHelper
     content_tag(:div, res.html_safe)
   end
 
+  def sp_bibliography_check_items(record)
+    res=[]
+    record.sp_items.each do |i|
+      begin
+        cm=i.clavis_manifestation
+      rescue
+        cm_id="errore: #{i.id}"
+      end
+      if cm.nil?
+        clavis_collciv=''
+        clavis_colldec=''
+        clavis_sigle=''
+      else
+        cm_id = cm.id
+        info=cm.collocazioni_e_siglebib_per_senzaparola
+        clavis_collciv=info['collciv']
+        clavis_colldec=info['colldec']
+        clavis_sigle=info['sigle']
+        i.colldec.gsub!(' ', '.') if !i.colldec.blank?
+        i.collciv.gsub!(' ', '.') if !i.collciv.blank?
+        collciv_color = i.collciv!=clavis_collciv ? 'cyan' : 'white'
+        colldec_color = i.colldec!=clavis_colldec ? 'cyan' : 'white'
+        sigle_color = i.sigle!=clavis_sigle ? 'cyan' : 'white'
+      end
+      res << content_tag(:tr, content_tag(:td, cm_id) +
+                         content_tag(:td, link_to(i.bibdescr[0..20], SpItem.senza_parola_item_path(i.item_id, i.bibliography_id))) +
+                         content_tag(:td, "#{i.collciv}<br/><span style='background-color:#{collciv_color}'>#{clavis_collciv}</span>".html_safe) +
+                         content_tag(:td, "#{i.colldec}<br/><span style='background-color:#{colldec_color}'>#{clavis_colldec}</span>".html_safe) +
+                         content_tag(:td, "#{i.sigle}<br/><span style='background-color:#{sigle_color}'>#{clavis_sigle}</span>".html_safe))
+    end
+    content_tag(:table, res.join.html_safe, class:'table table-striped')
+  end
+
 end
 
 

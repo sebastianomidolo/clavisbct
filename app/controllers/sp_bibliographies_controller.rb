@@ -40,4 +40,8 @@ class SpBibliographiesController < ApplicationController
     send_file(b.cover_image, :type=>'image/jpeg; charset=binary', :disposition => 'inline')
   end
 
+  def check_items
+    @sp_bibliography=SpBibliography.find(params[:id])
+  end
+
 end

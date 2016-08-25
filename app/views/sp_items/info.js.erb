@@ -1,0 +1,35 @@
+jQuery("#<%= @target_div -%>").html('<%= content_tag(:div, sp_item_clavis_info(@sp_item)).html_safe -%>');
+
+<% if !@sp_item.clavis_manifestation.nil? %>
+ if (jQuery('input[name=descr]').length==1 && jQuery('input[name=descr]').val().length == 0) {
+   isbd = $('<textarea />').html("<%= @sp_item.clavis_manifestation.to_isbd -%>").text();
+   jQuery('input[name=descr]').val(isbd);
+ }
+
+ if (jQuery('input[name=urlref_2]').val().length == 0) {
+   jQuery('input[name=urlref_2]').val("<%= @sp_item.clavis_manifestation.bid -%>");
+ }
+
+ <% r=@sp_item.clavis_manifestation.collocazioni_e_siglebib_per_senzaparola %>
+
+ var x=jQuery('input[name=sigle]');
+ if (x.val().length == 0) {
+   x.val("<%= r['sigle'] -%>");
+   if (x.val().length==0) { x.css('background-color', 'silver'); } else { x.css('background-color', 'cyan'); }
+ }
+
+ var x=jQuery('input[name=collciv]');
+ if (x.val().length == 0) {
+   x.val("<%= r['collciv'] -%>");
+   if (x.val().length==0) { x.css('background-color', 'silver'); } else { x.css('background-color', 'cyan'); }
+ }
+
+ var x=jQuery('input[name=colldec]');
+ if (x.val().length == 0) {
+   x.val("<%= r['colldec'] -%>");
+   if (x.val().length==0) { x.css('background-color', 'silver'); } else { x.css('background-color', 'cyan'); }
+ }
+
+
+<% end %>
+

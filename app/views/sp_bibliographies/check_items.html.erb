@@ -1,0 +1,7 @@
+
+<%= content_tag(:div, @sp_bibliography.title) %>
+
+<%= content_tag(:div, link_to('[Vai alla lista schede in SenzaParola]', @sp_bibliography.senza_parola_bibliography_path)) %>
+
+
+<%= content_tag(:div, sp_bibliography_check_items(@sp_bibliography)) %>

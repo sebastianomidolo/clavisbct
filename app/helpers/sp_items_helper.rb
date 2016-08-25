@@ -48,5 +48,16 @@ module SpItemsHelper
     content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
 
+  def sp_item_clavis_info(sp_item)
+    cm=sp_item.clavis_manifestation
+    return 'non trovato in Clavis' if cm.nil?
+    r=cm.collocazioni_e_siglebib_per_senzaparola
+    info="collciv: #{r['collciv']}<br/>colldec: #{r['colldec']}<br/>sigle: #{r['sigle']}"
+    content_tag(:div, clavis_manifestation_opac_preview(cm) +
+                content_tag(:div, link_to('Clavis gestionale', cm.clavis_url(:show))) +
+                content_tag(:div, info.html_safe) +
+                clavis_manifestation_show_items(cm))
+  end
+
 
 end

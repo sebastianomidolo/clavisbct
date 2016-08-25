@@ -19,8 +19,35 @@ class SpItem < ActiveRecord::Base
     self.collciv
   end
 
+  def clavis_manifestation
+    sql=nil
+    if !self.sbn_bid.blank?
+      sql=%Q{SELECT * FROM clavis.manifestation WHERE bid='#{self.sbn_bid}';}
+    else
+      if !self.collciv.blank?
+        if !self.id.blank?
+          sql=%Q{SELECT cm.* FROM sp.sp_items i
+           JOIN clavis.collocazioni cc ON(i.collciv=cc.collocazione)
+           JOIN clavis.item ci ON(ci.item_id=cc.item_id)
+           JOIN clavis.manifestation cm USING(manifestation_id)
+            WHERE ci.manifestation_id!=0 AND i.item_id='#{self.item_id}';}
+        else
+          sql=%Q{SELECT cm.* FROM clavis.collocazioni cc
+           JOIN clavis.item ci ON(ci.item_id=cc.item_id)
+           JOIN clavis.manifestation cm USING(manifestation_id)
+            WHERE ci.manifestation_id!=0 AND cc.collocazione='#{self.collciv}';}
+        end
+      end
+    end
+    sql.nil? ? nil : ClavisManifestation.find_by_sql(sql).first
+  end
+
   def senza_parola_item_path
-    "http://biblio.comune.torino.it/ProgettiCivica/SenzaParola/typo.cgi?id=#{self.bibliography_id}&skid=#{self.item_id}&rm=edit"
+    SpItem.senza_parola_item_path(self.item_id, self.bibliography_id)
+  end
+
+  def SpItem.senza_parola_item_path(item_id, bibliography_id)
+    "http://biblio.comune.torino.it:8080/ProgettiCivica/SenzaParola/typo.cgi?id=#{bibliography_id}&skid=#{item_id}&rm=edit"
   end
 
   def SpItem.ricollocati_a_scaffale_aperto
