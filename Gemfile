@@ -1,6 +1,9 @@
+# coding: utf-8
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.13'
+# gem 'rails', '3.2.13'
+gem 'rails', '3.2.22'
+
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -29,7 +32,7 @@ gem 'devise-encryptable'
 
 gem "cucumber-rails", ">= 1.3.0", :group => :test, :require => false
 
-gem 'rspec-rails', :group => [:development, :test]
+# gem 'rspec-rails', :group => [:development, :test]
 gem "factory_girl_rails", :group => [:development, :test]
 gem "database_cleaner", :group => :test
 gem "email_spec", :group => :test
@@ -40,7 +43,7 @@ gem 'will_paginate', '~> 3.0.0'
 
 gem 'rmagick', '2.13.2'
 
-gem "ruby-tcl", "~> 0.1.1"
+# gem "ruby-tcl", "~> 0.1.1"
 
 gem 'htmlentities'
 
@@ -88,3 +91,4 @@ gem 'cancancan', '1.12'
 gem 'jqcloud-rails'
 
 gem 'composite_primary_keys', '5.0.14'
+
