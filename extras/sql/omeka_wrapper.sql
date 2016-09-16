@@ -11,6 +11,12 @@ CREATE FOREIGN TABLE collections (
  SERVER mysql_server OPTIONS (dbname 'omeka', table_name 'omeka_collections');
 
 
+CREATE FOREIGN TABLE collection_trees (
+  collection_id integer,
+  parent_collection_id integer,
+  name text)
+ SERVER mysql_server OPTIONS (dbname 'omeka', table_name 'omeka_collection_trees');
+
 CREATE FOREIGN TABLE element_sets (
   id integer,
   record_type varchar(50),

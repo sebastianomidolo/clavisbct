@@ -11,6 +11,7 @@ class OmekaFilesController < ApplicationController
     if !item_title.blank?
       item=OmekaItem.create(params[:collection].to_i)
       item.title=item_title
+      item.clavis_manifestation_id=@d_object.clavis_manifestation_id if !@d_object.clavis_manifestation_id.nil?
       fname=@d_object.filename_with_path
       if params[:load_folder].blank?
         f=OmekaFile.upload_localfile(fname, item)

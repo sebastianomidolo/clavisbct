@@ -5,13 +5,17 @@ Clavisbct::Application.routes.draw do
 
   resources :clavis_purchase_proposals
 
-
-
   resources :omeka_files, only:[:index,:upload] do
     collection do
       get 'upload'
       post 'upload'
     end
+  end
+
+  resources :omeka_items, only:[:index,:show] do
+  end
+
+  resources :omeka_collections, only:[:index,:show] do
   end
 
   resources :bct_letters do

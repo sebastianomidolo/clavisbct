@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'RMagick'
 
 include DigitalObjects
@@ -16,7 +17,9 @@ class DObject < ActiveRecord::Base
   end
 
   def check_filesystem
-    self.digital_object_read_metadata
+    # Commentato il 23 agosto 2016 perché in alcune situazioni dà errore
+    # (per esempio tentando di salvare un record da http://clavisbct.comperio.it/bio_iconografico_cards/49689045/edit)
+    # self.digital_object_read_metadata
   end
 
   def read_metadata_da_cancellare
@@ -171,6 +174,13 @@ class DObject < ActiveRecord::Base
     res
   end
 
+  def clavis_manifestation_id
+    self.references.each do |r|
+      return r.attachable_id if r.attachable_type=='ClavisManifestation'
+    end
+    nil
+  end
+  
   def DObject.to_pdf(ids,pdf_filename)
     # return true if File.exists?(pdf_filename)
     logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.gif").first

@@ -10,4 +10,9 @@ class OmekaItem < OmekaRecord
     self.connection.execute sql
     self.last
   end
+
+  def omeka_url
+    "http://bctwww.comperio.it/omeka/items/show/#{self.id}#?c=0&m=0&s=0&cv=0"
+  end
+
 end
