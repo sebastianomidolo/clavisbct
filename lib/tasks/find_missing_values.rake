@@ -264,4 +264,7 @@ task :find_missing_values => :environment do
   puts cmd
   Kernel.system(cmd)
 
+  cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_max_inventari.html -q -d clavisbct_development informhop --command "select cl.label as biblioteca,max(inventory_number) as max_inventario from clavis.item ci join clavis.library cl on(ci.owner_library_id=cl.library_id) where ci.home_library_id != -1 AND cl.library_internal='1' AND ci.manifestation_id>0 group by (cl.label) order by cl.label;"}
+  puts cmd
+  Kernel.system(cmd)
 end
