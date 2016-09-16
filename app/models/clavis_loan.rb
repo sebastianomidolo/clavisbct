@@ -70,11 +70,29 @@ class ClavisLoan < ActiveRecord::Base
     return ClavisLoan.find_by_sql(sql)
   end
 
-  def ClavisLoan.loans_by_supplier(supplier_id, page=1, per_page=30, order=nil)
-    order = order.nil? ? '' : "ORDER BY #{order}"
-    sql=%Q{SELECT l.*, p.*, ci.title, ci.manifestation_id FROM clavis.view_prestiti2 p
+  def ClavisLoan.loans_by_supplier(supplier_id, params)
+    page = params[:page].blank? ? 1 : params[:page].to_i
+    per_page = params[:per_page].blank? ? 40 : params[:per_page].to_i
+    order = params[:order].blank? ? '' : "ORDER BY #{params[:order]}"
+    
+    date_filter = ''
+    if params[:date_from]
+      date_filter << " AND vp.loan_date_begin >= #{ClavisLoan.connection.quote(params[:date_from])}"
+    end
+    if params[:date_to]
+      date_filter << " AND vp.loan_date_begin < #{ClavisLoan.connection.quote(params[:date_to])}"
+    end
+    
+    sql=%Q{SELECT l.*, vp.*, case when p.gender is null then '?' else p.gender end as gender,
+           p.citizenship,
+           ci.title, ci.manifestation_id FROM clavis.view_prestiti2 vp
              JOIN clavis.loan l using(loan_id) JOIN clavis.item ci on (ci.item_id=l.item_id)
-         WHERE supplier_id=#{supplier_id.to_i} AND p.loan_date_begin NOTNULL #{order}}
+             LEFT JOIN clavis.patron p on(p.patron_id=l.patron_id)
+         WHERE supplier_id=#{supplier_id.to_i} AND vp.loan_date_begin NOTNULL #{date_filter} #{order}}
+    if !params[:view].blank?
+      page=1
+      per_page=999999
+    end
     ClavisLoan.paginate_by_sql(sql, per_page:per_page, page:page)
   end
 end

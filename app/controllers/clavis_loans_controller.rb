@@ -1,3 +1,4 @@
+# coding: utf-8
 # lastmod 21 febbraio 2013
 
 class ClavisLoansController < ApplicationController
@@ -7,8 +8,15 @@ class ClavisLoansController < ApplicationController
   def index
   end
 
+
+  # Esempio parametri:
+  #     date_from=01-03-2016&date_to=31-03-2016&per_page=200&order=ci.title
+  #     date_from=01-01-2015&date_to=31-12-2015&per_page=100&order=p.loan_date_begin+desc
+  # Si può avere anche un parametro "view":
+  #     view=by_month (in questo caso il parametro "per_page" viene ignorato)
   def view_goethe_loans
-    @clavis_loans=ClavisLoan.loans_by_supplier(269, params[:page], 40, 'p.loan_date_begin desc')
+    ActiveRecord::Base.connection.execute("SET DateStyle TO ISO, DMY;")
+    @clavis_loans=ClavisLoan.loans_by_supplier(269, params)
   end
 
   def receipts

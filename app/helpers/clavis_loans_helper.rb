@@ -1,3 +1,4 @@
+# coding: utf-8
 module ClavisLoansHelper
   def clavis_loans_list(records)
     res=[]
@@ -38,6 +39,42 @@ module ClavisLoansHelper
                          content_tag(:td, r.renew_count) +
                          content_tag(:td, d_rest))
                          
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def clavis_loans_view_by_month(records)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, 'Anno/Mese') +
+                            content_tag(:td, 'Numero prestiti'))
+    hash=records.group_by {|x| x.loan_date_begin.strftime("%Y/%m")}
+    hash.keys.sort.each do |r|
+      res << content_tag(:tr, content_tag(:td, r) +
+                              content_tag(:td, hash[r].count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def clavis_loans_view_by_gender(records)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, 'Genere') +
+                            content_tag(:td, 'Numero prestiti'))
+    hash=records.group_by {|x| x.gender}
+    hash.keys.sort.each do |r|
+      res << content_tag(:tr, content_tag(:td, r) +
+                              content_tag(:td, hash[r].count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def clavis_loans_view_by_citizenship(records)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, 'Cittadinanza') +
+                            content_tag(:td, 'Numero prestiti'))
+    hash=records.group_by {|x| x.citizenship.nil? ? '?' : x.citizenship.downcase.strip}
+    hash.keys.sort.each do |r|
+      res << content_tag(:tr, content_tag(:td, r) +
+                              content_tag(:td, hash[r].count))
     end
     content_tag(:table, res.join.html_safe, class:'table')
   end
