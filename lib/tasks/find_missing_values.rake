@@ -1,84 +1,11 @@
-# -*- mode: ruby;-*-
-# lastmod 7 gennaio 2016: - http://bctdoc.comperio.it/issues/256
-# lastmod 12 maggio 2015: - http://bctdoc.comperio.it/issues/240
-# lastmod 6 febbraio 2015: - http://bctdoc.comperio.it/issues/191
-# lastmod 17 luglio 2014: - http://bctdoc.comperio.it/issues/191
-# lastmod 3 marzo 2014: disabilito "periodici_mancanti" (non viene usato)
-# lastmod 7  gennaio 2014: - http://bctdoc.comperio.it/issues/136
-# lastmod 20 dicembre 2013: - http://bctdoc.comperio.it/issues/134
-# lastmod 29 agosto 2013 - http://bctdoc.comperio.it/issues/87
-# lastmod 15 luglio 2013 - http://bctdoc.comperio.it/issues/58
-# lastmod 17 giugno 2013 - http://bctdoc.comperio.it/issues/35 [trova_numeri.call('GIN',496,1) etc.]
-# lastmod 23 luglio 2012 - Aggiungo condizione "AND manifestation_id NOTNULL" alle condizioni
-#                          per il calcolo min/max dei numeri di inventario
-# lastmod  5 luglio 2012 - Aggiungo "trova inventari duplicati"
-# lastmod 26 giugno 2012
-# lastmod 17 maggio 2012 - Aggiungo auth_opere_blanks
-# lastmod 8 aprile 2012 - Aggiungo "archivia_html"
-# lastmod 4 aprile 2012 - Aggiungo "periodici_mancanti"
-# lastmod 2 aprile 2012 - Aggiungo "barcodes duplicati"
-# lastmod 26 marzo 2012 - Aggiungo "barcodes errati"
-# lastmod 16 marzo 2012 - Aggiungo "buchi_collocazione"
-# lastmod 12 marzo 2012 - Aggiungo "trova autori duplicati" (non c'entra con gli inventari)
-# lastmod  6 marzo 2012 - Aggiungo "trova bid duplicati" (non c'entra con gli inventari)
-# lastmod 24 febbraio 2012
-# lastmod 23 febbraio 2012
 
 desc 'Trova valori mancanti in una sequenza di numeri in tabella'
 task :find_missing_values => :environment do
 
-  def trova_periodici_mancanti
-    periodici_mancanti=lambda do |outdir,library_ids,tolleranza|
-      return if library_ids==[]
-      codes=ActiveRecord::Base.connection.execute("select library_code from clavis.library where library_id in (#{library_ids.join(',')})").collect {|x| x['library_code'][4..5]}
-      outfile="#{outdir}/#{codes.join('_')}.html"
-      # puts outfile
-      sql=%Q{set search_path to clavis;
-select substr(ci.title,1,32) as titolo,ci.manifestation_id as id,
- l.shortlabel as biblioteca, ci.barcode,
--- now()::date as rilevato_il,
-  ci.issue_arrival_date_expected atteso_per,
- age(now()::date,ci.issue_arrival_date_expected) as ritardo,
- f.supplier_code as codforn
--- s.tolerance::text
-  FROM issue i join item ci using(manifestation_id,issue_id)
- join library l on(l.library_id=ci.owner_library_id)
- LEFT join subscription s on(s.manifestation_id=ci.manifestation_id
-    and l.library_id=ci.owner_library_id)
- LEFT join supplier f on(f.supplier_id=s.supplier_id)
-  where i.issue_year in ('2012','2013','2014')
-  and ci.owner_library_id in (#{library_ids.join(',')})
-  and ci.issue_status='M' and
-   age(now()::date,ci.issue_arrival_date_expected) > interval '#{tolleranza}'
- order by age(now()::date,ci.issue_arrival_date_expected) asc,ci.manifestation_id,ci.issue_arrival_date_expected,l.shortlabel;}
-      # puts sql
-      cmd=%Q{/usr/local/bin/psql -H -o #{outfile} -q -d informhop informhop --command "#{sql}"}
-      # cmd=%Q{/usr/local/bin/psql -H -o #{outfile} -q -d informhop informhop --command "select now();"}
-      # puts cmd
-      Kernel.system(cmd)
-      data=File.read(outfile)
-      File.delete(outfile) and return if !data.index("(0 rows)").nil?
-      quando=Time.now
-      data=%Q{<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"/><title>fascicoli non pervenuti - #{quando}</title></head><body><div>
-<p>Data rilevazione: #{quando}<br/>Tolleranza: #{tolleranza}; i fascicoli sono ordinati per entit&agrave; del ritardo</p>#{data}</div></body></html>}
-      fd=File.open(outfile,'w')
-      fd.write(data)
-      fd.close
-    end
-    # periodici mancanti (kardex - esemplari mancanti)
-    outdir="/usr/local/www/html/mn/pm"
-    Kernel.system("/bin/rm #{outdir}/*.html")
-    ids=ActiveRecord::Base.connection.execute("select library_id from clavis.library where library_code like 'TO0%'").collect {|x| x['library_id']}
-    periodici_mancanti.call(outdir,ids,'1 month')
-    ids.each {|x| periodici_mancanti.call(outdir,[x],'15 days')}
-    #cmd="(cd #{outdir}; cd ..; /usr/bin/tar zcf pm.tar.bz2 pm)"
-    #Kernel.system(cmd)
-  end
-
   trova_numeri=lambda do |serie,library,min_filter|
     table='clavis.item'
     number="inventory_number"
-    conn=InfoTable.connection
+    conn=ClavisItem.connection
     sql = "select shortlabel from clavis.library where library_id=#{library}"
     libname=conn.execute(sql).collect.first['shortlabel']
     libname="%02d_#{libname.strip}" % library
@@ -134,13 +61,13 @@ select substr(ci.title,1,32) as titolo,ci.manifestation_id as id,
     end
     fd.write("\\.\n")
     fd.close
-    cmd="/usr/local/bin/psql -q -d informhop informhop  -f #{file}"
+    cmd="/usr/bin/psql -q -d clavisbct_development informhop  -f #{file}"
     # puts cmd
     Kernel.system(cmd)
 
     sql=%Q{select id from public.sequenza_numeri where id not in
  (select #{number} from #{table} where #{conditions}) order by id;}
-    # puts sql
+    puts sql
 
     tmpfile="/usr/local/www/html/missing_numbers.tmp"
     fd=File.open(tmpfile,"w")
@@ -202,13 +129,12 @@ select substr(ci.title,1,32) as titolo,ci.manifestation_id as id,
     end
   end
 
-  # trova_numeri.call('CSP',677,1)
-  # exit
-
   # trova_numeri.call('V',2,280000)
   # exit
 
-  # trova_periodici_mancanti
+  # trova_numeri.call('01',2,280000)
+  # exit
+
   missing_numbers
 
   # trova_numeri.call('V',2,280000)
@@ -320,58 +246,22 @@ select substr(ci.title,1,32) as titolo,ci.manifestation_id as id,
   trova_numeri.call('CSP',677,1)
 
   # Trova bid duplicati
-  cmd=%Q{/usr/local/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d informhop informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
+  cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d clavisbct_development informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
   puts cmd
   Kernel.system(cmd)
 
 
   # Trova inventari duplicati (esclude i periodici e l'inventario 0 (zero)
   sql=%Q{select inventory_serie_id,inventory_number,count(*) from clavis.item where issue_id isnull and inventory_serie_id notnull  and inventory_number != 0 group by owner_library_id,inventory_serie_id,inventory_number having count(*)>1 order by inventory_serie_id,inventory_number}
-  cmd=%Q{/usr/local/bin/psql -H -o /usr/local/www/html/mn/00_inventari_duplicati.html -q -d informhop informhop --command "#{sql}"}
-  puts cmd
-  Kernel.system(cmd)
-
-  # Aggiunto 17 maggio 2012 : auth_opere_blanks
-  cmd=%Q{/usr/local/bin/psql -H -q -d informhop informhop --command "select '<a href=http://tobi.selfip.info/titles/' || m.bid || '>' || m.bid || '</a>' as link_a_tobi, a.authority_id,l.manifestation_id,m.title from clavis.authority a left join clavis.l_authority_manifestation l using(authority_id) left join clavis.manifestation m using(manifestation_id) where authority_type='O' and a.sort_text='' order by a.authority_id,m.manifestation_id;" | /usr/bin/sed s/\"&lt;\"/\"<\"/g | /usr/bin/sed s/\"&gt;\"/\">\"/g | /usr/bin/sed s/\"&quot;\"/\\"/g > /usr/local/www/html/mn/00_auth_opere_blanks.html}
+  cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_inventari_duplicati.html -q -d clavisbct_development informhop --command "#{sql}"}
   puts cmd
   Kernel.system(cmd)
 
 
   # Trova autori personali duplicati
-  # cmd=%Q{/usr/local/bin/psql -H -o /usr/local/www/html/mn/00_authority_forse_duplicati.html -q -d informhop informhop --command "select replace(full_text,' ' ,''),count(*) from clavis.authority where authority_type='P' and full_text!='' group by replace(full_text,' ' ,'') having count(*)>1 order by count(*) desc limit 100;"}
-  cmd=%Q{/usr/local/bin/psql -H -o /usr/local/www/html/mn/00_authority_forse_duplicati.html -q -d informhop informhop --command "select full_text,count(*) from clavis.authority where authority_type='P' and full_text!='' group by full_text having count(*)>1 order by count(*) desc, full_text;"}
+  # cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_authority_forse_duplicati.html -q -d clavisbct_development informhop --command "select replace(full_text,' ' ,''),count(*) from clavis.authority where authority_type='P' and full_text!='' group by replace(full_text,' ' ,'') having count(*)>1 order by count(*) desc limit 100;"}
+  cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_authority_forse_duplicati.html -q -d clavisbct_development informhop --command "select full_text,count(*) from clavis.authority where authority_type='P' and full_text!='' group by full_text having count(*)>1 order by count(*) desc, full_text;"}
   puts cmd
-  Kernel.system(cmd)
-
-  cmd=%Q{/usr/local/bin/psql -H -q -d informhop informhop --command "select '<a href=http://sbct.comperio.it/index.php?page=Catalog.AuthorityViewPage&id=' || authority_id || '>' || full_text || '</a>',term_resource,created_by,date_created::date from clavis.authority where full_text in (select full_text from clavis.authority  where authority_type='P' and full_text!='' group by full_text having count(*)>1) order by full_text,term_resource;" | /usr/bin/sed s/\"&lt;\"/\"<\"/g | /usr/bin/sed s/\"&gt;\"/\">\"/g | /usr/bin/sed s/\"&quot;\"/\\"/g > /usr/local/www/html/mn/00_autori_dup_con_vid.html}
-  puts cmd
-  Kernel.system(cmd)
-
-  # Aggiunta del 26 marzo 2012: barcodes errati
-  # cmd=%Q{/usr/local/bin/psql -H -q -d informhop informhop --command "set search_path=clavis;set statement_timeout=0;select l.shortlabel as biblioteca, barcode,'<a href=http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&id=' || item_id || '>' || item_id || '</a>' as item_id from item i join library l on(l.library_id=i.owner_library_id) where barcode like 'B%' and 'B' || item_id != barcode order by owner_library_id,i.item_id" | /usr/bin/sed s/\"&lt;\"/\"<\"/g | /usr/bin/sed s/\"&gt;\"/\">\"/g | /usr/bin/sed s/\"&quot;\"/\\"/g > /usr/local/www/html/barcodes_errati.html}
-  # Modificato 2 aprile 2012, includo solo i barcodes numerici ("B+numero")
-  extracond="isdigits(substr(barcode,2,12)) and abs(item_id-substr(barcode,2,12)::integer)<10"
-  # extracond="isdigits(substr(barcode,2,12))"
-  cmd=%Q{/usr/local/bin/psql -H -q -d informhop informhop --command "set search_path=clavis;set statement_timeout=0;select l.shortlabel as biblioteca, barcode,'<a href=http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&id=' || item_id || '>' || item_id || '</a>' as item_id from item i join library l on(l.library_id=i.owner_library_id) where barcode like 'B%' and 'B' || item_id != barcode AND #{extracond} order by owner_library_id,i.item_id" | /usr/bin/sed s/\"&lt;\"/\"<\"/g | /usr/bin/sed s/\"&gt;\"/\">\"/g | /usr/bin/sed s/\"&quot;\"/\\"/g > /usr/local/www/html/barcodes_errati.html}
-  puts cmd
-  Kernel.system(cmd)
-
-
-  # Aggiunta del 2 aprile 2012: barcodes duplicati
-  cond="barcode in (select barcode from item where barcode notnull group by barcode having count(*)>1)"
-  outfile="/usr/local/www/html/mn/00_barcodes_duplicati.html"
-  cmd=%Q{/usr/local/bin/psql -H -q -d informhop informhop --command "set search_path=clavis;set statement_timeout=0;select l.shortlabel as biblioteca, barcode, i.date_created,'<a href=http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&id=' || item_id || '>' || item_id || '</a>' as item_id from item i join library l on(l.library_id=i.owner_library_id) where #{cond} order by i.date_created desc,i.item_id" | /usr/bin/sed s/\"&lt;\"/\"<\"/g | /usr/bin/sed s/\"&gt;\"/\">\"/g | /usr/bin/sed s/\"&quot;\"/\\"/g > #{outfile}}
-  puts cmd
-  Kernel.system(cmd)
-  data=File.read(outfile)
-  quando=Time.now
-  data=%Q{<html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"/><title>Item barcodes duplicati></title></head><body><div><p>Data rilevazione: #{quando}<br/>Item barcodes duplicati, ordinamento per data di creazione, discendente</p>#{data}</div></body></html>}
-  fd=File.open(outfile,'w')
-  fd.write(data)
-  fd.close
-
-  # Aggiunta dell'8 aprile 2012: archivia_html
-  cmd=%Q{/usr/bin/tar -C /usr/local/www/html -cvjf /home/midolo/ProgettiCivica/IntraVedo/html/costellazione_clavis.tar.bz2 mn}
   Kernel.system(cmd)
 
 end
