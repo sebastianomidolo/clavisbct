@@ -14,6 +14,7 @@
 
 <%= content_tag(:span, "@clavis_loans: #{@clavis_loans.size}") %> (escluse le collocazioni che iniziano per "DVD")
 
+<%= content_tag(:div, "Avviso: a causa di problemi persistenti nell'allineamento dati da Clavis, il sistema di stampa dei segnaposto libri in prestito è in ritardo di due o anche tre giorni; Comperio sta cercando di risolvere il problema, ripristinando le consuete modalità di allineamento") if @clavis_loans.size==0 %>
 
 <%= content_tag(:h2, link_to('PDF',"receipts.pdf?#{params.to_query}")) %>
 
