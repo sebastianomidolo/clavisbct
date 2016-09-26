@@ -1,0 +1,9 @@
+<% if @dng_shelf.Visibility=='public' %>
+ <%= @dng_shelf.Name %>
+ <%= content_tag(:div, "Creato da: #{@dng_shelf.OwnerID}, contiene #{@dng_shelf.clavis_manifestations_ids.size} titoli e #{@dng_shelf.items_barcodes.size} copie") %>
+ <%= link_to('[Scarica barcodes]', dng_shelf_path, format:'csv') %>
+ <%= content_tag(:div, clavis_manifestation_opac_list(@dng_shelf.clavis_manifestations)) %>
+<% else %>
+ Scaffale privato 
+<% end %> 
+

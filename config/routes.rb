@@ -12,6 +12,9 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :dng_shelves, only:[:index,:show] do
+  end
+  
   resources :omeka_items, only:[:index,:show] do
   end
 

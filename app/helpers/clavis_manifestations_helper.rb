@@ -42,6 +42,16 @@ module ClavisManifestationsHelper
     %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
+  def clavis_manifestation_opac_list(records)
+    res=[]
+    records.each do |r|
+      res << content_tag(:tr,
+                         content_tag(:td, r.id) +
+                         content_tag(:td, clavis_manifestation_opac_preview(r)))
+    end
+    content_tag(:table, res.join.html_safe, class: 'table')
+  end
+
   def clavis_manifestations_shortlist(records)
     res=[]
     res << content_tag(:tr, content_tag(:td, 'BID') +

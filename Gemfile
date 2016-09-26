@@ -92,3 +92,5 @@ gem 'jqcloud-rails'
 
 gem 'composite_primary_keys', '5.0.14'
 
+gem 'php-serialize'
+
