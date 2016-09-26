@@ -10,7 +10,7 @@ class ClavisAuthoritiesController < ApplicationController
     cond << "bid is null" if params[:bidnotnull]=='false'
     cond << "authority_rectype = #{ClavisAuthority.connection.quote(params[:rectype])}" if !params[:rectype].blank?
     cond = cond.join(' AND ')
-    order='sort_text'
+    order=params[:sort].blank? ? 'sort_text' : params[:sort]
     @sql_conditions=cond
     @clavis_authorities=ClavisAuthority.paginate(:conditions=>cond,per_page:400,
                                                :page=>params[:page],
