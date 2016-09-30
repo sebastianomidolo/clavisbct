@@ -1,18 +1,25 @@
 class ClavisItemsController < ApplicationController
   before_filter :authenticate_user!, only: 'showxxx'
-  load_and_authorize_resource only: [:ricollocazioni]
+  load_and_authorize_resource only: [:index,:ricollocazioni]
 
   def index
-    # render :text=>params[:clavis_item].inspect
-    # return
     @clavis_item = ClavisItem.new(params[:clavis_item])
-    if user_signed_in?
-      @clavis_item.owner_library_id=2 if @clavis_item.owner_library_id.nil?
+
+    if can? :manage, ClavisItem
+      if @clavis_item.owner_library_id.nil?
+        librarian=current_user.clavis_librarian
+        if librarian.nil?
+          @clavis_item.owner_library_id=2
+        else
+          @clavis_item.owner_library_id=librarian.default_library_id
+        end
+      end
       if @clavis_item.current_container.nil?
         @clavis_item.current_container=user_session[:current_container]
       end
       user_session[:current_container]=@clavis_item.current_container
     end
+
     @attrib=@clavis_item.attributes.collect {|a| a if not a.last.blank?}.compact
     toskip=["item_order_status", "mediapackage_size", "usage_count", "renewal_count", "notify_count", "discount_value"]
     @attrib.delete_if do |r|
@@ -58,8 +65,10 @@ class ClavisItemsController < ApplicationController
         @attrib << ['current_container', '']
         cond << 'containers.label is not null' if @clavis_item.in_container=='1'
       end
-      # cond << "cc.collocazione ~ '^#{params[:collocazione_inizia_per]}\\.'" if !params[:collocazione_inizia_per].blank?
-      cond << "date_updated between now() - interval '#{params[:days]} days' and now()" if !params[:days].blank?
+
+      if !params[:days].blank?
+        cond << "date_updated between now() - interval '#{params[:days]} days' and now()"
+      end
       cond = cond.join(" AND ")
       @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
@@ -212,7 +221,7 @@ class ClavisItemsController < ApplicationController
     sel='manifestation_id,section,collocation,specification,sequence1,sequence2'
 
     sql="SELECT #{sel} FROM clavis.item WHERE #{cond}"
-    logger.warn(sql)
+    # logger.warn(sql)
     ClavisItem.find_by_sql(sql).each do |r|
       res[r[:manifestation_id]]=r.collocazione
     end

@@ -17,16 +17,21 @@ module ClavisItemsHelper
   end
 
   def clavis_items_shortlist(records, table_id='items_list')
-    # return '' if records.size==0
+    return '' if records.size==0
     res=[]
-    # Eventuale link a qualcosa:
-    # content_tag(:td, link_to('[presta]', r.clavis_url(:loan), :target=>'_blank'))
+
+    prec_catena=0
     records.each do |r|
-      # next if !r.respond_to?('label')
-      container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
       if r.home_library_id==-1
-        lnk=r.title
-        media = 'TOPOGRAFICO'
+        lnk=r.title.gsub("\r",'; ')
+        media = 'TOPOGRAFICO' # forse non serve
+        if can? :manage, ExtraCard
+          mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
+          mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
+                          method: :delete, data: { confirm: "Confermi cancellazione?" })
+        else
+          mlnk = 'TOPOGRAFICO'
+        end
       else
         lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
         media = r.item_media_type
@@ -35,16 +40,38 @@ module ClavisItemsHelper
         media << "</br><b>#{r.loan_status}</b>"
         lnk << "</br><b>non visibile in opac</b>".html_safe if r.opac_visible!=1
         lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
+        mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
-      res << content_tag(:tr, content_tag(:td, link_to(r.collocazione.sub(/^BCT\./,''), clavis_item_path(r))) +
-                         content_tag(:td, media.html_safe) +
-                         content_tag(:td, lnk.html_safe) +
+      container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
+
+      colloc=r.collocazione.sub(/^BCT\./,'')
+      if can? :manage, Container
+        coll=link_to(colloc, r, remote: true, onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')})
+      else
+        coll=link_to(colloc, clavis_item_path(r))
+        catena=colloc.split('.').last.to_i
+        if catena-prec_catena>1 and false
+          [prec_catena..catena-1].each do |num|
+            res << content_tag(:tr, content_tag(:td, num) +
+                                    content_tag(:td, prec_catena) +
+                                    content_tag(:td, catena) +
+                                    content_tag(:td, '') +
+                                    content_tag(:td, ''))
+          end
+          prec_catena=catena+1
+        end
+      end
+      res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
+                         content_tag(:td, mlnk) +
+                         content_tag(:td, lnk.html_safe + "<br/>#{r.issue_description}".html_safe) +
                          content_tag(:td, r.inventario) +
                          content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
-    # res << content_tag(:div, "Trovati #{records.total_entries} esemplari", class: 'panel-heading')
-    res << content_tag(:div, "#{records.total_entries} esemplari (#{@sql_conditions})", class: 'panel-heading')
+    if can? :manage, Container
+      clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
+      res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{clink} (fare click sulla collocazione per inserire il volume corrispondente nel contenitore)".html_safe, class: 'panel-heading')
+    end
     res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
@@ -98,7 +125,6 @@ module ClavisItemsHelper
     res=content_tag(:table, res, {class: 'table table-striped'})
   end
 
-
   def clavis_items_shortlist_signed_in(records, table_id='items_list')
     return 'please sign in' if !user_signed_in?
     return '' if records.size==0
@@ -108,8 +134,6 @@ module ClavisItemsHelper
     records.each do |r|
       if r.home_library_id==-1
         lnk=r.title.gsub("\r",'; ')
-        # url="http://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&collocation=#{r.collocation}&section=BCT&item_title=#{lnk}&ser=#{r.inventory_serie_id}&inv=#{r.inventory_number}"
-        # lnk += "<br/>#{link_to('Inserisci in Clavis',url, :target=>'_blank')}"
         if can? :manage, ExtraCard
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,

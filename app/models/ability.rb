@@ -66,6 +66,10 @@ class Ability
       can :manage, ClavisLoan
     end
 
+    if user.role?('clavis_item_manager')
+      can :manage, ClavisItem
+    end
+
     if user.role?('clavis_loan_goethe')
       can :view_goethe_loans, ClavisLoan
     end
@@ -73,7 +77,6 @@ class Ability
     if user.role?('closed_stack_item_requests_manager')
       can :manage, ClosedStackItemRequest
     end
-
 
   end
 end

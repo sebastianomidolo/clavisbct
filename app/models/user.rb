@@ -14,6 +14,10 @@ class User < ActiveRecord::Base
     return !!self.roles.find_by_name(role.to_s.camelize)
   end
 
+  def clavis_librarian
+    ClavisLibrarian.find_by_username(self.email)
+  end
+
   def User.googledrive_session
     config = Rails.configuration.database_configuration
     username=config[Rails.env]["google_drive_login"]

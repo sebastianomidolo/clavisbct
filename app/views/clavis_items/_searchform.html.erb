@@ -1,31 +1,46 @@
 
 <%= simple_form_for(@clavis_item, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
-  <% f.input :manifestation_dewey, hint: 'classificazione dewey', placeholder: 'scrivi qui' %>
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
   <%= f.input :collocation, hint: 'collocazione (inserire la collocazione con spazio al posto del punto per avere la ricerca puntuale, esempio: 509 d 35)', label: false, placeholder: 'collocazione' %>
-  <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
-  <%= f.association :home_library, collection: ClavisItem.owner_library, hint: 'Biblioteca di gestione', include_blank: true, label: false %>
+  <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
+  <%= f.association :owner_library, collection: ClavisItem.owner_library, hint: 'Biblioteca proprietaria', include_blank: true, label: false %>
+
+  <% if can? :manage, Container %>
+   <%= content_tag(:b, link_to(@clavis_item.container.info, container_path(@clavis_item.container))) if !@clavis_item.container.nil?%>
+   <%= f.input :in_container, as: 'boolean', hint: 'Solo volumi nei contenitori', label: false %>
+   <%= link_to('[elenco contenitori]', containers_path) %>
+  <% end %>
+
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],
       label: false, hint: 'Visibilità in opac'
   %>
-  Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
-  <%= f.submit 'cerca', :class=>'btn btn-info' %>
+
+  <!--  Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni -->
+
+  <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
+
+  <%= link_to('Inserisci esemplare', new_extra_card_path) if can? :manage, ExtraCard %>
 
   <%= button_to_function("mostra tutti i campi di ricerca", "$('#mostra_tutti_i_campi').hide();$('.control-group','#new_clavis_item').show();", id: "mostra_tutti_i_campi", class: "btn btn-success") if @attrib.size>0 %>
 
-<%= link_to('scarica barcodes', params.merge(format:'csv')) + ' | ' if @clavis_items.count>1 %>
-<%= link_to('segnaposto (PDF)', params.merge(format:'pdf')) if @clavis_items.count>1 %>
+ <%= link_to('scarica barcodes', params.merge(format:'csv')) + ' | ' if @clavis_items.count>1 %>
+ <%= link_to('segnaposto (PDF)', params.merge(format:'pdf')) if @clavis_items.count>1 %>
 
 <% end %>
 
-
 <%=
 if @attrib.size>0
+  if @attrib.size==1
+   @attrib << ['title','']
+   @attrib << ['collocation','']
+   @attrib << ['inventory_number',''] 
+  end
   js="$('.control-group','#new_clavis_item').hide();"
   @attrib.each {|a| js << %Q{$("#clavis_item_#{a.first}").parent().parent().show();} }
   javascript_tag(js)
 end
 %>
+<% content_tag(:p, @attrib.inspect) %>
