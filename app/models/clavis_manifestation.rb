@@ -470,8 +470,6 @@ class ClavisManifestation < ActiveRecord::Base
     coll << " ; #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
     res << coll if !coll.blank?
 
-    res << "ISBN #{self.ISBNISSN}" if !self.ISBNISSN.blank?
-    
     res=res.join('. - ')
     # Collana:
     sql=%Q{select cm.title,lm.link_sequence from clavis.l_manifestation lm
@@ -485,6 +483,7 @@ class ClavisManifestation < ActiveRecord::Base
       res << " ; #{numseq.strip}" if !numseq.blank?
       res << ")"
     end
+    res << ". - ISBN #{self.ISBNISSN}" if !self.ISBNISSN.blank?
     res
   end
 

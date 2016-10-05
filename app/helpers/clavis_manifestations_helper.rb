@@ -47,7 +47,7 @@ module ClavisManifestationsHelper
     records.each do |r|
       res << content_tag(:tr,
                          content_tag(:td, r.id) +
-                         content_tag(:td, clavis_manifestation_opac_preview(r)))
+                         content_tag(:td, r.title))
     end
     content_tag(:table, res.join.html_safe, class: 'table')
   end

@@ -22,10 +22,11 @@ Pagina di servizio a uso interno delle BCT
 
 
 <ul>
-<% if user_signed_in? %>
+
   <%= content_tag(:li, link_to('Periodici Civica Centrale (collocazioni <b>Per.</b>)'.html_safe,
       clavis_consistency_notes_path)) %>
-  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) %>
+  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) if can? :manage, ClavisItem %>
+  <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
  <% if can? :manage, Container %>
   <%= content_tag(:li, link_to('Gestione scatole e contenitori fuori sede', containers_path)) %>
  <% end %>
@@ -43,10 +44,6 @@ Pagina di servizio a uso interno delle BCT
 
   <%= content_tag(:li, link_to('Closed stack items requests', closed_stack_item_requests_path)) if can? :manage, ClosedStackItemRequest %>
 
-
-<% else %>
-  <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
-  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) %>
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
-<% end %>
+
 </ul>

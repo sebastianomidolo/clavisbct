@@ -58,7 +58,8 @@
   e.title.gsub!("%", '\\\%')
   title=e.title[0..150]
   collocation = e.collocazione.size>18 ? "\\normalsize #{e.collocazione}" : e.collocazione
-  res << "\\card{#{collocation}}{#{title}}{\\em Ultima modifica: #{I18n.l e.date_updated.to_date}}{#{e.barcode}}{#{e.item_status}}{#{e.inventario}}"
+  updated_at = e.date_updated.nil? ? '-' : "#{I18n.l e.date_updated.to_date}"
+  res << "\\card{#{collocation}}{#{title}}{\\em Ultima modifica: #{updated_at}}{#{e.barcode}}{#{e.item_status}}{#{e.inventario}}"
  end
 %>
 <%= res.join("\n") %>
