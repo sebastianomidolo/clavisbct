@@ -456,22 +456,22 @@ class ClavisManifestation < ActiveRecord::Base
 
     
 
-    misura=elements['d215/sd'].text.sub(/\.$/,'')
-    
     res << self.title.strip
     # res << " / #{elements['d200/sf'].text}" if !elements['d200/sf'].nil?
     res << "#{luogo} : #{editore}, #{anno}"
-    # res << "#{pagine} : #{illustrazioni}, #{misura}"
 
     # Collazione
     coll=''
     # Pagine:
     coll << elements['d215/sa'].text if !elements['d215/sa'].blank?
     # Illustrazioni:
-    coll << " : #{elements['d215/sc']}" if !elements['d215/sc'].blank?
+    coll << " : #{elements['d215/sc'].text}" if !elements['d215/sc'].blank?
     # Misura:
-    coll << ", #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
+    coll << " ; #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
     res << coll if !coll.blank?
+
+    res << "ISBN #{self.ISBNISSN}" if !self.ISBNISSN.blank?
+    
     res=res.join('. - ')
     # Collana:
     sql=%Q{select cm.title,lm.link_sequence from clavis.l_manifestation lm
