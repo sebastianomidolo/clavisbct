@@ -21,6 +21,7 @@ task :import_from_clavis => :environment do
      'setup',
      'ricollocazioni',
      'merge_tobi',
+     'ex_collocazioni',
      'views',
      'export_bioicon'
     ].each do |fname|
