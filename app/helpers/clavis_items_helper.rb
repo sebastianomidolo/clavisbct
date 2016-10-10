@@ -24,7 +24,6 @@ module ClavisItemsHelper
     records.each do |r|
       if r.home_library_id==-1
         lnk=r.title.gsub("\r",'; ')
-        media = 'TOPOGRAFICO' # forse non serve
         if can? :manage, ExtraCard
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
@@ -33,7 +32,11 @@ module ClavisItemsHelper
           mlnk = 'TOPOGRAFICO'
         end
       else
-        lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+        if r.home_library_id==-3
+          lnk=link_to(r.title, ClavisItem.clavis_url(r.custom_field1,:show), :target=>'_blank')
+        else
+          lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+        end
         media = r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
         media << "</br><em>#{r.item_status}</em>"
@@ -61,12 +64,16 @@ module ClavisItemsHelper
           prec_catena=catena+1
         end
       end
+      classe = r.home_library_id==-3 ? 'success' : ''
+
+      coll << "</br>RICOLLOCATO".html_safe if r.home_library_id==-3
+
       res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
                          content_tag(:td, mlnk) +
                          content_tag(:td, lnk.html_safe + "<br/>#{r.issue_description}".html_safe) +
                          content_tag(:td, r.inventario) +
                          content_tag(:td, container_link),
-                         {:data_view=>r.view})
+                         {:data_view=>r.view,:class=>classe})
     end
     if can? :manage, Container
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
