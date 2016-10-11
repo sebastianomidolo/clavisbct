@@ -18,7 +18,9 @@
       label: false, hint: 'Visibilità in opac'
   %>
 
-  <!--  Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni -->
+  <% if params[:mode]=='lastmod' %>
+    Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
+  <% end %>
 
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
 

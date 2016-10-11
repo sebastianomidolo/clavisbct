@@ -5,7 +5,7 @@ class ClavisItemsController < ApplicationController
   def index
     @clavis_item = ClavisItem.new(params[:clavis_item])
 
-    if can? :manage, ClavisItem
+    if can? :search, ClavisItem
       if @clavis_item.owner_library_id.nil?
         librarian=current_user.clavis_librarian
         if librarian.nil?
@@ -258,7 +258,7 @@ class ClavisItemsController < ApplicationController
   end
 
   def fifty_years
-    @clavis_items=ClavisItem.fifty_years
+    @clavis_items=ClavisItem.fifty_years(params)
   end
 
 end

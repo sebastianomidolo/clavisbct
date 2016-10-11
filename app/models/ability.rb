@@ -70,6 +70,10 @@ class Ability
       can :manage, ClavisItem
     end
 
+    if user.role?('clavis_item_search')
+      can [:search,:index], ClavisItem
+    end
+
     if user.role?('clavis_loan_goethe')
       can :view_goethe_loans, ClavisLoan
     end

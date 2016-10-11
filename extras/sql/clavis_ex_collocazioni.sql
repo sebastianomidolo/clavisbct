@@ -15,7 +15,7 @@ INSERT INTO clavis.item(
    )
    (
     select
-     manifestation_id,-3,owner_library_id,inventory_serie_id,inventory_number,excollocazione,
+     manifestation_id,-3,owner_library_id,inventory_serie_id,inventory_number*-1,excollocazione,
      '[Nuova collocazione => ' ||
     public.compact_collocation(item."section",item.collocation,item.specification,
          item.sequence1,item.sequence2) || '] ' || title,item_media,issue_number,item_icon,
