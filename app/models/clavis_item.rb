@@ -293,18 +293,28 @@ class ClavisItem < ActiveRecord::Base
     elenco=[]
     res.each do |r|
       catena = r['collocazione'].split('.')[2]
-      primo,ultimo=catena.split('-')
-      if !ultimo.nil?
-        # puts "range: da #{primo} a #{ultimo}"
-        catena=catena.to_i
-        ultimo=ultimo.to_i
-        while catena < ultimo do
-          elenco << catena
-          catena += 1
+
+      numeri=catena.split('-')
+      if numeri.size>1
+        # puts "numeri: #{numeri} (#{numeri.size})  --- catena #{catena}"
+        if numeri.size==2
+          primo =numeri.first.to_i
+          ultimo=numeri.last.to_i
+          # puts "range: da #{primo} a #{ultimo}"
+          while primo <= ultimo do
+            elenco << primo
+            primo += 1
+          end
+        else
+          # tipo "216.F.4-5-6"
+          numeri.each do |n|
+            elenco << n.to_i
+            catena = n.to_i
+          end
         end
+      else
+        elenco << catena.to_i
       end
-      # puts catena
-      elenco << catena.to_i
     end
 
     cnt=0
