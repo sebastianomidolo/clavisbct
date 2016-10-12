@@ -282,4 +282,84 @@ class ClavisItem < ActiveRecord::Base
     ClavisItem.find_by_sql(sql)
   end
 
+  def ClavisItem.missing_numbers(scaffale, palchetto)
+    return [] if scaffale.class!=Fixnum
+    filtro = "^#{scaffale}\\.#{palchetto}\\."
+    sql=%Q{SELECT collocazione FROM clavis.collocazioni c JOIN clavis.item i USING(item_id)
+        WHERE i.owner_library_id=2 AND collocazione ~ #{ClavisItem.connection.quote(filtro)}
+        ORDER BY espandi_collocazione(collocazione);}
+    res=ClavisItem.connection.execute(sql).to_a
+
+    elenco=[]
+    res.each do |r|
+      catena = r['collocazione'].split('.')[2]
+      primo,ultimo=catena.split('-')
+      if !ultimo.nil?
+        # puts "range: da #{primo} a #{ultimo}"
+        catena=catena.to_i
+        ultimo=ultimo.to_i
+        while catena < ultimo do
+          elenco << catena
+          catena += 1
+        end
+      end
+      # puts catena
+      elenco << catena.to_i
+    end
+
+    cnt=0
+    res=[]
+    elenco.each do |catena|
+      # catena = r['collocazione'].split('.')[2].to_i
+      # puts "Collocazione: #{r['collocazione']}"
+      while cnt < catena-1 do
+        cnt += 1
+        res << cnt
+      end
+      # puts "catena: #{catena} ; lastnum: #{lastnum} - cnt=#{cnt}"
+      cnt = catena
+    end
+    ClavisItem.compatta_lista_numeri(res)
+  end
+
+  def ClavisItem.compatta_lista_numeri(lista)
+    prec=lista.shift
+    res=[]
+    inizio_range=fine_range=nil
+    lista.each do |i|
+      if (i - prec) == 1
+        inizio_range=prec if inizio_range.nil?
+        fine_range=i
+        # puts "range da #{prec} a #{i}"
+      else
+        # puts "Salto di numero da #{prec} a #{i}"
+        if !inizio_range.nil?
+          # puts "sono preceduto da un range, da #{inizio_range} a #{fine_range}"
+          if fine_range-inizio_range==1
+            res << inizio_range
+            res << fine_range
+          else
+            res << "#{inizio_range}-#{fine_range}"
+          end
+          inizio_range=fine_range=nil
+        else
+          res << prec
+        end
+      end
+      prec=i
+    end
+    # puts "Uscito dal loop: #{prec} (#{inizio_range}-#{fine_range})"
+    if inizio_range.nil?
+      res << prec
+    else
+      if fine_range-inizio_range==1
+        res << inizio_range
+        res << fine_range
+      else
+        res << "#{inizio_range}-#{fine_range}"
+      end
+    end
+    res.compact
+  end
+  
 end

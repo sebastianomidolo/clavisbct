@@ -1,5 +1,6 @@
 <%= render :partial => 'searchform' if params[:nosearchform].blank? %>
 
 <% content_tag(:div, @sql_conditions, class: 'panel panel-success') %>
+<%= content_tag(:div, clavis_items_missing_numbers(@clavis_item.collocation)) %>
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%= clavis_items_shortlist(@clavis_items) %>

@@ -260,4 +260,13 @@ module ClavisItemsHelper
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
+  def clavis_items_missing_numbers(collocazione)
+    return '' if collocazione.blank?
+    scaffale,palchetto=collocazione.split('.')
+    return '' if palchetto.nil? or scaffale.to_i == 0
+    nc=ClavisItem.missing_numbers(scaffale.to_i,palchetto.upcase)
+    return '' if nc.size==0
+    "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nc.join(', ')}".html_safe
+  end
+
 end
