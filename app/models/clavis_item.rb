@@ -294,6 +294,7 @@ class ClavisItem < ActiveRecord::Base
     res.each do |r|
       catena = r['collocazione'].split('.')[2]
 
+      next if catena.nil?
       numeri=catena.split('-')
       if numeri.size>1
         # puts "numeri: #{numeri} (#{numeri.size})  --- catena #{catena}"

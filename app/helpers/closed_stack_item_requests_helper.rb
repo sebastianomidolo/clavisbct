@@ -18,7 +18,7 @@ module ClosedStackItemRequestsHelper
     return '' if res == []
     # <h3 class="pending"><i class="fa fa-clock-o"></i> Prestiti in elaborazione</h3>
                            
-    content_tag(:h3, %Q{<i class="fa fa-print" aria-hidden="true"></i> Richieste a magazzino}.html_safe, class:'pending') +
+    content_tag(:h3, %Q{<i id="print_request_tag" class="fa fa-print" aria-hidden="true"></i> Richieste a magazzino}.html_safe, class:'pending') +
       content_tag(:table, res.join.html_safe, class:'table text-success')
   end
 end

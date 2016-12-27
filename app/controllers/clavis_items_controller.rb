@@ -1,3 +1,4 @@
+# coding: utf-8
 class ClavisItemsController < ApplicationController
   before_filter :authenticate_user!, only: 'showxxx'
   load_and_authorize_resource only: [:index,:ricollocazioni]
@@ -232,7 +233,8 @@ class ClavisItemsController < ApplicationController
   end
 
   def closed_stack_item_request
-    headers['Access-Control-Allow-Origin'] = "*"
+    # headers['Access-Control-Allow-Origin'] = "*"
+    headers['Access-Control-Allow-Origin'] = "http://bct.comperio.it"
     cm=ClavisManifestation.find(params[:manifestation_id])
     patron=ClavisPatron.find_by_opac_username(params[:dng_user])
     dng_session=DngSession.find_by_params_and_request(params,request)
@@ -247,14 +249,18 @@ class ClavisItemsController < ApplicationController
     else
       item=ClavisItem.find_by_home_library_id_and_inventory_serie_id_and_inventory_number(library_id,s,i)
     end
-    logger.warn("richiesta_a_magazzino #{cm.title}")
-    logger.warn("richiesta_a_magazzino #{patron.lastname}")
-    logger.warn("richiesta_a_magazzino #{patron.opac_username}")
-    logger.warn("richiesta_a_magazzino #{dng_session.inspect}")
-    logger.warn("richiesta_a_magazzino #{item.id}")
-    logger.warn("richiesta_a_magazzino #{item.title}")
-    ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
-    render json:{status:'ok', requests:ClosedStackItemRequest.count}
+    if patron.closed_stack_item_requests.collect {|r| r.item_id}.include?(item.id)
+      render json:{status:'presente', msg:"Esemplare precedentemente già richiesto"}
+    else
+      logger.warn("richiesta_a_magazzino #{cm.title}")
+      logger.warn("richiesta_a_magazzino #{patron.lastname}")
+      logger.warn("richiesta_a_magazzino #{patron.opac_username}")
+      logger.warn("richiesta_a_magazzino #{dng_session.inspect}")
+      logger.warn("richiesta_a_magazzino #{item.id}")
+      logger.warn("richiesta_a_magazzino #{item.title}")
+      ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
+      render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta presa in carico'}
+    end
   end
 
   def fifty_years

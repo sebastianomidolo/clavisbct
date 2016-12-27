@@ -108,7 +108,8 @@ class ClavisPatron < ActiveRecord::Base
 
   def closed_stack_item_requests
     time_limit = "request_time-now() > interval '60 minutes ago'"
-    sql=%Q{SET timezone to 'UTC'; SELECT DISTINCT ir.* FROM closed_stack_item_requests ir
+    ActiveRecord::Base.connection.execute("SET timezone to 'UTC'")
+    sql=%Q{SELECT DISTINCT ir.* FROM closed_stack_item_requests ir
         JOIN dng_sessions s ON(ir.dng_session_id=s.id)
               WHERE #{time_limit} ORDER BY request_time;}
     ClosedStackItemRequest.find_by_sql(sql)

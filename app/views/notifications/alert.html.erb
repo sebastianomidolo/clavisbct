@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+  </head>
+  <body>
+    <h1>Messaggio di posta elettronica generato automaticamente da ClavisBCT</h1>
+
+    <p>Timestamp invio: <%= content_tag(:b, Time.now) %></p>
+
+    <h2>Elenco di titoli a caso</h2>
+    <% @talking_books.each do |tb| %>
+     <%= talking_book_show_record(tb) %>
+    <% end %>
+
+    <p>
+      Fine elenco
+    </p>
+
+
+    
+    <em>Non rispondere a questa email, è una prova</em>
+  </body>
+</html>

@@ -29,6 +29,10 @@ psql -c "DROP SCHEMA bm_audiovisivi CASCADE" clavisbct_development informhop
 pg_dump -n bm_audiovisivi -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA bm_letteratura CASCADE" clavisbct_development informhop
 pg_dump -n bm_letteratura -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+psql -c "DROP SCHEMA bm_periodici CASCADE" clavisbct_development informhop
+pg_dump -n bm_periodici -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+psql -c "DROP SCHEMA bm_periodici_old CASCADE" clavisbct_development informhop
+pg_dump -n bm_periodici_old -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA cr_attrezzature CASCADE" clavisbct_development informhop
 pg_dump -n cr_attrezzature -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA cr_acquisti CASCADE" clavisbct_development informhop
