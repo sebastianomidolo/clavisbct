@@ -7,6 +7,11 @@ class ClavisManifestationsController < ApplicationController
   def index
   end
 
+  def bid_duplicati
+    sql=%Q{select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid}
+    @records=ActiveRecord::Base.connection.execute(sql)
+  end
+
   def attachments_list
     headers['Access-Control-Allow-Origin'] = "*"
     ids=params[:m]
