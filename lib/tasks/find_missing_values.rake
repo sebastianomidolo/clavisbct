@@ -245,10 +245,10 @@ task :find_missing_values => :environment do
   # http://bctdoc.comperio.it/issues/191
   trova_numeri.call('CSP',677,1)
 
-  # Trova bid duplicati
-  cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d clavisbct_development informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
-  puts cmd
-  Kernel.system(cmd)
+  # Trova bid duplicati (18 ottobre 2016: spostato in ClavisManifestationsController#bid_duplicati)
+  # cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d clavisbct_development informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
+  # puts cmd
+  # Kernel.system(cmd)
 
 
   # Trova inventari duplicati (esclude i periodici e l'inventario 0 (zero)
