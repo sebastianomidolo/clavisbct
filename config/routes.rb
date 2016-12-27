@@ -149,6 +149,7 @@ Clavisbct::Application.routes.draw do
       get 'shortlist'
       get 'attachments_list'
       get 'libriparlati_con_audio'
+      get 'bid_duplicati'
     end
   end
 

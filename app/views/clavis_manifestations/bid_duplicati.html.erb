@@ -1,0 +1,10 @@
+<ol>
+<% @records.each do |r| %>
+  <%=
+     lnk="http://sbct.comperio.it/index.php?page=Catalog.RecordList&start=0&sort=&simplebid=#{r['bid']}"
+     content_tag(:li, link_to(r['bid'],lnk,target:'_blank'))
+  %>
+<% end %>
+</ol>
+
+
