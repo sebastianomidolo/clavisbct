@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Inventario:</b>
+  <%= @work_station.id %>
+</p>
+
+<p>
+  <b>Sede:</b>
+  <%= @work_station.clavis_library.description %>
+</p>
+
+<p>
+  <b>Architettura:</b>
+  <%= "#{@work_station.processor} bit" %>
+</p>
+
+<p>
+  <b>Ubicazione:</b>
+  <%= @work_station.location %>
+</p>
+
+
+<%= link_to 'Edit', edit_work_station_path(@work_station) %> |
+<%= link_to 'Back', work_stations_path %>
+
+
+<%= content_tag(:pre, @work_station.print_config) %>
+

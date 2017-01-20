@@ -47,4 +47,6 @@ Pagina di servizio a uso interno delle BCT
 
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 
+  <%= content_tag(:li, link_to('Postazioni OPAC', work_stations_path)) if can? :manage, WorkStation %>
+  
 </ul>

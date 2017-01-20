@@ -1,0 +1,29 @@
+<h2>Elenco postazioni Opac</h2>
+
+<table>
+  <tr>
+    <th>Inventario</th>
+    <th>Biblioteca</th>
+    <th>Architettura</th>
+    <th>Ubicazione</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @work_stations.each do |work_station| %>
+  <tr>
+    <td><%= work_station.id %></td>
+    <td><%= work_station.clavis_library.shortlabel %></td>
+    <td><%= work_station.processor %></td>
+    <td><%= work_station.location %></td>
+    <td><%= link_to 'Show', work_station %></td>
+    <td><%= link_to 'Edit', edit_work_station_path(work_station) %></td>
+    <td><%= link_to 'Destroy', work_station, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Work station', new_work_station_path %>

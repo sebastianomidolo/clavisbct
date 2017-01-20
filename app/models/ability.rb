@@ -82,5 +82,9 @@ class Ability
       can :manage, ClosedStackItemRequest
     end
 
+    if user.role?('work_station_manager')
+      can :manage, WorkStation
+    end
+
   end
 end

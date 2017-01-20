@@ -1,0 +1,16 @@
+<%= simple_form_for(@work_station) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :id, label:'Postazione numero', hint:"Numero d'inventario della postazione senza zero iniziale"  %>
+    <%= f.association :clavis_library, collection: ClavisItem.owner_library, hint: 'Biblioteca', include_blank: true, label: false %>
+    <%= f.input :processor, collection: [['32 bit', '32'] ,['64 bid', '64']], label:'Architettura', as: :radio_buttons %>
+
+    
+    <%= f.input :location %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit %>
+  </div>
+<% end %>

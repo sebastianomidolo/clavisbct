@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20160812091407) do
+ActiveRecord::Schema.define(:version => 20161227092551) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -376,6 +376,10 @@ ActiveRecord::Schema.define(:version => 20160812091407) do
 
   add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
 
+  create_table "sequenza_numeri", :id => false, :force => true do |t|
+    t.integer "id"
+  end
+
   create_table "serials_admin_table", :force => true do |t|
     t.integer "anno_fornitura"
     t.text    "titolo"
@@ -523,5 +527,11 @@ ActiveRecord::Schema.define(:version => 20160812091407) do
 
   add_index "users", ["email"], :name => "index_users_on_email", :unique => true
   add_index "users", ["reset_password_token"], :name => "index_users_on_reset_password_token", :unique => true
+
+  create_table "work_stations", :force => true do |t|
+    t.integer "clavis_library_id"
+    t.string  "processor",         :limit => 2
+    t.string  "location",          :limit => 80
+  end
 
 end

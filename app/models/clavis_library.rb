@@ -4,6 +4,7 @@ class ClavisLibrary < ActiveRecord::Base
 
   has_many :owned_items, class_name: 'ClavisItem', foreign_key: 'owner_library_id'
   has_many :ordini, foreign_key: 'library_id'
+  has_many :timetables, class_name: 'ClavisLibraryTimetable', foreign_key: 'library_id'
   has_many :containers, foreign_key: 'library_id'
 
   def to_label
@@ -15,6 +16,11 @@ class ClavisLibrary < ActiveRecord::Base
 
   def clavis_url
     ClavisLibrary.clavis_url(self.id)
+  end
+
+  def week_timetable
+    date  = Date.parse('Monday')
+    self.timetables.where("timetable_day>='#{date.strftime('%F')}'").limit(7).order('timetable_day')
   end
 
   def ClavisLibrary.clavis_url(id)
