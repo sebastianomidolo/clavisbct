@@ -1,0 +1,6 @@
+<ul>
+  <li><%= link_to('Vedi lista ordinata per Prezzo/val.inv',controllo_valori_inventariali_clavis_items_path({:year=>params[:year],:order=>'inventory_value desc'})) %></li>
+  <li><%= link_to('Vedi lista ordinata per Importo',controllo_valori_inventariali_clavis_items_path({:year=>params[:year],:order=>'currency_value desc'})) %></li>
+</ul>
+
+<%= content_tag(:div, clavis_items_valori_inventariali(@clavis_items)) %>

@@ -260,6 +260,31 @@ module ClavisItemsHelper
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
+  def clavis_items_valori_inventariali(records)
+    res=[]
+    header=content_tag(:tr, content_tag(:td, 'Prezzo/val.inv.') +
+                            content_tag(:td, 'Sconto') +
+                            content_tag(:td, 'Importo') +
+                            content_tag(:td, 'Data inventario') +
+                            content_tag(:td, 'Creato da') +
+                          content_tag(:td, 'Titolo'))
+    res << header
+    records.each do |r|
+      lnk_ci=link_to("#{r.title[0..20]}", r.clavis_url(:edit), :target=>'_blank')
+      res << content_tag(:tr,
+                         content_tag(:td, r.inventory_value) +
+                         content_tag(:td, r.discount_value) +
+                         content_tag(:td, r.currency_value) +
+                         content_tag(:td, r.inventory_date) +
+                         content_tag(:td, r.created_by) +
+                         content_tag(:td, lnk_ci))
+    end
+    res << header
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
+
   def clavis_items_missing_numbers(collocazione)
     return '' if collocazione.blank?
     scaffale,palchetto=collocazione.split('.')

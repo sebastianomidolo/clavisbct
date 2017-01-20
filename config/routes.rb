@@ -1,5 +1,8 @@
 Clavisbct::Application.routes.draw do
 
+  resources :work_stations
+
+
   resources :bio_iconografico_topics
 
 
@@ -170,6 +173,7 @@ Clavisbct::Application.routes.draw do
       get 'ricollocazioni'
       post 'closed_stack_item_request'
       get 'fifty_years'
+      get 'controllo_valori_inventariali'
     end
   end
 

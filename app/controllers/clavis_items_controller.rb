@@ -267,5 +267,9 @@ class ClavisItemsController < ApplicationController
     @clavis_items=ClavisItem.fifty_years(params)
   end
 
+  def controllo_valori_inventariali
+    @clavis_items=ClavisItem.controllo_valori_inventariali(params)
+  end
+
 end
 

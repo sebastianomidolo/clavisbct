@@ -282,6 +282,32 @@ class ClavisItem < ActiveRecord::Base
     ClavisItem.find_by_sql(sql)
   end
 
+  def ClavisItem.controllo_valori_inventariali(params)
+    if params[:year].blank?
+      filter= ''
+    else
+      filter="inventory_date between '#{params[:year]}-01-1' and '#{params[:year]}-12-31' AND"
+    end
+    library_id = params[:owner_library_id].blank? ? 2 : params[:owner_library_id].to_i
+    order = params[:order].blank? ? 'currency_value' : params[:order]
+    sql=%Q{
+select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,currency_value,discount_value,
+  round(currency_value-currency_value*(discount_value/100),2) as "Prezzo scontato"
+ from clavis.item
+  where
+   #{filter}
+    (inventory_value >0 or currency_value>0) and
+   manifestation_id!=0 and item_source in ('C','E','F','O')
+   and item_media in ('A','B','F','H','N','P','Q','R')
+   -- and    (inventory_value>90 or currency_value>90)
+   and inventory_value!=currency_value
+ and round(currency_value-currency_value*(discount_value/100),2)!=inventory_value
+ --   order by inventory_value desc
+    order by #{order}
+   limit 800}
+    ClavisItem.find_by_sql(sql)
+  end
+
   def ClavisItem.missing_numbers(scaffale, palchetto)
     return [] if scaffale.class!=Fixnum
     filtro = "^#{scaffale}\\.#{palchetto}\\."
