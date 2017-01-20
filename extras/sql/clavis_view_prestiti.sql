@@ -38,3 +38,64 @@ from clavis.view_prestiti
    specification, sequence1, sequence2;
 */
 
+CREATE OR REPLACE VIEW clavis.view_prestiti_sciutti AS
+SELECT
+ l.loan_id,
+ l.loan_status,l.manifestation_id as loan_mid,
+ l.item_id,
+ l.class_code,
+ l.external_library_id,
+ item_owner_library_id,item_home_library_id,from_library,to_library,end_library,
+ l.loan_date_begin,
+ l.loan_date_end,
+ l.due_date,
+ age(l.loan_date_end,l.loan_date_begin) as durata,
+ l.renew_count,
+ ci.item_media,
+ p.last_seen,
+ p.patron_id
+ FROM
+ clavis.loan l
+ join clavis.item ci using(item_id)
+ left join clavis.patron p on(l.patron_id=p.patron_id);
+ 
+	  
+CREATE TABLE clavis.tobi_loan AS
+ SELECT * FROM clavis.view_prestiti_sciutti
+  WHERE loan_date_begin notnull and due_date notnull
+ UNION
+ SELECT * FROM clavis.view_prestiti_sciutti
+  WHERE age(loan_date_end,loan_date_begin) > interval '0 seconds'
+ UNION
+  SELECT * FROM clavis.view_prestiti_sciutti
+ WHERE loan_date_begin is null;
+
+ALTER TABLE clavis.tobi_loan add primary key (loan_id);
+
+
+CREATE OR REPLACE VIEW clavis.view_export_prestiti_sciutti AS
+SELECT
+loan_id,loan_status,loan_mid,item_id,class_code,external_library_id,item_owner_library_id,
+item_home_library_id,from_library,to_library,end_library,loan_date_begin,loan_date_end,due_date,
+durata,renew_count,item_media,last_seen,patron_id
+ FROM clavis.tobi_loan
+ WHERE loan_status!='H';
+
+
+/*
+ * Comando da dare a mano per estrarre i dati necessari a Fabrizio Sciutti per le statistiche annuali 
+
+\o /home/storage/preesistente/static/stat/2016_prestiti_bct.csv
+\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2015-11-01' AND '2015-12-31' ORDER BY loan_id) TO stdout csv header
+\o
+
+\o /home/storage/preesistente/static/stat/tobi_loan.csv
+\copy (select * from clavis.tobi_loan) TO stdout csv header;
+\o
+
+
+\o /home/storage/preesistente/static/stat/esemplari.csv
+\copy (select * from clavis.item where loan_status notnull) TO stdout csv header;
+\o
+
+*/    
