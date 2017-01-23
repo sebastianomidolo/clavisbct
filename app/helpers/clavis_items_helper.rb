@@ -247,14 +247,20 @@ module ClavisItemsHelper
 
   def clavis_items_simple_list(records)
     res=[]
+    res << content_tag(:tr, content_tag(:td, 'data') +
+                            content_tag(:td, 'rist') +
+                            content_tag(:td, 'titolo') +
+                            content_tag(:td, 'item') +
+                            content_tag(:td, 'volume_text'))
     records.each do |r|
       lnk_cm=link_to(r.title, ClavisManifestation.clavis_url(r.manifestation_id, :show), :target=>'_blank')
       lnk_ci=link_to("item #{r.item_id}", r.clavis_url(:edit), :target=>'_blank')
 
       res << content_tag(:tr, content_tag(:td, r.edition_date) +
-                         content_tag(:td, lnk_cm) +
-                         content_tag(:td, lnk_ci) +
-                         content_tag(:td, r.volume_text))
+                              content_tag(:td, r.reprint) +
+                              content_tag(:td, lnk_cm) +
+                              content_tag(:td, lnk_ci) +
+                              content_tag(:td, r.volume_text))
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')

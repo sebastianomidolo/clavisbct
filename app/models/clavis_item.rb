@@ -272,7 +272,7 @@ class ClavisItem < ActiveRecord::Base
 
   def ClavisItem.fifty_years(params)
     library_id = params[:owner_library_id].blank? ? 2 : params[:owner_library_id].to_i
-    sql=%Q{SELECT ci.barcode,ci.manifestation_id,ci.item_id,cm.edition_date,ci.volume_text, substr(ci.title, 1, 80) as title
+    sql=%Q{SELECT ci.reprint,ci.barcode,ci.manifestation_id,ci.item_id,cm.edition_date,ci.volume_text, substr(ci.title, 1, 80) as title
  FROM clavis.item ci join clavis.manifestation cm using(manifestation_id)
  WHERE
   edition_date between 1500 and date_part('year', now())-50 and loan_class='B' and
