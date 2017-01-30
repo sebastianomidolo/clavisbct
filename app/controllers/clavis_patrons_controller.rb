@@ -1,4 +1,6 @@
 class ClavisPatronsController < ApplicationController
+  load_and_authorize_resource only: [:wrong_contacts]
+
   def user_checkin_notification
     user=params[:user]
     opac_secret=params[:pass]
@@ -21,5 +23,8 @@ class ClavisPatronsController < ApplicationController
     # @msg="#{user} - #{opac_secret} - #{ip}"
 
     render :text=>@msg, :content_type=>'text/plain'
+  end
+
+  def wrong_contacts
   end
 end

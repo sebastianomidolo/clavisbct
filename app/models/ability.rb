@@ -74,6 +74,10 @@ class Ability
       can [:search,:index], ClavisItem
     end
 
+    if user.role?('clavis_patron_wrong_contacts')
+      can [:wrong_contacts], ClavisPatron
+    end
+
     if user.role?('clavis_loan_goethe')
       can :view_goethe_loans, ClavisLoan
     end

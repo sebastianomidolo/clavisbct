@@ -1,0 +1,19 @@
+
+<%
+   sql="select cp.patron_id,cc.contact_value as email,cp.name,cp.lastname from clavis.patron cp join clavis.contact cc using(patron_id) where cc.contact_type='X' order by lower(cc.contact_value);"
+%>
+
+
+<ol>
+<% ActiveRecord::Base.connection.execute(sql).each do |r| %>
+
+
+<% u="http://sbct.comperio.it/index.php?page=Circulation.PatronPage&id=#{r['patron_id']}" %>
+
+
+<%= content_tag(:li, link_to(r['email'],u,target:'_new') + " (#{r['name']} #{r['lastname']})".html_safe) %>
+
+<% end %>
+</ol>
+
+

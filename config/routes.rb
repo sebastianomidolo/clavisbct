@@ -226,5 +226,7 @@ Clavisbct::Application.routes.draw do
 
   match '/cipes' => 'cipes_cedo_records#index'
 
+  match '/cp_wc' => 'clavis_patrons#wrong_contacts'
+  
   root :to => 'home#index'
 end
