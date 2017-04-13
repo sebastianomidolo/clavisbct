@@ -129,6 +129,24 @@ task :find_missing_values => :environment do
     end
   end
 
+
+  def trova_salti_dvd
+    sql=%Q{
+     create temp table buchi_dvd as select item_id,collocation,
+       split_part(collocation, '.', 1) AS sigla, 
+       split_part(replace(collocation, '/', '.'), '.', 2) AS catena
+     from clavis.item
+     where collocation like 'DVD.%' and owner_library_id=2;
+     delete from buchi_dvd  where catena ~* '[a-z]';
+     alter table buchi_dvd alter COLUMN catena type integer using catena::integer;
+     with ids as (select catena from generate_series(1,(select max(catena) from buchi_dvd)) as catena) select catena from ids left join buchi_dvd b using(catena) where b.catena is null;}
+    cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/02_Centrale_DVD_buchi_collocazione.html -q -d clavisbct_development informhop --command "#{sql}"}
+    cmd.gsub!("\n", ' ')
+    puts cmd
+    Kernel.system(cmd)
+  end
+  trova_salti_dvd
+
   # trova_numeri.call('V',2,280000)
   # exit
 
