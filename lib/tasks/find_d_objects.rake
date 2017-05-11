@@ -1,3 +1,4 @@
+# coding: utf-8
 # -*- mode: ruby;-*-
 
 # Esempio. In development:
@@ -5,10 +6,13 @@
 # In production:
 # RAILS_ENV=production  rake find_d_objects
 
-desc 'Metadata import from filesystem'
+desc 'Metadata import from filesystem (non più usato)'
 
 task :find_d_objects => :environment do
 
+  puts "Non usare"
+  exit
+  
   tempdir = File.join(Rails.root.to_s, 'tmp')
   tf = Tempfile.new("import",tempdir)
   tempfile=tf.path
@@ -29,8 +33,8 @@ task :find_d_objects => :environment do
        ]
   # Limito l'esecuzione alla dir del libro parlato:
   dirs=[
-        'libroparlato',
-       ]
+    'libroparlato',
+  ]
 
   dirs.each do |folder|
     fdout.write(%Q{DELETE FROM public.d_objects WHERE filename LIKE '#{folder}/%';

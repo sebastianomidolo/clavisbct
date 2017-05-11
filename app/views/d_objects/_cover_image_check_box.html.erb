@@ -1,0 +1,17 @@
+
+<%
+   if ['image/jpeg', 'image/tiff', 'image/png'].include?(@d_object.mime_type.split(';').first)
+%>
+<%= content_tag(:label, check_box_tag('set_as_cover_image_check', 1, @d_object.is_cover_image?) + " Imposta come immagine di copertina", class:'btn btn-primary') %>
+  
+<script>
+ jQuery('#set_as_cover_image_check').change(function(){
+  jQuery.get('/d_objects/<%= @d_object.id -%>/set_as_cover_image.js?checked='+jQuery(this).prop('checked'), function(data,status){
+ if(status == 'success'){
+  myvar=jQuery(this);
+    }
+   })
+  })
+</script>
+
+<% end %>

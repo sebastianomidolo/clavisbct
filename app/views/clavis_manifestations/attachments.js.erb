@@ -1,7 +1,8 @@
 <% title,content=clavis_manifestation_show_attachments(@clavis_manifestation,params,request,@dng_session) %>
 <% if !title.nil? %>
 jQuery("#attachments_tab").hide();
-jQuery('div',"#attachments").html('<%= content %>');
+jQuery('div',"#attachments").html('<%= j content.html_safe -%>');
+// jQuery('div',"#attachments").html('<%= "test" -%>');
 jQuery('a','#attachments_tab').text('<%= title %>');
 jQuery('#attachments').prev().find('a').text('<%= title %>');
 jQuery('a','#attachments_tab').attr('title',"Accedi all'audio mp3");

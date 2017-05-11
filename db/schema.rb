@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20161227092551) do
+ActiveRecord::Schema.define(:version => 20170327114134) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -212,20 +212,32 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
   add_index "containers", ["label"], :name => "containers_label_idx", :unique => true
 
   create_table "d_objects", :force => true do |t|
-    t.string   "filename",        :limit => 2048
+    t.string   "filename",            :limit => 2048
     t.xml      "tags"
-    t.decimal  "bfilesize",                       :precision => 15, :scale => 0
-    t.string   "mime_type",       :limit => 96
+    t.decimal  "bfilesize",                           :precision => 15, :scale => 0
+    t.string   "mime_type",           :limit => 96
     t.datetime "f_ctime"
     t.datetime "f_mtime"
     t.datetime "f_atime"
-    t.integer  "access_right_id", :limit => 2
-    t.string   "type",            :limit => 32
+    t.integer  "access_right_id",     :limit => 2
+    t.string   "type",                :limit => 32
+    t.integer  "d_objects_folder_id"
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
   add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
   add_index "d_objects", ["type"], :name => "index_d_objects_on_type"
+
+  create_table "d_objects_d_objects_folders", :id => false, :force => true do |t|
+    t.integer "d_objects_folder_id", :null => false
+    t.integer "d_object_id",         :null => false
+  end
+
+  create_table "d_objects_folders", :force => true do |t|
+    t.text "name", :null => false
+  end
+
+  add_index "d_objects_folders", ["name"], :name => "d_objects_folders_idx_name", :unique => true
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
     t.integer "owner_library_id"
@@ -258,6 +270,11 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
     t.string   "client_ip",  :limit => 128
     t.datetime "login_time"
     t.integer  "patron_id",                 :null => false
+  end
+
+  create_table "email_verificate", :id => false, :force => true do |t|
+    t.string "email", :limit => 128
+    t.string "stato", :limit => 24
   end
 
   create_table "excel_files", :force => true do |t|
@@ -295,6 +312,10 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
 
   add_index "import_libroparlato_colloc", ["collocation"], :name => "import_libroparlato_colloc_collocation_idx"
 
+  create_table "iscritti_newsletter", :id => false, :force => true do |t|
+    t.text "email"
+  end
+
   create_table "kardex_adabas", :force => true do |t|
     t.text    "barcode"
     t.string  "collocazione",  :limit => 160
@@ -315,6 +336,11 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
   end
 
   add_index "kardex_adabas", ["bid"], :name => "fascicoli2_bid_idx"
+
+  create_table "manifestations_d_objects", :id => false, :force => true do |t|
+    t.integer "d_object_id"
+    t.text    "manifestation_id"
+  end
 
   create_table "musicbrainz_artists_clavis_authorities", :id => false, :force => true do |t|
     t.string  "gid",          :limit => nil
@@ -428,6 +454,11 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
 
+  create_table "temp_d_objects_manifestation_id", :id => false, :force => true do |t|
+    t.integer "id"
+    t.string  "manifestation_id", :limit => nil
+  end
+
   create_table "temp_import_areaonlus", :id => false, :force => true do |t|
     t.text    "oid"
     t.text    "isbn"
@@ -532,6 +563,7 @@ ActiveRecord::Schema.define(:version => 20161227092551) do
     t.integer "clavis_library_id"
     t.string  "processor",         :limit => 2
     t.string  "location",          :limit => 80
+    t.integer "monitor_id"
   end
 
 end

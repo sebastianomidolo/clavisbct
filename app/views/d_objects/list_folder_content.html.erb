@@ -1,0 +1,11 @@
+<%= will_paginate @d_objects, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:h3,
+ "#{@d_objects.total_entries} files contenuti nella cartella del file <b>#{@d_object.filename}</b> - id file: #{@d_object.id}".html_safe)
+%>
+
+<%= d_objects_view(@d_objects) %>
+
+<%= button_to "Converti in PDF", makepdf_d_object_path(@d_object,page:params[:page]) %>
+
+<%= button_to "Converti in PDF (senza logo BCT)", makepdf_d_object_path(@d_object,nologo:true,page:params[:page]) %>

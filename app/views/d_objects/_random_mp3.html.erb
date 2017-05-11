@@ -5,7 +5,7 @@
   if @d_object.audioclip_exists?(cnt)
     title=@guess ? "<b>?</b>" : track['title']
     if @guess
-    lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{title}".html_safe, %Q{http://#{request.host_with_port}#{d_object_path(@d_object, format: 'mp3', t: cnt)}}))
+    lista << content_tag(:li, link_to("#{track[:attributes]['position']}. #{title}".html_safe, %Q{http://#{request.host_with_port}#{d_object_path(@d_object, format: 'mp3', t: cnt)}},class:'audio_track',style:'display:none'))
     end
   else
     lista << content_tag(:li, "#{track[:attributes]['position']}. #{track['title']}")
@@ -53,11 +53,15 @@
   %>
  </div>
 
+
+
   <% content_tag(:div, clavis_manifestation_opac_preview(@d_object.references.first.attachable)) %>
-  <%= content_tag(:div, attachments_render(@d_object.references.first.attachable.attachments,false)) %>
+  <%= content_tag(:div, attachments_render_old_style(@d_object.references.first.attachable.attachments,false)) %>
 
+<!--
 <script src="http://clavisbct.comperio.it/player.js" type="text/javascript"></script>
-
+-->
+  
  <% end %>
 <% end %>
 

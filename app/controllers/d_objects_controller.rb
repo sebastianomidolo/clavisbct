@@ -2,17 +2,22 @@ require 'RMagick'
 
 class DObjectsController < ApplicationController
   layout 'navbar'
-  before_filter :authenticate_user!, only: [:upload]
+  # before_filter :authenticate_user!, only: [:upload]
+  load_and_authorize_resource only: [:index,:view,:list_folder_content,:makepdf,:upload,:edit,:destroy]
 
 
   def index
     cond=[]
     cond << "mime_type='#{params[:mime_type]}'" if !params[:mime_type].blank?
     cond << "filename ~* #{ActiveRecord::Base.connection.quote(params[:filename])}" if !params[:filename].blank?
-    cond << "tags::text ~* #{ActiveRecord::Base.connection.quote(params[:tags])}" if !params[:tags].blank?
+    if !params[:tags].blank?
+      ts=DObject.connection.quote_string(params[:tags].split.join(' & '))
+      cond << "to_tsvector('simple', tags::text) @@ to_tsquery('simple', '#{ts}')"
+      # cond << "tags::text ~* #{ActiveRecord::Base.connection.quote(params[:tags])}"
+    end
     cond = cond.join(" AND ")
     cond = "false" if cond.blank?
-    order='filename'
+    order='name'
     @d_objects = DObject.paginate(:conditions=>cond,
                                   :page=>params[:page],
                                   :order=>order)
@@ -23,17 +28,103 @@ class DObjectsController < ApplicationController
     end
   end
 
+  def download
+    @d_object=DObject.find(params[:id])
+    send_file(@d_object.filename_with_path, :filename=>File.basename(@d_object.filename), :type=>'application/octet-stream', :disposition => 'inline')
+  end
+
+  def list_folder_content
+    @d_object=DObject.find(params[:id])
+    @d_objects=@d_object.folder_content(params)
+  end
+
+  def makepdf
+    d_object=DObject.find(params[:id])
+    fn=d_object.to_pdf(params)
+    send_file(fn, filename:'temp.pdf', type:'application/pdf', disposition:'inline')
+  end
+
+  def edit
+    if @d_object.tags.blank?
+      @d_object.tags='<r></r>'
+      @d_object.save
+    end
+  end
+
+  def destroy
+    d_object=DObject.find(params[:id])
+    @d_objects_folder=d_object.d_objects_folder
+    d_object.destroy
+    redirect_to d_objects_folder_path(@d_objects_folder)
+  end
+
+  # Imposta come immagine di copertina (sottinteso: del folder che lo contiene)
+  def set_as_cover_image
+    o=DObject.find(params[:id])
+    f=o.d_objects_folder
+    f.write_tags_from_filename if f.tags.nil?
+    if params[:checked]=='true'
+      f.cover_image=o.id
+      f.save if f.changed?
+    else
+      f.cover_image=nil
+      f.set_cover_image
+    end
+  end
+
+  def update
+    @d_object = DObject.find(params[:id])
+    respond_to do |format|
+      if @d_object.update_attributes(params[:d_object])
+        format.html { render :action => "view" }
+      else
+        format.html { render :action => "edit" }
+      end
+    end
+  end
+  
+  def view
+    @d_object = DObject.find(params[:id])
+    @d_objects_folder = @d_object.d_objects_folder
+    respond_to do |format|
+      format.html {}
+      format.jpeg {
+        if @d_object.mime_type.split(';').first=='application/pdf'
+          page = params[:page].blank? ? 1 : params[:page].to_i
+          page = @d_object.pdf_count_pages if page > @d_object.pdf_count_pages
+          img=Magick::Image.read(@d_object.pdf_filename_for_jpeg(page)).first
+        else
+          img=Magick::Image.read(@d_object.filename_with_path).first
+        end
+        img.format='jpeg'
+        if !params[:size].blank?
+          s=params[:size].split('x')
+          if s[1].blank?
+            img.resize_to_fit!(s[0].to_i)
+          else
+            img.resize_to_fit!(s[0].to_i,s[1].to_i)
+          end
+        else
+          # img.resize_to_fit!(300)
+        end
+        # send_file(@d_object.filename_with_path, :filename=>File.basename(@d_object.filename), :type => 'image/jpeg; charset=binary', :disposition => 'inline')
+        send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
+      }
+    end
+  end
+
   def upload
-    @backend=params[:backend]
     if request.method=="POST"
-      if @backend.camelcase.constantize.new.respond_to?('save_new_record')
-        @backend.camelcase.constantize.new.send('save_new_record', params)
+      uploaded_io = params[:filename]
+      if uploaded_io.nil?
+        render :template=>'d_objects/file_non_specificato'
+      else
+        @d_object = DObject.new.save_new_record(params,current_user)
+        render :action=>:edit
       end
     else
       @d_object = DObject.new
-    end
-    if !@backend.blank?
-      render template:"d_objects/#{@backend}_upload"
+      @d_object.d_objects_folder_id=params[:d_objects_folder_id]
     end
   end
 
@@ -44,6 +135,7 @@ class DObjectsController < ApplicationController
     else
       @d_object = DObject.find(params[:id])
     end
+    @d_object.access_right_id=0 if can? :search, DObject
     respond_to do |format|
       format.html {
       }
@@ -82,35 +174,37 @@ class DObjectsController < ApplicationController
 
   def objshow
     @d_object = DObject.find(params[:id])
-    key=Digest::MD5.hexdigest(@d_object.filename)
-    if key!=params[:key]
-      key=Digest::MD5.hexdigest(@d_object.libroparlato_audioclip_filename)
-      if key==params[:key]
-        tmp_id=@d_object.id
-        @d_object = DObject.new(filename: @d_object.libroparlato_audioclip_filename, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary')
-        @d_object.id=tmp_id
+    if !can? :search, DObject
+      key=Digest::MD5.hexdigest(@d_object.filename)
+      if key!=params[:key]
+        key=Digest::MD5.hexdigest(@d_object.libroparlato_audioclip_filename)
+        if key==params[:key]
+          tmp_id=@d_object.id
+          @d_object = DObject.new(filename: @d_object.libroparlato_audioclip_filename, access_right_id: 0, mime_type: 'audio/mpeg; charset=binary')
+          @d_object.id=tmp_id
+        end
       end
-    end
-    if key!=params[:key]
-      render :text=>"error #{request.remote_ip}", :content_type=>'text/plain'
-      return
-    end
-    ack=DngSession.access_control_key(params,request)
-    if ack!=params[:ac]
-      respond_to do |format|
-        format.html {
-          render :template=>'d_objects/show_restricted'
-        }
-        format.mp3 {
-          if @d_object.audioclip_exists?
-            fname=@d_object.libroparlato_audioclip_filename
-          else
-            fname=@d_object.filename_with_path
-          end
-          send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
-        }
+      if key!=params[:key]
+        render :text=>"error #{request.remote_ip}", :content_type=>'text/plain'
+        return
       end
-      return
+      ack=DngSession.access_control_key(params,request)
+      if ack!=params[:ac]
+        respond_to do |format|
+          format.html {
+            render :template=>'d_objects/show_restricted'
+          }
+          format.mp3 {
+            if @d_object.audioclip_exists?
+              fname=@d_object.libroparlato_audioclip_filename
+            else
+              fname=@d_object.filename_with_path
+            end
+            send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
+          }
+        end
+        return
+      end
     end
     log="#{Time.new}|objshow|#{@d_object.id}|#{request.remote_ip}|dng_user=#{params[:dng_user]}"
     logger.warn(log)
@@ -132,7 +226,13 @@ class DObjectsController < ApplicationController
         end
         # img.scale!(0.25)
         # img.resize_to_fit!(300, 300)
-        img.resize_to_fit!(800, 800)
+        
+        if !params[:size].blank?
+          s=params[:size].split('x')
+          img.resize_to_fit!(s[0].to_i)
+        else
+          # img.resize_to_fit!(800, 800)
+        end
         # http://www.imagemagick.org/RMagick/doc/image3.html#watermark
         # img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
         # img=img.watermark(logo,0.1,0.5,Magick::SouthGravity,0,0)
@@ -151,7 +251,6 @@ class DObjectsController < ApplicationController
         # return
         send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
       }
-
     end
   end
 

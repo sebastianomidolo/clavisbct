@@ -120,9 +120,12 @@ class ClavisManifestationsController < ApplicationController
           render :text=>"error #{fname}", :content_type=>'text/plain'
           return
         end
-        ac=DngSession.access_control_key(params,request)
-        if ac.nil? or ac!=params[:ac]
-          render :text=>"Error! (wrong dng_user or dng_session expired)",:content_type=>'text/plain' and return
+        if can? :search, DObject
+        else
+          ac=DngSession.access_control_key(params,request)
+          if ac.nil? or ac!=params[:ac]
+            render :text=>"Error! (wrong dng_user or dng_session expired)",:content_type=>'text/plain' and return
+          end
         end
         pdfdata=File.read(fname)
         send_data(pdfdata,

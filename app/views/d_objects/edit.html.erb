@@ -1,0 +1,12 @@
+<%= content_tag(:p, "Modifica metadati per file #{@d_object.filename}") %>
+
+<% if @d_object.type.blank? %>
+ <%= content_tag(:p, flash[:error]) %>
+ <%= render 'form' %>
+ <%= link_to('[non salvare le modifiche]',view_d_object_path(@d_object)) %>
+<% else %>
+
+<%= content_tag(:h2, "Oggetto di tipo #{@d_object.type} - non modificabile da qui") %>
+
+<% end %> 
+

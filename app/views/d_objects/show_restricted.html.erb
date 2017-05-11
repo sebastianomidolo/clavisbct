@@ -1,6 +1,9 @@
-<%= render :partial=>'searchform' %>
+<% render :partial=>'searchform' %>
 
 <%= content_tag(:div, d_object_show(@d_object)) %>
+
+<% @d_object.access_right_id=0 if can? :search, DObject %>
+<%= content_tag(:div, "access_right_id: #{@d_object.access_right_id}") %>
 
 <% if @d_object.access_right_id==0 %>
  <% cnt=-1; @d_object.pdf_to_jpeg.each do |f| %>
@@ -15,3 +18,4 @@
 <% if can? :manage, DObject %>
 <%= link_to('Carica su Omeka', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>
 <% end %>
+

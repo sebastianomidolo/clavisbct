@@ -5,27 +5,34 @@
 
 <%= will_paginate @d_objects %>
 
-<table>
-  <tr>
-    <th></th>
-    <th></th>
-  </tr>
+<table class="table table-bordered">
+
 
 <% @d_objects.each do |d_object| %>
-  <tr>
-    <%= content_tag(:td, d_object.filename) %>
-    <td><%= link_to 'Show', d_object_md5_link(d_object) %></td>
+<tr>
+  <% mtype = d_object.mime_type.blank? ? '' : d_object.mime_type.split(';').first %>
+  <% if ['image/jpeg', 'image/tiff', 'image/png','application/pdf'].include?(mtype) %>
+  <%= content_tag(:td, link_to(image_tag(view_d_object_path(d_object, format:'jpeg', size:'150x')), view_d_object_path(d_object))) %>
+  <% else %>
+    <%= content_tag(:td, link_to('vedi', view_d_object_path(d_object))) %>
+  <% end %>
+    <%= content_tag(:td, "#{d_object.filename}<br/>[#{d_object.f_mtime}]".html_safe) %>
+    <%= content_tag(:td, "#{number_to_human_size(d_object.bfilesize)}<br/>#{d_object.mime_type}".html_safe) %>
   </tr>
 <% end %>
 </table>
 
-<br />
+<%= link_to('Carica oggetto digitale', upload_d_objects_path) if can? :manage, DObject %>
+| <%= link_to('Cartelle', d_objects_folders_path)%>
 
+
+<% if can?(:manage, DObject) %>
 <%=
 if params[:show_attachments].blank? and params[:attachment_category].blank?
    content_tag(:div, attachments_summary, {style: 'border: 1px solid grey;padding:4px'}) + content_tag(:div, d_objects_summary)
 else
-  content_tag(:div, clavis_manifestations_attachments_summary(params[:attachment_category]))
+   content_tag(:div, clavis_manifestations_attachments_summary(params[:attachment_category]))
 end
 %>
+<% end %>
 

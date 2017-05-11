@@ -1,0 +1,29 @@
+<%= simple_form_for(@d_object) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :x_mid, label:'x_mid', as: 'integer' %>
+    <%= f.input :x_ti, label:'x_ti', as: 'string', input_html: {size: 80} %>
+    <%= f.input :x_au, label:'x_au', as: 'string', input_html: {size: 80} %>
+    <%= f.input :x_an, label:'x_an', as: 'string', input_html: {size: 20} %>
+    <%= f.input :x_pp, label:'x_pp', as: 'string', input_html: {size: 20} %>
+    <%= f.input :x_uid, label:'x_uid', as: 'integer' %>
+    <%= f.input :x_sc, label:'x_sc', as: 'string', input_html: {size: 20} %>
+    <%= f.input :x_dc, label:'x_dc', as: 'string', input_html: {size: 20} %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva modifiche' %>
+  </div>
+<% end %>
+
+<pre>
+  x_mid : manifestation id su Clavis
+  x_ti  : titolo
+  x_au  : autore
+  x_an  : anno pubblicazione
+  x_pp  : numero (estremi) delle pagine/tavole scansionate
+  x_uid : identificativo Utente Clavis che ha ordinato/pagato la scansione
+  x_sc  : scadenza riserva per visualizzazione sull’OPAC (esempio: 6 mesi)
+  x_dc  : data di creazione dei files (aaaa-mm)
+</pre>

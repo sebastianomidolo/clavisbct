@@ -1,4 +1,12 @@
+[objshow]
 <%= content_tag(:div, d_object_show(@d_object)) %>
-<%= content_tag(:div, d_objects_render([@d_object])) %>
-<%= content_tag(:div, rmagick_image_info(@d_object)) %>
+[render]
+<%= content_tag(:div, d_objects_render([@d_object], {size:'400x200'})) %>
+[rmagick - no]
+<%
+   # content_tag(:div, rmagick_image_info(@d_object))
+%>
+[end]
 
+<br/>
+<%= link_to("[Mostra il contenuto della cartella (#{@d_object.d_objects_folder.d_objects.size} files)]", d_objects_folder_path(@d_object.d_objects_folder)) if can? :search, DObject %>

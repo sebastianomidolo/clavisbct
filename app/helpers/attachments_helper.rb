@@ -1,7 +1,9 @@
 module AttachmentsHelper
 
-  def attachments_render(attachments, show_category=true)
+  # Versione vecchio stile, quando ancora non avevo d_objects_folder
+  def attachments_render_old_style(attachments, show_category=true)
     ct =attachments.group_by {|a| a.attachment_category_id}
+    # return "ct.size: #{ct.size} (#{attachments.size})"
     res=[]
 
     ct.each_pair do |category,allegati|
@@ -17,6 +19,7 @@ module AttachmentsHelper
           # res << content_tag(:h3, x.d_object.id)
           dob << x.d_object
         end
+        # return "test category: #{category}"
         if category=='E'
           dob.each do |d_ob|
             lista=d_object_tracklist(d_ob)
@@ -26,7 +29,7 @@ module AttachmentsHelper
             end
           end
         else
-          res << content_tag(:div, d_objects_render(dob))
+          res << content_tag(:div, d_objects_render(dob,:size=>'450x'))
         end
       end
     end

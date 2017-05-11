@@ -1,1 +1,13 @@
-Oh, no, così non funziona caro...
+<h1> AVVISO: NON FUNZIONA PER ORA, NON USARE GRAZIE </H1>
+<h3>Caricamento di oggetto digitale</h3>
+<%=
+   content_tag(:p, content_tag(:b, "Cartella di destinazione: #{@d_object.d_objects_folder.name}")) if !@d_object.d_objects_folder.nil?
+%>
+
+<%= form_tag({action: :upload}, multipart: true) do %>
+ <%= hidden_field_tag :d_objects_folder_id, @d_object.d_objects_folder.id %>
+ <br/><%= file_field_tag 'filename' %>
+  <%= submit_tag 'Salva' %>
+<% end %>
+
+

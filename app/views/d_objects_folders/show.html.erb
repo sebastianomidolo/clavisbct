@@ -1,0 +1,24 @@
+<%= content_tag(:div, d_objects_folder_show_cover_image(@d_objects_folder)) %>
+<%= content_tag(:h3, @d_objects_folder.name) %>
+<%= content_tag(:span, link_to("[Modifica]", edit_d_objects_folder_path(@d_objects_folder))) if can? :edit, DObjectsFolder %>
+|
+<%= content_tag(:span, link_to("[Carica file in questa cartella]", upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
+
+<%= will_paginate @d_objects, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:h3, "#{@d_objects.total_entries} files") %>
+
+<%= d_objects_view(@d_objects) %>
+
+<% if @d_objects.size > 1 %>
+<%= button_to "Converti in PDF", makepdf_d_objects_folder_path(@d_objects_folder,{page:params[:page],per_page:params[:per_page]}) %>
+<%= button_to "Converti in PDF (senza logo BCT)", makepdf_d_objects_folder_path(@d_objects_folder,{nologo:true,page:params[:page],per_page:params[:per_page]}) %>
+
+
+<% else %>
+
+<%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
+
+
+
+<% end %>

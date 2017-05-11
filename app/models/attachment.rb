@@ -3,7 +3,6 @@ class Attachment < ActiveRecord::Base
   belongs_to :d_object
   belongs_to :attachment_category
 
-
   def save
     # disabilitato
   end

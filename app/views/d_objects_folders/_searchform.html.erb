@@ -1,0 +1,10 @@
+<%= form_tag(d_objects_folders_path, :method=>:get) do %>
+
+<%= text_field_tag('tags', params[:tags]) %> (ricerca libera per parole)
+<br/> Cerca solo nelle cartelle <%= check_box_tag('folders_only',1,params[:folders_only]) %>
+<br/>
+<%= text_field_tag('basefolder', params[:basefolder]) %> (inizio nome della cartella)
+
+<%= submit_tag('Cerca') %>
+
+<% end %>

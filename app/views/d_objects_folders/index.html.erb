@@ -1,0 +1,22 @@
+<%= render :partial=>'searchform' %>
+
+
+<%= link_to('Carica oggetto digitale', upload_d_objects_path) if can? :manage, DObject %>
+| <%= link_to('Ricerca singoli oggetti', d_objects_path)%>
+
+
+<% if @do_search %>
+
+<%= will_paginate @d_objects_folders, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:h3, "#{@d_objects_folders.total_entries} cartelle") %>
+
+<%= content_tag(:div, d_objects_folders_list(@d_objects_folders)) %>
+
+<% else %>
+
+<%= content_tag(:div, d_objects_folders_root) %>
+
+
+<% end %>
+

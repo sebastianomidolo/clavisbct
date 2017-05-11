@@ -73,9 +73,23 @@ Clavisbct::Application.routes.draw do
   resources :d_objects do
     collection do
       get 'random_mp3'
+      get 'upload'
+      post 'upload'
+    end
+    member do
+      get 'download'
+      get 'list_folder_content'
+      get 'view'
+      get 'set_as_cover_image'
     end
   end
 
+  resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
+    member do
+      post 'makepdf'
+    end
+  end
+  
   resources :bio_iconografico_cards do
     collection do
       get 'upload'

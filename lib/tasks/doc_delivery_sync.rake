@@ -1,3 +1,4 @@
+# coding: utf-8
 # -*- mode: ruby;-*-
 
 # Esempio. In development:
@@ -8,7 +9,8 @@
 desc 'Sincronizza folder doc_delivery'
 
 task :doc_delivery_sync => :environment do
-
+  puts "doc_delivery_sync non è più utilizzato"
+  exit
   def exec_sqlfile(sqlfile)
     config   = Rails.configuration.database_configuration
     dbname=config[Rails.env]["database"]
