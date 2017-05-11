@@ -65,11 +65,23 @@ module BioIconograficoCardsHelper
     image_tag(bio_iconografico_card_path(record, :format=>'jpg', :size=>'300x300'))
   end
 
+  def bio_iconografico_cards_namespaces
+    res = []
+    BioIconograficoCard.namespaces.each do |n|
+      if n.first.to_s == params[:namespace]
+        res << content_tag(:b, n.last)
+      else
+        res << link_to(n.last, bio_iconografico_cards_path(namespace:n.first))
+      end
+    end
+    res
+  end
+
   def bio_iconografico_cards_menu_orizzontale
     r=[]
-    links=[['Cerca',bio_iconografico_cards_path]]
+    links=[['Cerca',bio_iconografico_cards_path(namespace:params[:namespace])]]
     BioIconograficoCard.lettere.each do |l|
-      links << [l,bio_iconografico_cards_path(:lettera=>l)]
+      links << [l,bio_iconografico_cards_path(lettera:l,namespace:params[:namespace])]
     end
     links.each do |v|
       t,l=v

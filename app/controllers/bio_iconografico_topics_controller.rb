@@ -8,6 +8,8 @@ class BioIconograficoTopicsController < ApplicationController
   respond_to :html
 
   def index
+    params[:namespace] = 'bioico' if params[:namespace].blank?
+
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_topic].blank?
@@ -22,6 +24,7 @@ class BioIconograficoTopicsController < ApplicationController
   end
 
   def show
+    params[:namespace] = 'bioico' if params[:namespace].blank?
     respond_with(@bio_iconografico_topic)
   end
 
@@ -31,6 +34,7 @@ class BioIconograficoTopicsController < ApplicationController
   end
 
   def edit
+    params[:namespace] = 'bioico' if params[:namespace].blank?
   end
 
   def create

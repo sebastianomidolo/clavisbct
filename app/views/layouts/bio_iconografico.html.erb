@@ -30,7 +30,9 @@
 access_link=[]
 if user_signed_in?
  access_link << "Sei #{link_to(current_user.email, edit_user_registration_path)}".html_safe
+ access_link << bio_iconografico_cards_namespaces
  access_link << link_to("<b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete)
+ access_link.flatten!
 else
  access_link << link_to("Entra", new_user_session_path)
 end
@@ -48,8 +50,8 @@ end
 				<div id="search">
 				</div>
 				<div class="lefts">
-					<h1><a href="http://www.comune.torino.it/cultura/biblioteche/">Biblioteche Civiche Torinesi</a></h1>
-					<h2>Il Repertorio bio-iconografico</h2>
+				  <h1><a href="http://www.comune.torino.it/cultura/biblioteche/">Biblioteche Civiche Torinesi</a></h1>
+				  <%= content_tag(:h2, BioIconograficoCard.namespaces[params[:namespace].to_sym]) %>
 				</div>
 	</div>
 	
@@ -70,7 +72,7 @@ end
 		<div id="rightside">
 
 <% if signed_in? and !params[:lettera].blank? %>
- <%= content_tag(:h2, link_to("Carica file (#{params[:lettera]})", upload_bio_iconografico_cards_path(lettera:params[:lettera]))) if can? :upload, BioIconograficoCard  %>
+ <%= content_tag(:h2, link_to("Carica file (#{params[:lettera]})", upload_bio_iconografico_cards_path(namespace:params[:namespace],lettera:params[:lettera]))) if can? :upload, BioIconograficoCard  %>
 <% end %>
 
             <% access_link.each do |l| %>

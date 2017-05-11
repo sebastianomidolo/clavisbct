@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 class BioIconograficoCard < DObject
-  attr_accessible :intestazione, :lettera, :numero, :note, :var1, :var2, :var3, :var4, :var5,
+  attr_accessible :namespace, :intestazione, :lettera, :numero, :note, :var1, :var2, :var3, :var4, :var5,
   :qualificazioni, :seqnum, :data_nascita, :data_morte, :luogo_nascita, :luogo_morte, :altri_link,
   :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
   before_save :check_record, :bio_iconografico_topic
@@ -46,14 +46,15 @@ class BioIconograficoCard < DObject
 
     r=BioIconograficoCard.find_by_filename(fn)
     if !r.nil?
-      fn=File.join('bct','bio_iconografico', 'doppi', "#{self.id}.jpg")
-      puts "Esiste già un record (#{}) con nome #{self.filename}, per quello che sto salvando uso il nome univoco #{fn}"
+      return if r.id==self.id
+      fn=File.join('bct','cards', 'doppi', "#{self.id}.jpg")
+      puts "Esiste già un record (#{r.id}) con nome #{self.filename}, per quello che sto salvando uso il nome univoco #{fn}"
     end
 
     sfn=File.join(mp, fn)
     FileUtils.mkdir_p(File.dirname(sfn))
     if !File.exists?(sfn)
-      puts "sposto il file nella posizione canonica"
+      puts "sposto il file nella posizione canonica (#{sfn})"
       of=File.join(mp, self.filename)
       FileUtils.mv(of, sfn)
     end
@@ -62,7 +63,11 @@ class BioIconograficoCard < DObject
 
   def canonical_filename
     return nil if self.lettera.blank? or self.numero.blank?
-    "#{File.join('bct', 'bio_iconografico', self.lettera.upcase, (format "%05d", self.numero))}.jpg"
+    if self.namespace.blank?
+      "#{File.join('bct', 'bio_iconografico', self.lettera.upcase, (format "%05d", self.numero))}.jpg"
+    else
+      "#{File.join('bct', 'cards', self.namespace, self.lettera.upcase, (format "%05d", self.numero))}.jpg"
+    end
   end
 
   def absolute_filepath
@@ -86,8 +91,9 @@ class BioIconograficoCard < DObject
     end
     full_filename.sub!(mp,'')
     self.filename=full_filename
-    lettera=params[:lettera] 
-    self.tags={l:lettera,user:creator.id.to_s,
+    lettera=params[:lettera]
+    namespace=params[:namespace]
+    self.tags={l:lettera,ns:namespace,user:creator.id.to_s,
       intestazione:''}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
     self.save
     self
@@ -102,6 +108,7 @@ class BioIconograficoCard < DObject
   def intestazione=(t) self.edit_tags(intestazione:t) end
   def lettera=(t) self.edit_tags(l:t) end
   def numero=(t) self.edit_tags(n:t) end
+  def namespace=(t) self.edit_tags(ns:t) end
 
   def size=(t) self.edit_tags(size:t) end
 
@@ -126,6 +133,7 @@ class BioIconograficoCard < DObject
   def intestazione() self.xmltag('intestazione') end
   def lettera() self.xmltag('l') end
   def numero() self.xmltag('n') end
+  def namespace() self.xmltag('ns') end
 
   def size() self.xmltag('size') end
 
@@ -150,6 +158,11 @@ class BioIconograficoCard < DObject
     "#{self.xmltag('l')}_#{self.xmltag('n')}"
   end
 
+  def namespace_to_label
+    return 'non assegnato' if self.namespace.blank?
+    BioIconograficoCard.namespaces[self.namespace.to_sym]
+  end
+
   def self.lettere
     ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
   end
@@ -157,6 +170,7 @@ class BioIconograficoCard < DObject
   def self.list(params, bio_iconografico_card=nil)
     cond = []
     if bio_iconografico_card.nil?
+      namespace = params[:namespace].blank? ? 'bioico' : params[:namespace]
       cond << "b.lettera=#{self.connection.quote(params[:lettera])}"
       if !params[:numero].blank?
         cond << "b.numero>=#{self.connection.quote(params[:numero])}"
@@ -168,17 +182,17 @@ class BioIconograficoCard < DObject
       end
     else
       b=bio_iconografico_card
+      namespace = b.namespace
       # cond << "b.intestazione::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
       cond << "o.tags::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
       cond << "b.numero = #{b.numero}" if !b.numero.nil?
     end
 
-    if cond.size>0
-      cond = "WHERE #{cond.join(" and ")}"
-    else
-      return []
-    end
-    sql=%Q{select b.*,o.tags,o.filename
+    return [] if cond.size==0
+    cond << "b.namespace=#{self.connection.quote(namespace)}"
+    cond = "WHERE #{cond.join(" and ")}"
+
+    sql=%Q{select b.*,o.tags,o.name,o.d_objects_folder_id
       from bio_iconografico_cards b join d_objects o using(id)
       #{cond}
       order by lettera, numero}
@@ -187,7 +201,7 @@ class BioIconograficoCard < DObject
   end
 
   def self.conta(params={})
-    sql="select count(*) from bio_iconografico_cards where lettera = '#{params[:lettera]}'"
+    sql="select count(*) from bio_iconografico_cards where lettera = '#{params[:lettera]}' and namespace = '#{params[:namespace]}'"
     self.connection.execute(sql).first['count']
   end
 
@@ -218,4 +232,17 @@ class BioIconograficoCard < DObject
     self.connection.execute(sql).first['size'].to_i
   end
 
+  def self.namespaces
+    {
+      bioico:'Repertorio bio-iconografico',
+      catarte:'Catalogo Arte',
+      cattor:'Catalogo Torino'
+    }
+  end
+
+  def BioIconograficoCard.find_by_filename(fname)
+    f=DObjectsFolder.find_by_name(File.dirname(fname))
+    return nil if f.nil?
+    BioIconograficoCard.find_by_name_and_d_objects_folder_id(File.basename(fname),f.id)
+  end
 end

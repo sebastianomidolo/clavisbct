@@ -1,5 +1,5 @@
 <% if params[:lettera].blank? %>
-<%= content_tag(:div, "Totale schede inserite: #{BioIconograficoCard.count}") %>
+<% content_tag(:div, "Totale schede inserite: #{BioIconograficoCard.conta(params)}") %>
 <% else %>
 <%= info = params[:numero].blank? ? '' : " (a partire dalla numero #{params[:numero]})"
  content_tag(:div, "<b>#{BioIconograficoCard.conta(params)}</b> schede per la lettera #{params[:lettera]}#{info}".html_safe) %>
@@ -15,7 +15,7 @@
 <% end %>
 
 <% if @bio_iconografico_cards.respond_to?('total_pages') %>
-<%= "Trovate #{@bio_iconografico_cards.total_entries} schede" %>
+<%= "Trovate #{@bio_iconografico_cards.total_entries} schede in <b>#{BioIconograficoCard.namespaces[params[:namespace].to_sym]}</b>".html_safe %>
 <%= will_paginate @bio_iconografico_cards, renderer: BootstrapPagination::Rails %>
 <% end %>
 

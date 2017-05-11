@@ -1,4 +1,5 @@
-<h3>Modifica scheda repertorio bio-iconografico</h3>
+<%= content_tag(:h3, "Modifica scheda #{@bio_iconografico_card.namespace_to_label}") %>
+
 <%= content_tag(:h2, "Lettera #{params[:lettera]}", style:"font-size:140%") %>
 
 <%= content_tag(:p, flash[:error]) %>

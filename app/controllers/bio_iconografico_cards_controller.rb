@@ -8,19 +8,24 @@ class BioIconograficoCardsController < ApplicationController
   respond_to :html
 
   def index
+    params[:namespace] = 'bioico' if params[:namespace].blank?
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_card].blank?
         @bio_iconografico_card=BioIconograficoCard.new
         @bio_iconografico_card.tags={}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
+        @bio_iconografico_card.namespace=params[:namespace]
       else
         logger.warn "ok cards - lettera blank here: #{params['bio_iconografico_card']['intestazione']}"
         @bio_iconografico_card=BioIconograficoCard.new
         @bio_iconografico_card.tags={}.to_xml(root:'r',:skip_instruct => true, :indent => 0)
         @bio_iconografico_card.intestazione=params['bio_iconografico_card']['intestazione']
         @bio_iconografico_card.numero=params['bio_iconografico_card']['numero']
+        @bio_iconografico_card.namespace=params['bio_iconografico_card']['namespace']
       end
+      namespace=@bio_iconografico_card.namespace
     end
+    params[:namespace]=namespace if params[:namespace].blank?
     @bio_iconografico_cards=BioIconograficoCard.list(params,@bio_iconografico_card)
   end
 
@@ -55,6 +60,7 @@ class BioIconograficoCardsController < ApplicationController
 
 
   def edit
+    params[:namespace] = @bio_iconografico_card.namespace
   end
 
   def update
@@ -62,7 +68,7 @@ class BioIconograficoCardsController < ApplicationController
     respond_to do |format|
       if @bio_iconografico_card.update_attributes(params[:bio_iconografico_card])
         format.html {
-          redirect_to controller: 'bio_iconografico_cards', action: 'index', lettera:@bio_iconografico_card.lettera, numero:@bio_iconografico_card.numero
+          redirect_to controller: 'bio_iconografico_cards', action: 'index', lettera:@bio_iconografico_card.lettera, numero:@bio_iconografico_card.numero, namespace:@bio_iconografico_card.namespace
         }
         format.json { respond_with_bip(@bio_iconografico_card) }
       else
@@ -74,6 +80,7 @@ class BioIconograficoCardsController < ApplicationController
 
   def show
     @bio_iconografico_card=BioIconograficoCard.find(params[:id])
+    params[:namespace] = @bio_iconografico_card.namespace
     respond_to do |format|
       format.html {
         # render :layout=>nil
