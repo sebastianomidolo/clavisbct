@@ -20,6 +20,11 @@
   <%= @work_station.location %>
 </p>
 
+<p>
+  <b>Numero di censimento del monitor associato:</b>
+  <%= @work_station.monitor_id %>
+</p>
+
 
 <%= link_to 'Edit', edit_work_station_path(@work_station) %> |
 <%= link_to 'Back', work_stations_path %>

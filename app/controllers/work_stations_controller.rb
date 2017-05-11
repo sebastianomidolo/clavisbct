@@ -4,7 +4,11 @@ class WorkStationsController < ApplicationController
   respond_to :html
 
   def index
-    @work_stations = WorkStation.where('true').order('clavis_library_id,id')
+    if params[:clavis_library_id].blank?
+      @work_stations = WorkStation.where('true').order('clavis_library_id,id')
+    else
+      @work_stations = WorkStation.where(clavis_library_id:params[:clavis_library_id]).order('id')
+    end
     respond_with(@work_stations)
   end
 
@@ -14,6 +18,7 @@ class WorkStationsController < ApplicationController
 
   def new
     @work_station = WorkStation.new
+    @work_station.processor='64'
     respond_with(@work_station)
   end
 

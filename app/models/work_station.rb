@@ -1,5 +1,5 @@
 class WorkStation < ActiveRecord::Base
-  attr_accessible :clavis_library_id, :id, :location, :processor
+  attr_accessible :clavis_library_id, :id, :location, :processor, :monitor_id
 
   belongs_to :clavis_library, class_name: 'ClavisLibrary', foreign_key: 'clavis_library_id'
 
@@ -37,6 +37,7 @@ class WorkStation < ActiveRecord::Base
       next if d.time1_end.nil?
       days << "#{d.timetable_day.strftime('%A')}-#{d.time1_end.strftime('%H:%M')}"
     end
+    return "# no scheduled actions" if days.size==0
     "scheduled_action=#{days.join(' ')} action:halt"
   end
 

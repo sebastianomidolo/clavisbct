@@ -1,29 +1,41 @@
-<h2>Elenco postazioni Opac</h2>
+<h2>Elenco postazioni Porteus-Kiosk</h2>
 
-<table>
+<%= link_to 'Inserimento nuova postazione...', new_work_station_path %>
+
+
+<%= form_tag(work_stations_path, method: 'get') do %>
+<%= select_tag(:clavis_library_id, options_for_select(ClavisItem.owner_library,
+      params[:clavis_library_id]), prompt:'Tutte le sedi', :onchange=>'submit();') %>
+  <%= submit_tag 'cerca', :class=>'btn btn-info' %>
+<% end %>
+
+
+<div style="width:60%">
+<table class='table table-condensed'>
   <tr>
-    <th>Inventario</th>
-    <th>Biblioteca</th>
-    <th>Architettura</th>
-    <th>Ubicazione</th>
-    <th></th>
-    <th></th>
-    <th></th>
+    <td>Inventario</td>
+    <td>Sede</td>
+    <td>Architettura</td>
+    <td>Ubicazione</td>
+    <td>Monitor</td>
+    <td></td>
+    <td></td>
   </tr>
 
 <% @work_stations.each do |work_station| %>
   <tr>
-    <td><%= work_station.id %></td>
+    <td><%= link_to work_station.id, edit_work_station_path(work_station) %></td>
     <td><%= work_station.clavis_library.shortlabel %></td>
-    <td><%= work_station.processor %></td>
+    <td><%= "#{work_station.processor} bit" %></td>
     <td><%= work_station.location %></td>
+    <td><%= work_station.monitor_id %></td>
     <td><%= link_to 'Show', work_station %></td>
-    <td><%= link_to 'Edit', edit_work_station_path(work_station) %></td>
     <td><%= link_to 'Destroy', work_station, method: :delete, data: { confirm: 'Are you sure?' } %></td>
   </tr>
-<% end %>
+  <% end %>
 </table>
+</div>
 
 <br />
 
-<%= link_to 'New Work station', new_work_station_path %>
+
