@@ -134,7 +134,7 @@ class ClavisItemsController < ApplicationController
         @clavis_item=nil
         if ClavisIssue.exists?(issue_id)
           ci=ClavisIssue.find(issue_id)
-          @clavis_item = ClavisItem.first(:select=>sel,:conditions=>{:manifestation_id=>ci.manifestation_id,:owner_library_id=>params[:owner_library_id]})
+          @clavis_item = ClavisItem.first(:select=>sel,:conditions=>{:manifestation_id=>ci.manifestation_id,:owner_library_id=>params[:owner_library_id], :item_status=>'F'})
         end
       end
     else
@@ -259,7 +259,7 @@ class ClavisItemsController < ApplicationController
       logger.warn("richiesta_a_magazzino #{item.id}")
       logger.warn("richiesta_a_magazzino #{item.title}")
       ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
-      render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta presa in carico'}
+      render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta recepita'}
     end
   end
 

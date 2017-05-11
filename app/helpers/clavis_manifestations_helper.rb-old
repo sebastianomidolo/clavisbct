@@ -193,7 +193,7 @@ module ClavisManifestationsHelper
         else
           uname = dng_session.nil? ? 'Gentile utente' : dng_session.patron.appellativo
           content="#{uname}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
-          content+=content_tag(:span, link_to('"Condizioni di iscrizione e prestito"', 'http://www.comune.torino.it/cultura/biblioteche/lettura_accessibile/libriparlati.shtml'))
+          content+=content_tag(:span, link_to('\"Condizioni di iscrizione e prestito\"', 'http://www.comune.torino.it/cultura/biblioteche/lettura_accessibile/libriparlati.shtml'))
           content+=content_tag(:br)
           content += talking_book_opac_presentation(record,false)
         end
@@ -203,9 +203,37 @@ module ClavisManifestationsHelper
       return [tabtitle,content]
 
     else
-      tabtitle="Allegati"
-      # testo_avviso="d_object_id #{d_object.id} - request.format: #{request.format}"
-      content = clavis_manifestation_attachments_render(record,true)
+
+      a=record.main_attachment
+      d_object=a.d_object
+      a_cat=a.attachment_category
+      tabtitle = a_cat.nil? ? 'Allegati' : a_cat.label
+      a_cat=AttachmentCategory.find('C') if a_cat.nil?
+
+      testo_avviso="Informazione: il contenuto di questa pagina, inserito a titolo sperimentale, potrebbe contenere errori e cambiare senza preavviso"
+      testo_avviso="d_object_id #{d_object.id} - request.format: #{request.format}"
+      # Attenzione, la chiamata "sicura" sarebbe questa:
+      # content = clavis_manifestation_pdf_links(record)
+      # Ma per far funzionare le cose, uso questa:
+      content = clavis_manifestation_pdf_links(record, access_control_key)
+      # La cosa giusta sarebbe che la chiamata da javascript includa il parametro ac=???
+      # nell'url, cosa che al momento (ottobre 2013) non è possibile perché il valore di "ac"
+      # dovrebbe essere incluso nella pagina fornita da Comperio in base al contesto.
+      # Per ora ci accontentiamo di un codice meno sicuro, nel senso che con molta fantasia
+      # un utente potrebbe riuscire a ricavare l'indirizzo corretto per scaricare un pdf
+      # pur non avendone i diritti... ma non si tratta di conti bancari per cui al momento va bene così
+      # In ogni caso, quando la sessione utente scade, il link al pdf viene comunque invalidato
+
+      if (['B','C'].include?(a_cat.code))
+        # content+=content_tag(:div, attachments_render(record.attachments, false))
+        extra={}
+        [:ac,:dng_user].each {|t| extra[t] = params[t] if !params[t].blank?}
+        content += content_tag(:div, link_to(image_tag(d_object_md5_link(d_object,:jpeg, :size=>'450px')),
+             "http://#{request.host_with_port}#{clavis_manifestation_path(record,extra)}")) if !anonimo
+      end
+      if (['A','D'].include?(a_cat.code))
+        content+=link_to("Ascolta incipit musicali", "http://clavisbct.comperio.it/clavis_manifestations/#{record.id}")
+      end
     end
 
     return [nil,nil] if content.blank?
@@ -220,8 +248,8 @@ module ClavisManifestationsHelper
       else
         cover_id=r['cover_image_id']
       end
-      res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')) + content_tag(:td, r['folder_name']))
-      # res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')))
+      res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')) +
+                              content_tag(:td, r['folder_name']))
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')

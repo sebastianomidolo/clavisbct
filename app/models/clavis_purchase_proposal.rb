@@ -6,7 +6,15 @@ class ClavisPurchaseProposal < ActiveRecord::Base
 
   belongs_to :patron, :class_name=>'ClavisPatron'
 
+  def status_label
+    sql=%Q{SELECT value_label FROM clavis.lookup_value WHERE value_class = 'PROPOSALSTATUS'
+             AND value_language='it_IT' AND value_key='#{self.status}'}
+    self.connection.execute(sql).first['value_label']
+  end
 
+  def patron_clavis_url
+    ClavisPatron.clavis_url(self.patron_id)
+  end
 
   def self.list(proposal,params)
     attrib=proposal.attributes.collect {|a| a if not a.last.blank?}.compact
@@ -30,14 +38,20 @@ class ClavisPurchaseProposal < ActiveRecord::Base
                AND value_language='it_IT')
              LEFT JOIN clavis.manifestation cm ON(cm."EAN"=purchase_proposal.ean AND cm."EAN" != '' AND purchase_proposal.ean!='')}
     cond = cond.join(' AND ')
-    ClavisPurchaseProposal.paginate(conditions:cond,
-                                    page:params[:page],
-                                    select:select,
-                                    joins:joins,
-                                    include:'patron',
-                                    :per_page=>100,
-                                    :order=>'proposal_id desc')
-  end 
+    if cond==''
+      cond = "purchase_proposal.date_created between now() - interval '15 days' and now()"
+    end
 
+    prm={
+      conditions:cond,
+      select:select,
+      joins:joins,
+      include:'patron',
+      page:params[:page],
+      per_page:100,
+      :order=>'proposal_id desc'
+    }
+    ClavisPurchaseProposal.paginate(prm)
+  end
 
 end

@@ -82,16 +82,16 @@ module TalkingBooksHelper
       res << link_to(content_tag(:span, 'Scarica audio mp3 completo', class: "badge"), lnk)
 
       if clavis_manifestation.attachments.size>0
-        res << '<br/>'
-        res << image_tag("http://#{request.host_with_port}/assets/icona_ascolto.gif?mid=#{mid}", style: 'padding: 4px')
-        res << content_tag(:span, 'Ascolta in streaming')
+        #res << '<br/>'
+        #res << image_tag("http://#{request.host_with_port}/assets/icona_ascolto.gif?mid=#{mid}", style: 'padding: 4px')
+        #res << content_tag(:span, 'Ascolta in streaming')
         # content_tag(:span, clavis_manifestation.title, :class=>'label label-default')
         # content_tag(:span, ' in streaming')
         # res << content_tag(:button, access_control_key, :class=>'btn')
-        res << content_tag(:div, attachments_render(clavis_manifestation.attachments))
+        #res << content_tag(:div, attachments_render(clavis_manifestation.attachments))
       end
     else
-      res << content_tag(:div, d_objects_render(clavis_manifestation.audioclips))
+      # res << content_tag(:div, d_objects_render(clavis_manifestation.audioclips))
       # res << content_tag(:div, clavis_manifestation.id)
     end
 

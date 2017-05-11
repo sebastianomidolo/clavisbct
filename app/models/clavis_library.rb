@@ -34,5 +34,5 @@ class ClavisLibrary < ActiveRecord::Base
       where library_internal='1' order by label}
     self.connection.execute(sql).collect {|i| [i['key'],i['label']]}
   end
-  
+
 end

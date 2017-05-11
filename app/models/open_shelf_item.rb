@@ -25,7 +25,7 @@ class OpenShelfItem < ActiveRecord::Base
   end
 
   def OpenShelfItem.sections
-    sql=%Q{select value_key as key,value_label as label,count(ci.item_id) from clavis.library_value lv left join clavis.item ci on(value_key=ci.section) where value_class = 'ITEMSECTION' and value_library_id=2 and value_key in ('CCVT','CCNC','CCTL','CCPT') group by value_key,value_label order by value_key}
+    sql=%Q{select value_key as key,value_label as label,count(ci.item_id) from clavis.library_value lv left join clavis.item ci on(value_key=ci.section) where value_class = 'ITEMSECTION' and value_library_id=2 and value_key in ('CCVT','CCNC','CCTL','CCPT','SAP') group by value_key,value_label order by value_key}
     self.connection.execute(sql).to_a.collect{|x| [x['label'] + " [ricollocati: #{x['count']}]",x['key']] }
   end
 

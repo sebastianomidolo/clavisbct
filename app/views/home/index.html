@@ -29,6 +29,7 @@ Pagina di servizio a uso interno delle BCT
   <%= content_tag(:li, link_to('Cerca esemplari (con filtro per data di ultima modifica)', clavis_items_path(mode:'lastmod'))) if can? :search, ClavisItem %>
 
   <%= content_tag(:li, link_to('Lista contatti errati', '/cp_wc')) if can? :wrong_contacts, ClavisPatron %>
+  <%= content_tag(:li, link_to('Lista contatti con email nel campo cellulare', '/cp_wc?contact_note=@')) if can? :wrong_contacts, ClavisPatron %>
 
   <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
  <% if can? :manage, Container %>
@@ -51,5 +52,8 @@ Pagina di servizio a uso interno delle BCT
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 
   <%= content_tag(:li, link_to('Postazioni OPAC', work_stations_path)) if can? :manage, WorkStation %>
+
+
+  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path)) if can? :read, BioIconograficoCard %>
   
 </ul>

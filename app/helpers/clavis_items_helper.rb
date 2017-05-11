@@ -37,7 +37,7 @@ module ClavisItemsHelper
         else
           lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
         end
-        media = r.item_media_type
+        media = r.item_media_type.nil? ? 'Media type ignoto' : r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
         media << "</br><em>#{r.item_status}</em>"
         media << "</br><b>#{r.loan_status}</b>"

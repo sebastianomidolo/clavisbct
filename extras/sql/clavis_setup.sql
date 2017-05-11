@@ -73,10 +73,10 @@ create or replace view soggetti_non_presenti_in_nuovo_soggettario as
    and not ca.full_text ~ ',' and ns is null order by ca.sort_text;
 
 create or replace view bio_iconografico_cards as
-  select id,(xpath('//r/l/text()',tags))[1]::varchar as lettera,
-    (xpath('//r/n/text()',tags))[1]::text::integer as numero
+  select id,(xpath('//r/ns/text()',tags))[1]::varchar as namespace,
+       (xpath('//r/l/text()',tags))[1]::varchar as lettera,
+       (xpath('//r/n/text()',tags))[1]::text::integer as numero
   from d_objects where type = 'BioIconograficoCard';
-
 
 create or replace view bio_iconografico_topics_view as
   select id,(xpath('//r/intestazione/text()',tags))[1]::text as intestazione

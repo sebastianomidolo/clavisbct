@@ -39,7 +39,28 @@ module ClavisPurchaseProposalsHelper
   end
   
   def clavis_purchase_proposal_show(record)
-    record.inspect
+    res=[]
+    
+    record.attribute_names.sort.each do |r|
+      case r
+      when 'status'
+        dt=record.status_label
+      when 'patron_id'
+        dt=link_to(record.patron.to_label, record.patron_clavis_url, target:'_new')
+        r="proposto da"
+      when 'created_by'
+        dt=nil
+      when 'ean'
+        dt=nil if record[r]=='0'
+      else
+        dt=record[r]
+        dt=nil if dt==0
+      end
+      next if dt.blank?
+      res << content_tag(:tr, content_tag(:td, r) +
+                              content_tag(:td, dt))
+    end
+    content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
 
 end

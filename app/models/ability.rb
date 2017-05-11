@@ -13,7 +13,7 @@ class Ability
       can :read, [BioIconograficoTopic]
     end
     if user.role?('bio_iconografico_numera_scansioni')
-      can [:numera,:update], BioIconograficoCard
+      can [:read,:numera,:update], BioIconograficoCard
     end
 
     if user.role?('bio_iconografico_manager')
@@ -47,7 +47,13 @@ class Ability
 
     if user.role?('d_object_manager')
       can :manage, DObject
+      can :manage, DObjectsFolder
       can :upload, OmekaFile
+    end
+
+    if user.role?('d_object_search')
+      can [:search,:index,:view,:list_folder_content,:makepdf], DObject
+      can [:index,:show], DObjectsFolder
     end
 
     if user.role?('extra_card_manager')

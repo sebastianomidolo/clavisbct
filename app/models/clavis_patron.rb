@@ -32,16 +32,11 @@ class ClavisPatron < ActiveRecord::Base
   end
 
   def to_label
-    "#{self.name} #{self.lastname}"    
+    "#{self.name} #{self.lastname}"
   end
 
-  # Attualmente considero abilitati al servizio libro parlato gli utenti contenuti
-  # nello scaffale numero 1929 (assurdo, ma funziona)
   def autorizzato_al_servizio_lp
-    return true if self.loan_class=='@'
-    sql="select true from clavis.shelf_item where shelf_id = 1929 and object_id=#{self.patron_id}"
-    r=ClavisPatron.connection.execute(sql).num_tuples
-    r == 0 ? false : true
+    self.loan_class=='@' ? true : false
   end
 
   def autorizzato_download_pdf(clavis_manifestation)
@@ -120,6 +115,12 @@ class ClavisPatron < ActiveRecord::Base
     inputdata << dng_session
     lp=LatexPrint::PDF.new('closed_stack_item_request', inputdata)
     lp.makepdf
+  end
+
+  def ClavisPatron.clavis_url(id)
+    config = Rails.configuration.database_configuration
+    host=config[Rails.env]['clavis_host']
+    "#{host}/index.php?page=Circulation.PatronViewPage&id=#{id}"
   end
 
 end

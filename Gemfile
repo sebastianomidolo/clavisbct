@@ -94,3 +94,6 @@ gem 'composite_primary_keys', '5.0.14'
 
 gem 'php-serialize'
 
+gem 'rest-client', '~> 1.8'
+
+

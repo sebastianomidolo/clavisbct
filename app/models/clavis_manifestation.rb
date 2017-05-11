@@ -65,6 +65,7 @@ class ClavisManifestation < ActiveRecord::Base
 
   def iccu_opac_url
     return nil if !['SBN','SBNBCT'].include?(self.bid_source)
+    return "http://opac.sbn.it/bid/#{self.bid}"
     template="http://www.sbn.it/opacsbn/opaclib?db=solr_iccu&rpnquery=%2540attrset%2Bbib-1%2B%2540attr%2B1%253D1032%2B%2540attr%2B4%253D2%2B%2522IT%255C%255CICCU%255C%255C__POLO__%255C%255C__NUMERO__%2522&select_db=solr_iccu&nentries=1&rpnlabel=Preferiti&resultForward=opac%2Ficcu%2Ffull.jsp&searchForm=opac%2Ficcu%2Ferror.jsp&do_cmd=search_show_cmd&brief=brief&saveparams=false&&fname=none&from=1"
     template.sub!('__POLO__',bid[0..2])
     template.sub('__NUMERO__',numero=bid[3..9])
@@ -117,9 +118,9 @@ class ClavisManifestation < ActiveRecord::Base
         pgdone+=1
         pgcnt=pgdone
         if File.exists?(fname)
-          # puts "Esiste #{fname}"
+          puts "Esiste #{fname}"
         else
-          # puts "Da creare #{fname}"
+          puts "Da creare #{fname}"
           DObject.to_pdf(ar, fname) if generate
         end
         fnames << fname
@@ -138,6 +139,41 @@ class ClavisManifestation < ActiveRecord::Base
 
   def attachments_zipfilename
     File.join(DigitalObjects.digital_objects_cache, "mid_#{self.id}.zip")
+  end
+
+  def attachments_with_folders
+    sql=%Q{select a.attachment_category_id,f.name as folder_name,f.id as folder_id,
+(xpath('//r/cover_image/text()'::text, f.tags))[1]::text as cover_image_id,count(*)
+ from attachments a join d_objects o on(a.d_object_id=o.id)
+  join d_objects_folders f on(f.id=o.d_objects_folder_id) where attachable_type='ClavisManifestation'
+      AND attachable_id = #{self.id} group by a.attachment_category_id,f.name,f.id,cover_image_id}
+    self.connection.execute(sql).to_a
+  end
+
+  
+  # Va chiamata controllando prima che ci sia almeno un attachment, altrimenti produce un errore
+  def main_attachment
+    f=self.attachments.first.d_object.d_objects_folder
+    puts "x_mid per folder: #{f.x_mid}"
+    if f.x_mid.to_i==self.id
+      x=self.attachments.first.d_object.d_objects_folder.cover_image
+    else
+      x=nil
+    end
+    puts "x: #{x}"
+    if x.blank?
+      self.attachments.each do |a|
+        puts ">>>#{a.d_object.x_mid}"
+        if a.d_object.x_mid.to_i==self.id
+          puts "trovato: #{a.d_object.id}"
+          x=a
+        end
+      end
+      x = self.attachments.first if x.nil?
+      return x
+    else
+      return Attachment.find_by_attachable_type_and_attachable_id_and_d_object_id('ClavisManifestation',self.id,x.to_i)
+    end
   end
 
   def attachments_zip
