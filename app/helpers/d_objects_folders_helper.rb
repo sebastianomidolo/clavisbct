@@ -28,8 +28,11 @@ module DObjectsFoldersHelper
             view_d_object_path(d_object))
   end
   def d_objects_folders_root
-    sql=%Q{SELECT regexp_replace(name, '/.*', '') AS basefolder,count(*) FROM d_objects_folders
-  where not name ~ '^/' group by basefolder order by basefolder}
+    sql=%Q{SELECT regexp_replace(name, '/.*', '') AS basefolder,count(*) FROM d_objects_folders f
+       JOIN d_objects_folders_users fu
+        ON( (fu.d_objects_folder_id=f.id OR f.name LIKE fu.pattern || '%') AND fu.user_id=#{current_user.id})
+         where not name ~ '^/'
+        group by basefolder order by basefolder}
     res=[]
     ActiveRecord::Base.connection.execute(sql).to_a.each do |r|
       f=r['basefolder']

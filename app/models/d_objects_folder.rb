@@ -34,6 +34,45 @@ class DObjectsFolder < ActiveRecord::Base
     end
   end
 
+  def sql_conditions_for_user(user)
+    user_id=user.class==Fixnum ? user : user.id
+    %Q{SELECT true FROM d_objects_folders_users fu JOIN d_objects_folders f
+       ON( (fu.d_objects_folder_id=f.id OR f.name LIKE fu.pattern || '%') AND fu.user_id=#{user_id})
+       WHERE f.id=#{self.id}}
+  end
+
+  def readable_by?(user)
+    sql=self.sql_conditions_for_user(user)
+    res=self.connection.execute(sql).to_a.first
+    res.nil? ? false : true
+  end
+
+  def writable_by?(user)
+    sql=%Q{#{self.sql_conditions_for_user(user)} AND mode='rw'}
+    res=self.connection.execute(sql).to_a.first
+    res.nil? ? false : true
+  end
+  def readable_by=(user)
+    self.set_permission(user,'ro')
+  end
+  def writable_by=(user)
+    self.set_permission(user,'rw')
+  end
+  def disable_user(user)
+    user_id=user.class==Fixnum ? user : user.id
+    sql=%Q{DELETE FROM d_objects_folders_users WHERE user_id=#{user_id} AND d_objects_folder_id=#{self.id}}
+    self.connection.execute(sql)    
+  end
+  def set_permission(user,mode)
+    user_id=user.class==Fixnum ? user : user.id
+    if self.readable_by?(user)
+      sql=%Q{UPDATE d_objects_folders_users SET mode='#{mode}' WHERE user_id=#{user_id} AND d_objects_folder_id=#{self.id} AND mode!='#{mode}'}
+    else
+      sql=%Q{INSERT INTO d_objects_folders_users (user_id,d_objects_folder_id,mode) VALUES(#{user_id},#{self.id},'#{mode}')}
+    end
+    self.connection.execute(sql)
+  end
+
   def d_object_cover_image
     return nil if self.cover_image.blank? or !DObject.exists?(self.cover_image)
     DObject.find(self.cover_image)

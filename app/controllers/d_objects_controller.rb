@@ -96,6 +96,7 @@ class DObjectsController < ApplicationController
         else
           img=Magick::Image.read(@d_object.filename_with_path).first
         end
+        # img=img.blue_shift
         img.format='jpeg'
         if !params[:size].blank?
           s=params[:size].split('x')
@@ -114,6 +115,8 @@ class DObjectsController < ApplicationController
   end
 
   def upload
+    @d_objects_folder=DObjectsFolder.find(params[:d_objects_folder_id])
+    render text:'forbidden' and return if !@d_objects_folder.writable_by?(current_user)
     if request.method=="POST"
       uploaded_io = params[:filename]
       if uploaded_io.nil?

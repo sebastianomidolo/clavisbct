@@ -1,3 +1,4 @@
+# coding: utf-8
 class DObjectsFoldersController < ApplicationController
   layout 'navbar'
   load_and_authorize_resource only: [:index,:show,:makepdf]
@@ -34,9 +35,12 @@ class DObjectsFoldersController < ApplicationController
       else
         @do_search = true
       end
-      sql=%Q{SELECT f.* FROM dobjects dox JOIN d_objects_folders f ON(f.id=dox.f_id) WHERE #{cond}}
+      @sql=%Q{SELECT DISTINCT f.name,f.id,f.tags::text FROM dobjects dox LEFT JOIN d_objects_folders f ON(f.id=dox.f_id)
+             JOIN d_objects_folders_users fu
+                 ON( (fu.d_objects_folder_id=f.id OR f.name LIKE fu.pattern || '%')
+              AND fu.user_id=#{current_user.id}) WHERE #{cond}}
       order='lower(f_name)'
-      @d_objects_folders = DObjectsFolder.paginate_by_sql(sql, page:params[:page], order:order)
+      @d_objects_folders = DObjectsFolder.paginate_by_sql(@sql, page:params[:page], order:order)
     else
       if !params[:tags].blank?
         ts=DObject.connection.quote_string(params[:tags].split.join(' & '))
@@ -49,14 +53,19 @@ class DObjectsFoldersController < ApplicationController
       else
         @do_search = true
       end
+      @sql=%Q{SELECT f.* FROM d_objects_folders f
+             JOIN d_objects_folders_users fu
+                  ON( (fu.d_objects_folder_id=f.id OR f.name LIKE fu.pattern || '%')
+              AND fu.user_id=#{current_user.id}) WHERE #{cond}}
       order='lower(name)'
-      @d_objects_folders = DObjectsFolder.paginate(conditions:cond, page:params[:page], order:order)
+      # @d_objects_folders = DObjectsFolder.paginate(conditions:cond, page:params[:page], order:order)
+      @d_objects_folders = DObjectsFolder.paginate_by_sql(@sql, page:params[:page], order:order)
     end
   end
 
-  
   def show
     @d_objects_folder=DObjectsFolder.find(params[:id])
+    render text:'non accessibile' and return if !@d_objects_folder.readable_by?(current_user)
     @d_objects=@d_objects_folder.d_objects
     page = params[:page].blank? ? 1 : params[:page].to_i
     per_page = params[:per_page].blank? ? 50 : params[:per_page].to_i

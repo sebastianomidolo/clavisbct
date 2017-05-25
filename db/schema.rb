@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170327114134) do
+ActiveRecord::Schema.define(:version => 20170512090141) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -212,7 +212,7 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
   add_index "containers", ["label"], :name => "containers_label_idx", :unique => true
 
   create_table "d_objects", :force => true do |t|
-    t.string   "filename",            :limit => 2048
+    t.string   "filename_old_style",  :limit => 2048
     t.xml      "tags"
     t.decimal  "bfilesize",                           :precision => 15, :scale => 0
     t.string   "mime_type",           :limit => 96
@@ -221,23 +221,32 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
     t.datetime "f_atime"
     t.integer  "access_right_id",     :limit => 2
     t.string   "type",                :limit => 32
-    t.integer  "d_objects_folder_id"
+    t.integer  "d_objects_folder_id",                                                :null => false
+    t.string   "name",                :limit => 512
   end
 
   add_index "d_objects", ["access_right_id"], :name => "access_right_id_idx"
-  add_index "d_objects", ["filename"], :name => "d_objects_filename_idx", :unique => true
+  add_index "d_objects", ["d_objects_folder_id"], :name => "d_objects_folders_id_idx"
+  add_index "d_objects", ["filename_old_style"], :name => "d_objects_filename_idx", :unique => true
+  add_index "d_objects", ["name"], :name => "d_objects_name_idx"
   add_index "d_objects", ["type"], :name => "index_d_objects_on_type"
-
-  create_table "d_objects_d_objects_folders", :id => false, :force => true do |t|
-    t.integer "d_objects_folder_id", :null => false
-    t.integer "d_object_id",         :null => false
-  end
 
   create_table "d_objects_folders", :force => true do |t|
     t.text "name", :null => false
+    t.xml  "tags"
   end
 
   add_index "d_objects_folders", ["name"], :name => "d_objects_folders_idx_name", :unique => true
+
+  create_table "d_objects_folders_users", :id => false, :force => true do |t|
+    t.integer "d_objects_folder_id"
+    t.integer "user_id",                            :null => false
+    t.string  "pattern",             :limit => 128
+    t.string  "mode",                :limit => 2,   :null => false
+  end
+
+  add_index "d_objects_folders_users", ["d_objects_folder_id", "user_id"], :name => "d_objects_folders_users_idx", :unique => true
+  add_index "d_objects_folders_users", ["pattern", "user_id"], :name => "d_objects_folders_users_pattern_idx", :unique => true
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
     t.integer "owner_library_id"
@@ -310,8 +319,6 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
     t.integer "position"
   end
 
-  add_index "import_libroparlato_colloc", ["collocation"], :name => "import_libroparlato_colloc_collocation_idx"
-
   create_table "iscritti_newsletter", :id => false, :force => true do |t|
     t.text "email"
   end
@@ -339,7 +346,7 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
 
   create_table "manifestations_d_objects", :id => false, :force => true do |t|
     t.integer "d_object_id"
-    t.text    "manifestation_id"
+    t.integer "manifestation_id"
   end
 
   create_table "musicbrainz_artists_clavis_authorities", :id => false, :force => true do |t|
@@ -454,6 +461,11 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
 
+  create_table "temp_canzoni", :id => false, :force => true do |t|
+    t.text    "bid"
+    t.integer "id"
+  end
+
   create_table "temp_d_objects_manifestation_id", :id => false, :force => true do |t|
     t.integer "id"
     t.string  "manifestation_id", :limit => nil
@@ -496,6 +508,46 @@ ActiveRecord::Schema.define(:version => 20170327114134) do
     t.text    "heading"
     t.text    "linknote"
     t.integer "seq"
+  end
+
+  create_table "temp_mlol_consultazioni", :id => false, :force => true do |t|
+    t.string  "barcode",         :limit => 24
+    t.date    "data_iscrizione"
+    t.integer "consultazioni"
+    t.integer "prestiti"
+    t.integer "patron_id"
+  end
+
+  create_table "temp_mlol_fasce_eta", :id => false, :force => true do |t|
+    t.integer "year_from"
+    t.integer "year_to"
+  end
+
+  create_table "temp_mlol_iscritti", :id => false, :force => true do |t|
+    t.integer "id_mlol"
+    t.string  "barcode",                     :limit => 24
+    t.date    "data_iscrizione"
+    t.integer "eta"
+    t.integer "patron_id"
+    t.string  "gender",                      :limit => 1
+    t.integer "numero_prestiti_in_clavis",                 :default => 0
+    t.boolean "iscritto_clavis_stesso_anno",               :default => false
+    t.date    "data_iscrizione_clavis"
+    t.integer "differenza_giorni"
+    t.integer "consultazioni_digitali"
+    t.integer "prestiti_digitali"
+  end
+
+  create_table "temp_mlol_prestiti", :id => false, :force => true do |t|
+    t.string  "barcode",                        :limit => 24
+    t.integer "prestiti_ebook"
+    t.integer "prestiti_audiolibri"
+    t.integer "eta"
+    t.integer "patron_id"
+    t.string  "gender",                         :limit => 1
+    t.integer "numero_prestiti_in_clavis",                    :default => 0
+    t.integer "numero_prestiti_in_clavis_2016",               :default => 0
+    t.date    "data_iscrizione_clavis"
   end
 
   create_table "temp_prestiti_goethe", :id => false, :force => true do |t|
