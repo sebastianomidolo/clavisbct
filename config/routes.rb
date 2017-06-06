@@ -87,6 +87,8 @@ Clavisbct::Application.routes.draw do
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
     member do
       post 'makepdf'
+      get 'makedir'
+      put 'makedir'
     end
   end
   

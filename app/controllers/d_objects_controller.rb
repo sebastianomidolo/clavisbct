@@ -45,6 +45,7 @@ class DObjectsController < ApplicationController
   end
 
   def edit
+    render text:'forbidden' and return if !@d_object.writable_by?(current_user)
     if @d_object.tags.blank?
       @d_object.tags='<r></r>'
       @d_object.save
@@ -53,6 +54,7 @@ class DObjectsController < ApplicationController
 
   def destroy
     d_object=DObject.find(params[:id])
+    render text:'forbidden' and return if !d_object.writable_by?(current_user)
     @d_objects_folder=d_object.d_objects_folder
     d_object.destroy
     redirect_to d_objects_folder_path(@d_objects_folder)
@@ -61,6 +63,7 @@ class DObjectsController < ApplicationController
   # Imposta come immagine di copertina (sottinteso: del folder che lo contiene)
   def set_as_cover_image
     o=DObject.find(params[:id])
+    render text:'forbidden' and return if !o.writable_by?(current_user)
     f=o.d_objects_folder
     f.write_tags_from_filename if f.tags.nil?
     if params[:checked]=='true'

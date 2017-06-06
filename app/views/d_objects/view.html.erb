@@ -1,5 +1,6 @@
-<%= content_tag(:p, "Cartella: \"#{@d_object.d_objects_folder.name}\"") %>
-<%= render partial:'cover_image_check_box' %>
+<%= content_tag(:h3, d_objects_folder_split(@d_object.d_objects_folder)) %>
+
+<%= render partial:'cover_image_check_box' if @d_object.writable_by?(current_user) %>
 
 <% if @d_object.mime_type.split(';').first=='application/pdf' %>
  <%= content_tag(:div, "File PDF contenente #{@d_object.pdf_count_pages} pagine") %>
@@ -16,8 +17,8 @@
 Unico file contenuto nella cartella
 <% end %>
 <%= content_tag(:div, link_to("[Scarica il file: #{@d_object.mime_type}]", download_d_object_path(@d_object))) %>
-<%= content_tag(:span, link_to("[Modifica]", edit_d_object_path(@d_object))) if can? :edit, DObject %>
-<%= content_tag(:span, link_to("Elimina", @d_object, method: :delete, data: {confirm: 'Confermi cancellazione?'})) if can? :destroy, DObject %>
+<%= content_tag(:span, link_to("[Modifica]", edit_d_object_path(@d_object))) if can? :edit, DObject and @d_object.writable_by?(current_user) %>
+<%= content_tag(:span, link_to("Elimina", @d_object, method: :delete, data: {confirm: 'Confermi cancellazione?'})) if can? :destroy, DObject and @d_object.writable_by?(current_user) %>
 
 
 

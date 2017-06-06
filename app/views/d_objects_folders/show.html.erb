@@ -1,8 +1,18 @@
+<%= content_tag(:h3, d_objects_folder_split(@d_objects_folder)) %>
+<% if @d_objects_folder.dir.size>0 %>
+<%= content_tag(:div, 'Cartelle:') %>
+<%= content_tag(:div, d_objects_folder_dir(@d_objects_folder)) %>
+<% end %>
+
 <%= content_tag(:div, d_objects_folder_show_cover_image(@d_objects_folder)) %>
-<%= content_tag(:h3, @d_objects_folder.name) %>
-<%= content_tag(:span, link_to("[Modifica]", edit_d_objects_folder_path(@d_objects_folder))) if can? :edit, DObjectsFolder %>
-|
+
+<%= content_tag(:span, link_to("[Modifica] |", edit_d_objects_folder_path(@d_objects_folder))) if can? :edit, DObjectsFolder and @d_objects_folder.writable_by?(current_user) %>
+
+<% if @d_objects_folder.writable_by?(current_user) %>
 <%= content_tag(:span, link_to("[Carica file in questa cartella]", upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
+<%= content_tag(:span, link_to("[Crea cartella]", makedir_d_objects_folder_path(@d_objects_folder.id))) if can? :makedir, DObjectsFolder %>
+<% end %>
+
 
 <%= will_paginate @d_objects, renderer: BootstrapPagination::Rails %>
 
@@ -17,8 +27,8 @@
 
 <% else %>
 
-<%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
-
-
+ <% if @d_objects_folder.dir.size==0 %>
+  <%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
+ <% end %>
 
 <% end %>

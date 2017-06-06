@@ -1,3 +1,4 @@
+# coding: utf-8
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
@@ -37,7 +38,7 @@ class DObjectsFolder < ActiveRecord::Base
   def sql_conditions_for_user(user)
     user_id=user.class==Fixnum ? user : user.id
     %Q{SELECT true FROM d_objects_folders_users fu JOIN d_objects_folders f
-       ON( (fu.d_objects_folder_id=f.id OR f.name LIKE fu.pattern || '%') AND fu.user_id=#{user_id})
+       ON( (fu.d_objects_folder_id=f.id OR f.name || '/' LIKE fu.pattern || '%') AND fu.user_id=#{user_id})
        WHERE f.id=#{self.id}}
   end
 
@@ -71,6 +72,55 @@ class DObjectsFolder < ActiveRecord::Base
       sql=%Q{INSERT INTO d_objects_folders_users (user_id,d_objects_folder_id,mode) VALUES(#{user_id},#{self.id},'#{mode}')}
     end
     self.connection.execute(sql)
+  end
+
+  def makedir(foldername)
+    foldername.strip!
+    foldername.gsub!(/[^-\p{Alnum}]/, ' ')
+    return self if foldername.blank?
+    DObjectsFolder.makedir(File.join(self.name,foldername))
+  end
+
+  def filename_with_path
+    File.join(self.digital_objects_mount_point,self.name)
+  end
+
+  def split_path
+    res=[]
+    path=self.name.split('/')
+    while path!=[]
+      s=path.join('/')
+      f=DObjectsFolder.find_by_name(s)
+      parte=path.pop
+      if f.nil?
+        # puts "dovrei creare: #{s}"
+        f=DObjectsFolder.makedir(s)
+      end
+      next if f.nil? or f.id==self.id
+      res << [parte,f.id]
+    end
+    res.reverse
+  end
+
+  def dir
+    name=self.connection.quote_string(self.name)
+    puts "name: #{name}"
+    sql=%Q{with dirnames as (
+      select string_to_array(substr(name, length('#{name}')+2), '/') as dirname
+       from d_objects_folders where name like '#{name}/%'
+      )
+       select distinct dirname[1] from dirnames order by dirname[1]}
+    res=self.connection.execute(sql).to_a
+    return res
+    res.each do |r|
+      name=File.join(self.name,r['dirname'])
+      f=DObjectsFolder.find_by_name(name)
+      if f.nil?
+        puts "NON trovato: #{name}"
+        DObjectsFolder.makedir(name)
+      end
+    end
+    res
   end
 
   def d_object_cover_image
@@ -132,6 +182,13 @@ class DObjectsFolder < ActiveRecord::Base
     end
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
+  end
+
+  def DObjectsFolder.makedir(dirname)
+    folder=DObjectsFolder.find_or_create_by_name(dirname)
+    folder.write_tags_from_filename
+    FileUtils.mkdir_p(folder.filename_with_path)
+    folder
   end
 
 end

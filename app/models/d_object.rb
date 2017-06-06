@@ -331,12 +331,9 @@ class DObject < ActiveRecord::Base
     nil
   end
 
-  # da eliminare
-  #def folder_content(params={})
-  #  page = params[:page].blank? ? 1 : params[:page].to_i
-  #  per_page = params[:per_page].blank? ? 50 : params[:per_page].to_i
-  #  self.d_objects_folder.d_objects.paginate(page:page,per_page:per_page)
-  #end
+  def writable_by?(user)
+    self.d_objects_folder.writable_by?(user)
+  end
 
   def d_objects_folder_sostituita_da_belongs_to
     sql=%Q{SELECT * from d_objects_folders f JOIN d_objects_d_objects_folders d

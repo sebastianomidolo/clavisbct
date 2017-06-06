@@ -1,0 +1,17 @@
+Creazione cartella in:
+<br/>
+<b><%= @d_objects_folder.name %></b>
+
+
+<%= simple_form_for(@d_objects_folder, url:makedir_d_objects_folder_path(method:'GET')) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= text_field_tag('foldername') %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Crea cartella' %>
+  </div>
+<% end %>
+
