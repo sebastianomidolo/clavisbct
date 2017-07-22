@@ -89,6 +89,7 @@ Clavisbct::Application.routes.draw do
       post 'makepdf'
       get 'makedir'
       put 'makedir'
+      get 'filenames'
     end
   end
   
@@ -190,6 +191,7 @@ Clavisbct::Application.routes.draw do
       post 'closed_stack_item_request'
       get 'fifty_years'
       get 'controllo_valori_inventariali'
+      get 'clear_user_data'
     end
   end
 

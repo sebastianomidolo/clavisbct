@@ -20,6 +20,7 @@ class ClavisItemsController < ApplicationController
       end
       user_session[:current_container]=@clavis_item.current_container
     end
+    @clavis_item.owner_library_id=params[:library_id] if !params[:library_id].blank?
 
     @attrib=@clavis_item.attributes.collect {|a| a if not a.last.blank?}.compact
     toskip=["item_order_status", "mediapackage_size", "usage_count", "renewal_count", "notify_count", "discount_value"]
@@ -59,7 +60,18 @@ class ClavisItemsController < ApplicationController
         cond << "#{name}=#{ts}"
       end
     end
-    if !params[:clavis_item].nil?
+
+    if !params[:manifestation_ids].blank? and !params[:library_id].blank?
+      items=ClavisItem.esemplari_disponibili(params[:manifestation_ids],params[:library_id])
+      items=items.split.join(' ')
+      if params[:item_ids].blank?
+        params[:item_ids] = items
+      else
+        params[:item_ids] += items
+      end
+    end
+    
+    if !params[:clavis_item].nil? or !params[:item_ids].blank?
       @attrib << ['title','']
       @attrib << ['inventory_number','']
       if user_signed_in?
@@ -70,12 +82,32 @@ class ClavisItemsController < ApplicationController
       if !params[:days].blank?
         cond << "date_updated between now() - interval '#{params[:days]} days' and now()"
       end
+
+      if !params[:item_ids].blank?
+        item_ids=params[:item_ids].split
+        item_ids=item_ids.collect {|x| x.to_i if !x.blank?}
+        if user_session[:item_ids].blank?
+          user_session[:item_ids]=item_ids
+        else
+          user_session[:item_ids] = user_session[:item_ids] | item_ids
+        end
+        cond << "item_id IN(#{user_session[:item_ids].join(',')})"
+      end
+
       cond = cond.join(" AND ")
       @sql_conditions=cond
       order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], :per_page=>135, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      per_page = params[:per_page].blank? ? 135 : params[:per_page]
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
+    end
+
+    if !user_session[:item_ids].blank?
+      # a=user_session[:item_ids].split(','){|x| x.to_i}
+      a=user_session[:item_ids]
+      b=@clavis_items.collect{|x| x.id}
+      @esemplari_non_trovati = (a-b) | (b-a)
     end
 
     respond_to do |format|
@@ -87,8 +119,14 @@ class ClavisItemsController < ApplicationController
         send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
       }
       format.pdf {
-        filename="#{@clavis_items.size}_segnaposto.pdf"
-        lp=LatexPrint::PDF.new('labels', @clavis_items)
+        if params[:pdf_template].blank?
+          filename="#{@clavis_items.size}_segnaposto.pdf"
+          lp=LatexPrint::PDF.new('labels', @clavis_items)
+        else
+          pdf_template=params[:pdf_template]
+          filename="#{@clavis_items.size}_#{pdf_template}.pdf"
+          lp=LatexPrint::PDF.new(pdf_template, @clavis_items, false)
+        end
         send_data(lp.makepdf,
                   :filename=>filename,:disposition=>'inline',
                   :type=>'application/pdf')
@@ -261,6 +299,11 @@ class ClavisItemsController < ApplicationController
       ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
       render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta recepita'}
     end
+  end
+
+  def clear_user_data
+    user_session[:item_ids]=nil
+    redirect_to clavis_items_path
   end
 
   def fifty_years

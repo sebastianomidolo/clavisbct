@@ -16,6 +16,17 @@ module ClavisItemsHelper
     res=content_tag(:table, res.join.html_safe)
   end
 
+  def clavis_items_rawlist(records)
+    return '' if records.size==0
+    res=[]
+    records.each do |r|
+      lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+      res << content_tag(:tr, content_tag(:td, lnk))
+    end
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
   def clavis_items_shortlist(records, table_id='items_list')
     return '' if records.size==0
     res=[]

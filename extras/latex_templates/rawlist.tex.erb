@@ -1,0 +1,63 @@
+% Lista di items generica
+
+\documentclass[a4paper,11pt]{article}
+
+% \usepackage[a4paper]{geometry}
+
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{1pt}
+\pagestyle{fancy}
+
+
+\textwidth=20cm
+
+% \rhead{Prova \LaTeX}
+
+\usepackage[utf8]{inputenc}
+% \usepackage{multicol}
+
+\linespread{1.3}
+
+% Impostazione per stampante ufficio informazioni
+\hoffset=-22mm
+% \voffset=-28mm
+
+
+\textheight=28cm
+
+\usepackage{supertabular}
+\begin{document}
+
+\lhead{Elenco libri da prendere a magazzino}
+\lfoot{}
+\cfoot{}
+\rfoot{}
+
+<%= "\\rhead{Stampa: #{Time.now.to_date}}" %>
+
+% \pagestyle{empty}
+
+% \head{x}
+
+%\tablehead{\hline}
+%\tabletail{\hline}
+
+\begin{supertabular}{|r|l|l|c|}
+<%
+ res=[]	
+ cnt=1
+ inputdata.each do |e|
+   e['title'].gsub!("&", '\\\&')
+   e['title'].gsub!("%", '\\\%')
+   res << "#{cnt} & {\\Large #{e.collocazione[0..18]}} & #{e['title'][0..50]} & \\hspace{3em} \\\\"
+   cnt+=1
+ end
+%>
+<%= res.join("\n") %>
+
+\end{supertabular}
+
+\end{document}

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170512090141) do
+ActiveRecord::Schema.define(:version => 20170718095801) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -439,6 +439,16 @@ ActiveRecord::Schema.define(:version => 20170512090141) do
     t.text    "note_interne"
   end
 
+  create_table "sessions", :force => true do |t|
+    t.string   "session_id", :null => false
+    t.text     "data"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "sessions", ["session_id"], :name => "index_sessions_on_session_id"
+  add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
+
   create_table "subject_subject", :id => false, :force => true do |t|
     t.integer "s1_id",                  :null => false
     t.integer "s2_id",                  :null => false
@@ -460,11 +470,6 @@ ActiveRecord::Schema.define(:version => 20170512090141) do
   add_index "subjects", ["clavis_authority_id"], :name => "index_subjects_on_clavis_authority_id"
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
-
-  create_table "temp_canzoni", :id => false, :force => true do |t|
-    t.text    "bid"
-    t.integer "id"
-  end
 
   create_table "temp_d_objects_manifestation_id", :id => false, :force => true do |t|
     t.integer "id"
@@ -536,6 +541,8 @@ ActiveRecord::Schema.define(:version => 20170512090141) do
     t.integer "differenza_giorni"
     t.integer "consultazioni_digitali"
     t.integer "prestiti_digitali"
+    t.integer "registration_library_id"
+    t.integer "preferred_library_id"
   end
 
   create_table "temp_mlol_prestiti", :id => false, :force => true do |t|

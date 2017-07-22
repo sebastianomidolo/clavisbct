@@ -398,5 +398,18 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     end
     res.compact
   end
-  
+
+  def ClavisItem.esemplari_disponibili(manifestation_ids, library_id)
+    return manifestation_ids if manifestation_ids.class!=String
+    sql=%Q{select item_id
+      from clavis.manifestation cm join clavis.item ci using(manifestation_id)
+       where cm.manifestation_id IN (#{manifestation_ids.strip.gsub(' ',',')})
+       and ci.loan_class='B'
+       and ci.owner_library_id=#{library_id}}
+    # fd=File.open('/tmp/testami', 'w')
+    # fd.write(sql)
+    # fd.close
+    ActiveRecord::Base.connection.execute(sql).to_a.collect {|x| x['item_id']}
+  end
+
 end
