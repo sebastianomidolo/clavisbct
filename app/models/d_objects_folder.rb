@@ -4,10 +4,16 @@ include DigitalObjects
 class DObjectsFolder < ActiveRecord::Base
   attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc
   after_save :set_clavis_manifestation_attachments
+  before_destroy :reset_sequence
   has_many :d_objects, order:'lower(name)'
 
   def filename
     self.name
+  end
+
+  def reset_sequence
+    sql="SELECT setval('public.d_objects_folders_id_seq', (select max(id) FROM public.d_objects_folders)+1)"
+    self.connection.execute(sql)
   end
 
   def folder_content(params={})
@@ -111,7 +117,8 @@ class DObjectsFolder < ActiveRecord::Base
       )
        select distinct dirname[1] from dirnames order by dirname[1]}
     res=self.connection.execute(sql).to_a
-    return res
+    # Decommentare in produzione:
+    # return res
     res.each do |r|
       name=File.join(self.name,r['dirname'])
       f=DObjectsFolder.find_by_name(name)

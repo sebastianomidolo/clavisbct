@@ -67,7 +67,7 @@ module DigitalObjects
     res
   end
 
-  def write_tags_from_filename
+  def write_tags_from_filename(do_save=true)
     puts "in write_tags_from_filename id #{self.id}"
     v=self.get_bibdata_from_filename
     if self.tags.nil?
@@ -86,6 +86,7 @@ module DigitalObjects
       end
       self.edit_tags(v)
     end
+    return if do_save==false
     self.save if self.changed?
   end
 

@@ -7,7 +7,7 @@ require 'mp3info'
 require 'will_paginate/array'
 
 class DObject < ActiveRecord::Base
-  attr_accessible :filename, :access_right_id, :mime_type, :tags,
+  attr_accessible :name, :d_objects_folder_id, :filename, :access_right_id, :mime_type, :tags,
                   :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
@@ -20,10 +20,20 @@ class DObject < ActiveRecord::Base
   end
 
   def check_filesystem
-    # Commentato il 23 agosto 2016 perché in alcune situazioni dà errore
-    # (per esempio tentando di salvare un record da http://clavisbct.comperio.it/bio_iconografico_cards/49689045/edit)
     return if (self.filename =~ /^bm::/)==0
+    if !self.changes['name'].nil? and !changes['name'].first.nil?
+      raise "error renaming to '#{self.name}'" and return if self.name.blank?
+      raise "error renaming to '#{self.name}' - file exists (#{self.changes['name'].inspect})" and return if File.exists?(self.filename_with_path)
+      old_object=DObject.new(name:changes['name'].first,d_objects_folder_id:self.d_objects_folder_id)
+      msg="cambio nome da #{old_object.filename_with_path} a #{self.filename_with_path}"
+      FileUtils.mv(old_object.filename_with_path, self.filename_with_path)
+      fd=File.open('/tmp/provetta.log', 'w')
+      fd.write("#{msg}\n")
+      fd.close
+    end
     self.digital_object_read_metadata
+    # Il parametro false qui indica: non salvare il record! (siamo già in una procedura before_save, quindi il record verrà comunque salvato)
+    self.write_tags_from_filename(false)
   end
 
   def read_metadata_da_cancellare
@@ -91,7 +101,6 @@ class DObject < ActiveRecord::Base
         self.name=random_fname
       end
     end
-    FileUtils.mv(full_filename, sfn)
 
     # Salvo il record per la seconda volta
     self.write_tags_from_filename

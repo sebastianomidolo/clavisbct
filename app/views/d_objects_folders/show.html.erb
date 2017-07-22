@@ -6,11 +6,12 @@
 
 <%= content_tag(:div, d_objects_folder_show_cover_image(@d_objects_folder)) %>
 
-<%= content_tag(:span, link_to("[Modifica] |", edit_d_objects_folder_path(@d_objects_folder))) if can? :edit, DObjectsFolder and @d_objects_folder.writable_by?(current_user) %>
+<%= content_tag(:span, link_to("[Modifica]", edit_d_objects_folder_path(@d_objects_folder))) if can? :edit, DObjectsFolder and @d_objects_folder.writable_by?(current_user) %>
 
 <% if @d_objects_folder.writable_by?(current_user) %>
-<%= content_tag(:span, link_to("[Carica file in questa cartella]", upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
-<%= content_tag(:span, link_to("[Crea cartella]", makedir_d_objects_folder_path(@d_objects_folder.id))) if can? :makedir, DObjectsFolder %>
+<%= content_tag(:span, link_to('[Rinomina files]', filenames_d_objects_folder_path(@d_objects_folder.id)))  %>
+<%= content_tag(:span, link_to('[Carica file in questa cartella]', upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
+<%= content_tag(:span, link_to('[Crea cartella]', makedir_d_objects_folder_path(@d_objects_folder.id))) if can? :makedir, DObjectsFolder %>
 <% end %>
 
 

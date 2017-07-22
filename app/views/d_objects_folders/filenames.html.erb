@@ -1,0 +1,4 @@
+<%= content_tag(:h3, d_objects_folder_split(@d_objects_folder)) %>
+<%= "files: #{@d_objects.total_entries}" %>
+<%= link_to('Aggiorna ordinamento alfabetico', filenames_d_objects_folder_path) %>
+<%= d_objects_filenames(@d_objects) %>

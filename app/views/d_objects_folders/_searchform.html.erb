@@ -1,7 +1,8 @@
 <%= form_tag(d_objects_folders_path, :method=>:get) do %>
 
 <%= text_field_tag('tags', params[:tags]) %> (ricerca libera per parole)
-<br/> Cerca solo nei nomi delle cartelle <%= check_box_tag('folders_only',1,params[:folders_only]) %> (togliendo la spunta, la ricerca avviene anche sul nome dei files)
+<br/> Cerca solo nei nomi delle cartelle <%= check_box_tag('folders_only',1,params[:folders_only]) %> (togliendo la spunta, la ricerca avviene anche sul nome dei files; si può anche
+<%= link_to('cercare solo sui nomi di files', d_objects_path) %>)
 <br/>
 <%= text_field_tag('basefolder', params[:basefolder]) %> (inizio nome della cartella)
 

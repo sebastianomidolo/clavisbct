@@ -83,6 +83,7 @@ class DObjectsController < ApplicationController
       else
         format.html { render :action => "edit" }
       end
+      format.json { respond_with_bip(@d_object) }
     end
   end
   

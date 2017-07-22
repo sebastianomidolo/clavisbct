@@ -22,8 +22,7 @@
 <% end %>
 </table>
 
-<%= link_to('Carica oggetto digitale', upload_d_objects_path) if can? :manage, DObject %>
-| <%= link_to('Cartelle', d_objects_folders_path)%>
+<%= link_to('Cartelle', d_objects_folders_path)%>
 
 
 <% if can?(:manage, DObject) %>

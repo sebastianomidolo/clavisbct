@@ -91,3 +91,4 @@ select c1.authority_id as mso_id,c1.subject_class as mso_class,c1.full_text as i
   where c1.subject_class='MSO' AND c2.subject_class !='MSO';
 
 
+REFRESH MATERIALIZED VIEW dobjects ;

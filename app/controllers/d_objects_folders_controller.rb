@@ -140,4 +140,11 @@ class DObjectsFoldersController < ApplicationController
     end
   end
 
+  def filenames
+    @d_objects_folder=DObjectsFolder.find(params[:id])
+    render text:'azione non permessa' and return if !@d_objects_folder.writable_by?(current_user)
+    d_objects=@d_objects_folder.d_objects
+    @d_objects=d_objects.paginate(page:1,per_page:d_objects.size)
+  end
+
 end

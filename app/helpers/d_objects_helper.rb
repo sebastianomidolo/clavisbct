@@ -1,6 +1,15 @@
 # coding: utf-8
 
 module DObjectsHelper
+  def d_object_editable_filename(record)
+    return record.name if !record.writable_by?(current_user)
+    best_in_place(record, :name, ok_button:'Salva', cancel_button:'Annulla',
+                  ok_button_class:'btn btn-success',
+                  class:'btn btn-default',
+                  skip_blur:false,
+                  html_attrs:{size:80})
+  end
+
   def d_object_show(record)
     res=[]
     if !record.access_right_id.nil?
@@ -206,6 +215,18 @@ module DObjectsHelper
 
     end
     content_tag(:div, res.join.html_safe)
+  end
+
+
+  def d_objects_filenames(records)
+    res=[]
+    cnt=0
+    records.each do |o|
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, link_to('[vedi]',view_d_object_path(o))) +
+                              content_tag(:td, d_object_editable_filename(o)))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
   end
 
 end
