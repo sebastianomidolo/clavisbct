@@ -1,3 +1,4 @@
+-- Non più utilizzato da 8 agosto 2017 in quanto incorporato in clavis_merge_tobi.sql
 BEGIN;
 CREATE TEMP TABLE excolloc AS
   SELECT item_id, trim(substr(custom_field1,3)) AS excollocazione FROM clavis.item WHERE custom_field1 ~* '^ex';
