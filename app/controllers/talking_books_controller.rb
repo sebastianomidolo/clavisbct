@@ -23,29 +23,35 @@ class TalkingBooksController < ApplicationController
 
     case params[:type]
     when 'novita'
+      order='data_collocazione desc'
       # cond << "data_collocazione notnull"
       mesi = params[:mesi].blank? ? 12 : params[:mesi].to_i
       mesi = 12 if mesi==0
       cond << "data_collocazione > now() - interval '#{mesi} months'"
     else
+      order='chiave,ordine'
     end
 
     respond_to do |format|
       format.html {
         cond = cond.join(" AND ")
         if params[:htmloutput]=='yes'
-          @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+          if params[:type]=='novita'
+            @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
+          else
+            @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
+          end
           render :partial=>'talking_books/html_catalog'
           return
         else
           # @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
-          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page])
+          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page],:order=>order)
         end
       }
       format.csv {
         require 'csv'
         cond = cond.join(" AND ")
-        @records = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+        @records = TalkingBook.find(:all,:conditions=>cond, :order=>order)
         csv_string = CSV.generate do |csv|
           @records.each do |r|
             barcode = r.clavis_item.nil? ? "da controllare" : r.clavis_item.barcode
@@ -57,7 +63,7 @@ class TalkingBooksController < ApplicationController
 
       format.pdf {
         cond = cond.join(" AND ")
-        @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>'chiave,ordine')
+        @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
         pdf=TalkingBook.pdf_catalog(@talking_books)
         send_data(pdf, :disposition=>'inline', :type=>'application/pdf')
       }
