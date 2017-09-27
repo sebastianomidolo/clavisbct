@@ -9,7 +9,7 @@ module ClavisLoansHelper
         m_lnk="#{r.title} [fuori catalogo]"
       end
       i_lnk=link_to(r.collocazione, clavis_item_path(r.item_id, :redir=>true))
-      res << content_tag(:tr, content_tag(:td, i_lnk) +
+      res << content_tag(:tr, content_tag(:td, r.piano) + content_tag(:td, i_lnk) +
                          content_tag(:td, m_lnk))
                          
     end

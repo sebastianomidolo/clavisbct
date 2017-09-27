@@ -56,17 +56,20 @@ class ClavisLoan < ActiveRecord::Base
       ldb="and loan_date_begin notnull"
     end
 
-    sql=%Q{SELECT collocazione, title, loan_date_begin, barcode, manifestation_id,
-            item_id, inventario, item_barcode from clavis.view_prestiti
+    per_centrale = library_id==2 ? "AND NOT cl.primo_elemento in ('DVD','BCTA','LP', 'SAP')" : ''
+    
+    sql=%Q{SELECT vp.collocazione, cl.piano, title, loan_date_begin, barcode, manifestation_id,
+            item_id, inventario, item_barcode from clavis.view_prestiti vp
+          JOIN clavis.collocazioni cc using(item_id)
+          LEFT JOIN clavis.centrale_locations cl using(item_id)
   WHERE
-  owner_library_id=#{library_id}
+  home_library_id=#{library_id}
     #{ldb}
    and loan_date_end isnull
-   AND NOT collocazione ~ '^CC' AND NOT collocazione ~ '^BCT.DVD.'
+   AND NOT vp.collocazione ~ '^CC' #{per_centrale}
    -- and item_media in ('F','H')
-  order by section, espandi_collocazione(collocazione),
-   specification, sequence1, sequence2;}
-    # puts sql
+  order by cl.piano, espandi_collocazione(cc.sort_text);}
+    puts sql
     return ClavisLoan.find_by_sql(sql)
   end
 
