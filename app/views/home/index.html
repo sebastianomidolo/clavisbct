@@ -54,6 +54,17 @@ Pagina di servizio a uso interno delle BCT
   <%= content_tag(:li, link_to('Postazioni OPAC', work_stations_path)) if can? :manage, WorkStation %>
 
 
+  <% if can? :search, ClavisItem %>
+    <%= content_tag(:li, link_to('Esemplari senza piano assegnato', clavis_items_path(senzapiano:'y'))) %>
+    <%= content_tag(:li, link_to('Esemplari (periodici) senza piano assegnato', "http://clavisbct.comperio.it/clavis_items?utf8=%E2%9C%93&clavis_item%5Btitle%5D=&clavis_item%5Bcollocation%5D=&clavis_item%5Binventory_number%5D=&clavis_item%5Bmanifestation_dewey%5D=&clavis_item%5Bowner_library_id%5D=2&clavis_item%5Bin_container%5D=0&clavis_item%5Bitem_status%5D=&clavis_item%5Bitem_media%5D=S&clavis_item%5Bopac_visible%5D=&commit=cerca&senzapiano=y")) %>
+    <%= content_tag(:li, link_to('Sesto piano', clavis_items_path(piano:'6° piano'))) %>
+    <%= content_tag(:li, link_to('Secondo seminterrato', clavis_items_path(piano:'Secondo seminterrato'))) %>
+  <% end %>
+  
+
+
   <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path)) if can? :read, BioIconograficoCard %>
+
+  <%= content_tag(:li, link_to('Monografie senza soggetto e senza altri legami', '/senzasoggetto')) if can? :manage, ClavisItem %>
   
 </ul>

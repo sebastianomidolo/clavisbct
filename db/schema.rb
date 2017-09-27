@@ -471,6 +471,21 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
 
+  create_table "temp_analisi_collocazioni", :id => false, :force => true do |t|
+    t.text    "primo_elemento_collocazione"
+    t.integer "numero esemplari",            :limit => 8
+  end
+
+  create_table "temp_analisi_collocazioni_secondo_elemento", :id => false, :force => true do |t|
+    t.text    "secondo_elemento_collocazione"
+    t.integer "numero esemplari",              :limit => 8
+  end
+
+  create_table "temp_collocazioni_ai_piani", :id => false, :force => true do |t|
+    t.string "collocazione", :limit => 24
+    t.string "dove",         :limit => 36
+  end
+
   create_table "temp_d_objects_manifestation_id", :id => false, :force => true do |t|
     t.integer "id"
     t.string  "manifestation_id", :limit => nil

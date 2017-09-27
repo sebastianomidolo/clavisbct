@@ -7,7 +7,7 @@
       ], include_blank:false, label:false, :input_html => {:onchange => 'submit()'} %>
 
   <%= f.input :numero_fattura, hint: 'numero di fattura o di nota di credito', as: 'string', label: false, placeholder: 'numero fattura o nota di credito' %>
-  <%= f.association :clavis_library, collection: ClavisItem.owner_library,
+  <%= f.association :clavis_library, collection: ClavisItem.home_library,
        include_blank: true, label: false, :input_html => {:onchange => 'submit()'}  %>
   <%= f.input :issue_status, collection: [['Filtra per...',''],
        ['Senza manifestation_id', 'SM'],

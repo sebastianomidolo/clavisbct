@@ -237,6 +237,8 @@ Clavisbct::Application.routes.draw do
   match '/iccu' => 'home#iccu_link'
 
   match '/spazioragazzi' => 'home#spazioragazzi'
+  
+  match '/senzasoggetto' => 'home#senzasoggetto'
 
   match '/sa' => 'clavis_items#ricollocazioni'
 
