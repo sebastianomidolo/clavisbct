@@ -1,0 +1,20 @@
+
+<%= simple_form_for(@extra_card, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+   <%= f.input :titolo, as: 'string', input_html: {size: 20} %>
+   <%= f.input :collocazione, as: 'string', input_html: {size: 20} %>
+   <%= f.input :note_interne, as: 'string', input_html: {size: 20} %>
+   <% f.input :inventory_serie_id, collection: ['V','01'], label: 'Serie inventariale' %>
+   <%= f.input :inventory_number, label: 'Numero di inventario' %>
+   <% f.input :login, label: 'login' %>
+   <% f.input :mancante %>
+   <% f.input :deleted, label: 'Cancellato' %>
+   <%= f.input :home_library_id, as: 'hidden' %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Cerca' %> | <%= link_to('Pulisci', extra_cards_path) %>
+  </div>
+<% end %>
