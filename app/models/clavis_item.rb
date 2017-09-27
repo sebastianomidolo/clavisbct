@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+
+include TextSearchUtils
+
+
 class ClavisItem < ActiveRecord::Base
   self.table_name='clavis.item'
   self.primary_key = 'item_id'
@@ -7,7 +11,7 @@ class ClavisItem < ActiveRecord::Base
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
   :current_container, :in_container, :dewey_collocation, :barcode, :loan_status,
   :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
-  :rfid_code, :actual_library_id
+  :rfid_code, :actual_library_id, :date_updated
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
   belongs_to :home_library, class_name: 'ClavisLibrary', foreign_key: 'home_library_id'
@@ -18,6 +22,7 @@ class ClavisItem < ActiveRecord::Base
   has_one :open_shelf_item, foreign_key:'item_id'
 
   before_save :check_record
+  after_save :piano_centrale
 
   def to_label
     if self.clavis_manifestation.nil?
@@ -71,6 +76,19 @@ class ClavisItem < ActiveRecord::Base
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
     r.delete_if {|a| a.blank?}
     r.join('.')
+  end
+
+  def piano_centrale
+    sql="SELECT collocazione,piano FROM clavis.centrale_locations WHERE item_id=#{self.id}"
+    res=self.connection.execute(sql)
+    return nil if res.ntuples==0
+    piano=res.first['piano']
+    if piano.nil?
+      piano=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'])
+      sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano)} WHERE item_id=#{self.id}"
+      self.connection.execute(sql)
+    end
+    piano
   end
 
   def current_container
@@ -128,6 +146,15 @@ class ClavisItem < ActiveRecord::Base
     end
   end
 
+  # Da rivedere bene
+  def sanifica_collocazione
+    if self.section!='BCT'
+      self.sequence2='' if self.sequence2 =~ /prenot/
+      self.sequence2='' if self.sequence2 =~ /Sala/
+      self.collocation=self.collocation.split.first if !self.collocation.nil?
+    end
+  end
+
   def item_info
     sql=%Q{select c.*,os.*,l.label as nomebib from clavis.item ci left join container_items i on(i.item_id=ci.item_id) left join containers c on(c.id=i.container_id) left join clavis.library l on(l.library_id=c.library_id) left join open_shelf_items os on(os.item_id=ci.item_id) where ci.item_id = #{self.id}}
     r=ActiveRecord::Base.connection.execute(sql).first
@@ -170,11 +197,11 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
   end
 
-  def self.owner_library
+  def self.home_library
     sql=%Q{select library_id as key,label from clavis.library
       where library_status='A' AND library_internal='1' order by label}
-    puts sql
-    self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
+    r=self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
+    r << ['Tutte',0]
   end
   def self.periodici_e_fatture(library_id,issue_years)
     issue_years=[issue_years] if issue_years.class==String
@@ -194,18 +221,13 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).to_a
   end
 
-  def ClavisItem.item_status_label_to_key(label)
-    sql="select value_label,value_key from clavis.lookup_value where value_class = 'ITEMSTATUS' and value_language='it_IT' and value_label=#{self.connection.quote(label)}"
+  def ClavisItem.label_to_key(label,value_class)
+    label.gsub!(/\(|\)$/, '')
+    sql="select value_label,value_key from clavis.lookup_value where value_class = '#{value_class}' and value_language='it_IT' and value_label=#{self.connection.quote(label)}"
     res=self.connection.execute(sql).first
     res.nil? ? nil : res['value_key']
   end
 
-  def ClavisItem.loan_status_label_to_key(label)
-    label.gsub!(/\(|\)$/, '')
-    sql="select value_label,value_key from clavis.lookup_value where value_class = 'LOANSTATUS' and value_language='it_IT' and value_label=#{self.connection.quote(label)}"
-    res=self.connection.execute(sql).first
-    res.nil? ? nil : res['value_key']
-  end
 
   def ClavisItem.section_label_to_key(label,library_id)
     library_id=library_id.to_i
@@ -312,7 +334,7 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     return [] if scaffale.class!=Fixnum
     filtro = "^#{scaffale}\\.#{palchetto}\\."
     sql=%Q{SELECT collocazione FROM clavis.collocazioni c JOIN clavis.item i USING(item_id)
-        WHERE i.owner_library_id=2 AND collocazione ~ #{ClavisItem.connection.quote(filtro)}
+        WHERE i.home_library_id=2 AND collocazione ~ #{ClavisItem.connection.quote(filtro)}
         ORDER BY espandi_collocazione(collocazione);}
     res=ClavisItem.connection.execute(sql).to_a
 
@@ -397,6 +419,10 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
       end
     end
     res.compact
+  end
+
+  def ClavisItem.piano(collocazione)
+    puts "collocazione: #{collocazione}"
   end
 
   def ClavisItem.esemplari_disponibili(manifestation_ids, library_id)

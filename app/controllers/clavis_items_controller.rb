@@ -1,4 +1,6 @@
 # coding: utf-8
+include TextSearchUtils
+
 class ClavisItemsController < ApplicationController
   before_filter :authenticate_user!, only: 'showxxx'
   load_and_authorize_resource only: [:index,:ricollocazioni]
@@ -7,12 +9,12 @@ class ClavisItemsController < ApplicationController
     @clavis_item = ClavisItem.new(params[:clavis_item])
 
     if can? :search, ClavisItem
-      if @clavis_item.owner_library_id.nil?
+      if @clavis_item.home_library_id.nil?
         librarian=current_user.clavis_librarian
         if librarian.nil?
-          @clavis_item.owner_library_id=2
+          @clavis_item.home_library_id=2
         else
-          @clavis_item.owner_library_id=librarian.default_library_id
+          @clavis_item.home_library_id=librarian.default_library_id
         end
       end
       if @clavis_item.current_container.nil?
@@ -20,7 +22,7 @@ class ClavisItemsController < ApplicationController
       end
       user_session[:current_container]=@clavis_item.current_container
     end
-    @clavis_item.owner_library_id=params[:library_id] if !params[:library_id].blank?
+    @clavis_item.home_library_id=params[:library_id] if !params[:library_id].blank?
 
     @attrib=@clavis_item.attributes.collect {|a| a if not a.last.blank?}.compact
     toskip=["item_order_status", "mediapackage_size", "usage_count", "renewal_count", "notify_count", "discount_value"]
@@ -35,10 +37,13 @@ class ClavisItemsController < ApplicationController
 
       case name
       when 'title'
-        ts=ClavisItem.connection.quote_string(value.split.join(' & '))
+        # ts=ClavisItem.connection.quote_string(value.split.join(' & '))
+        ts=ClavisItem.connection.quote_string(textsearch_sanitize(value))
         cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
       when 'manifestation_id'
-        cond << "manifestation_id=0" if value==1
+        cond << "manifestation_id=0" if value.blank?
+      when 'home_library_id'
+        cond << "home_library_id=#{value}" if value!=0
       when 'collocation'
         if (@clavis_item.collocation =~ /\.$/).nil?
           if @clavis_item.collocation.count(' ')>0
@@ -56,8 +61,12 @@ class ClavisItemsController < ApplicationController
           cond << (@clavis_item.rfid_code=='1' ? "rfid_code !=''" : "(rfid_code is null OR rfid_code='')")
         end
       else
-        ts=ClavisItem.connection.quote(value)
-        cond << "#{name}=#{ts}"
+        if value=~/^!/
+          x=value.sub(/^!/,'')
+          cond << "#{name}!=#{ClavisItem.connection.quote(x)}"
+        else
+          cond << "#{name}=#{ClavisItem.connection.quote(value)}"
+        end
       end
     end
 
@@ -71,7 +80,7 @@ class ClavisItemsController < ApplicationController
       end
     end
     
-    if !params[:clavis_item].nil? or !params[:item_ids].blank?
+    if !params[:clavis_item].nil? or !params[:item_ids].blank? or !params[:senzapiano].blank? or !params[:piano].blank?
       @attrib << ['title','']
       @attrib << ['inventory_number','']
       if user_signed_in?
@@ -94,11 +103,35 @@ class ClavisItemsController < ApplicationController
         cond << "item_id IN(#{user_session[:item_ids].join(',')})"
       end
 
+      if params[:senzapiano]=='y'
+        #cond << %Q{piano is null and ((home_library_id != -3 and manifestation_id!=0 and item_status IN ('F','G','S'))
+        #         OR (home_library_id = -1 and owner_library_id=2)) }
+        cond << %Q{(piano='__non assegnato__' or piano is null) and ((home_library_id = 2 and item_status IN ('F','G','S'))
+                 OR (home_library_id=2 and owner_library_id=-1)) }
+      end
+
+      if !params[:piano].blank?
+        cond << %Q{piano=#{ClavisItem.connection.quote(params[:piano])}}
+      end
+
       cond = cond.join(" AND ")
       @sql_conditions=cond
-      order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
+      #if current_user.email=='seba'
+      if params[:order]=='collocation'
+        order_by = 'cc.sort_text, clavis.item.title'
+      else
+        order_by = cond.blank? ? nil : 'cl.piano, cc.sort_text, clavis.item.title'
+      end
+      # order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
+
+      if params[:con_prenotazioni].blank?
+        join_prenotazioni=select_prenotazioni=''
+      else
+        join_prenotazioni='join clavis.items_con_prenotazioni_pendenti icpp using(item_id)'
+        select_prenotazioni='icpp.*,'
+      end
       per_page = params[:per_page].blank? ? 135 : params[:per_page]
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>'item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,containers.label',:joins=>"left join clavis.collocazioni cc using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>"#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label",:joins=>"#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end
@@ -196,6 +229,7 @@ class ClavisItemsController < ApplicationController
   end
 
   def info
+    render nothing: true, status: 404 and return if !ClavisItem.exists?(params[:id])
     @clavis_item=ClavisItem.find(params[:id])
     respond_to do |format|
       format.html
@@ -204,29 +238,38 @@ class ClavisItemsController < ApplicationController
   end
 
   def sync
+    # Da rivedere (agosto 2017)
     @clavis_item=ClavisItem.new(params[:i])
     @clavis_item.id=params[:id]
-    new_item_status=ClavisItem.item_status_label_to_key(@clavis_item.item_status)
-    new_loan_status=ClavisItem.loan_status_label_to_key(@clavis_item.loan_status)
-    new_section=ClavisItem.section_label_to_key(@clavis_item.section,@clavis_item.owner_library_id)
-    new_custom_field1=@clavis_item.custom_field1
+    @clavis_item.opac_visible = params[:i][:opac_visible] == 'true' ? 1 : 0
     new_collocation=@clavis_item.collocation
     if ClavisItem.exists?(params[:id])
-      @clavis_item=ClavisItem.find(params[:id])
-      @clavis_item.item_status=new_item_status
-      @clavis_item.loan_status=new_loan_status
-      @clavis_item.section=new_section
-      @clavis_item.collocation=new_collocation
-      @clavis_item.custom_field1=new_custom_field1
-      @clavis_item.save if @clavis_item.changed?
+      @c_item=ClavisItem.find(params[:id])
+      @c_item.title=@clavis_item.title
+      @c_item.item_status=ClavisItem.label_to_key(@clavis_item.item_status,'ITEMSTATUS')
+      @c_item.loan_status=ClavisItem.label_to_key(@clavis_item.loan_status,'LOANSTATUS')
+      @c_item.item_media=ClavisItem.label_to_key(@clavis_item.item_media,'ITEMMEDIATYPE')
+      @c_item.section=ClavisItem.section_label_to_key(@clavis_item.section,@clavis_item.owner_library_id)
+      @c_item.collocation=new_collocation
+      @c_item.opac_visible=@clavis_item.opac_visible
+      @c_item.custom_field1=@clavis_item.custom_field1
+      @c_item.custom_field3=@clavis_item.custom_field3
+      @c_item.date_updated=@clavis_item.date_updated
+      ['owner_library_id','home_library_id','actual_library_id'].each do |f|
+        @c_item[f] = @clavis_item.send(f) 
+      end
+      @c_item.sanifica_collocazione
+      @c_item.save if @c_item.changed?
     else
-      @clavis_item.item_status=new_item_status
-      @clavis_item.loan_status=new_loan_status
-      @clavis_item.section=new_section
+      @clavis_item.loan_status=ClavisItem.label_to_key(@clavis_item.loan_status,'LOANSTATUS')
+      @clavis_item.item_media=ClavisItem.label_to_key(@clavis_item.item_media,'ITEMMEDIATYPE')
+      @clavis_item.item_status=ClavisItem.label_to_key(@clavis_item.item_status,'ITEMSTATUS')
+      @clavis_item.section=ClavisItem.section_label_to_key(@clavis_item.section,@clavis_item.owner_library_id)
       @clavis_item.item_icon=''
       @clavis_item.issue_number=0
-      @clavis_item.section=@clavis_item.section.split.first
+      @clavis_item.section=@clavis_item.section.split.first if !@clavis_item.section.nil?
       @clavis_item.save
+      # render :template=>"/clavis_items/show" and return
     end
     respond_to do |format|
       format.html

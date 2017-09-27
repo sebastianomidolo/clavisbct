@@ -45,7 +45,7 @@ select ci.item_id,ca.authority_id as class_id,ca.class_code || '.' ||
 
    left join clavis.authority up_mainentry on (lam3.authority_id=up_mainentry.authority_id)
 
- where ci.owner_library_id=2
+ where ci.home_library_id=2
 ;
 
 

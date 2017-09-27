@@ -52,7 +52,7 @@
  inputdata.each do |e|
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
-   res << "#{cnt} & {\\Large #{e.collocazione[0..18]}} & #{e['title'][0..50]} & \\hspace{3em} \\\\"
+   res << "#{e.piano} & {\\Large #{e.collocazione[0..18]}} & #{e['title'][0..50]} & \\hspace{3em} \\\\"
    cnt+=1
  end
 %>

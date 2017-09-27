@@ -21,9 +21,9 @@ task :import_from_clavis => :environment do
      'setup',
      'ricollocazioni',
      'merge_tobi',
-     'ex_collocazioni',
      'views',
-     'export_bioicon'
+     'export_bioicon',
+     'centrale_locations'
     ].each do |fname|
       sf=File.join(Rails.root.to_s, 'extras', 'sql', "clavis_#{fname}.sql")
       # cmd="/usr/bin/psql --no-psqlrc --quiet -d #{db} #{user}  -f #{sf}"

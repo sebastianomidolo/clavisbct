@@ -15,6 +15,7 @@ CREATE INDEX item_title_idx ON clavis.item USING gin(to_tsvector('simple', title
 UPDATE clavis.item SET issue_status = NULL WHERE issue_status NOTNULL AND issue_id ISNULL;
 
 CREATE INDEX item_owner_library_id_idx ON clavis.item(owner_library_id);
+CREATE INDEX item_home_library_id_idx ON clavis.item(home_library_id);
 CREATE INDEX item_section_idx ON clavis.item("section");
 CREATE INDEX item_specification_idx ON clavis.item(specification);
 CREATE INDEX item_supplier_id_idx ON clavis.item(supplier_id);
@@ -91,4 +92,37 @@ select c1.authority_id as mso_id,c1.subject_class as mso_class,c1.full_text as i
   where c1.subject_class='MSO' AND c2.subject_class !='MSO';
 
 
+
+update clavis.item set sequence2=NULL where section = 'BCTA' and sequence2 = '(su prenotazione)';
+update clavis.item set sequence2=NULL where section = 'BCTA' and sequence2 = '. (su prenotazione)';
+
 REFRESH MATERIALIZED VIEW dobjects ;
+
+create index l_authority_manifestation_manifestation_id_ndx on clavis.l_authority_manifestation (manifestation_id);
+create index l_manifestation_manifestation_id_down_ndx on clavis.l_manifestation (manifestation_id_down);
+-- create index clavis_item_custom_field1_ndx on clavis.item(custom_field1) where owner_library_id=-3 and custom_field1 notnull;
+
+
+create table clavis.items_con_prenotazioni_pendenti as
+select ci.item_id,array_agg(distinct ir.request_id) as request_ids,count(*)::integer as requests_count
+from
+clavis.item_request ir join clavis.manifestation cm
+using(manifestation_id) join clavis.item ci using(manifestation_id)
+where ir.request_status='A' and ci.manifestation_id!=0
+AND ci.loan_class IN('A','B') and ci.loan_status = 'A'
+AND ci.item_status IN ('F','K','S','V')
+GROUP BY ci.item_id;
+
+/*
+loan_class
+A - Non disponibile
+B - Prestabile
+
+item_status
+F - Su scaffale
+K - Novità
+S - Non trovato da cercare
+V - In vetrina
+*/
+
+

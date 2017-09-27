@@ -33,7 +33,7 @@ module ClavisItemsHelper
 
     prec_catena=0
     records.each do |r|
-      if r.home_library_id==-1
+      if r.owner_library_id==-1
         lnk=r.title.gsub("\r",'; ')
         if can? :manage, ExtraCard
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
@@ -43,7 +43,7 @@ module ClavisItemsHelper
           mlnk = 'TOPOGRAFICO'
         end
       else
-        if r.home_library_id==-3
+        if r.owner_library_id==-3
           lnk=link_to(r.title, ClavisItem.clavis_url(r.custom_field1,:show), :target=>'_blank')
         else
           lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
@@ -54,12 +54,15 @@ module ClavisItemsHelper
         media << "</br><b>#{r.loan_status}</b>"
         lnk << "</br><b>non visibile in opac</b>".html_safe if r.opac_visible!=1
         lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
+        lnk << "</br>Ultima modifica: #{r.date_updated.to_date}".html_safe if !r.date_updated.nil?
+        lnk << "</br>#{link_to('[vedi notizia]', ClavisManifestation.clavis_url(r.manifestation_id,:show),:target=>'_blank')}".html_safe if r.manifestation_id!=0
+        
         mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
 
       colloc=r.collocazione.sub(/^BCT\./,'')
-      if can? :manage, Container
+      if can? :manage, Container and !@clavis_item.current_container.nil?
         coll=link_to(colloc, r, remote: true, onclick: %Q{$('#item_#{r.id}').html('<b>aspetta...</b>')})
       else
         coll=link_to(colloc, clavis_item_path(r))
@@ -75,9 +78,12 @@ module ClavisItemsHelper
           prec_catena=catena+1
         end
       end
-      classe = r.home_library_id==-3 ? 'success' : ''
+      classe = r.owner_library_id==-3 ? 'success' : ''
 
-      coll << "</br>RICOLLOCATO".html_safe if r.home_library_id==-3
+      coll << "</br>RICOLLOCATO".html_safe if r.owner_library_id==-3
+      coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
+      coll << "</br><em>#{r.requests_count} #{r.requests_count=='1' ? 'prenotazione' : 'prenotazioni' }</em>".html_safe if r.respond_to?('requests_count')
+      
 
       res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
                          content_tag(:td, mlnk) +
@@ -86,11 +92,13 @@ module ClavisItemsHelper
                          content_tag(:td, container_link),
                          {:data_view=>r.view,:class=>classe})
     end
-    if can? :manage, Container
+    if can? :manage, Container and !@clavis_item.current_container.nil?
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{clink} (fare click sulla collocazione per inserire il volume corrispondente nel contenitore)".html_safe, class: 'panel-heading')
+    else
+      res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
     end
-    res=content_tag(:table, res.join.html_safe, {:id=>table_id, class: 'table table-striped'})
+    res=content_tag(:table, res.join("\n").html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
 
@@ -192,6 +200,7 @@ module ClavisItemsHelper
                          content_tag(:td, container_link),
                          {:data_view=>r.view})
     end
+
     if can? :manage, Container
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{clink} (fare click sulla collocazione per inserire il volume corrispondente nel contenitore)".html_safe, class: 'panel-heading')
@@ -308,7 +317,11 @@ module ClavisItemsHelper
     return '' if palchetto.nil? or scaffale.to_i == 0
     nc=ClavisItem.missing_numbers(scaffale.to_i,palchetto.upcase)
     return '' if nc.size==0
-    "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nc.join(', ')}".html_safe
+    nclink=[]
+    nc.each do |n|
+      nclink << link_to(n, new_extra_card_path(collocazione:"#{collocazione}.#{n}"),target:'_blank') if can? :manage, ExtraCard
+    end
+    "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nclink.join(', ')}".html_safe
   end
 
 end

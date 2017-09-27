@@ -3,25 +3,31 @@
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
   <%= f.input :collocation, hint: 'collocazione (inserire la collocazione con spazio al posto del punto per avere la ricerca puntuale, esempio: 509 d 35)', label: false, placeholder: 'collocazione' %>
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
+  <%= f.input :inventory_serie_id, hint: 'Serie inventariale', label: false, placeholder: 'serie inventariale' %>
   <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
-  <%= f.association :owner_library, collection: ClavisItem.owner_library, hint: 'Biblioteca proprietaria', include_blank: true, label: false %>
+  <%= f.association :home_library, collection: ClavisItem.home_library, hint: 'Biblioteca di gestione', include_blank: false, label: false %>
+
+  <div class='control-group'>
+   Con prenotazioni pendenti e in grado di essere soddisfatte da almeno una biblioteca <%= check_box_tag 'con_prenotazioni', 'S', params[:con_prenotazioni] %>
+  </div>
 
   <% if can? :manage, Container %>
    <%= content_tag(:b, link_to(@clavis_item.container.info, container_path(@clavis_item.container))) if !@clavis_item.container.nil?%>
-   <%= f.input :in_container, as: 'boolean', hint: 'Solo volumi nei contenitori', label: false %>
-   <%= link_to('[elenco contenitori]', containers_path) %>
+   <%= f.input :in_container, as: 'boolean', label: 'Solo volumi nei contenitori' %>
+   <% link_to('[elenco contenitori]', containers_path) %>
   <% end %>
 
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],
-      label: false, hint: 'Visibilità in opac'
-  %>
+      label: false, hint: 'Visibilità in opac' %>
 
-  <% if params[:mode]=='lastmod' %>
-    Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
+
+  <% if params[:mode]=='lastmod' or !params[:days].blank? %>
+  Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
   <% end %>
 
+  
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
 
   <%= link_to('Inserisci esemplare', new_extra_card_path) if can? :manage, ExtraCard %>
@@ -38,10 +44,19 @@
  <%= content_tag(:div, link_to('Stampa elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999))) %>
  <%= content_tag(:p, "Esemplari da stampare: <b>#{@clavis_items.total_entries}</b> [#{lnk}]".html_safe) %>
 <% else %>
- <%= link_to('scarica barcodes', params.merge(format:'csv')) + ' | ' if @clavis_items.count>1 %>
- <%= link_to('segnaposto (PDF)', params.merge(format:'pdf')) if @clavis_items.count>1 %>
+  <% if @clavis_items.count>1 %>
+    <%= link_to('scarica barcodes', params.merge(format:'csv')) + ' | ' %>
+    <%= link_to('segnaposto', params.merge(format:'pdf')) + ' | '  %>
+    <%= link_to('elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999)) + ' | ' %>
  <% end %>
  
+ <% if params[:order]=='collocation' %>
+  <%= link_to('ordina_per_piano', params.merge(order:'')) if @clavis_items.count>1 %>
+ <% else %>
+  <%= link_to('ordina_per_collocazione', params.merge(order:'collocation')) if @clavis_items.count>1 %>
+ <% end %>
+<% end %>
+
 <% end %>
 
 <%=
@@ -57,3 +72,5 @@ if @attrib.size>0
 end
 %>
 <% content_tag(:p, @attrib.inspect) %>
+
+<% content_tag(:div, "sql: #{@sql_conditions}") %>
