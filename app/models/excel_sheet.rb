@@ -295,7 +295,7 @@ class ExcelSheet < ActiveRecord::Base
           else
             d=d.to_s.strip
             d.gsub!(/\n|\r/,'\r')
-            d.gsub!(/\t/,' ')
+            d.gsub!(/\t|\\/,' ')
           end
         end
         data << d

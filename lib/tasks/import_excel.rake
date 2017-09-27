@@ -56,7 +56,7 @@ def mainloop(basedir,fdout)
   post_sql_files=[]
   entries=Dir.entries(basedir).delete_if {|z| ['.','..'].include?(z)}.sort
   entries.each do |entry|
-    # puts entry
+    next if entry=='celdes'
     file_or_dir=File.join(basedir,entry)
     if File.directory?(file_or_dir)
       # puts "questa e' una directory: #{file_or_dir}"
