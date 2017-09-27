@@ -1,21 +1,9 @@
-<h1>Scheda extra Clavs (topografico)</h1>
+<h3>Topografico non in Clavis</h3>
 
-<table>
-  <tr>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
+<%= render :partial => 'searchform' if can? :search, ExtraCard %>
 
-<% @extra_cards.each do |ec| %>
-  <tr>
-    <td><%= link_to ec.collocazione, ec %></td>
-    <td><%= link_to ec.titolo, ec %></td>
-    <td><%= link_to 'Edit', edit_extra_card_path(ec) %></td>
-  </tr>
-<% end %>
-</table>
+<%= content_tag(:b, "Trovati #{@extra_cards.total_entries} items") %>
+<%= will_paginate @extra_cards, renderer: BootstrapPagination::Rails %>
 
-<br />
 
-<%= link_to 'New Extra card', new_extra_card_path %>
+<%= extra_cards_shortlist(@extra_cards) %>

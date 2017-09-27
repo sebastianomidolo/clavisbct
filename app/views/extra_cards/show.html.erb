@@ -20,6 +20,14 @@
 %>
 <% end %>
 
+<% if @extra_card.created_by.nil? %>
+<%= content_tag(:p, "Scheda con id #{@extra_card.id} importata da ToBi") %>
+<% else %>
+<%= content_tag(:p, "Scheda creata da #{@extra_card.created_by.email}") %>
+<% end %>
+
 <br/>
 <%= link_to 'Vedi pseudo scheda esemplare Clavis', clavis_item_path(@extra_card.clavis_item) if !@extra_card.clavis_item.nil?%>
 
+
+<%= content_tag(:div, extra_card_show(@extra_card)) %>

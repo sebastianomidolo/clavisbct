@@ -9,9 +9,36 @@ class ExtraCardsController < ApplicationController
   respond_to :html
 
   def index
-    cond={}
-    cond[:collocazione]=params[:collocazione] if !params[:collocazione].blank?
-    @extra_cards = ExtraCard.paginate(:conditions=>cond,:per_page=>300,:page=>params[:page])
+    @extra_card = ExtraCard.new(params[:extra_card])
+    @attrib=@extra_card.attributes.collect {|a| a if not a.last.blank?}.compact
+    toskip=["id_titolo", "id_copia"]
+    @attrib.delete_if do |r|
+      toskip.include?(r.first)
+    end
+
+    cond=[]
+    @extra_cards = ExtraCard.paginate_by_sql("SELECT * FROM topografico_non_in_clavis WHERE false", :page=>1);
+    @attrib.each do |a|
+      name,value=a
+      case name
+      when 'titolo'
+        ts=ExtraCard.connection.quote_string(value.split.join(' & '))
+        cond << "to_tsvector('simple', titolo) @@ to_tsquery('simple', '#{ts}')"
+      when 'mancante'
+        x = value=='1' ? 'true' : 'false'
+        cond << "#{name} is #{x}"
+      when 'inventory_number'
+        cond << "#{name}=#{value}"
+      else
+        ts=ExtraCard.connection.quote_string(value)
+        cond << "#{name} ~* '#{ts}'"
+      end
+    end
+    cond = cond.join(" AND ")
+    @sql_conditions=cond
+    order_by = cond.blank? ? nil : 'espandi_collocazione(collocazione)'
+    per_page = params[:per_page].blank? ? 200 : params[:per_page]
+    @extra_cards = ExtraCard.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :order=>order_by)
     respond_with(@extra_cards)
   end
 
@@ -20,8 +47,8 @@ class ExtraCardsController < ApplicationController
   end
 
   def new
-    olid=params[:owner_library_id].blank? ? 2 : params[:owner_library_id]
-    @extra_card = ExtraCard.new(owner_library_id: olid)
+    olid=params[:home_library_id].blank? ? 2 : params[:home_library_id]
+    @extra_card = ExtraCard.new(home_library_id: olid, collocazione:params[:collocazione])
     respond_with(@extra_card)
   end
 

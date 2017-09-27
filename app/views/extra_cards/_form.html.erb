@@ -6,7 +6,9 @@
    <%= f.input :titolo, input_html: {cols: 80, rows: 3} %>
    <%= f.input :inventory_serie_id, collection: ['V','01'], label: 'Serie inventariale' %>
    <%= f.input :inventory_number, label: 'Numero di inventario' %>
-   <%= f.input :owner_library_id, as: 'hidden' %>
+   <%= f.input :note_interne, as: 'string', input_html: {size: 60} %>
+   <%= f.input :mancante %>
+   <%= f.input :home_library_id, as: 'hidden' %>
   </div>
 
   <div class="form-actions">
