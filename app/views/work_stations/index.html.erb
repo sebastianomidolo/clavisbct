@@ -4,7 +4,7 @@
 
 
 <%= form_tag(work_stations_path, method: 'get') do %>
-<%= select_tag(:clavis_library_id, options_for_select(ClavisItem.owner_library,
+<%= select_tag(:clavis_library_id, options_for_select(ClavisItem.home_library,
       params[:clavis_library_id]), prompt:'Tutte le sedi', :onchange=>'submit();') %>
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 <% end %>
