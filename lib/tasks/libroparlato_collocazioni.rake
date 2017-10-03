@@ -1,11 +1,14 @@
+# coding: utf-8
 # -*- mode: ruby;-*-
 
 # RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop
 # RAILS_ENV=production  rake libroparlato_collocazioni | psql clavisbct_production informhop
 
-desc 'Creazione tabella import_libroparlato_colloc per libro parlato'
+desc 'Creazione tabella import_libroparlato_colloc per libro parlato (non più usato)'
 
 task :libroparlato_collocazioni => :environment do
+  puts "libroparlato_collocazioni: non usare!"
+  exit
   sql=%Q{select win_sortfilename(filename) as filename,id from d_objects where filename ~ '^libroparlato'
           order by win_sortfilename(filename);}
 
