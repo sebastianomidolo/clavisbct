@@ -146,7 +146,7 @@ module ClavisItemsHelper
     end
     if can? :manage, Container and !@clavis_item.current_container.nil?
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
-      res << content_tag(:div, "Trovati #{records.total_entries} esemplari - contenitore corrente: #{clink} (fare click sulla collocazione per inserire il volume corrispondente nel contenitore)".html_safe, class: 'panel-heading')
+      res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
     else
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
     end
