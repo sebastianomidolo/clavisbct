@@ -12,7 +12,7 @@
   </div>
 
   <% if can? :manage, Container %>
-   <%= content_tag(:b, link_to(@clavis_item.container.info, container_path(@clavis_item.container))) if !@clavis_item.container.nil?%>
+   <%= content_tag(:b, link_to(@clavis_item.container.info, container_path(@clavis_item.container))) if !@clavis_item.container.nil? and !@clavis_item.container.closed %>
    <%= f.input :in_container, as: 'boolean', label: 'Solo volumi nei contenitori' %>
    <% link_to('[elenco contenitori]', containers_path) %>
   <% end %>
