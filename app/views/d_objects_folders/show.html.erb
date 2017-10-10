@@ -21,7 +21,7 @@
 
 <%= d_objects_view(@d_objects) %>
 
-<% if @d_objects.size > 1 %>
+<% if @d_objects.size > 1 and can? :manage, DObjectsFolder %>
 <%= button_to "Converti in PDF", makepdf_d_objects_folder_path(@d_objects_folder,{page:params[:page],per_page:params[:per_page]}) %>
 <%= button_to "Converti in PDF (senza logo BCT)", makepdf_d_objects_folder_path(@d_objects_folder,{nologo:true,page:params[:page],per_page:params[:per_page]}) %>
 

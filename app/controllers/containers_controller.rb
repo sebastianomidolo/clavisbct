@@ -8,6 +8,7 @@ class ContainersController < ApplicationController
   # GET /containers
   # GET /containers.json
   def index
+    user_session[:current_container]=nil
     if params[:label].blank?
       @containers = Container.lista
     else

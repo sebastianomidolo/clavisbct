@@ -1,0 +1,2 @@
+$("#extra_card_id_<%= @extra_card.id -%>").remove();
+$("#container_info_<%= @container.id -%>").replaceWith("<%=j content_tag(:div, container_info(@container)) -%>");

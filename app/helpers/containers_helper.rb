@@ -15,74 +15,60 @@ module ContainersHelper
 
   def container_show(record)
     res=[]
-    prec_mid=nil
-    prec_item=nil
-    prec_cons=nil
-    cnt=0
-    record.container_items.each do |i|
-      cnt += 1
+    delete_button=%Q{<button type="button" class="close" aria-label="Close" title="Rimuovi volume"><span aria-hidden="true">&times;</span></button>}
+
+    record.elements.each do |r|
       inventario=nil
-      if i.manifestation_id!=prec_mid
-        title = i.clavis_item.nil? ? '?' : i.clavis_item.title
-        if i.manifestation_id!=0
-          lnk_opac="#{link_to(title, ClavisManifestation.clavis_url(i.manifestation_id,:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(i.item_id,:show), target: '_blank')}"
-        else
-          lnk_opac = title
+      title = r['titolo']
+      lnk_opac=title
+
+      item_title=r['container_item_title']
+      if item_title.nil?
+        bip=title
+        del = content_tag(:td, link_to(delete_button.html_safe,
+                                       remove_from_container_extra_card_path(r['extra_card_id']),
+                                       remote:true, method: :post,
+                                       confirm: "X Confermi rimozione del volume #{r['collocazione']}?"))
+        del_id = "extra_card_id_#{r['extra_card_id']}"
+      else
+        if r['manifestation_id']!=0
+          lnk_opac="#{link_to(title, ClavisManifestation.clavis_url(r['manifestation_id'],:opac), target: '_blank')} #{link_to('<b>[edit]</b>'.html_safe, ClavisItem.clavis_url(r['item_id'],:show), target: '_blank')}"
         end
-      else
-        lnk_opac = '-'
-      end
-      if user_signed_in?
-        bip=best_in_place(i, :item_title, ok_button:'Salva', cancel_button:'Annulla modifiche',
-                          ok_button_class:'btn btn-success',
-                          class:'btn btn-default',
-                          skip_blur:false,
-                          html_attrs:{size:i.item_title.size}
-                          )
-      else
-        bip=i.item_title
-      end
-
-      if i.item_id!=prec_item and !i.clavis_item.nil?
-        if i.item_id.nil?
-          lnk_item = ''
+        if can? :manage, Container and !r['container_item_id'].nil?
+          i=ContainerItem.find(r['container_item_id'])
+          del = content_tag(:td, link_to(delete_button.html_safe, i, remote:true, method: :delete,
+                                         confirm: "Y Confermi rimozione del volume #{r['collocazione']}?"))
+          del_id = "item_#{i.id}"
+          bip=best_in_place(i, :item_title, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                            ok_button_class:'btn btn-success',
+                            class:'btn btn-default',
+                            skip_blur:false,
+                            html_attrs:{size:i.item_title.size}
+                           )
         else
-          # lnk_item = link_to(i.collocazione, i.clavis_item.clavis_url, target: '_blank')
-          lnk_item = link_to(i.collocazione, clavis_item_path(i.item_id), target: '_blank')
-          inventario = i.clavis_item.inventario
+          bip=title
+          del = ''
         end
-      else
-        lnk_item = ''
-        inventario=''
-      end
-      if i.consistency_note_id!=prec_cons
-        lnk_consistenza = i.consistency_note_id.nil? ? '' : link_to('[Periodico]', clavis_consistency_note_path(i.consistency_note_id), target: '_blank')
-      else
       end
 
-      prec_mid=i.manifestation_id
-      prec_item=i.item_id
-      prec_cons=i.consistency_note_id
+      lnk_item = r['collocazione']
+      inventario=''
 
-      delete_button=%Q{<button type="button" class="close" aria-label="Close" title="Rimuovi volume"><span aria-hidden="true">&times;</span></button>}
-
-      res << content_tag(:tr,
-                         content_tag(:td, link_to(delete_button.html_safe, i, remote:true, method: :delete,
-                          confirm: "Confermi rimozione del volume #{i.collocazione}?")) +
+      res << content_tag(:tr, del +
                          content_tag(:td, lnk_item) +
                          content_tag(:td, lnk_opac.html_safe) +
                          content_tag(:td, bip) +
-                         content_tag(:td, inventario) +
-                         content_tag(:td, lnk_consistenza), id: "item_#{i.id}")
+                         content_tag(:td, inventario), id: del_id)
     end
     res=content_tag(:table, res.join.html_safe, :class=>'table')
   end
+
   def container_info(record)
-    if record.container_items.size==0
+    if record.elements.size==0
       msg="Contenitore vuoto "
       msg += link_to('[elimina contenitore]', record, method: :delete, confirm: "Confermi cancellazione del contenitore #{record.label}?")
     else
-      msg="Contiene #{@container.container_items.size} volumi"
+      msg="Contiene #{@container.elements.size} volumi"
     end
     content_tag(:div, msg.html_safe, id: "container_info_#{record.id}")
   end

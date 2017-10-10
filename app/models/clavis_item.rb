@@ -123,16 +123,24 @@ class ClavisItem < ActiveRecord::Base
     old_container=ContainerItem.find_by_item_id(self.id)
     return "già presente in #{old_container.inspect}" if !old_container.nil?
     return "contenitore #{container.label} chiuso, elemento non aggiunto" if container.closed?
-    title=self.title.strip
-    container_item = ContainerItem.new(
-                                       created_by:user.id,
-                                       manifestation_id:self.manifestation_id,
-                                       item_title:title,
-                                       container_id:container.id,
-                                       item_id:self.item_id
-                                       )
-    container_item.save
-    return "(#{container.label} contiene #{container.container_items.size} elementi)"
+
+    if self.owner_library_id==-1
+      c=ExtraCard.find(self.custom_field3)
+      c.container_id=container.id
+      c.save
+      return "extracard: #{self.custom_field3} inserito in #{container.label}"
+    else
+      title=self.title.strip
+      container_item = ContainerItem.new(
+        created_by:user.id,
+        manifestation_id:self.manifestation_id,
+        item_title:title,
+        container_id:container.id,
+        item_id:self.item_id
+      )
+      container_item.save
+      return "(#{container.label} contiene #{container.container_items.size} elementi)"
+    end
   end
 
   def check_record

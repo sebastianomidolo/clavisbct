@@ -205,6 +205,13 @@ update clavis.centrale_locations set piano='9° piano' where (scaffale=643 and s
 update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale = 660
                                   and secondo_elemento = 'A';
 
+
+-- 586.A => "Atti parlamentari", tutti in deposito esterno
+update clavis.centrale_locations set piano='Deposito esterno' where scaffale = 586
+                                  and secondo_elemento = 'A';
+
+
+
 -- 830.A-B-C-D-E-F | -2°
 -- 830.LF-LG       | -2°  (in realtà gli LX sono già assegnati al -2 da una precedente regola)
 --update clavis.centrale_locations set piano='Secondo seminterrato' where

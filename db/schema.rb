@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20170718095801) do
+ActiveRecord::Schema.define(:version => 20171004120200) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -249,7 +249,7 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
   add_index "d_objects_folders_users", ["pattern", "user_id"], :name => "d_objects_folders_users_pattern_idx", :unique => true
 
   create_table "da_inserire_in_clavis", :id => false, :force => true do |t|
-    t.integer "owner_library_id"
+    t.integer "home_library_id"
     t.string  "inventory_serie_id", :limit => 128
     t.integer "inventory_number"
     t.text    "collocazione"
@@ -257,7 +257,6 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
     t.string  "login",              :limit => 40
     t.date    "date_created"
     t.date    "date_updated"
-    t.text    "note"
     t.text    "note_interne"
     t.integer "source_id"
   end
@@ -303,6 +302,11 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
   add_index "excel_sheets", ["sheet_number", "excel_file_id"], :name => "excel_sheets_idx1", :unique => true
   add_index "excel_sheets", ["tablename"], :name => "index_excel_sheets_on_tablename", :unique => true
 
+  create_table "excolloc", :id => false, :force => true do |t|
+    t.integer "item_id"
+    t.text    "excollocazione"
+  end
+
   create_table "import_bctaudio_metatags", :id => false, :force => true do |t|
     t.string  "collocation", :limit => 128
     t.string  "folder",      :limit => 512
@@ -343,6 +347,20 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
   end
 
   add_index "kardex_adabas", ["bid"], :name => "fascicoli2_bid_idx"
+
+  create_table "le_ricollocazioni", :id => false, :force => true do |t|
+    t.integer "item_id"
+    t.integer "class_id"
+    t.text    "dewey_collocation"
+    t.text    "vedetta"
+    t.integer "authority_id"
+    t.text    "sort_text"
+  end
+
+  add_index "le_ricollocazioni", ["authority_id"], :name => "le_ricollocazioni_authority_id_ndx"
+  add_index "le_ricollocazioni", ["class_id"], :name => "le_ricollocazioni_class_id_ndx"
+  add_index "le_ricollocazioni", ["item_id"], :name => "le_ricollocazioni_item_id_ndx"
+  add_index "le_ricollocazioni", ["sort_text"], :name => "le_ricollocazioni_sort_text_ndx"
 
   create_table "manifestations_d_objects", :id => false, :force => true do |t|
     t.integer "d_object_id"
@@ -408,6 +426,13 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
   end
 
   add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
+
+  create_table "schema_collocazioni_centrale", :force => true do |t|
+    t.string "piano",         :limit => 24
+    t.string "scaffale",      :limit => 24
+    t.string "palchetto",     :limit => 24
+    t.string "filtro_colloc", :limit => 36
+  end
 
   create_table "sequenza_numeri", :id => false, :force => true do |t|
     t.integer "id"
@@ -572,6 +597,14 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
     t.date    "data_iscrizione_clavis"
   end
 
+  create_table "temp_piani", :id => false, :force => true do |t|
+    t.integer "id",                          :null => false
+    t.string  "piano",         :limit => 24
+    t.string  "scaffale",      :limit => 24
+    t.string  "palchetto",     :limit => 24
+    t.string  "filtro_colloc", :limit => 36
+  end
+
   create_table "temp_prestiti_goethe", :id => false, :force => true do |t|
     t.integer  "item_id"
     t.integer  "loan_id"
@@ -594,11 +627,10 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
     t.text     "bid"
     t.integer  "id_copia"
     t.integer  "id_titolo"
-    t.integer  "owner_library_id"
+    t.integer  "home_library_id"
     t.string   "inventory_serie_id", :limit => 128
     t.integer  "inventory_number"
     t.text     "collocazione"
-    t.text     "note"
     t.text     "note_interne"
     t.date     "data_collocazione"
     t.date     "data_aggiornamento"
@@ -612,6 +644,7 @@ ActiveRecord::Schema.define(:version => 20170718095801) do
     t.datetime "updated_at"
     t.integer  "created_by"
     t.integer  "updated_by"
+    t.integer  "container_id"
   end
 
   create_table "users", :force => true do |t|

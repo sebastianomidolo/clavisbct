@@ -9,6 +9,7 @@ INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9°
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '577', 'A');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '582', 'D');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '582', 'E');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Deposito esterno', '586', 'A');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '599', 'H');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '600', 'C');
 INSERT into schema_collocazioni_centrale (piano,scaffale,filtro_colloc) values ('Manoscritti e rari', '600', '~* \'manos\'');

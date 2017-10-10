@@ -16,6 +16,56 @@ module ClavisItemsHelper
     res=content_tag(:table, res.join.html_safe)
   end
 
+  def clavis_items_row(record)
+    coll=record.collocazione
+    mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(record.custom_field3))
+    lnk='lnk'
+
+    if record.owner_library_id==-1
+      lnk=record.title.gsub("\r",'; ')
+      if can? :manage, ExtraCard
+        mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(record.custom_field3))
+        mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(record.custom_field3), remote:true,
+                        method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
+        mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(record.custom_field3), remote:true,
+                        method: :post, data: { confirm: "Vuoi duplicare questa scheda? (#{record.collocazione})" })
+      else
+        mlnk = 'TOPOGRAFICO'
+      end
+    else
+      if record.owner_library_id==-3
+        lnk=link_to(record.title, ClavisItem.clavis_url(record.custom_field1,:show), :target=>'_blank')
+      else
+        lnk=link_to(record.title, record.clavis_url(:show), :target=>'_blank')
+      end
+    end
+
+    colloc=record.collocazione.sub(/^BCT\./,'')
+    if can? :manage, Container and !@clavis_item.current_container.nil?
+      coll=link_to(colloc, record, remote: true, onclick: %Q{$('#item_#{record.id}').html('<b>aspetta...</b>')})
+    else
+      coll=link_to(colloc, clavis_item_path(record))
+    end
+    piano = record.piano_centrale
+    coll << "</br>#{piano}".html_safe if !piano.nil?
+
+    classe = ''
+    container_link=''
+
+    content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{record.id}") +
+                     content_tag(:td, mlnk) +
+                     content_tag(:td, lnk.html_safe + "<br/>#{record.issue_description}".html_safe) +
+                     content_tag(:td, record.inventario) +
+                     content_tag(:td, container_link),
+                {:data_view=>record.view,:class=>classe})
+
+    # mlnk = "prova"
+    # content_tag(:tr, content_tag(:td, record.collocazione.html_safe) +
+    #                  content_tag(:td, mlnk) +
+    #                  content_tag(:td, record.title) +
+    #                  content_tag(:td, record.id))
+  end
+
   def clavis_items_rawlist(records)
     return '' if records.size==0
     res=[]
@@ -38,7 +88,9 @@ module ClavisItemsHelper
         if can? :manage, ExtraCard
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
-                          method: :delete, data: { confirm: "Confermi cancellazione?" })
+                          method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
+          mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(r.custom_field3), remote:true,
+                          method: :post, data: { confirm: "Vuoi duplicare questa scheda? (#{r.collocazione})" })
         else
           mlnk = 'TOPOGRAFICO'
         end

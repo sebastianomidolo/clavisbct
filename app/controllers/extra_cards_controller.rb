@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 class ExtraCardsController < ApplicationController
-  before_filter :set_extra_card, only: [:show, :edit, :update, :destroy]
-  before_filter :authenticate_user!, only: [:show, :edit, :update, :destroy]
+  before_filter :set_extra_card, only: [:show, :edit, :update, :destroy, :record_duplicate, :remove_from_container]
+  before_filter :authenticate_user!, only: [:show, :edit, :update, :destroy, :record_duplicate, :remove_from_container]
   load_and_authorize_resource except: [:show, :index]
 
 
@@ -79,6 +79,29 @@ class ExtraCardsController < ApplicationController
       @extra_card.deleted=true
       flash[:notice] = "Scheda contrassegnata come cancellata"
     end
+    @extra_card.save
+    respond_to do |format|
+      format.html { respond_with(@extra_card) }
+      format.js
+    end
+  end
+
+  def record_duplicate
+    @clavis_item_id=@extra_card.clavis_item.item_id
+    @extra_card = @extra_card.dup
+    @extra_card.login=nil
+    @extra_card.created_by=current_user
+    @extra_card.save
+    @clavis_item=@extra_card.clavis_item
+    respond_to do |format|
+      format.html { respond_with(@extra_card) }
+      format.js
+    end
+  end
+
+  def remove_from_container
+    @container=Container.find(@extra_card.container_id)
+    @extra_card.container_id=nil
     @extra_card.save
     respond_to do |format|
       format.html { respond_with(@extra_card) }

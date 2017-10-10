@@ -32,7 +32,12 @@ Clavisbct::Application.routes.draw do
   resources :bct_people
   resources :bct_places
 
-  resources :extra_cards
+  resources :extra_cards do
+    member do
+      post 'record_duplicate'
+      post 'remove_from_container'
+    end
+  end
 
   resources :open_shelf_items do
     member do

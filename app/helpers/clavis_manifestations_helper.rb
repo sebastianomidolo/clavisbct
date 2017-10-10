@@ -39,7 +39,7 @@ module ClavisManifestationsHelper
 
   def clavis_manifestation_opac_preview(record)
     mid = record.class==ClavisManifestation ? record.id : record
-    %Q{<iframe src="http://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
+    %Q{<iframe src="https://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
   def clavis_manifestation_opac_list(records)
@@ -130,7 +130,7 @@ module ClavisManifestationsHelper
     cnt=0
     pg.each do |r|
       cnt+=1
-      lnk="http://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}"
+      lnk="https://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}"
       res << content_tag(:tr, content_tag(:td, cnt) +
                          content_tag(:td, link_to(r['title'], lnk)) +
                          content_tag(:td, r['label']) +
@@ -320,7 +320,7 @@ module ClavisManifestationsHelper
     <div class="cover-overlay adjust-size"> </div>
     <div class="cover-border left"> </div>
     <img title="__TITLE__"
-        src="http://sbct.comperio.it/index.php?file=__NUMFILE__"
+        src="https://sbct.comperio.it/index.php?file=__NUMFILE__"
         alt="__TITLE__"
         property="image"
     /></a></div>}

@@ -43,7 +43,7 @@ class ClavisItemsController < ApplicationController
       when 'manifestation_id'
         cond << "manifestation_id=0" if value.blank?
       when 'home_library_id'
-        cond << "home_library_id=#{value}" if value!=0
+        cond << "item.home_library_id=#{value}" if value!=0
       when 'collocation'
         if (@clavis_item.collocation =~ /\.$/).nil?
           if @clavis_item.collocation.count(' ')>0
@@ -63,9 +63,9 @@ class ClavisItemsController < ApplicationController
       else
         if value=~/^!/
           x=value.sub(/^!/,'')
-          cond << "#{name}!=#{ClavisItem.connection.quote(x)}"
+          cond << "item.#{name}!=#{ClavisItem.connection.quote(x)}"
         else
-          cond << "#{name}=#{ClavisItem.connection.quote(value)}"
+          cond << "item.#{name}=#{ClavisItem.connection.quote(value)}"
         end
       end
     end
@@ -131,7 +131,7 @@ class ClavisItemsController < ApplicationController
         select_prenotazioni='icpp.*,'
       end
       per_page = params[:per_page].blank? ? 135 : params[:per_page]
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>"#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label",:joins=>"#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id)", :order=>order_by)
+      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>"#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label",:joins=>"#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)", :order=>order_by)
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end
