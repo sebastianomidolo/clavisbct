@@ -32,9 +32,13 @@ module DObjectsFoldersHelper
     res=[]
     record.split_path.each do |i|
       name,id=i
-      res << link_to(name, d_objects_folder_path(id))
+      if DObjectsFolder.find(id).writable_by?(current_user)
+        res << link_to(name, d_objects_folder_path(id))
+      else
+        res << name
+      end
     end
-    res << content_tag(:b, File.basename(record.name))
+    res << content_tag(:b, d_objects_folder_editable_name(record))
     content_tag(:h3, res.join('/').html_safe)
   end
 
@@ -62,4 +66,15 @@ module DObjectsFoldersHelper
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
+
+  def d_objects_folder_editable_name(record)
+    return record.basename if !record.parent or !record.parent.writable_by?(current_user)
+    # return "editable: #{record.basename} (#{record.id})"
+    best_in_place(record, :basename, ok_button:'Salva', cancel_button:'Annulla',
+                  ok_button_class:'btn btn-success',
+                  class:'btn btn-default',
+                  skip_blur:false,
+                  html_attrs:{size:record.basename.size+10})
+  end
+
 end

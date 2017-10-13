@@ -2,13 +2,41 @@
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
-  attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc
+  attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename
   after_save :set_clavis_manifestation_attachments
+  before_save :check_filesystem
   before_destroy :reset_sequence
   has_many :d_objects, order:'lower(name)'
 
   def filename
     self.name
+  end
+
+  def basename
+    File.basename(self.name)
+  end
+
+  def basename=(newname)
+    newname.strip!
+    return if self.basename==newname or newname.blank?
+    raise "Non è possibile modificare il nome della directory radice '#{}'" if File.dirname(self.name)=='.'
+    self.name=File.join(File.dirname(self.name), newname)
+  end
+
+  def check_filesystem
+    return if !self.changed?
+    old,new=self.changes['name']
+    return if old.nil?
+    d_old = File.join(self.digital_objects_mount_point,old)
+    d_new = File.join(self.digital_objects_mount_point,new)
+    raise "Directory '#{d_new}' esistente, non posso rinominare #{d_old}" if Dir.exist?(d_new)
+    FileUtils.mv(d_old, d_new)
+    # Aggiorno eventuale cache:
+    if File.exists?(File.join(self.digital_objects_cache, old))
+      FileUtils.mv(File.join(self.digital_objects_cache, old), File.join(self.digital_objects_cache, new))
+    end
+    # Ora aggiorno sul db le eventuali "sottocartelle"
+    DObjectsFolder.update_subfolders(old, new)
   end
 
   def reset_sequence
@@ -91,6 +119,12 @@ class DObjectsFolder < ActiveRecord::Base
     File.join(self.digital_objects_mount_point,self.name)
   end
 
+  def parent
+    p=self.split_path.last
+    return nil if p.nil?
+    DObjectsFolder.find(p[1])
+  end
+
   def split_path
     res=[]
     path=self.name.split('/')
@@ -123,7 +157,7 @@ class DObjectsFolder < ActiveRecord::Base
       name=File.join(self.name,r['dirname'])
       f=DObjectsFolder.find_by_name(name)
       if f.nil?
-        puts "NON trovato: #{name}"
+        # puts "NON trovato: #{name}"
         DObjectsFolder.makedir(name)
       end
     end
@@ -198,4 +232,10 @@ class DObjectsFolder < ActiveRecord::Base
     folder
   end
 
+  def DObjectsFolder.update_subfolders(old, new)
+    old=self.connection.quote(old)
+    new=self.connection.quote(new)
+    sql=%Q{UPDATE #{self.table_name} set name = regexp_replace(name, #{old}, #{new}) WHERE name ~ #{old}}
+    self.connection.execute(sql)
+  end
 end

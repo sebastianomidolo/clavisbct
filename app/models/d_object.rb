@@ -24,12 +24,13 @@ class DObject < ActiveRecord::Base
     if !self.changes['name'].nil? and !changes['name'].first.nil?
       raise "error renaming to '#{self.name}'" and return if self.name.blank?
       raise "error renaming to '#{self.name}' - file exists (#{self.changes['name'].inspect})" and return if File.exists?(self.filename_with_path)
-      old_object=DObject.new(name:changes['name'].first,d_objects_folder_id:self.d_objects_folder_id)
-      msg="cambio nome da #{old_object.filename_with_path} a #{self.filename_with_path}"
+      f_id = self.changes['d_objects_folder_id'].nil? ? self.d_objects_folder_id : self.changes['d_objects_folder_id'].first
+      old_object=DObject.new(name:self.changes['name'].first,d_objects_folder_id:f_id)
       FileUtils.mv(old_object.filename_with_path, self.filename_with_path)
-      fd=File.open('/tmp/provetta.log', 'w')
-      fd.write("#{msg}\n")
-      fd.close
+      if self.mime_type=='application/pdf; charset=binary'
+        # Rinomino eventuali files jpeg nella cache
+        rename_jpeg_from_pdf(old_object)
+      end
     end
     self.digital_object_read_metadata
     # Il parametro false qui indica: non salvare il record! (siamo già in una procedura before_save, quindi il record verrà comunque salvato)
@@ -93,12 +94,9 @@ class DObject < ActiveRecord::Base
       self.d_objects_folder_id=folder.id
       self.name=uploaded_io.original_filename
       sfn=File.join(mp, folder.name, self.name)
-      fd=File.open("/tmp/debug.log", "w")
-      fd.write(sfn)
-      fd.close
       if File.exists?(sfn)
-        sfn=File.join(mp, folder.name, random_fname)
-        self.name=random_fname
+        # Assegno un nome casuale, diverso da random_fname
+        self.name=random_fname.reverse
       end
     end
 
@@ -230,6 +228,18 @@ class DObject < ActiveRecord::Base
     s=Dir.glob("#{self.pdf_filename_for_jpeg}*").size
     self.pdf_to_jpeg if s==0
     Dir.glob("#{self.pdf_filename_for_jpeg}*").size
+  end
+
+  def rename_jpeg_from_pdf(old_object)
+    return nil if self.mime_type!='application/pdf; charset=binary'
+    from=old_object.pdf_filename_for_jpeg
+    to=self.pdf_filename_for_jpeg
+    # puts "rinomino da #{from} a #{to}"
+    Dir.glob("#{old_object.pdf_filename_for_jpeg}*").each do |f|
+      dest=f.sub(from,to)
+      # puts "rinomino da #{f} to #{dest}"
+      FileUtils.mv(f, dest)
+    end
   end
 
   def pdf_filename_for_jpeg(page_number=nil)
