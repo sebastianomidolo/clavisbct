@@ -8,7 +8,7 @@
 <th>Aperto/Chiuso</th>
 </tr>
 
-<% Container.lista.each do |container| %>
+<% @containers.each do |container| %>
   <tr>
     <td><%= link_to(container.label, container) %></td>
     <td><%= container.description %></td>

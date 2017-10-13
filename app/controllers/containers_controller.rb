@@ -10,7 +10,7 @@ class ContainersController < ApplicationController
   def index
     user_session[:current_container]=nil
     if params[:label].blank?
-      @containers = Container.lista
+      @containers = Container.list(params[:filter])
     else
       @container = Container.find_by_label(params[:label])
       render action: 'show' and return

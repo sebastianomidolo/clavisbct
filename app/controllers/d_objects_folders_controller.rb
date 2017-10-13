@@ -123,9 +123,9 @@ class DObjectsFoldersController < ApplicationController
       else
         format.html { render :action => "edit" }
       end
+      format.json { respond_with_bip(@d_objects_folder) }
     end
   end
-
 
   def makepdf
     f=DObjectsFolder.find(params[:id])

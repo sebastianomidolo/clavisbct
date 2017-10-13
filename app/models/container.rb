@@ -37,9 +37,10 @@ class Container < ActiveRecord::Base
     ActiveRecord::Base.connection.execute(sql).to_a
   end
 
-  def Container.lista
+  def Container.list(filter=nil)
+    filter = filter.blank? ? '' : "WHERE c.label ~ '^#{ActiveRecord::Base.connection.quote_string(filter)}'"
     sql=%Q{SELECT c.id,c.label,c.closed,l.library_id,l.label AS description
-      FROM containers c LEFT JOIN clavis.library l USING(library_id)
+      FROM containers c LEFT JOIN clavis.library l USING(library_id) #{filter}
         ORDER BY substr(c.label,0,2), regexp_replace(c.label,'([A-Z]+)','')::integer}
     Container.find_by_sql(sql)
   end

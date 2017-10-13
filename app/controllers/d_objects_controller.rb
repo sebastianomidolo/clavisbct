@@ -127,7 +127,7 @@ class DObjectsController < ApplicationController
         render :template=>'d_objects/file_non_specificato'
       else
         @d_object = DObject.new.save_new_record(params,current_user)
-        render :action=>:edit
+        render :action=>:view
       end
     else
       @d_object = DObject.new
