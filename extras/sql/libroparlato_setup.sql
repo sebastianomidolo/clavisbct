@@ -16,12 +16,6 @@ ALTER TABLE libroparlato.catalogo ALTER COLUMN cassette TYPE INTEGER;
 UPDATE libroparlato.catalogo SET cassette=NULL WHERE cassette=0;
 
 ALTER TABLE libroparlato.catalogo ADD COLUMN first_mp3_filename char(254);
-UPDATE libroparlato.catalogo AS lp SET first_mp3_filename=f.name || '/' || o.name
-  FROM attachments a, d_objects o join d_objects_folders f on(f.id=o.d_objects_folder_id)
-  WHERE lp.first_mp3_filename IS NULL
-     AND a.attachable_type='ClavisManifestation'
-     AND a.attachment_category_id='D' AND o.id=a.d_object_id AND a.position=1
-     AND lp.manifestation_id=a.attachable_id;
 
 -- DELETE  FROM  libroparlato.catalogo WHERE manifestation_id IS NULL;
 

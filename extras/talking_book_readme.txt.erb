@@ -7,7 +7,7 @@ Titolo: <%= record.titolo_completo %>
 Codice dell'opera: <%= record.codice_opera %>
 <% if record.digitalizzato? %>Data di produzione: <%= record.digitalizzato %><% end %>
 Lettura ad alta voce dell'edizione a stampa: <%= record.editore %>
-<% record.clavis_manifestations.each do |cm| %>
+<% cm=record.clavis_manifestation; if !cm.nil? %>
 Scheda catalografica [<%= cm.oggbibl_5 %>]:
   <%= cm.clavis_url(:opac) %>
 <% end %>

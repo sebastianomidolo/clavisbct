@@ -46,23 +46,13 @@ class TalkingBook < ActiveRecord::Base
   end
 
   def titolo_completo
-    cm=self.clavis_manifestations.first
-    cm.nil? ? self.titolo : cm.title
+    return self.titolo if self.manifestation_id.nil?
+    self.clavis_manifestation.title.strip
   end
 
-  def clavis_manifestations
-    return [] if n.nil?
-    inventory=self.n.split.last.to_i
-    basecolloc=self.n.split.first
-    series=["'NV#{basecolloc}'"]
-    series << "'NVCD#{basecolloc}'" if !self.digitalizzato.blank?
-    sql=%Q{SELECT cm.*
- FROM clavis.item ci JOIN clavis.manifestation cm
-      using(manifestation_id) WHERE ci.inventory_number=#{inventory}
-       -- AND ci.owner_library_id=29
-       AND inventory_serie_id IN (#{series.join(',')}) ;}
-    puts sql
-    ClavisManifestation.find_by_sql(sql)
+  def clavis_manifestation
+    return nil if self.manifestation_id.nil?
+    ClavisManifestation.find(self.manifestation_id)
   end
 
   def build_readme_file
@@ -106,7 +96,6 @@ class TalkingBook < ActiveRecord::Base
     d_objects=cm.d_objects
     cnt=0
     d_objects.each do |o|
-      puts o.filename
       FileUtils.cp(File.join(storage_dir, o.filename), tempdir)
       cnt+=1
     end
@@ -134,7 +123,7 @@ class TalkingBook < ActiveRecord::Base
       # "TBPM" => "BPM (beats per minute)"
       # "COMM" => "Comments"
 
-      mp3.tag2.WOAS="http://clavisbct.comperio.it/talking_books/#{self.id}"
+      mp3.tag2.WOAS="https://clavisbct.comperio.it/talking_books/#{self.id}"
       mp3.tag2.TCON='Audiobook'
       mp3.tag2.TPOS=1                  ;# Disc number, sempre 1
       mp3.tag2.TBPM=mp3.bitrate
