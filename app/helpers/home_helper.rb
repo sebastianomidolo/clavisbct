@@ -101,9 +101,35 @@ ci.issue_arrival_date_expected as previsto
     res << content_tag(:tr, content_tag(:td, content_tag(:b,'Media oraria')) + content_tag(:td, tot/cnt), class:'danger') if cnt>0
     content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
                 :class=>'table-responsive')
-    
   end
 
+  def misc_esemplari_con_rfid(records)
+    res=[]
+    records.each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r['biblioteca'],
+                                                       esemplari_con_rfid_path(library_id:r['library_id'])),
+                                          class:'col-md-4') +
+                              content_tag(:td, r['count']))
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+  end
 
+  def misc_dettaglio_esemplari_con_rfid(library_id)
+    records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{library_id} order by snapshot_date")
+    res=[]
+    prec_cnt=0
+    records.each do |r|
+      cnt=r['tagged_count'].to_i
+      diff = prec_cnt==0 ? 0 : cnt-prec_cnt
+      res << content_tag(:tr, content_tag(:td, r['snapshot_date'].to_date, class:'col-md-2') +
+                              content_tag(:td, cnt, class:'col-md-2') +
+                              content_tag(:td, diff))
+      prec_cnt=cnt
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table'),
+                :class=>'table-responsive')
+  end
 
+  
 end

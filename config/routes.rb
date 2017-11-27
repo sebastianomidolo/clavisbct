@@ -125,6 +125,7 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'check'
       get 'check_duplicates'
+      get 'build_pdf'
       get 'digitalizzati'
       get 'digitalizzati_non_presenti'
     end
@@ -247,6 +248,8 @@ Clavisbct::Application.routes.draw do
   match '/spazioragazzi' => 'home#spazioragazzi'
   
   match '/senzasoggetto' => 'home#senzasoggetto'
+
+  match '/esemplari_con_rfid' => 'home#esemplari_con_rfid'
 
   match '/sa' => 'clavis_items#ricollocazioni'
 

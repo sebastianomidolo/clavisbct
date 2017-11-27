@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20171004120200) do
+ActiveRecord::Schema.define(:version => 20171122090312) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -323,6 +323,8 @@ ActiveRecord::Schema.define(:version => 20171004120200) do
     t.integer "position"
   end
 
+  add_index "import_libroparlato_colloc", ["collocation"], :name => "import_libroparlato_colloc_collocation_idx"
+
   create_table "iscritti_newsletter", :id => false, :force => true do |t|
     t.text "email"
   end
@@ -398,6 +400,12 @@ ActiveRecord::Schema.define(:version => 20171004120200) do
     t.string  "thetitle",     :limit => nil
     t.string  "thespec",      :limit => nil
     t.string  "thedrawer",    :limit => nil
+  end
+
+  create_table "rfid_summary", :id => false, :force => true do |t|
+    t.integer "library_id",    :null => false
+    t.date    "snapshot_date", :null => false
+    t.integer "tagged_count",  :null => false
   end
 
   create_table "ricollocazioni", :id => false, :force => true do |t|
@@ -519,6 +527,7 @@ ActiveRecord::Schema.define(:version => 20171004120200) do
   create_table "temp_import_areaonlus", :id => false, :force => true do |t|
     t.text    "oid"
     t.text    "isbn"
+    t.text    "data_caricamento"
     t.string  "bid",              :limit => 10
     t.integer "manifestation_id"
     t.string  "sbam_oid",         :limit => 12

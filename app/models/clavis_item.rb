@@ -446,4 +446,12 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     ActiveRecord::Base.connection.execute(sql).to_a.collect {|x| x['item_id']}
   end
 
+  def ClavisItem.conta_esemplari_con_tag_rfid(library_ids='')
+    filter = library_ids.blank? ? '' : "AND cl.library_id IN (#{library_ids.split.join(',')})"
+    sql=%Q{select cl.label as "biblioteca",cl.library_id, count(*) from clavis.item ci
+  join clavis.library cl on(cl.library_id=ci.home_library_id) where rfid_code != '' #{filter}
+    AND ci.item_status!='E' AND ci.barcode!=''
+  group by cl.label,cl.library_id order by cl.label;}
+    ActiveRecord::Base.connection.execute(sql)
+  end
 end

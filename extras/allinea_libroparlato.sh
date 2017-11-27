@@ -17,10 +17,13 @@ psql -c "DROP SCHEMA bm_periodici CASCADE" clavisbct_development informhop
 pg_dump -n bm_periodici -U informhop bctaudio_development | psql clavisbct_development informhop -f -
 psql -c "DROP SCHEMA bm_periodici_old CASCADE" clavisbct_development informhop
 pg_dump -n bm_periodici_old -U informhop bctaudio_development | psql clavisbct_development informhop -f -
-psql -c "DROP SCHEMA cr_attrezzature CASCADE" clavisbct_development informhop
-pg_dump -n cr_attrezzature -U informhop bctaudio_development | psql clavisbct_development informhop -f -
-psql -c "DROP SCHEMA cr_acquisti CASCADE" clavisbct_development informhop
-pg_dump -n cr_acquisti -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+
+# Commentato il 27 novembre 2017 in quanto mi sembra che il Centro rete non abbia più aggiornato il backup
+#psql -c "DROP SCHEMA cr_attrezzature CASCADE" clavisbct_development informhop
+#pg_dump -n cr_attrezzature -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+#psql -c "DROP SCHEMA cr_acquisti CASCADE" clavisbct_development informhop
+#pg_dump -n cr_acquisti -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+
 
 # 8 gennaio 2014:
 (psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_development informhop)
@@ -35,3 +38,6 @@ pg_dump -n cr_acquisti -U informhop bctaudio_development | psql clavisbct_develo
 # /bin/rm -rf /home/sites/456.selfip.net/html/clavis/mn
 # /usr/bin/wget --quiet -O /dev/stdout http://libroparlato.selfip.net/ProgettiCivica/IntraVedo/html/costellazione_clavis.tar.bz2 | /usr/bin/tar -j -C /home/sites/456.selfip.net/html/clavis -xf -
 
+(cd /home/ror/clavisbct/extras/libroparlato; /usr/bin/make)
+
+(cd /home/ror/clavisbct; RAILS_ENV=development rake aggiorna_libroparlato)

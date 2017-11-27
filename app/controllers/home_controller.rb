@@ -75,6 +75,13 @@ select cm.* from manifestations cm left join
     @records=ActiveRecord::Base.connection.execute(sql)
   end
 
+  def esemplari_con_rfid
+    @pagetitle='Esemplari con tag RFID'
+    if params[:library_id].blank?
+      @records=ClavisItem.conta_esemplari_con_tag_rfid(params[:library_ids])
+    end
+  end
+
   def iccu_link
     if !params[:bid].blank?
       @url=ClavisManifestation.new(bid_source: 'SBN', bid: params[:bid]).iccu_opac_url
