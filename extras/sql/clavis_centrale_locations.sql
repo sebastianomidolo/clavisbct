@@ -83,7 +83,7 @@ update clavis.centrale_locations set piano='6° piano' where piano isnull and sc
 update clavis.centrale_locations set piano='Manoscritti e rari' where piano isnull and scaffale between 400 and 402;
 
 -- 403-404 | 9° piano
-update clavis.centrale_locations set piano='9° piano' where piano isnull and scaffale in(403,404);
+-- update clavis.centrale_locations set piano='9° piano' where piano isnull and scaffale in(403,404);
 
 -- 405 | Manoscritti e rari
 update clavis.centrale_locations set piano='Manoscritti e rari' where piano isnull and scaffale = 405;
@@ -173,6 +173,10 @@ update clavis.centrale_locations set piano='Manoscritti e rari' where scaffale=6
 
 
 -- 602.D.1-641.F.1 | 9° piano (chiarire)
+
+-- 602 - 640 A-B-C | 9° piano (foglio excel ufficio)
+update clavis.centrale_locations set piano='9° piano' where scaffale between 602 and 640
+                                      and secondo_elemento in ('A','B','C');
 
 -- 606.G | -2°
 update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=606 and secondo_elemento='G';
@@ -329,6 +333,7 @@ update clavis.centrale_locations cl set piano='Cassa deposito esterno' from cont
   join containers c on(c.id=ci.container_id) join clavis.library l on(l.library_id=c.library_id)
   where ci.item_id=cl.item_id;
 
+update clavis.centrale_locations set piano='Secondo seminterrato' where piano isnull and scaffale between 400 and 405;
 update clavis.centrale_locations set piano='__non assegnato__' where piano is null;
 
 -- riepilogo per piano

@@ -82,9 +82,11 @@ INSERT INTO clavis.item(
 CREATE UNIQUE INDEX item_custom_field3 ON clavis.item(custom_field3) WHERE owner_library_id=-1 AND custom_field3 notnull;
 CREATE UNIQUE INDEX item_custom_field1 ON clavis.item(custom_field1) WHERE owner_library_id=-3 AND custom_field1 notnull;
 
+/*
 BEGIN;
 DROP TABLE clavis.collocazioni;
 COMMIT;
+*/
 
 CREATE TABLE clavis.collocazioni AS
   SELECT item_id, public.compact_collocation("section",collocation,specification,

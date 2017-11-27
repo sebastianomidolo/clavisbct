@@ -1,11 +1,10 @@
 DROP TABLE temp_import_areaonlus, temp_import_sbam, temp_import_librinlinea;
 
-CREATE TABLE temp_import_areaonlus(oid text, isbn text);
+CREATE TABLE temp_import_areaonlus(oid text, isbn text, data_caricamento text);
 CREATE TABLE temp_import_sbam(oid text, isbn text, bid text);
 CREATE TABLE temp_import_librinlinea(isbn text, bid char(10));
 
-\copy temp_import_areaonlus   from '/home/seb/2016_05_10_areaonlus.csv' delimiter ';';
-
+\copy temp_import_areaonlus from '/home/sites/oidomatic.comperio.it/dataimport/area_onlus.csv' delimiter ';'
 
 -- Per ottenere /tmp/isbn_sbam.csv:
 -- cut -d ',' -f 1-3 /home/seb/BCT/wca22014/linux64/librinlinea/Posseduto_SBAM.csv > /tmp/isbn_sbam.csv
@@ -52,18 +51,11 @@ UPDATE temp_import_areaonlus AS ao SET manifestation_id=s.manifestation_ID
 UPDATE temp_import_areaonlus AS ao SET sbam_oid=s.oid
    FROM temp_import_sbam AS s WHERE ao.sbam_oid IS NULL AND ao.bid=s.bid;
 
-
-
--- delete from temp_import_areaonlus where bid is null and manifestation_id is null and sbam_oid is null;
-
-
-
 CREATE UNIQUE INDEX temp_import_librinlinea_idx ON temp_import_librinlinea (bid);
 CREATE UNIQUE INDEX temp_import_sbam_idx ON temp_import_sbam (bid);
 
 --update temp_import_areaonlus as t set bid = ll.bid
 --   from temp_import_librinlinea ll where ll.isbn=t.isbn;
-
 
 -- esportazione dati per oidomatic
 -- bct.csv
@@ -80,6 +72,17 @@ CREATE UNIQUE INDEX temp_import_sbam_idx ON temp_import_sbam (bid);
 \copy (SELECT DISTINCT ll.bid FROM temp_import_librinlinea ll LEFT JOIN temp_import_sbam sb USING(bid) LEFT JOIN clavis.manifestation cm ON(cm.bid=ll.bid) WHERE (sb.bid notnull OR cm.bid notnull)) TO '/home/sites/oidomatic.comperio.it/dataimport/librinlinea/librinlinea_bids.csv'
 
 
+\copy (SELECT "SID", "Ext. ID",0 from excel_files_tables.museo_torino WHERE "Tipo Ext. ID"='BID' and  "Ext. ID"!='') TO '/home/sites/oidomatic.comperio.it/dataimport/museotorino.csv' delimiter ','
 
+create temp table temp_mt as
+with x as
+  (
+   select regexp_split_to_array(replace("Digital Url",
+     'http://www.museotorino.it/resources/pdf/books/',''), '\.|\||/') as id,
+      "Ext. ID" as bid from excel_files_tables.museo_torino
+      WHERE "Tipo Ext. ID"='BID' AND "Ext. ID" != '' AND
+        "Digital Url" LIKE 'http://www.museotorino.it/resources/pdf/books/%'
+  )
+  select id[1]::integer,bid from x;
 
-
+\copy (SELECT id, bid,7 from temp_mt) TO '/home/sites/oidomatic.comperio.it/dataimport/mt_digit.csv' delimiter ','

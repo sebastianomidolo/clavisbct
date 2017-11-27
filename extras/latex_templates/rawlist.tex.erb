@@ -5,7 +5,7 @@
 % \usepackage[a4paper]{geometry}
 
 
-\usepackage[a4paper, top=20mm, bottom=10mm, left=4.5cm, right=1.25in]{geometry}
+\usepackage[a4paper, top=20mm, bottom=10mm, left=3.5cm, right=1.25in]{geometry}
 
 \usepackage{fancyhdr}
 \setlength{\headheight}{1pt}
@@ -29,14 +29,21 @@
 \textheight=28cm
 
 \usepackage{supertabular}
-\begin{document}
 
-\lhead{Elenco libri da prendere a magazzino}
+
+\renewcommand{\headrulewidth}{0pt}
+\pagestyle{fancy}
+
+<%= "\\chead{Elenco libri da prendere a magazzino --- Stampa: #{Time.now.to_date}}" %>
+
 \lfoot{}
 \cfoot{}
 \rfoot{}
 
-<%= "\\rhead{Stampa: #{Time.now.to_date}}" %>
+
+
+\begin{document}
+
 
 % \pagestyle{empty}
 
@@ -52,7 +59,7 @@
  inputdata.each do |e|
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
-   res << "#{e.piano} & {\\Large #{e.collocazione[0..18]}} & #{e['title'][0..50]} & \\hspace{3em} \\\\"
+   res << "#{e.piano} & {\\Large #{e.collocazione[0..18]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} \\\\"
    cnt+=1
  end
 %>
