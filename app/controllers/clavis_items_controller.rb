@@ -106,8 +106,8 @@ class ClavisItemsController < ApplicationController
       if params[:senzapiano]=='y'
         #cond << %Q{piano is null and ((home_library_id != -3 and manifestation_id!=0 and item_status IN ('F','G','S'))
         #         OR (home_library_id = -1 and owner_library_id=2)) }
-        cond << %Q{(piano='__non assegnato__' or piano is null) and ((home_library_id = 2 and item_status IN ('F','G','S'))
-                 OR (home_library_id=2 and owner_library_id=-1)) }
+        cond << %Q{(piano='__non assegnato__' or piano is null) and ((item.home_library_id = 2 and item_status IN ('F','G','S'))
+                 OR (item.home_library_id=2 and owner_library_id=-1)) }
       end
 
       if !params[:piano].blank?

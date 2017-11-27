@@ -1,3 +1,5 @@
+# coding: utf-8
+
 include DigitalObjects
 
 require 'mp3info'
@@ -6,11 +8,7 @@ class TalkingBook < ActiveRecord::Base
   self.table_name='libroparlato.catalogo'
   self.primary_key = 'id'
   has_many :attachments, :as => :attachable
-
-  def clavis_item
-    sql="SELECT * FROM clavis.item WHERE section='LP' AND owner_library_id=29 AND collocation ~ '#{self.codice_opera}$' LIMIT 1"
-    ClavisItem.find_by_sql(sql).first
-  end
+  belongs_to :d_objects_folder
 
   def main_entry
     # self.intestatio.blank? ? "#{self.titolo}" : "#{self.intestatio}. "
@@ -23,7 +21,8 @@ class TalkingBook < ActiveRecord::Base
 
   def collocazione
     # "#{self.n} - #{self.titolo}"
-    self.cd.nil? ? self.n : "#{self.cd} CD #{self.n}"
+    # self.cd.nil? ? self.n : "#{self.cd} CD #{self.n}"
+    self.cd.nil? ? self.n : "CD #{self.n}"
   end
 
   def area_descrizione_fisica_tex
@@ -55,6 +54,10 @@ class TalkingBook < ActiveRecord::Base
     ClavisManifestation.find(self.manifestation_id)
   end
 
+  def manifestation_id_da_collocazione
+    self.n
+  end
+
   def build_readme_file
     str=File.read(File.join(Rails.root.to_s,'extras','talking_book_readme.txt.erb'))
     erb = ERB.new(str)
@@ -81,6 +84,108 @@ class TalkingBook < ActiveRecord::Base
     File.join(path, "#{mid}#{uid}.zip")
   end
 
+  def attachments_insert
+    return nil if self.manifestation_id.nil?
+    sql=%Q{
+         DELETE FROM public.attachments WHERE attachable_id=#{self.manifestation_id}
+          AND attachment_category_id='D' AND attachable_type='ClavisManifestation';
+         INSERT INTO public.attachments
+         (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
+          (select d_object_id,#{self.manifestation_id},'ClavisManifestation','D',position
+           from public.import_libroparlato_colloc where collocation = '#{self.collocazione}');}
+    puts sql
+    ActiveRecord::Base.connection.execute(sql)
+    self.update_d_objects_folder_id
+  end
+
+  def book_update(folder=nil)
+    config = Rails.configuration.database_configuration
+    source=config[Rails.env]["libroparlato_upload"]
+    mount_point=config[Rails.env]["digital_objects_mount_point"]
+    destfolder=File.join(mount_point,'libroparlato')
+    if folder.nil?
+      if self.d_objects_folder_id.nil?
+        raise "parametro 'folder' mancante per #{self.class} #{self.id} (self.d_objects_folder_id è NULL)"
+      end
+      folder=self.d_objects_folder.name.sub(/^libroparlato\//,'')
+    end
+    puts "aggiornamento da source #{source} a destfolder #{destfolder}"
+    puts "folder di provenienza: #{folder}"
+
+    target=File.dirname(folder)
+    puts "source: #{source}"
+    puts "target: #{target}"
+    puts "destfolder: #{destfolder}"
+    puts "mount_point: #{mount_point}"
+
+    source_folder=File.join(source,folder)
+    target_folder=File.join(destfolder,target)
+    old_folder=File.join(target_folder,File.basename(folder))
+    if !Dir.exists?(source_folder)
+      puts "non aggiornabile, non esiste #{source_folder}, proseguo con i files già presenti"
+    else
+      if Dir.exists?(old_folder)
+        puts "cancello #{old_folder}"
+        FileUtils.remove_dir(old_folder)
+      end
+      puts "Aggiorno da #{source_folder}"
+      puts "a: #{target_folder}"
+      FileUtils.cp_r(source_folder,target_folder,{preserve:true})
+    end
+    scan_dir=old_folder.sub(mount_point,'')
+    puts "nuovo scan da effettuare in #{scan_dir}"
+
+    numfiles=DObject.fs_scan(scan_dir)
+    puts "Analizzati e importati nel db #{numfiles} files"
+    collocazione=TalkingBook.filename2colloc(folder)
+    
+    puts "ora inserisco collocazione #{collocazione} in tabella import_libroparlato_colloc"
+
+    newdestfolder=ActiveRecord::Base.connection.quote_string(scan_dir)
+    sql=%Q{DELETE FROM import_libroparlato_colloc WHERE collocation='#{collocazione}';
+           INSERT INTO import_libroparlato_colloc(collocation,position,d_object_id)
+       (SELECT '#{collocazione}',row_number() over(order by win_sortfilename(o.name)), o.id
+         from d_objects_folders f join d_objects o on(o.d_objects_folder_id=f.id)
+           where f.name ~ '^#{newdestfolder}');}
+    puts sql
+    ActiveRecord::Base.connection.execute(sql)
+    self.attachments_insert
+
+    cm=self.clavis_manifestation
+    puts "Aggiorno mp3tags per #{cm.title} (t_book: #{self.id} = manifestation_id #{cm.id})"
+    cm.write_mp3tags_libroparlato
+    self.create_or_replace_audio_zip
+  end
+
+  def collocation_from_filename
+    return nil if self.d_objects_folder_id.nil?
+    TalkingBook.filename2colloc(self.d_objects_folder.name)
+  end
+
+  def create_or_replace_audio_zip
+    if File.exists?(self.zip_filepath)
+      puts "Cancello audiozip: #{self.zip_filepath}"
+      File.delete(self.zip_filepath)
+    end
+    puts "Creo audiozip: #{self.zip_filepath}"
+    self.make_audio_zip
+    # group 33 => www-data
+    File.chown(nil, 33, self.zip_filepath) if File.exists?(self.zip_filepath)
+  end
+
+  def update_d_objects_folder_id
+    puts "update_d_objects_folder_id: #{self.clavis_manifestation.id}"
+    return nil if self.clavis_manifestation.nil?
+    atch = self.clavis_manifestation.attachments
+    puts "ok procedo - #{atch.first}"
+
+    return nil if atch.nil?
+    a = atch.where(attachment_category_id:'D',attachable_type: "ClavisManifestation").order('position').first
+    return nil if a.nil?
+    self.d_objects_folder_id=a.d_object.d_objects_folder_id
+    self.save if self.changed?
+  end
+
   def make_audio_zip(patron=nil)
     return nil if self.manifestation_id.nil?
     return nil if !patron.nil? and patron.loan_class!='@'
@@ -104,6 +209,11 @@ class TalkingBook < ActiveRecord::Base
     d_objects.each do |o|
       cnt+=1
       fname=File.join(tempdir, File.basename(o.filename))
+      if !['application/octet-stream; charset=binary','audio/mpeg; charset=binary'].include?(o.mime_type)
+        puts "non mp3: #{o.filename} - #{o.mime_type}"
+        next
+      end
+      puts "acquisisco informazioni su mp3 file: #{o.filename} - #{o.mime_type}"
       mp3=Mp3Info.open(fname)
       # see: /var/lib/gems/1.9.1/gems/ruby-mp3info-0.8/lib/mp3info.rb
       # and: /var/lib/gems/1.9.1/gems/ruby-mp3info-0.8/lib/mp3info/id3v2.rb
@@ -191,6 +301,13 @@ class TalkingBook < ActiveRecord::Base
     lp.makepdf(3)
   end
 
+  def TalkingBook.digitalizzati_non_presenti_su_server
+    sql=%Q{select * from libroparlato.catalogo where digitalizzato notnull
+      and cd notnull and d_objects_folder_id is null and n!= '' order by
+       espandi_collocazione(n)}
+    TalkingBook.find_by_sql(sql)
+  end
+
   def TalkingBook.digitalizzati
     sql=%Q{SELECT * FROM libroparlato.catalogo WHERE manifestation_id IN
       (SELECT attachable_id FROM attachments WHERE attachable_type='ClavisManifestation' AND attachment_category_id='D')
@@ -207,6 +324,33 @@ class TalkingBook < ActiveRecord::Base
       logger.warn("Errore: #{$!}")
       lastmode=Time.now.to_date
     end
+  end
+
+  def TalkingBook.d_objects_folders
+    sql=%Q{select id,name from d_objects_folders where name ~ '^libroparlato'}
+    collocazioni={}
+    ActiveRecord::Base.connection.execute(sql).each do |r|
+      colloc=TalkingBook.filename2colloc(r['name'])
+      next if colloc==' 0'
+      # puts "#{r['id']} #{colloc} #{r['name']}"
+      if !collocazioni[colloc].nil?
+        # puts "Collocazione duplicata #{collocazioni[colloc].class} '#{colloc}'"
+        if collocazioni[colloc].class!=Array
+          val=collocazioni[colloc]
+          collocazioni[colloc] = Array.new
+          collocazioni[colloc] << val
+        end
+        collocazioni[colloc] << r['id'].to_i
+      else
+        collocazioni[colloc] = r['id'].to_i
+      end
+    end
+    collocazioni
+  end
+
+  def TalkingBook.build_pdf_catalogs
+    cmd="(cd #{File.join(Rails.root,'extras','libroparlato')};make clean;make;ls -lh *.pdf)"
+    Open3.capture3(cmd)
   end
 
   def self.loadhelper

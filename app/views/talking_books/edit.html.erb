@@ -1,6 +1,10 @@
-<h1>Editing talking_book</h1>
 
-<%= render 'form' %>
+<%= content_tag(:div, talking_book_view_mp3_files(@talking_book)) if can? :manage, TalkingBook %>
 
-<%= link_to 'Show', @talking_book %> |
-<%= link_to 'Back', talking_books_path %>
+<%=
+   f=@talking_book.d_objects_folder
+   content_tag(:p, "Cartella mp3: <b>#{link_to(f.name, d_objects_folder_path(f))}</b>".html_safe) if !f.nil?
+%>
+
+
+<%= content_tag(:div, talking_book_show(@talking_book)) %>

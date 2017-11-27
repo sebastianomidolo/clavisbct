@@ -1,0 +1,13 @@
+<ol>
+  <% TalkingBook.d_objects_folders.each_pair do |k,v| %>
+   <% next if v.class!=Array %>
+   <%= content_tag(:li, k) %>
+    <ul> 
+      <% v.each do |folder_id|
+	 lnk = link_to("#{folder_id} => #{DObjectsFolder.find(folder_id).name}", d_objects_folder_path(folder_id))
+      %>
+      <%= content_tag(:li, lnk ) %>
+    <% end %>
+    </ul>
+  <% end %>
+</ol>

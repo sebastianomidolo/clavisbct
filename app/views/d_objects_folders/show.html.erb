@@ -21,15 +21,17 @@
 
 <%= d_objects_view(@d_objects) %>
 
-<% if @d_objects.size > 1 and can? :manage, DObjectsFolder %>
+<% if @d_objects.size > 1 and can? :manage, DObjectsFolder and @d_objects_folder.contains_images? %>
 <%= button_to "Converti in PDF", makepdf_d_objects_folder_path(@d_objects_folder,{page:params[:page],per_page:params[:per_page]}) %>
 <%= button_to "Converti in PDF (senza logo BCT)", makepdf_d_objects_folder_path(@d_objects_folder,{nologo:true,page:params[:page],per_page:params[:per_page]}) %>
 
 
 <% else %>
 
- <% if @d_objects_folder.dir.size==0 %>
+ <% if @d_objects_folder.dir.size==0 and @d_objects_folder.writable_by?(current_user) %>
   <%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
  <% end %>
 
 <% end %>
+
+<%= link_to("Scheda libro parlato #{@d_objects_folder.talking_book.n}", edit_talking_book_path(@d_objects_folder.talking_book)) if !@d_objects_folder.talking_book.nil? %>

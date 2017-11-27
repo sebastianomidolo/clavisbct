@@ -1,5 +1,9 @@
 class TalkingBooksController < ApplicationController
   layout 'navbar'
+
+  before_filter :set_talking_book, only: [:edit]
+  load_and_authorize_resource only: [:edit,:digitalizzati_non_presenti]
+
   # GET /talking_books
   # GET /talking_books.json
   def index
@@ -13,7 +17,7 @@ class TalkingBooksController < ApplicationController
     if type=='yes'
       logger.warn("type: solo digitalizzati")
       # cond << "digitalizzato notnull"
-      cond << "first_mp3_filename notnull"
+      cond << "d_objects_folder_id notnull"
     end
     type=params[:cdmp3]
     if type=='yes'
@@ -91,6 +95,15 @@ class TalkingBooksController < ApplicationController
     end
   end
 
+  def digitalizzati_non_presenti
+    @talking_books=TalkingBook.digitalizzati_non_presenti_su_server
+  end
+
+  def build_pdf
+    require 'open3'
+    @stdout,@stderr,@status=TalkingBook.build_pdf_catalogs
+  end
+
   def download_mp3
     ack=DngSession.access_control_key(params,request)
     if ack!=params[:ac]
@@ -115,5 +128,10 @@ class TalkingBooksController < ApplicationController
     fd.write("#{Time.now} - download #{File.basename(@talking_book.zip_filepath)} (record id: #{@talking_book.id}) per utente #{@clavis_patron.id}\n")
     fd.close
     send_file(zipfile)
+  end
+
+  private
+  def set_talking_book
+    @talking_book = TalkingBook.find(params[:id])
   end
 end

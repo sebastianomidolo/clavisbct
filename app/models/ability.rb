@@ -96,5 +96,9 @@ class Ability
       can :manage, WorkStation
     end
 
+    if user.role?('talking_book__manager')
+      can :manage, TalkingBook
+    end
+
   end
 end

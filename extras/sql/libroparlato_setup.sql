@@ -17,5 +17,7 @@ UPDATE libroparlato.catalogo SET cassette=NULL WHERE cassette=0;
 
 ALTER TABLE libroparlato.catalogo ADD COLUMN first_mp3_filename char(254);
 
+ALTER TABLE libroparlato.catalogo ADD COLUMN d_objects_folder_id integer;
 -- DELETE  FROM  libroparlato.catalogo WHERE manifestation_id IS NULL;
 
+delete from libroparlato.catalogo where n isnull;

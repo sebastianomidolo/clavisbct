@@ -1,0 +1,16 @@
+<%= content_tag(:h2, "Ricostruzione forzata cataloghi PDF") %>
+
+<%= content_tag(:h2, "Standard Output") %>
+<%= content_tag(:pre, @stdout) %>
+
+<% if @status.exitstatus!=0 %>
+<%= content_tag(:h2, "Status") %>
+<%= content_tag(:pre, "Exit status: #{@status.exitstatus}") %>
+<%= content_tag(:h2, "Standard Error") %>
+<%= content_tag(:pre, @stderr) %>
+<% end %>
+
+
+
+
+

@@ -40,9 +40,15 @@
 
 <% end %>
 
+<%= link_to('[admin]', check_talking_books_path) if can? :manage, TalkingBook %>
 <%= content_tag(:h2, "Trovati #{@talking_books.total_entries}") %>
 <%= will_paginate @talking_books, renderer: BootstrapPagination::Rails %>
 
 
 <hr/>
-<%= content_tag(:div, talking_books_index(@talking_books)) %>
+<%= if can? :manage, TalkingBook
+      content_tag(:div, talking_books_index_editable(@talking_books))
+    else
+      content_tag(:div, talking_books_index(@talking_books))
+    end
+%>

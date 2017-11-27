@@ -7,6 +7,7 @@ class DObjectsFolder < ActiveRecord::Base
   before_save :check_filesystem
   before_destroy :reset_sequence
   has_many :d_objects, order:'lower(name)'
+  has_one :talking_book
 
   def filename
     self.name
@@ -48,6 +49,13 @@ class DObjectsFolder < ActiveRecord::Base
     page = params[:page].blank? ? 1 : params[:page].to_i
     per_page = params[:per_page].blank? ? 50 : params[:per_page].to_i
     self.d_objects.paginate(page:page,per_page:per_page)
+  end
+
+  def contains_images?
+    self.d_objects.group_by {|x| x.mime_type}.keys.each do |mt|
+      return true if mt =~ /jpeg|jpg|tiff/
+    end
+    false
   end
 
   def cover_image=(t) self.edit_tags(cover_image:t.to_s) end

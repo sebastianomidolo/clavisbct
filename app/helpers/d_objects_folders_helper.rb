@@ -23,7 +23,7 @@ module DObjectsFoldersHelper
 
   def d_objects_folder_show_cover_image(record)
     d_object=record.d_object_cover_image
-    return 'no cover' if d_object.nil?
+    return '' if d_object.nil?
     link_to(image_tag(view_d_object_path(d_object, format:'jpeg', size:'400x')),
             view_d_object_path(d_object))
   end
@@ -32,7 +32,7 @@ module DObjectsFoldersHelper
     res=[]
     record.split_path.each do |i|
       name,id=i
-      if DObjectsFolder.find(id).writable_by?(current_user)
+      if DObjectsFolder.find(id).readable_by?(current_user)
         res << link_to(name, d_objects_folder_path(id))
       else
         res << name

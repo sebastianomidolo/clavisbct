@@ -8,6 +8,20 @@ module TalkingBooksHelper
     content_tag(:table, res.join.html_safe)
   end
 
+  def talking_books_index_editable(records)
+    res=[]
+    records.each do |r|
+      f=r.d_objects_folder_id
+      img = f.nil? ? '' : link_to(image_tag('http://bctwww.comperio.it/static/libroparlato_scaricabile.jpg'), d_objects_folder_path(f))
+      res << content_tag(:tr, content_tag(:td, link_to(r.n, edit_talking_book_path(r))) +
+                              content_tag(:td, "#{r.cd} CD") +
+                              content_tag(:td, img) +
+                              content_tag(:td, link_to(r.titolo, talking_book_path(r))) +
+                              content_tag(:td, r.digitalizzato))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
   def talking_book_show(record)
     res=[]
 
@@ -16,13 +30,15 @@ module TalkingBooksHelper
       res << content_tag(:tr, content_tag(:td, k) +
                          content_tag(:td, record[k]))
     end
-    res=content_tag(:table, res.join.html_safe)
-    if !record.manifestation_id.nil?
-      lnk=clavis_manifestation_path(record.manifestation_id)
-      res << link_to("Vedi manifestation #{record.manifestation_id}",lnk)
-      res << content_tag(:div, clavis_manifestation_opac_preview(record.manifestation_id))
-    end
-    res
+    content_tag(:table, res.join.html_safe)
+  end
+
+  def talking_book_opac(record)
+    return '' if record.manifestation_id.nil?
+    lnk=clavis_manifestation_path(record.manifestation_id)
+    res=[]
+    res << link_to("Vedi manifestation #{record.manifestation_id}",lnk)
+    res << content_tag(:div, clavis_manifestation_opac_preview(record.manifestation_id))
   end
 
   def talking_book_extra_data(record)
@@ -46,8 +62,8 @@ module TalkingBooksHelper
     res = []
     res << content_tag(:h3,%Q{#{record.main_entry}<em>#{record.titolo}</em>.}.html_safe)
     href=nil
-    if !record.first_mp3_filename.nil?
-      href=File.join('https://bctwww.comperio.it/tbda',File.basename(record.zip_filepath))
+    if !record.d_objects_folder_id.nil?
+      href=File.join('https://bctwww.comperio.it/tbda',File.basename(record.zip_filepath)) if !record.zip_filepath.nil?
     end
     ad=[]
     ad << "#{record.abstract}." if !record.abstract.blank?
@@ -60,11 +76,12 @@ module TalkingBooksHelper
       ad << content_tag(:div, "Codice cassette: #{record.n}, #{record.cassette} cassette.", :class=>'codice')
       ok=true
     end
-    ad << content_tag(:div, "Collocazione da controllare: #{record.n} (id #{record.id})") if ok==false
+    ad << content_tag(:div, "Collocazione: #{record.n} (id #{record.id})") if ok==false
 
     ad << link_to("Scarica #{record.n}", href) if !href.nil?
     ad << content_tag(:div, "Data inserimento: #{record.data_collocazione}")
     res << content_tag(:div, ad.join("\n").html_safe)
+    # res << talking_book_opac(record)
     content_tag(:div, res.join.html_safe,  :class=>'scheda_libro_parlato')
   end
 
@@ -99,4 +116,17 @@ module TalkingBooksHelper
     content_tag(:div, res.join.html_safe)
   end
 
+  def talking_book_view_mp3_files(record)
+    return nil if record.zip_filepath.blank?
+    res=[]
+    if File.exists?(record.zip_filepath)
+      res << record.zip_filepath
+      fsize=File.size(record.zip_filepath)
+      res << "Dimensioni file: #{number_to_human_size(fsize)} (#{fsize} bytes)"
+      res << "Data del file: #{File.ctime(record.zip_filepath)}"
+    else
+      res << "file zip audio non presente"
+    end
+    content_tag(:pre, res.join("\n"))
+  end
 end

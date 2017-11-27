@@ -123,7 +123,10 @@ Clavisbct::Application.routes.draw do
       get 'download_mp3'
     end
     collection do
+      get 'check'
+      get 'check_duplicates'
       get 'digitalizzati'
+      get 'digitalizzati_non_presenti'
     end
   end
   resources :iss_articles

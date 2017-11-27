@@ -8,7 +8,9 @@ desc 'Creazione tabella import_libroparlato_colloc per libro parlato e creazione
 
 task :libroparlato_collocazioni => :environment do
   sql=%Q{select f.name as filename,o.id from d_objects_folders f join d_objects o on(o.d_objects_folder_id=f.id)
-      where f.name ~ '^libroparlato' order by f.id,win_sortfilename(o.name);}
+      where f.name ~ '^libroparlato'  AND o.mime_type
+        IN('audio/mpeg; charset=binary','application/octet-stream; charset=binary','audio/x-wav; charset=binary')
+       order by f.id,win_sortfilename(o.name);}
   ttable='public.import_libroparlato_colloc'
   puts "DROP TABLE #{ttable};"
   puts "CREATE TABLE #{ttable} (collocation varchar(128), d_object_id integer, position integer);"
@@ -27,9 +29,18 @@ task :libroparlato_collocazioni => :environment do
   puts "\\.\n"
   puts "CREATE INDEX #{ttable.sub('public.','')}_collocation_idx ON #{ttable} (collocation);"
 
+  puts "CREATE TEMP TABLE temp_libroparlato_folders (collocation varchar(64),folder_id integer);"
+  puts "COPY temp_libroparlato_folders (collocation,folder_id) FROM stdin;"
+  TalkingBook.d_objects_folders.each_pair do |k,v|
+    next if v.class==Array
+    puts "#{k}\t#{v}"
+  end
+  puts "\\.\n"
+
   sql=%Q{delete from public.attachments where attachment_category_id = 'D'
      and attachable_type='ClavisManifestation' and d_object_id in
-   (select o.id from d_objects o join d_objects_folders f on(o.d_objects_folder_id=f.id));
+   (select o.id from d_objects o join d_objects_folders f on(o.d_objects_folder_id=f.id)
+       WHERE f.name ~ '^libroparlato');
     INSERT INTO public.attachments
   (d_object_id,attachable_id,attachable_type,attachment_category_id,position)
   (
@@ -39,8 +50,13 @@ task :libroparlato_collocazioni => :environment do
    join d_objects o on(lp.d_object_id=o.id)
    where section='LP' and home_library_id=2 and ci.manifestation_id NOT IN (0,449004,441874)
      and ci.item_status='F'
-        and o.mime_type='audio/mpeg; charset=binary'
+     and o.mime_type
+    IN('audio/mpeg; charset=binary','application/octet-stream; charset=binary','audio/x-wav; charset=binary')
   );
+  UPDATE libroparlato.catalogo AS tb SET d_objects_folder_id=f.folder_id
+    FROM temp_libroparlato_folders f
+    WHERE tb.d_objects_folder_id is null and
+     replace(tb.n,'CD ','')=replace(f.collocation,'CD ','');
   UPDATE libroparlato.catalogo AS lp SET first_mp3_filename=f.name || '/' || o.name
     FROM public.attachments a, d_objects o join d_objects_folders f on(f.id=o.d_objects_folder_id)
     WHERE lp.first_mp3_filename IS NULL
