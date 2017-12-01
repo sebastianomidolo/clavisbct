@@ -45,15 +45,21 @@ ci.issue_arrival_date_expected as previsto
     res=[]
     prec=''
     cnt=0
+    res << content_tag(:tr, content_tag(:td, '') +
+                            content_tag(:td, 'nota') +
+                            content_tag(:td, 'creato da, modificato da') +
+                            content_tag(:td, ''))
+    
     records.each do |r|
       title=r['title'].blank? ? '[?]' : r['title']
       if r['nota']!=prec
-        cnt=0
+        # cnt=0
         prec=r['nota']
       end
       cnt+=1
       res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}.")) +
-                         content_tag(:td, r['nota']) +
+                              content_tag(:td, r['nota']) +
+                              content_tag(:td, r['librarian_id']) +
                          content_tag(:td,
                                      link_to(title,
                                              ClavisManifestation.clavis_url(r['manifestation_id'],:edit)) +

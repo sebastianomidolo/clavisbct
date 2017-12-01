@@ -1,5 +1,5 @@
 class OmekaFile < OmekaRecord
-  self.table_name='omeka.files'
+  self.table_name='bcteka.files'
   after_destroy :delete_files
 
   attr_accessible :mime_type

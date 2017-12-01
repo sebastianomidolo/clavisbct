@@ -1,5 +1,5 @@
 class OmekaItem < OmekaRecord
-  self.table_name='omeka.items'
+  self.table_name='bcteka.items'
   has_many :files, foreign_key: 'item_id', class_name:OmekaFile
   has_many :element_texts, foreign_key:'record_id', conditions:"record_type='Item'", class_name:OmekaElementText
   belongs_to :collection, foreign_key: 'collection_id', class_name:OmekaCollection

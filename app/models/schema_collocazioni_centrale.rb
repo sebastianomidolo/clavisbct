@@ -11,6 +11,7 @@ class SchemaCollocazioniCentrale < ActiveRecord::Base
     puts "palchetto: #{palchetto}"
     int_scaffale=scaffale.to_i
 
+    retval='__non assegnato__'
     if int_scaffale!=0
       puts "SCAFFALE NUMERICO"
       sql1=%Q{select * from #{self.table_name} where scaffale='#{scaffale}'}
@@ -41,7 +42,7 @@ class SchemaCollocazioniCentrale < ActiveRecord::Base
         res=self.connection.execute(sql)
         next if res.ntuples==0
         puts "trovato: #{res.first['piano']}"
-        return res.first['piano']
+        retval=res.first['piano']
       end
     else
       puts "Scaffale non numerico: #{scaffale}"
@@ -60,9 +61,9 @@ class SchemaCollocazioniCentrale < ActiveRecord::Base
         res=self.connection.execute(sql)
         next if res.ntuples==0
         puts "trovato: #{res.first['piano']}"
-        return res.first['piano']
+        retval=res.first['piano']
       end
     end
-    nil
+    retval
   end
 end

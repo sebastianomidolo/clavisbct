@@ -12,7 +12,7 @@
                                view_d_object_path(@d_object, format:'jpeg'))) if ['image/jpeg', 'image/tiff', 'image/png'].include?(@d_object.mime_type.split(';').first)
  %>
 <% end %>
-
+<div class="clearfix"></div>
 <% if @d_object.d_objects_folder.d_objects.size>1 %>
 <%= link_to("[Mostra il contenuto della cartella (#{@d_object.d_objects_folder.d_objects.size} files)]", d_objects_folder_path(@d_object.d_objects_folder))  %>
 <% else %>
@@ -27,3 +27,7 @@ Unico file contenuto nella cartella
 <pre>Dettagli</pre>
 <%= content_tag(:div, d_object_show(@d_object)) %>
 
+
+<% if can? :manage, DObject %>
+<%= link_to('Carica su Omeka', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>
+<% end %>

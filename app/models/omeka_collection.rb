@@ -1,10 +1,10 @@
 class OmekaCollection < OmekaRecord
-  self.table_name='omeka.collections'
+  self.table_name='bcteka.collections'
   has_many :items, foreign_key: 'collection_id', class_name:OmekaItem
   has_many :element_texts, foreign_key:'record_id', conditions:"record_type='Collection'", class_name:OmekaElementText
 
   def parent_collection
-    sql=%Q{SELECT c.* FROM omeka.collection_trees ct JOIN omeka.collections c ON(c.id=ct.parent_collection_id)
+    sql=%Q{SELECT c.* FROM bcteka.collection_trees ct JOIN bcteka.collections c ON(c.id=ct.parent_collection_id)
             WHERE ct.collection_id=#{self.id} AND ct.parent_collection_id!=0;}
     OmekaCollection.find_by_sql(sql).first
   end
@@ -23,15 +23,16 @@ class OmekaCollection < OmekaRecord
   end
 
   def omeka_url
-    "http://bctwww.comperio.it/omeka/collections/show/#{self.id}"
+    "https://bcteka.comperio.it/collections/show/#{self.id}"
   end
 
 
   def OmekaCollection.sql(parent_collection=0)
-    %Q{SELECT ct.collection_id as id,et.text as title
-       FROM omeka.collection_trees ct JOIN omeka.element_texts et
+    filter = parent_collection.nil? ? '' : "WHERE ct.parent_collection_id=#{parent_collection.to_i}"
+    %Q{SELECT parent_collection_id,ct.collection_id as id,et.text as title
+       FROM bcteka.collection_trees ct JOIN bcteka.element_texts et
           ON(et.record_id=ct.collection_id AND et.record_type='Collection' AND element_id=50)
-      WHERE ct.parent_collection_id=#{parent_collection.to_i} order by text;}
+      #{filter} order by parent_collection_id,text;}
   end
 
   def OmekaCollection.options_for_select(parent_collection=0)

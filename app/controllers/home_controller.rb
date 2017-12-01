@@ -69,8 +69,9 @@ select cm.* from manifestations cm left join
   
   def uni856
     @pagetitle='Titoli in Clavis con URL (unimarc tag 856)'
-    sql=%Q{select trim(cm.title) as title,u.* from clavis.uni856 u
-        join clavis.manifestation cm using(manifestation_id)
+    filter = params[:librarian_id].blank? ? '' : "WHERE #{params[:librarian_id]} IN (cm.modified_by, cm.created_by)"
+    sql=%Q{select trim(cm.title) as title,u.*,cm.created_by || ',' || cm.modified_by as librarian_id from clavis.uni856 u
+        join clavis.manifestation cm using(manifestation_id) #{filter}
          order by lower(u.nota),cm.sort_text}
     @records=ActiveRecord::Base.connection.execute(sql)
   end

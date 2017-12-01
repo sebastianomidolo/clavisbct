@@ -210,7 +210,9 @@ module DObjectsHelper
   def d_object_view_pdf(record)
     res=[]
     (1..record.pdf_count_pages).each do |page|
-      res << content_tag(:span, link_to(image_tag(view_d_object_path(record, page:page, format:'jpeg', size:'150x')),
+      res << content_tag(:span, link_to(image_tag(
+                                          view_d_object_path(record, page:page, format:'jpeg', size:'250x'),
+                                          style:'padding:1ex',class:'col-md-3 col-sm-4 col-lg'),
                                         view_d_object_path(record, page:page, format:'jpeg')))
 
     end

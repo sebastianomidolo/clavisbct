@@ -1,10 +1,11 @@
-Caricamento su Omeka
+<%= content_tag(:p, "Prova caricamento su Omeka per il folder #{@d_objects_folder.id}") %>
 
 <%= content_tag(:div, @d_object.filename) %>
 
 <%= render :partial=>'upload_form' %>
 
 
-<%= d_object_show_folder_content(@d_object) %>
+<%= d_objects_view(@d_objects) %>
+
 
 
