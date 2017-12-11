@@ -109,10 +109,10 @@ module ProculturaHelper
                        :id=>"image_#{record.id}")
     else
       r << content_tag(:tr,
-                       content_tag(:td, link_to(record.id, procultura_card_path(record), remote:true)) +
+                       content_tag(:td, link_to(record.id, procultura_card_path(record), remote:true) +
+                                        "<br/>#{record.updated_by_info}".html_safe) +
                        content_tag(:td, bip) +
-                       content_tag(:td, "<b>#{bip2}</b>".html_safe) +
-                       content_tag(:td, record.updated_by_info),
+                       content_tag(:td, "<b>#{bip2}</b>".html_safe),
                        :id=>record.id, class:classe)
     end
     r.join.html_safe
