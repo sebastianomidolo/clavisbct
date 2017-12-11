@@ -1,10 +1,10 @@
-<% if params[:library_id].blank? %>
+<% if @library.nil? %>
  <%= content_tag(:h3, "Conteggio esemplari con tag RFID inizializzato") %>
  <%= content_tag(:div, misc_esemplari_con_rfid(@records)) %>
  <% else %>
- <%= content_tag(:h3, "Biblioteca #{ClavisLibrary.find(params[:library_id]).label}") %>
+ <%= content_tag(:h3, "Biblioteca #{@library.label}") %>
  <%= content_tag(:h4, "Incremento giornaliero esemplari con tag RFID") %>
- <%= content_tag(:div, misc_dettaglio_esemplari_con_rfid(params[:library_id].to_i)) %>
+ <%= content_tag(:div, misc_dettaglio_esemplari_con_rfid(@library.id, @ancora_da_taggare)) %>
  <%= link_to("Conteggio complessivo...", esemplari_con_rfid_path) %>
 <% end %>
  

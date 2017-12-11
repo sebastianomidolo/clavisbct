@@ -77,9 +77,13 @@ select cm.* from manifestations cm left join
   end
 
   def esemplari_con_rfid
-    @pagetitle='Esemplari con tag RFID'
     if params[:library_id].blank?
-      @records=ClavisItem.conta_esemplari_con_tag_rfid(params[:library_ids])
+      @pagetitle='Esemplari con tag RFID'
+      @records=ClavisItem.lista_esemplari_con_tag_rfid(params[:library_ids])
+    else
+      @library=ClavisLibrary.find(params[:library_id])
+      @ancora_da_taggare=ClavisItem.conta_esemplari_senza_tag_rfid(@library.id)
+      @pagetitle="Esemplari con tag RFID - Biblioteca #{@library.shortlabel}"
     end
   end
 

@@ -121,21 +121,37 @@ ci.issue_arrival_date_expected as previsto
                 :class=>'table-responsive')
   end
 
-  def misc_dettaglio_esemplari_con_rfid(library_id)
+  def misc_dettaglio_esemplari_con_rfid(library_id, ancora_da_taggare)
     records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{library_id} order by snapshot_date")
     res=[]
     prec_cnt=0
+    totale=0
+    giorni=0
+    res << content_tag(:tr, content_tag(:td, "Data taggatura", class:'col-md-2') +
+                            content_tag(:td, "Tag inseriti", class:'col-md-1') +
+                            content_tag(:td, "Totale progressivo", class:'col-md-2') +
+                            content_tag(:td, "Giorni", class:'col-md-1') +
+                            content_tag(:td, "Media giornaliera (arrotondata per eccesso)", class:'col-md-6'))
     records.each do |r|
       cnt=r['tagged_count'].to_i
       diff = prec_cnt==0 ? 0 : cnt-prec_cnt
-      res << content_tag(:tr, content_tag(:td, r['snapshot_date'].to_date, class:'col-md-2') +
-                              content_tag(:td, cnt, class:'col-md-2') +
-                              content_tag(:td, diff))
+      totale+=diff
+      if diff!=0
+        giorni+=1
+        res << content_tag(:tr, content_tag(:td, r['snapshot_date'].to_date) +
+                                content_tag(:td, diff) +
+                                content_tag(:td, totale) +
+                                content_tag(:td, giorni) +
+                                content_tag(:td, "#{(totale/giorni.to_f).ceil}"))
+      end
       prec_cnt=cnt
     end
+
+    res << content_tag(:tr, content_tag(:td, "Ancora da taggare: #{ancora_da_taggare}"))
+    res << content_tag(:tr, content_tag(:td, "Media su #{giorni} giorni: #{(totale/giorni.to_f).ceil}"))
+    res << content_tag(:tr, content_tag(:td, "Giorni necessari: #{ancora_da_taggare/((totale/giorni.to_f).ceil)}"))
     content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table'),
                 :class=>'table-responsive')
   end
 
-  
 end
