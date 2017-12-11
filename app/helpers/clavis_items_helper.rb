@@ -17,18 +17,20 @@ module ClavisItemsHelper
   end
 
   def clavis_items_row(record)
+    edit_in_place=false
     coll=record.collocazione
     mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(record.custom_field3))
-    lnk='lnk'
 
     if record.owner_library_id==-1
       lnk=record.title.gsub("\r",'; ')
       if can? :manage, ExtraCard
+        edit_in_place=true
+        extra_card=ExtraCard.find(record.custom_field3)
         mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(record.custom_field3))
         mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(record.custom_field3), remote:true,
                         method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
         mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(record.custom_field3), remote:true,
-                        method: :post, data: { confirm: "Vuoi duplicare questa scheda? (#{record.collocazione})" })
+                        method: :post)
       else
         mlnk = 'TOPOGRAFICO'
       end
@@ -47,14 +49,29 @@ module ClavisItemsHelper
       coll=link_to(colloc, clavis_item_path(record))
     end
     piano = record.piano_centrale
+    classe = ''
+
+    if edit_in_place
+      stringa_titolo=lnk.html_safe
+      stringa_titolo=best_in_place(extra_card, :titolo, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                                   ok_button_class:'btn btn-success',
+                                   class:'btn btn-default',
+                                   skip_blur:false,
+                                   html_attrs:{size:extra_card.titolo.size,style:'display: block'})
+      coll=best_in_place(extra_card, :collocazione, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                         ok_button_class:'btn btn-success',
+                         class:'btn btn-default',
+                         skip_blur:false,
+                         html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
+    else
+      stringa_titolo=lnk.html_safe + "<br/>#{r.issue_description}".html_safe
+    end
     coll << "</br>#{piano}".html_safe if !piano.nil?
 
-    classe = ''
     container_link=''
-
     content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{record.id}") +
                      content_tag(:td, mlnk) +
-                     content_tag(:td, lnk.html_safe + "<br/>#{record.issue_description}".html_safe) +
+                     content_tag(:td, stringa_titolo) +
                      content_tag(:td, record.inventario) +
                      content_tag(:td, container_link),
                 {:data_view=>record.view,:class=>classe})
@@ -83,14 +100,17 @@ module ClavisItemsHelper
 
     prec_catena=0
     records.each do |r|
+      edit_in_place=false
       if r.owner_library_id==-1
         lnk=r.title.gsub("\r",'; ')
         if can? :manage, ExtraCard
+          edit_in_place=true
+          extra_card=ExtraCard.find(r.custom_field3)
           mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
                           method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
           mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(r.custom_field3), remote:true,
-                          method: :post, data: { confirm: "Vuoi duplicare questa scheda? (#{r.collocazione})" })
+                          method: :post)
         else
           mlnk = 'TOPOGRAFICO'
         end
@@ -132,16 +152,31 @@ module ClavisItemsHelper
       end
       classe = r.owner_library_id==-3 ? 'success' : ''
 
+      if edit_in_place
+        stringa_titolo=lnk.html_safe
+        stringa_titolo=best_in_place(extra_card, :titolo, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                                     ok_button_class:'btn btn-success',
+                                     class:'btn btn-default',
+                                     skip_blur:false,
+                                     html_attrs:{size:extra_card.titolo.size,style:'display: block'})
+        coll=best_in_place(extra_card, :collocazione, ok_button:'Salva', cancel_button:'Annulla modifiche',
+                           ok_button_class:'btn btn-success',
+                           class:'btn btn-default',
+                           skip_blur:false,
+                           html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
+      else
+        stringa_titolo=lnk.html_safe + "<br/>#{r.issue_description}".html_safe
+      end
+
       coll << "</br>RICOLLOCATO".html_safe if r.owner_library_id==-3
       coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
       coll << "</br><em>#{r.requests_count} #{r.requests_count=='1' ? 'prenotazione' : 'prenotazioni' }</em>".html_safe if r.respond_to?('requests_count')
-      
 
       res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
-                         content_tag(:td, mlnk) +
-                         content_tag(:td, lnk.html_safe + "<br/>#{r.issue_description}".html_safe) +
-                         content_tag(:td, r.inventario) +
-                         content_tag(:td, container_link),
+                              content_tag(:td, mlnk) +
+                              content_tag(:td, stringa_titolo) +
+                              content_tag(:td, r.inventario) +
+                              content_tag(:td, container_link),
                          {:data_view=>r.view,:class=>classe})
     end
     if can? :manage, Container and !@clavis_item.current_container.nil?

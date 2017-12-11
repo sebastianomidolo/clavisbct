@@ -63,11 +63,18 @@ class ExtraCardsController < ApplicationController
   end
 
   def update
-    @extra_card.update_attributes(params[:extra_card])
-    @extra_card.updated_by=current_user
-    @extra_card.save
-    flash[:notice] = "Modifiche salvate"
-    respond_with(@extra_card)
+    respond_to do |format|
+      if @extra_card.update_attributes(params[:extra_card])
+        @extra_card.updated_by=current_user
+        @extra_card.save
+        flash[:notice] = "Modifiche salvate"
+        format.html { respond_with(@extra_card) }
+        format.json { respond_with_bip(@extra_card) }
+      else
+        format.html { render :action => "edit" }
+        format.json { respond_with_bip(@extra_card) }
+      end
+    end
   end
 
   def destroy
