@@ -55,4 +55,7 @@ class SubjectsController < ApplicationController
     end
   end
 
+  def duplicate_terms
+    @subjects=Subject.duplicate_terms
+  end
 end

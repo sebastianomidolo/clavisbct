@@ -109,4 +109,23 @@ module SubjectsHelper
     content_tag(:table, res.join.html_safe)
   end
 
+  def subjects_duplicate_terms(records)
+    res=[]
+    cnt=0
+    records.each do |r|
+      i=0
+      classi=[]
+      ids=r['authority_ids'].gsub(/{|}/,'').split(',')
+      r['subject_classes'].gsub(/{|}/,'').split(',').each do |c|
+        # classi << "#{i}: #{c} => #{ids[i]}"
+        classi << link_to("#{c} => #{ids[i]}", ClavisAuthority.clavis_url(ids[i],:edit)) + " #{ids[i]}"
+        i+=1
+      end
+      cnt+=1
+      res << content_tag(:tr, content_tag(:td, cnt) +
+                              content_tag(:td, r['heading']) +
+                              content_tag(:td, classi.join(', ').html_safe))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
 end

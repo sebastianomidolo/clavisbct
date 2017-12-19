@@ -57,4 +57,14 @@ class Subject < ActiveRecord::Base
     self.connection.execute(sql).collect {|i| ["#{i['csc']} (#{i['cnt']})",i['csc']]}
   end
 
+  def Subject.duplicate_terms
+    sql=%Q{with doppie as
+      (select full_text as heading,array_agg(subject_class order by subject_class,authority_id) as subject_classes,
+        array_agg(authority_id order by subject_class,authority_id) as authority_ids,count(*) from clavis.authority
+         where full_text notnull and subject_class in('FI','MSO','ACT')
+        group by full_text having count(*)>1)
+      select * from doppie where 'ACT' = ANY(subject_classes) OR 'MSO' = ANY(subject_classes)
+        order by heading;}
+    self.connection.execute(sql).to_a
+  end
 end

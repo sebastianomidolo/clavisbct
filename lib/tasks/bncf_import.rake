@@ -50,7 +50,7 @@ task :bncf_import => :environment do
 
   sqlfile="/tmp/bncf_import.sql"
   fdout=File.open(sqlfile,'w')
-  fdout.write(%Q{DROP TABLE public.bncf_terms;CREATE TABLE public.bncf_terms (id integer primary key, bncf_id integer, category varchar(21), term varchar(128), rdftype varchar(10), parent_id integer, definition text, termtype varchar(12));\n})
+  fdout.write(%Q{DROP TABLE public.bncf_terms;CREATE TABLE public.bncf_terms (id integer primary key, bncf_id integer, category varchar(21), term varchar(128), rdftype varchar(24), parent_id integer, definition text, termtype varchar(12));\n})
   fdout.write(%Q{COPY public.bncf_terms (id, category, bncf_id, term, rdftype, parent_id, termtype, definition) FROM stdin;\n})
   entries=Dir.entries(sourcedir).delete_if {|z| ['.','..'].include?(z)}.sort
   cnt=0
