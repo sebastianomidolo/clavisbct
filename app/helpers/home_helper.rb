@@ -121,8 +121,7 @@ ci.issue_arrival_date_expected as previsto
                 :class=>'table-responsive')
   end
 
-  def misc_dettaglio_esemplari_con_rfid(library_id, ancora_da_taggare)
-    records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{library_id} order by snapshot_date")
+  def misc_dettaglio_esemplari_con_rfid(records, library_id, ancora_da_taggare)
     res=[]
     prec_cnt=0
     totale=0
@@ -148,10 +147,31 @@ ci.issue_arrival_date_expected as previsto
     end
 
     res << content_tag(:tr, content_tag(:td, "Ancora da taggare: #{ancora_da_taggare}"))
-    res << content_tag(:tr, content_tag(:td, "Media su #{giorni} giorni: #{(totale/giorni.to_f).ceil}"))
-    res << content_tag(:tr, content_tag(:td, "Giorni necessari: #{ancora_da_taggare/((totale/giorni.to_f).ceil)}"))
+    if giorni>0
+      res << content_tag(:tr, content_tag(:td, "Media su #{giorni} giorni: #{(totale/giorni.to_f).ceil}"))
+      res << content_tag(:tr, content_tag(:td, "Giorni necessari: #{ancora_da_taggare/((totale/giorni.to_f).ceil)}"))
+    end
     content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table'),
                 :class=>'table-responsive')
+  end
+
+  def misc_dettaglio_esemplari_con_rfid_csv(records,library,header=true)
+    res=[]
+    res << "Library,Date,Count,Progr,Average" if header
+    prec_cnt=0
+    totale=0
+    giorni=0
+    records.each do |r|
+      cnt=r['tagged_count'].to_i
+      diff = prec_cnt==0 ? 0 : cnt-prec_cnt
+      totale+=diff
+      if diff!=0
+        giorni+=1
+        res << "#{library},#{r['snapshot_date'].to_date},#{diff},#{totale},#{totale/giorni.to_f}"
+      end
+      prec_cnt=cnt
+    end
+    res.join("\n")
   end
 
 end

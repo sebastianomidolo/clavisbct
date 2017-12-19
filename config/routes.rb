@@ -109,7 +109,11 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :subjects
+  resources :subjects do
+    collection do
+      get 'duplicate_terms'
+    end
+  end
 
   resources :bncf_terms do
     collection do
@@ -249,7 +253,7 @@ Clavisbct::Application.routes.draw do
   
   match '/senzasoggetto' => 'home#senzasoggetto'
 
-  match '/esemplari_con_rfid' => 'home#esemplari_con_rfid'
+  match 'esemplari_con_rfid', to: 'home#esemplari_con_rfid', via: [:get]
 
   match '/sa' => 'clavis_items#ricollocazioni'
 

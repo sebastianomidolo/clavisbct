@@ -83,7 +83,12 @@ select cm.* from manifestations cm left join
     else
       @library=ClavisLibrary.find(params[:library_id])
       @ancora_da_taggare=ClavisItem.conta_esemplari_senza_tag_rfid(@library.id)
-      @pagetitle="Esemplari con tag RFID - Biblioteca #{@library.shortlabel}"
+      @records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{@library.id} order by snapshot_date")
+      @pagetitle="Esemplari con tag RFID - Biblioteca #{@library.shortlabel.strip}"
+    end
+    respond_to do |format|
+      format.html {}
+      format.csv {}
     end
   end
 

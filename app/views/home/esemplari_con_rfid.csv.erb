@@ -1,0 +1,5 @@
+<% if @library.nil? %>
+'no data'
+<% else %>
+<%= misc_dettaglio_esemplari_con_rfid_csv(@records,@library.shortlabel.strip,params[:header]=='0' ? false : true) %>
+<% end %>

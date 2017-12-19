@@ -9,7 +9,7 @@ task :conta_esemplari_con_tag_rfid => :environment do
   tm=Time.now - 1.day
   date="'#{tm.day}/#{tm.month}/#{tm.year}'"
   sql << "DELETE FROM rfid_summary WHERE snapshot_date=#{date};"
-  ClavisItem.conta_esemplari_con_tag_rfid.each do |r|
+  ClavisItem.lista_esemplari_con_tag_rfid.each do |r|
     sql << "INSERT INTO rfid_summary (library_id, snapshot_date, tagged_count) VALUES(#{r['library_id']}, #{date}, #{r['count']});"
   end
   ActiveRecord::Base::connection.execute(sql.join)
