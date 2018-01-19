@@ -5,6 +5,11 @@
  <%= content_tag(:h3, "Biblioteca #{@library.label}") %>
  <%= content_tag(:h4, "Incremento giornaliero esemplari con tag RFID") %>
  <%= content_tag(:div, misc_dettaglio_esemplari_con_rfid(@records, @library.id, @ancora_da_taggare)) %>
- <%= link_to("Conteggio complessivo...", esemplari_con_rfid_path) %>
+ <% link_to("Conteggio complessivo...", esemplari_con_rfid_path) %>
 <% end %>
  
+
+<%= image_tag("http://bctwww.comperio.it/static/out2.png",size: "800x800") %>
+<%= image_tag("http://bctwww.comperio.it/static/out.png",size: "800x800") %>
+
+

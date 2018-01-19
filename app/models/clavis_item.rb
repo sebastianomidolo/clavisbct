@@ -199,6 +199,12 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
   end
 
+  def self.loan_status
+    sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
+  where value_language = 'it_IT' and value_class='LOANSTATUS' order by value_key}
+    self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+  end
+
   def self.item_media
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
   where value_language = 'it_IT' and value_class='ITEMMEDIATYPE' order by value_key}

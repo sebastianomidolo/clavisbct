@@ -19,6 +19,7 @@
 
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
+  <%= f.input :loan_status, collection: ClavisItem.loan_status, hint: 'Loan status', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],
       label: false, hint: 'Visibilità in opac' %>
 

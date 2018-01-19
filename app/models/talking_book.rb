@@ -138,7 +138,7 @@ class TalkingBook < ActiveRecord::Base
     numfiles=DObject.fs_scan(scan_dir)
     puts "Analizzati e importati nel db #{numfiles} files"
     collocazione=TalkingBook.filename2colloc(folder)
-    
+    collocazione = "CD #{collocazione}" if (collocazione =~ /^CD /).nil?
     puts "ora inserisco collocazione #{collocazione} in tabella import_libroparlato_colloc"
 
     newdestfolder=ActiveRecord::Base.connection.quote_string(scan_dir)
@@ -351,6 +351,11 @@ class TalkingBook < ActiveRecord::Base
   def TalkingBook.build_pdf_catalogs
     cmd="(cd #{File.join(Rails.root,'extras','libroparlato')};make clean;make;ls -lh *.pdf)"
     Open3.capture3(cmd)
+  end
+
+  def TalkingBook.logfilename
+    tempdir = File.join(Rails.root.to_s, 'tmp')
+    File.join(tempdir, 'libroparlato.log')
   end
 
   def self.loadhelper

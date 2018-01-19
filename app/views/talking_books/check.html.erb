@@ -12,3 +12,5 @@
    content_tag(:li, link_to('Home page libro parlato', talking_books_path)))
 %>
 
+<%= content_tag(:pre, File.read(TalkingBook.logfilename)) if File.exists?(TalkingBook.logfilename) %>
+

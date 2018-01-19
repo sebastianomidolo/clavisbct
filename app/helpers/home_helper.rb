@@ -167,7 +167,7 @@ ci.issue_arrival_date_expected as previsto
       totale+=diff
       if diff!=0
         giorni+=1
-        res << "#{library},#{r['snapshot_date'].to_date},#{diff},#{totale},#{totale/giorni.to_f}"
+        res << "#{library},#{r['snapshot_date']},#{diff},#{totale},#{totale/giorni.to_f}"
       end
       prec_cnt=cnt
     end

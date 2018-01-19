@@ -8,15 +8,24 @@ task :aggiorna_libroparlato => :environment do
   esamina_cartella_di_provenienza(config[Rails.env]["libroparlato_upload"], "/home/storage/preesistente/libroparlato")
 end
 
-def errore(msg)
-  puts "msg: #{msg}"
+def logmessage(msg)
+  fn=TalkingBook.logfilename
+  fdout=File.open(fn, 'a')
+  fdout.write("#{msg}\n")
+  # puts "msg: #{msg}"
+  fdout.close
 end
 
 def esamina_cartella_di_provenienza(sourcedir,destdir)
-  puts "esamino #{sourcedir}"
-  Dir.glob("/home/seb/BCT/wca22014/linux64/LP2mog/upload_libroparlato/*").each do |dirname|
+  fn=TalkingBook.logfilename
+  fdout=File.open(fn, 'w')
+  fdout.write("#{Time.now}: INIZIO ESECUZIONE script 'aggiorna_libroparlato'\n\n")
+  fdout.close
+  logmessage "esamino #{sourcedir}"
+
+  Dir.glob("#{sourcedir}/*").each do |dirname|
     slot=File.basename(dirname)
-    puts "in slot #{slot}"
+    logmessage "Entro in #{slot}"
 
     Dir.glob("#{dirname}/*").each do |folder|
       newfolder=File.basename(folder)
@@ -24,17 +33,22 @@ def esamina_cartella_di_provenienza(sourcedir,destdir)
       collocazione=TalkingBook.filename2colloc(newfolder)
       t_book=TalkingBook.where("n = replace('#{collocazione}','CD ','')").first
       if t_book.nil?
-        errore "Record non trovato nel catalogo libro parlato per la collocazione #{collocazione}"
+        logmessage "Record non trovato nel catalogo libro parlato per la collocazione #{collocazione}"
         next
       else
         if t_book.manifestation_id.nil?
-          errore "manifestation_id non trovata (#{collocazione}) per https://clavisbct.comperio.it/talking_books/#{t_book.id}"
+          logmessage "manifestation_id non trovata (#{collocazione}) per https://clavisbct.comperio.it/talking_books/#{t_book.id}"
           next
         end
       end
-      puts "chiamo book_update su TalkingBook numero #{t_book.id} - collocazione #{collocazione}"
+      logmessage "chiamo book_update su TalkingBook numero #{t_book.id} - collocazione #{collocazione}"
       source_folder=File.join(slot,File.basename(folder))
       t_book.book_update(source_folder)
     end
   end
+
+  fn=TalkingBook.logfilename
+  fdout=File.open(fn, 'a')
+  fdout.write("\n#{Time.now}: FINE ESECUZIONE script 'aggiorna_libroparlato'\n")
+  fdout.close
 end

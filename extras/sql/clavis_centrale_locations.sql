@@ -145,14 +145,43 @@ update clavis.centrale_locations set piano = '9° piano' where scaffale between 
 update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale = 551 and secondo_elemento='A';
 update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale between 552 and 565;
 
--- 566.A-573 | 9° piano
-update clavis.centrale_locations set piano='9° piano' where piano isnull and scaffale = 566 and secondo_elemento='A';
+-- 566.A-573 | 9° piano (566.A gazzetta ufficiale)
+update clavis.centrale_locations set piano='Centro rete' where scaffale = 566 and secondo_elemento='A';
 update clavis.centrale_locations set piano='9° piano' where piano isnull and scaffale between 567 and 573;
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=566 and secondo_elemento
+                     between 'B' and 'E';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=567 and secondo_elemento
+                     between 'C' and 'E';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=568 and secondo_elemento
+                     between 'A' and 'B';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=569 and secondo_elemento
+                     between 'A' and 'F';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale in(570,571) and secondo_elemento
+                     between 'A' and 'C';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=572 and secondo_elemento
+                     between 'A' and 'B';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=573 and secondo_elemento
+                     in ('A','B','C','E');
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=574 and secondo_elemento = 'A';
+
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=599 and secondo_elemento
+                     between 'C' and 'E';
 
 -- 577.A.3 e 600.C.60 | 9° piano
 -- in realtà è 577.A  e  600.C
 update clavis.centrale_locations set piano='9° piano' where scaffale = 577 and secondo_elemento='A';
 update clavis.centrale_locations set piano='9° piano' where scaffale = 600 and secondo_elemento='C';
+
+update clavis.centrale_locations set piano='Casse in -2' where scaffale = 600 and secondo_elemento='A'
+    and terzo_elemento = '6';
 
 -- 582.D.37-582.D.105 | 9° piano
 update clavis.centrale_locations set piano='9° piano' where scaffale = 582 and secondo_elemento='D';
@@ -167,10 +196,14 @@ update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale
 update clavis.centrale_locations set piano='9° piano' where piano isnull and scaffale=599;
 update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=599 and secondo_elemento='H';
 
--- 600 Ufficio informazioni
-update clavis.centrale_locations set piano='Uff. informazioni' where scaffale=600;
+-- 600 Ufficio informazioni (è una vecchia indicazione non più attuale)
+-- update clavis.centrale_locations set piano='Uff. informazioni' where scaffale=600;
 update clavis.centrale_locations set piano='Manoscritti e rari' where scaffale=600 and collocazione ~* 'manos';
 
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=600
+           AND secondo_elemento = 'C' AND terzo_elemento in ('60','102');
+update clavis.centrale_locations set piano='Secondo seminterrato' where scaffale=600
+           AND secondo_elemento = 'A' AND terzo_elemento in ('1','5','10');
 
 -- 602.D.1-641.F.1 | 9° piano (chiarire)
 
@@ -235,8 +268,8 @@ update clavis.centrale_locations set piano='2° piano' where piano is null and p
 -- BCTXX.AO | 2°
 update clavis.centrale_locations set piano='2° piano' where primo_elemento ~ '^BCT\.\.$' and secondo_elemento='AO';
 
--- BIBLIO | 9° piano
-update clavis.centrale_locations set piano='9° piano' where primo_elemento='BIBLIO';
+-- BIBLIO | 9° piano poi Sala multimediale
+update clavis.centrale_locations set piano='Sala multimediale' where primo_elemento='BIBLIO';
 
 -- PG
 update clavis.centrale_locations set piano='Sala giornali' where primo_elemento='PG'
@@ -306,7 +339,8 @@ update clavis.centrale_locations set piano='1° piano' where primo_elemento='GM'
 update clavis.centrale_locations set piano='Manoscritti e rari?' where primo_elemento='Fer';
 
 -- Sci (Fondo Sci)
-update clavis.centrale_locations set piano='9° piano' where primo_elemento in ('Sci', 'Tesi');
+update clavis.centrale_locations set piano='Secondo seminterrato' where primo_elemento ~* 'Sci';
+update clavis.centrale_locations set piano='9° piano' where primo_elemento in ('Tesi');
 
 -- Tattili
 update clavis.centrale_locations set piano='2° piano' where primo_elemento = 'Tattil';
