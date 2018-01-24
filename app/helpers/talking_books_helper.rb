@@ -27,8 +27,8 @@ module TalkingBooksHelper
 
     record.attributes.keys.each do |k|
       next if record[k].blank?
-      res << content_tag(:tr, content_tag(:td, k) +
-                         content_tag(:td, record[k]))
+      lnk = k=='manifestation_id' ? clavis_manifestation_opac_preview(record[k]) : record[k]
+      res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, lnk))
     end
     content_tag(:table, res.join.html_safe)
   end

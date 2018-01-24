@@ -295,7 +295,7 @@ update clavis.centrale_locations set piano='Scaffale aperto 2° piano' where pri
 update clavis.centrale_locations set piano='Scaffale aperto 1° piano' where primo_elemento = 'SAP';
 update clavis.centrale_locations set piano='2° piano' where primo_elemento in ('CD','DVD');
 update clavis.centrale_locations set piano='Sala consultazione' where primo_elemento = 'Cons';
-update clavis.centrale_locations set piano='9° piano' where primo_elemento = 'Coll';
+update clavis.centrale_locations set piano='7° piano' where primo_elemento = 'Coll';
 
 update clavis.centrale_locations set piano='7° piano' where scaffale in(661,662) and secondo_elemento='A';
 
@@ -309,10 +309,15 @@ update clavis.centrale_locations set piano='Secondo seminterrato' where primo_el
 -- PER.D (Periodici in dono, al settimo piano)
 update clavis.centrale_locations set piano='7° piano' where primo_elemento IN ('PER.D', 'PERD')
          OR primo_elemento = 'PER???' and secondo_elemento='D';
-update clavis.centrale_locations set piano='8° piano' where primo_elemento='PER'
-                and secondo_elemento!='' and secondo_elemento::integer between 1 and 1688;
+
+update clavis.centrale_locations set piano='9° piano' where primo_elemento='PER'
+                and secondo_elemento!='' and secondo_elemento::integer between 1 and 1427;
+
+update clavis.centrale_locations set piano='9° piano' where primo_elemento='PER'
+                and secondo_elemento!='' and secondo_elemento::integer between 1689 and 2468;
+
 update clavis.centrale_locations set piano='7° piano' where primo_elemento='PER'
-                and secondo_elemento!='' and secondo_elemento::integer >= 1689;
+                and secondo_elemento!='' and secondo_elemento::integer >= 2469;
 
 
 -- PER dal 2012 in poi, al settimo piano
@@ -326,7 +331,7 @@ update clavis.centrale_locations set piano='Manoscritti e rari' where primo_elem
 update clavis.centrale_locations set piano='Secondo semint. (casse?)' where primo_elemento='S' and secondo_elemento='L';
 
 -- A.A.
-update clavis.centrale_locations set piano='9° piano' where primo_elemento='A' and secondo_elemento='A';
+update clavis.centrale_locations set piano='7° piano' where primo_elemento='A' and secondo_elemento='A';
 
 -- GM - microfilm (per ora approssimativo)
 update clavis.centrale_locations set secondo_elemento = trim(secondo_elemento) where primo_elemento='GM';
@@ -340,7 +345,7 @@ update clavis.centrale_locations set piano='Manoscritti e rari?' where primo_ele
 
 -- Sci (Fondo Sci)
 update clavis.centrale_locations set piano='Secondo seminterrato' where primo_elemento ~* 'Sci';
-update clavis.centrale_locations set piano='9° piano' where primo_elemento in ('Tesi');
+update clavis.centrale_locations set piano='7° piano' where primo_elemento in ('Tesi');
 
 -- Tattili
 update clavis.centrale_locations set piano='2° piano' where primo_elemento = 'Tattil';

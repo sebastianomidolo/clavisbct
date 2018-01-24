@@ -12,7 +12,7 @@ def logmessage(msg)
   fn=TalkingBook.logfilename
   fdout=File.open(fn, 'a')
   fdout.write("#{msg}\n")
-  # puts "msg: #{msg}"
+  puts "msg: #{msg}"
   fdout.close
 end
 
@@ -41,7 +41,7 @@ def esamina_cartella_di_provenienza(sourcedir,destdir)
           next
         end
       end
-      logmessage "chiamo book_update su TalkingBook numero #{t_book.id} - collocazione #{collocazione}"
+      logmessage %Q{produco audio.zip per <a href="https://clavisbct.comperio.it/talking_books/#{t_book.id}/edit">#{t_book.titolo}</a> - collocazione #{collocazione}}
       source_folder=File.join(slot,File.basename(folder))
       t_book.book_update(source_folder)
     end

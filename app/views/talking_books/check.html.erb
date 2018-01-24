@@ -8,9 +8,9 @@
    content_tag(:ol,
    content_tag(:li, link_to('Digitalizzati ancora da caricare su server', digitalizzati_non_presenti_talking_books_path)) +
    content_tag(:li, link_to('Controllo cartelle duplicate', check_duplicates_talking_books_path)) +
-   content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path) + " (richiede qualche minuto)") +
+   content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path, data: { confirm: 'Sicuro sicuro di volerlo fare?' }) + " (richiede qualche minuto) - File catalogo.mdb: #{File.mtime "/home/seb/BCT/wca22014/linux64/LP2mog/catalogo.mdb"}") +
    content_tag(:li, link_to('Home page libro parlato', talking_books_path)))
 %>
 
-<%= content_tag(:pre, File.read(TalkingBook.logfilename)) if File.exists?(TalkingBook.logfilename) %>
+<%= content_tag(:pre, File.read(TalkingBook.logfilename).html_safe) if File.exists?(TalkingBook.logfilename) %>
 
