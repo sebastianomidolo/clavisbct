@@ -12,29 +12,29 @@ INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9°
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Deposito esterno', '586', 'A');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '599', 'H');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '600', 'C');
-INSERT into schema_collocazioni_centrale (piano,scaffale,filtro_colloc) values ('Manoscritti e rari', '600', '~* \'manos\'');
+INSERT into schema_collocazioni_centrale (piano,scaffale,filtro_colloc) values ('Manoscritti e rari', '600', E'~* \'manos\'');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '606', 'G');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '636', 'D');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '640', 'A');
-INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '641-653', '~ \'^[A-G]$\'');
-INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '643', 'IN(\'D\',\'E\',\'G\')');
-INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '648', 'IN(\'B\',\'C\')');
-INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '650', '~ \'^[A-G]$\'');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '641-653', E'~ \'^[A-G]$\'');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '643', E'IN(\'D\',\'E\',\'G\')');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '648', E'IN(\'B\',\'C\')');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '650', E'~ \'^[A-G]$\'');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '652', 'G');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('Secondo seminterrato', '660', 'A');
-INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '660', 'IN(\'B\',\'C\',\'D\',\'F\')');
+INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '660', E'IN(\'B\',\'C\',\'D\',\'F\')');
 INSERT into schema_collocazioni_centrale (piano,scaffale,palchetto) values ('9° piano', '662', 'B');
 
 --
-INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('9° piano', 'Z', '~ \'^BCT..\\.\'');
-INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('2° piano', 'A', '~ \'^BCT09\\.\'');
-INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('2° piano', 'AO', '~ \'^BCT..\\.\'');
-INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('5° piano', '~ \'^BCT09\\.\'');
-INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('2° piano', '~ \'^BCT..\\.\'');
+INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('9° piano', 'Z', E'~ \'^BCT..\\.\'');
+INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('2° piano', 'A', E'~ \'^BCT09\\.\'');
+INSERT into schema_collocazioni_centrale (piano,palchetto,filtro_colloc) values ('2° piano', 'AO', E'~ \'^BCT..\\.\'');
+INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('5° piano', E'~ \'^BCT09\\.\'');
+INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('2° piano', E'~ \'^BCT..\\.\'');
 
-INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('9° piano', '~ \'^BIBLIO\\.\'');
+INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('9° piano', E'~ \'^BIBLIO\\.\'');
 
-INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('Scaffale aperto 1° piano', '~ \'^SAP\\.\'');
+INSERT into schema_collocazioni_centrale (piano,filtro_colloc) values ('Scaffale aperto 1° piano', E'~ \'^SAP\\.\'');
 
 
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('8° piano', '1-58');
@@ -53,7 +53,7 @@ INSERT into schema_collocazioni_centrale (piano,scaffale) values ('5° piano', '
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('Manoscritti e rari', '410-413');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('6° piano', '414-510');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('Secondo seminterrato', '511-522');
-INSERT into schema_collocazioni_centrale (piano,scaffale) values ('9° piano', '523-556');
+INSERT into schema_collocazioni_centrale (piano,scaffale) values ('7° piano', '523-556');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('Secondo seminterrato', '552-565');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('9° piano', '567-573');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('Secondo seminterrato', '587-598');
@@ -68,7 +68,7 @@ INSERT into schema_collocazioni_centrale (piano,scaffale) values ('6° piano', '
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('9° piano', '811-820');
 INSERT into schema_collocazioni_centrale (piano,scaffale) values ('Secondo seminterrato', '830');
 
-INSERT into schema_collocazioni_centrale (piano,palchetto) values ('Secondo seminterrato', '~ \'^L[BCDFGM]$\'');
+INSERT into schema_collocazioni_centrale (piano,palchetto) values ('Secondo seminterrato', E'~ \'^L[BCDFGM]$\'');
 
 -- select * from schema_collocazioni_centrale where scaffale notnull order by split_part(scaffale,'-',1)::integer;
 

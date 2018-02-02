@@ -112,7 +112,7 @@ task :find_missing_values => :environment do
       return "#{section}.#{collocation} (#{k.min}-#{k.max})#{msg}\n"
     end
 
-    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCTA'].each do |s|
+    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCTA'].each do |s|
       outfile="/usr/local/www/html/mn/00_#{s}_missing_numbers.txt"
       puts outfile
       File.delete(outfile) if File.exists?(outfile)

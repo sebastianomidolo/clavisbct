@@ -11,7 +11,7 @@ class ClavisItem < ActiveRecord::Base
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
   :current_container, :in_container, :dewey_collocation, :barcode, :loan_status,
   :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
-  :rfid_code, :actual_library_id, :date_updated
+  :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
   belongs_to :home_library, class_name: 'ClavisLibrary', foreign_key: 'home_library_id'
@@ -87,6 +87,12 @@ class ClavisItem < ActiveRecord::Base
       piano=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'])
       sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano)} WHERE item_id=#{self.id}"
       self.connection.execute(sql)
+    else
+      piano_new=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'])
+      if piano_new != piano
+        sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano_new)} WHERE item_id=#{self.id}"
+        self.connection.execute(sql)
+      end
     end
     piano
   end

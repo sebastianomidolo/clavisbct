@@ -33,7 +33,8 @@ Pagina di servizio a uso interno delle BCT
 
   <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
  <% if can? :manage, Container %>
-  <%= content_tag(:li, link_to('Gestione contenitori fuori sede (Q)', containers_path(filter:'Q'))) %>
+ <%= content_tag(:li, link_to('Gestione contenitori fuori sede (Q)', containers_path(filter:'Q'))) %>
+ <%= content_tag(:li, link_to('Gestione contenitori fuori sede (SC)', containers_path(filter:'SC'))) %>
  <% end %>
 <% if can? :ricollocazioni, ClavisItem %>
   <%= content_tag(:li, link_to('Scaffale aperto', '/sa')) %>

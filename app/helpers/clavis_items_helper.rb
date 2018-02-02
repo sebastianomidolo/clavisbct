@@ -126,7 +126,9 @@ module ClavisItemsHelper
         media << "</br><b>#{r.loan_status}</b>"
         lnk << "</br><b>non visibile in opac</b>".html_safe if r.opac_visible!=1
         lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
-        lnk << "</br>Ultima modifica: #{r.date_updated.to_date}".html_safe if !r.date_updated.nil?
+        if !r.date_created.nil?
+          lnk << "</br>Creato il #{r.date_created.to_date} (#{r.created_by}) - Ultima modifica: #{r.date_updated.to_date} (#{r.modified_by})".html_safe if !r.date_updated.nil?
+        end
         lnk << "</br>#{link_to('[vedi notizia]', ClavisManifestation.clavis_url(r.manifestation_id,:show),:target=>'_blank')}".html_safe if r.manifestation_id!=0
         
         mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)

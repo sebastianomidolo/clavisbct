@@ -17,6 +17,10 @@
    <% link_to('[elenco contenitori]', containers_path) %>
   <% end %>
 
+
+  <%= f.input :created_by, hint: 'created_by librarian_id', label: false, placeholder: 'created_by librarian_id' %>
+  <%= f.input :modified_by, hint: 'modified_by librarian_id', label: false, placeholder: 'modified_by librarian_id' %>
+  
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :loan_status, collection: ClavisItem.loan_status, hint: 'Loan status', include_blank: true, label:false %>

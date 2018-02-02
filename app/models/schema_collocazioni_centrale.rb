@@ -2,6 +2,27 @@
 class SchemaCollocazioniCentrale < ActiveRecord::Base
   self.table_name='schema_collocazioni_centrale'
 
+  def sql_for_update_centrale_locations
+    conditions = []
+
+    if !scaffale.nil?
+      from,to=scaffale.split('-')
+      conditions << (to.nil? ? "scaffale = #{from}" : "scaffale between #{from} and #{to}")
+    end
+    if !palchetto.nil?
+      if (palchetto =~ /^~/) or (palchetto =~ /^IN\(/)
+        conditions << "secondo_elemento #{palchetto}"
+      else
+        conditions << "secondo_elemento='#{palchetto}'"
+      end
+    end
+    if !filtro_colloc.nil?
+      conditions << "collocazione #{filtro_colloc}"
+    end
+    c = conditions.join(' and ')
+    # puts "#{self.id} update clavis.centrale_locations set piano='#{piano}' where #{c};"
+    puts "update clavis.centrale_locations set piano='#{piano}' where #{c};"
+  end
 
   def self.trova_piano(collocazione)
     puts "trovo il piano per la collocazione #{collocazione}"
