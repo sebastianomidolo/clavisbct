@@ -27,6 +27,14 @@ join clavis.manifestation cm using(manifestation_id)
     @clavis_consistency_notes=ClavisConsistencyNote.paginate_by_sql(sql,:page=>params[:page], :per_page=>100)
   end
 
+  def list_by_manifestation_id
+    if params[:id].blank?
+      @clavis_consistency_notes=[]
+    else
+      @clavis_consistency_notes=ClavisConsistencyNote.where(manifestation_id:params[:id]).order(:library_id)
+    end
+  end
+
   def show
     @clavis_consistency_note=ClavisConsistencyNote.find(params[:id])
   end

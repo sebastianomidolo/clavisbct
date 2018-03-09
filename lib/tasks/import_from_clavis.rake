@@ -69,4 +69,7 @@ task :import_from_clavis => :environment do
   ClavisConsistencyNote.update_collocazione_per
   puts "tornato da ClavisConsistencyNote.update_collocazione_per #{Time.now}"
 
+  puts "chiamo ora SchemaCollocazioniCentrale.update_all_centrale_locations #{Time.now}"
+  SchemaCollocazioniCentrale.update_all_centrale_locations
+  puts "tornato da SchemaCollocazioniCentrale.update_all_centrale_locations #{Time.now}"
 end
