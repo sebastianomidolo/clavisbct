@@ -1,0 +1,17 @@
+<%= simple_form_for(@collocazione) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.association :bib_section, collection:BibSection.order(:name), include_blank:false, label:'Ubicazione' %>
+    <%= f.input :scaffale, label:'Scaffale numerico o sezione di collocazione (esclusa BCT)' %>
+    <%= f.input :palchetto %>
+    <%= f.input :filtro_colloc, label:'Filtro sulla collocazione' %>
+    <%= f.input :locked, label:'Blocca collocazione' %>
+    <%= f.input :notes, label:'Annotazioni' %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva modifiche' %>
+  </div>
+<% end %>
+

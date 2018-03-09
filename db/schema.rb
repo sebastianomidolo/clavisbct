@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20171122090312) do
+ActiveRecord::Schema.define(:version => 20180223103806) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -93,6 +93,12 @@ ActiveRecord::Schema.define(:version => 20171122090312) do
     t.integer "bm_id"
   end
 
+  create_table "bib_sections", :force => true do |t|
+    t.string "name", :limit => 32
+  end
+
+  add_index "bib_sections", ["name"], :name => "bib_sections_name_idx", :unique => true
+
   create_table "biblioteche_celdes", :id => false, :force => true do |t|
     t.text    "label"
     t.integer "library_id"
@@ -138,7 +144,7 @@ ActiveRecord::Schema.define(:version => 20171122090312) do
     t.integer "bncf_id"
     t.string  "category",   :limit => 21
     t.string  "term",       :limit => 128
-    t.string  "rdftype",    :limit => 10
+    t.string  "rdftype",    :limit => 24
     t.integer "parent_id"
     t.text    "definition"
     t.string  "termtype",   :limit => 12
@@ -436,10 +442,13 @@ ActiveRecord::Schema.define(:version => 20171122090312) do
   add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
 
   create_table "schema_collocazioni_centrale", :force => true do |t|
-    t.string "piano",         :limit => 24
-    t.string "scaffale",      :limit => 24
-    t.string "palchetto",     :limit => 24
-    t.string "filtro_colloc", :limit => 36
+    t.string  "piano",          :limit => 24
+    t.string  "scaffale",       :limit => 24
+    t.string  "palchetto",      :limit => 24
+    t.string  "filtro_colloc",  :limit => 36
+    t.integer "bib_section_id",                                   :null => false
+    t.string  "notes",          :limit => 128
+    t.boolean "locked",                        :default => false
   end
 
   create_table "sequenza_numeri", :id => false, :force => true do |t|

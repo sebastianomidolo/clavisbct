@@ -1,0 +1,13 @@
+<% if params[:order]=='p' %>
+<%= order='p';content_tag(:span, "<b>Ordinamento per piano</b> [#{link_to('ordina per scaffale', schema_collocazioni_centrales_path)}]".html_safe) %>
+<% else %>
+<%= order='s';content_tag(:span, "<b>Ordinamento per scaffale</b> [#{link_to('ordina per piano', schema_collocazioni_centrales_path(order:'p'))}]".html_safe) %>
+<% end %>
+
+<%= link_to('Nuova collocazione...', new_schema_collocazioni_centrale_path) %>
+
+<%= content_tag(:div, schema_collocazioni_centrale_list(@collocazioni, order)) %>
+
+<%= content_tag(:div, schema_collocazioni_centrale_riepilogo) %>
+<%= content_tag(:div, schema_collocazioni_centrale_non_assegnati) %>
+

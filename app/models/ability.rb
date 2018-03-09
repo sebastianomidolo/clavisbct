@@ -96,8 +96,12 @@ class Ability
       can :manage, WorkStation
     end
 
-    if user.role?('talking_book__manager')
+    if user.role?('talking_book_manager')
       can :manage, TalkingBook
+    end
+
+    if user.role?('schema_collocazioni_centrale')
+      can :manage, SchemaCollocazioniCentrale
     end
 
   end

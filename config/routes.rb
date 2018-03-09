@@ -218,6 +218,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_consistency_notes do
     collection do
       get 'details'
+      get 'list_by_manifestation_id'
     end
   end
 
@@ -227,6 +228,13 @@ Clavisbct::Application.routes.draw do
   resources :clavis_authorities do
     collection do
       get 'info'
+    end
+  end
+
+  resources :schema_collocazioni_centrales, only: [:index, :show, :edit, :update, :new, :create, :destroy] do
+    collection do
+      get 'see'
+      get 'list'
     end
   end
 

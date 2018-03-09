@@ -1,0 +1,10 @@
+<% if params[:order]=='p' %>
+<%= order='p';content_tag(:span, "<b>Ordinamento per piano</b> [#{link_to('ordina per scaffale', list_schema_collocazioni_centrales_path)}]".html_safe) %>
+<% else %>
+<%= order='s';content_tag(:span, "<b>Ordinamento per scaffale</b> [#{link_to('ordina per piano', list_schema_collocazioni_centrales_path(order:'p'))}]".html_safe) %>
+<% end %>
+
+
+<%= content_tag(:div, schema_collocazioni_centrale_list(@collocazioni, order)) %>
+
+

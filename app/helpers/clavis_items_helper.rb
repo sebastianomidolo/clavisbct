@@ -1,11 +1,27 @@
 module ClavisItemsHelper
   def clavis_item_show(record)
     res=[]
+
+    if record[:owner_library_id]==-3
+      ci=ClavisItem.find(record[:custom_field1])
+      record[:collocation] = "#{ci.custom_field1}, collocazione attuale #{ci.la_collocazione}"
+    else
+
+    end
+
     record.attributes.keys.each do |k|
       next if record[k].blank?
       case k
-      when 'collocation'
-        txt = link_to(record[k], "/clavis_items?clavis_item%5Bcollocation%5D=#{record[k]}")
+      when 'item_id'
+        if record[:owner_library_id]==-3
+          txt = link_to(record[:custom_field1], ClavisItem.clavis_url(record[:custom_field1],:edit))
+        else
+          if record[:owner_library_id]==-1
+            txt = link_to(record[k], extra_card_path(record[:custom_field3]))
+          else
+            txt = link_to(record[k], ClavisItem.clavis_url(record[k]))
+          end
+        end
       when 'manifestation_id'
         txt = record[k]==0 ? 'FUORI CATALOGO' : link_to(record[k], clavis_manifestation_path(record[k]))
       else
@@ -167,7 +183,13 @@ module ClavisItemsHelper
                            skip_blur:false,
                            html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
       else
-        stringa_titolo=lnk.html_safe + "<br/>#{r.issue_description}".html_safe
+        if r.item_media=='S'
+          arrivato_il = r.issue_arrival_date.blank? ? '' : " - Arrivato il #{r.issue_arrival_date}"
+          lnk_cons = link_to(' [consistenza]',list_by_manifestation_id_clavis_consistency_notes_path(id:r.manifestation_id), :target=>'_blank')
+          stringa_titolo="[#{r.manifestation_id}] #{lnk}".html_safe + "#{lnk_cons}<br/><b>#{r.issue_description}#{arrivato_il}</b>".html_safe
+        else
+          stringa_titolo=lnk.html_safe
+        end
       end
 
       coll << "</br>RICOLLOCATO".html_safe if r.owner_library_id==-3
@@ -343,15 +365,19 @@ module ClavisItemsHelper
   end
 
   def clavis_item_info(record)
-    return '' if record.item_info.nil?
-    info=record.item_info
-    t=''
-    if !info['os_section'].blank?
-      t="Scaffale aperto - sezione #{info['os_section']}"
+    if record.item_info.nil?
+      t = record.piano_centrale
     else
-      t="In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}"
+      info=record.item_info
+      t=''
+      if !info['os_section'].blank?
+        t="Scaffale aperto - sezione #{info['os_section']}"
+      else
+        t="In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}"
+      end
     end
-    content_tag(:span, content_tag(:b, t),style:'margin-left: 180px')
+    return '' if t.blank?
+    content_tag(:span, content_tag(:b, "Collocazione in Civica Centrale: #{t}"),style:'margin-left: 180px')
   end
 
   def clavis_items_simple_list(records)
