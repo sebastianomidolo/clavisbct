@@ -5,7 +5,7 @@ class ClosedStackItemRequestsController < ApplicationController
   load_and_authorize_resource only: [:index]
 
   def index
-
+    @csir = ClosedStackItemRequest.list
   end
 
   def item_delete

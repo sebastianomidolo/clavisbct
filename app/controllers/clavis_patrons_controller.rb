@@ -27,4 +27,18 @@ class ClavisPatronsController < ApplicationController
 
   def wrong_contacts
   end
+
+  def print_request
+    @clavis_patron=ClavisPatron.find(params[:id])
+    respond_to do |format|
+      format.html { }
+      format.pdf  {
+        filename="request.pdf"
+        pdf=@clavis_patron.closed_stack_print_request
+        send_data(pdf,
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
+      }
+    end
+  end
 end

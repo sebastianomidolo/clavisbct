@@ -89,6 +89,12 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :clavis_patrons, only: [:index] do
+    member do
+      get 'print_request'
+    end
+  end
+
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
     member do
       post 'makepdf'
@@ -270,6 +276,9 @@ Clavisbct::Application.routes.draw do
   match '/cipes' => 'cipes_cedo_records#index'
 
   match '/cp_wc' => 'clavis_patrons#wrong_contacts'
+
+  get 'controllo_provincia/:city/:province', to: 'home#controllo_provincia'
+
   
   root :to => 'home#index'
 end

@@ -79,6 +79,7 @@ module ClavisItemsHelper
                          class:'btn btn-default',
                          skip_blur:false,
                          html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
+      stringa_titolo+="<br/>#{extra_card.note_interne}".html_safe if !extra_card.note_interne.blank?
     else
       stringa_titolo=lnk.html_safe + "<br/>#{r.issue_description}".html_safe
     end
@@ -182,6 +183,7 @@ module ClavisItemsHelper
                            class:'btn btn-default',
                            skip_blur:false,
                            html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
+        stringa_titolo+="<br/>#{extra_card.note_interne}".html_safe if !extra_card.note_interne.blank?
       else
         if r.item_media=='S'
           arrivato_il = r.issue_arrival_date.blank? ? '' : " - Arrivato il #{r.issue_arrival_date}"

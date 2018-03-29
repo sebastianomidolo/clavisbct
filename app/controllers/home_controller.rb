@@ -83,7 +83,8 @@ select cm.* from manifestations cm left join
     else
       @library=ClavisLibrary.find(params[:library_id])
       @ancora_da_taggare=ClavisItem.conta_esemplari_senza_tag_rfid(@library.id)
-      @records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{@library.id} order by snapshot_date")
+      cond=params[:datefrom].blank? ? '' : "AND snapshot_date >= '#{params[:datefrom]}'"
+      @records=ActiveRecord::Base::connection.execute("select snapshot_date,tagged_count from rfid_summary where library_id = #{@library.id} #{cond} order by snapshot_date")
       @pagetitle="Esemplari con tag RFID - Biblioteca #{@library.shortlabel.strip}"
     end
     respond_to do |format|
@@ -95,6 +96,43 @@ select cm.* from manifestations cm left join
   def iccu_link
     if !params[:bid].blank?
       @url=ClavisManifestation.new(bid_source: 'SBN', bid: params[:bid]).iccu_opac_url
+    end
+  end
+
+  def controllo_provincia
+    conn=ActiveRecord::Base.connection
+    @sql=%Q{select * from comuni_italiani where denominazione ~* #{conn.quote(params[:city])} }
+    @records=conn.execute(@sql)
+    @provs=[]
+    @prov_ok=false
+    @records.each do |r|
+      @provs << r['provincia']
+    end
+    @prov_ok = true if @provs.include?(params[:province])
+    if !params[:patron_id].blank?
+      @patron = ClavisPatron.find(params[:patron_id])
+      @cf_suggest=true
+      begin
+        cf=@patron.codice_fiscale
+        if @patron.national_id!=cf
+          @cf="CF calcolato: #{@patron.codice_fiscale}"
+          @patron.national_id=@patron.codice_fiscale
+          @patron.save if @patron.changed?
+        else
+          @cf="CF presente: #{@patron.codice_fiscale}"
+          # @cf_suggest=false
+        end
+      rescue
+        @cf="Errore: #{$!}"
+      end
+      if @patron.birth_city!=params[:city]
+        @patron.birth_city=params[:city].strip
+        @patron.save
+      end
+    end
+    respond_to do |format|
+      format.html {}
+      format.js {}
     end
   end
 end
