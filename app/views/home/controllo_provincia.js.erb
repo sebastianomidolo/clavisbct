@@ -1,0 +1,15 @@
+<% if !@prov_ok %>
+ <% if @provs.size==0 %>
+  jQuery('label', jQuery("#ctl0_Main_PatronView_BirthProvince").parent()).html("<b>Provincia non trovata</b>");
+ <% else %>
+  jQuery('label', jQuery("#ctl0_Main_PatronView_BirthProvince").parent()).html("<b>Provincia errata!</b> sarebbe <b><%= @provs.join(', ') -%></b>");
+ <% end %>
+<% else %>
+jQuery('label', jQuery("#ctl0_Main_PatronView_BirthProvince").parent()).html("<b>Provincia OK</b>");
+<% end %>
+
+<% if !@cf.nil? && @cf_suggest==true %>
+ jQuery('label', jQuery("#ctl0_Main_PatronView_NationalCode").parent()).html("<b><%=@cf-%></b>");
+<% else %>
+ jQuery('label', jQuery("#ctl0_Main_PatronView_NationalCode").parent()).html("<b>CF indeterminato</b>");
+<% end %>

@@ -39,6 +39,21 @@ class ClavisPatron < ActiveRecord::Base
     self.loan_class=='@' ? true : false
   end
 
+  def codice_fiscale
+    require 'codice_fiscale'
+    self.birth_province = self.birth_city[0..1] if self.birth_province.blank?
+    self.birth_province = self.birth_province[0..1]
+    sx = self.gender == 'M' ? :male : :female
+    CodiceFiscale.calculate(
+      :name          => self.name,
+      :surname       => self.lastname,
+      :gender        => sx,
+      :birthdate     => self.birth_date,
+      :province_code => self.birth_province.strip,
+      :city_name     => self.birth_city.strip
+    )
+  end
+
   def autorizzato_download_pdf(clavis_manifestation)
     # Esempio su manifestation 571777 e uid 52697 cioè:
     # reload!;ClavisPatron.find(52697).autorizzato_download_pdf(ClavisManifestation.find(571777))
@@ -101,19 +116,33 @@ class ClavisPatron < ActiveRecord::Base
     end
   end
 
-  def closed_stack_item_requests
+  def closed_stack_item_requests_by_session
     time_limit = "request_time-now() > interval '60 minutes ago'"
     ActiveRecord::Base.connection.execute("SET timezone to 'UTC'")
     sql=%Q{SELECT DISTINCT ir.* FROM closed_stack_item_requests ir
         JOIN dng_sessions s ON(ir.dng_session_id=s.id)
               WHERE #{time_limit} ORDER BY request_time;}
+    puts sql
     ClosedStackItemRequest.find_by_sql(sql)
   end
+  def closed_stack_item_requests
+    sql=%Q{SELECT * FROM closed_stack_item_requests
+              WHERE patron_id=#{self.id} and printed is false;}
+    puts sql
+    ClosedStackItemRequest.find_by_sql(sql)
+  end
+
   def closed_stack_item_request_pdf(dng_session)
     inputdata=[]
     inputdata << self
     inputdata << dng_session
     lp=LatexPrint::PDF.new('closed_stack_item_request', inputdata)
+    lp.makepdf
+  end
+  def closed_stack_print_request
+    inputdata=[]
+    inputdata << self
+    lp=LatexPrint::PDF.new('closed_stack_item_request', inputdata, false)
     lp.makepdf
   end
 
