@@ -32,6 +32,13 @@
   Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
   <% end %>
 
+  <% if current_user.email=='seba' %>
+    <br/>Esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31'
+    <%= text_field_tag 'sql_and', params[:sql_and], size:80 %>
+  <% else %>
+   <%= hidden_field_tag('sql_and', params[:sql_and]) %>
+  <% end %>
+    
   
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
 
@@ -50,28 +57,35 @@
  <%= content_tag(:p, "Esemplari da stampare: <b>#{@clavis_items.total_entries}</b> [#{lnk}]".html_safe) %>
 <% else %>
   <% if @clavis_items.count>1 %>
-    <%= link_to('scarica barcodes', params.merge(format:'csv')) + ' | ' %>
+    <%= link_to('scarica barcodes', params.merge(format:'csv',per_page:999999)) + ' | ' %>
     <%= link_to('segnaposto', params.merge(format:'pdf')) + ' | '  %>
     <%= link_to('elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999)) + ' | ' %>
  <% end %>
- 
- <% if params[:order]=='collocation' %>
-  <%= link_to('ordina_per_piano', params.merge(order:'')) if @clavis_items.count>1 %>
- <% else %>
-  <%= link_to('ordina_per_collocazione', params.merge(order:'collocation')) if @clavis_items.count>1 %>
+
+ <% if @clavis_item.item_media!='S' %>
+  <% if params[:order]=='collocation' %>
+   <%= link_to('ordina_per_piano', params.merge(order:'')) if @clavis_items.count>1 %>
+  <% else %>
+   <%= link_to('ordina_per_collocazione', params.merge(order:'collocation')) if @clavis_items.count>1 %>
+  <% end %>
  <% end %>
+  
 <% end %>
 
 <% end %>
 
 <%=
 if @attrib.size>0
+ js="$('.control-group','#new_clavis_item').hide();"
   if @attrib.size==1
    @attrib << ['title','']
    @attrib << ['collocation','']
-   @attrib << ['inventory_number',''] 
+   @attrib << ['inventory_number','']
+   if !params[:item_media].blank?
+    @attrib << ['item_media','']
+    js << %Q{$('#clavis_item_item_media').val('#{params[:item_media]}');}
+   end
   end
-  js="$('.control-group','#new_clavis_item').hide();"
   @attrib.each {|a| js << %Q{$("#clavis_item_#{a.first}").parent().parent().show();} }
   javascript_tag(js)
 end

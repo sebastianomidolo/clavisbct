@@ -80,18 +80,20 @@ class ClavisItem < ActiveRecord::Base
 
   def piano_centrale
     sql="SELECT collocazione,piano FROM clavis.centrale_locations WHERE item_id=#{self.id}"
+    puts sql
     res=self.connection.execute(sql)
     return nil if res.ntuples==0
     piano=res.first['piano']
     if piano.nil?
-      piano=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'])
+      piano=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'].upcase.gsub(' ',''))
       sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano)} WHERE item_id=#{self.id}"
       self.connection.execute(sql)
     else
-      piano_new=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'])
+      piano_new=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'].upcase.gsub(' ',''))
       if piano_new != piano
-        sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano_new)} WHERE item_id=#{self.id}"
-        self.connection.execute(sql)
+        # VERIFICARE IL SENSO DI QUESTA UPDATE (potrebbe essere causa di errori)
+        # sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano_new)} WHERE item_id=#{self.id}"
+        # self.connection.execute(sql)
       end
     end
     piano
