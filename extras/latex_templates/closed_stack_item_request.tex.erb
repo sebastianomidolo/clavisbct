@@ -11,12 +11,10 @@
 \setlength{\headheight}{1pt}
 \pagestyle{fancy}
 
+\usepackage[utf8x]{inputenc}
+\usepackage{gensymb}
 
-% \textwidth=20cm
-
-% \rhead{Prova \LaTeX}
-
-\usepackage[utf8]{inputenc}
+\usepackage{supertabular}
 
 
 \begin{document}
@@ -31,11 +29,18 @@
  dng_session=inputdata[1]
 
  res << "Utente: #{patron.lastname}\\hfill Data: #{Time.now.to_date}\\\\\\bigskip"
- patron.closed_stack_item_requests().each do |e|
-  item=ClavisItem.find(e.item_id)
-  res << "\\bigskip{\\bf\\Large{#{item.la_collocazione}}}" 
-  res << "#{item.title[0..40]}\\\\" 
- end
+
+ res << "\\begin{supertabular}{l|l|l|l}"
+  patron.closed_stack_item_requests().each do |e|
+   item=ClavisItem.find(e.item_id)
+   item.title.gsub!("&", '\\\&')
+   item.title.gsub!("%", '\\\%')
+
+   res << "{\\bf\\Large{#{item.la_collocazione}}} &"
+   res << "#{item.title[0..30]} & #{item.inventario} &"
+   res << "#{item.piano_centrale} \\\\"
+  end
+ res << "\\end{supertabular}"
 %>
 <%= res.join("\n") %>
 

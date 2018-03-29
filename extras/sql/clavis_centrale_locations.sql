@@ -11,7 +11,7 @@ commit;
 create table clavis.centrale_locations as
 select item_id,collocazione from clavis.collocazioni cc
   join clavis.item ci using(item_id)
-    where (ci.home_library_id=2 and ci.item_status NOT IN ('A','B','L','M'))
+    where (ci.home_library_id=2 and ci.item_status NOT IN ('A','L','M'))
      OR (ci.home_library_id=2 and ci.owner_library_id=-1);
 
 delete from clavis.centrale_locations where item_id in
