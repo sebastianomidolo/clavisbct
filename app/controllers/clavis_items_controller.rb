@@ -69,7 +69,9 @@ class ClavisItemsController < ApplicationController
         end
       end
     end
-
+    if !params[:sql_and].blank?
+      cond << params[:sql_and]
+    end
     if !params[:manifestation_ids].blank? and !params[:library_id].blank?
       items=ClavisItem.esemplari_disponibili(params[:manifestation_ids],params[:library_id])
       items=items.split.join(' ')
@@ -117,17 +119,21 @@ class ClavisItemsController < ApplicationController
       cond = cond.join(" AND ")
       @sql_conditions=cond
       #if current_user.email=='seba'
-      if params[:order]=='collocation'
-        order_by = 'cc.sort_text, clavis.item.title'
+      if @clavis_item.item_media=='S'
+        order_by = 'clavis.item.manifestation_id, clavis.item.issue_year,clavis.item.issue_number'
       else
-        if !@clavis_item.created_by.nil? or !@clavis_item.modified_by.nil?
-          if @clavis_item.modified_by.nil?
-            order_by = 'clavis.item.date_created::date desc, cc.sort_text, clavis.item.title'
-          else
-            order_by = 'clavis.item.date_updated::date desc, cc.sort_text, clavis.item.title'
-          end
+        if params[:order]=='collocation'
+          order_by = 'cc.sort_text, clavis.item.title'
         else
-          order_by = cond.blank? ? nil : 'cl.piano, cc.sort_text, clavis.item.title'
+          if !@clavis_item.created_by.nil? or !@clavis_item.modified_by.nil?
+            if @clavis_item.modified_by.nil?
+              order_by = 'clavis.item.date_created::date desc, cc.sort_text, clavis.item.title'
+            else
+              order_by = 'clavis.item.date_updated::date desc, cc.sort_text, clavis.item.title'
+            end
+          else
+            order_by = cond.blank? ? nil : 'cl.piano, cc.sort_text, clavis.item.title'
+          end
         end
       end
       # order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
