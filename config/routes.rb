@@ -98,9 +98,12 @@ Clavisbct::Application.routes.draw do
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
     member do
       post 'makepdf'
+      get 'makepdf'
       get 'makedir'
       put 'makedir'
       get 'filenames'
+      get 'set_pdf_params'
+      get 'derived'
     end
   end
   
@@ -278,6 +281,8 @@ Clavisbct::Application.routes.draw do
   match '/cp_wc' => 'clavis_patrons#wrong_contacts'
 
   get 'controllo_provincia/:city/:province', to: 'home#controllo_provincia'
+
+  get 'getpdf/:manifestation_id', to: 'home#getpdf'
 
   
   root :to => 'home#index'

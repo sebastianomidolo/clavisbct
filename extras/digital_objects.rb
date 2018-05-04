@@ -95,20 +95,52 @@ module DigitalObjects
     return nil if self.tags.nil?
     doc = REXML::Document.new(self.tags)
     elem=doc.root.elements[tag]
-    elem.nil? ? nil : elem.text
+    return nil if elem.nil?
+    res={}
+    elem.children.each do |e|
+      return e.to_s if e.class==REXML::Text
+      puts "e: #{e.inspect} (e.class: #{e.class})"
+      res[e.name] = e.text
+    end
+    res
+    # elem.nil? ? nil : elem.text
   end
 
   def edit_tags(hash)
-    doc=REXML::Document.new(self.tags)
-    # puts "in edit_tags, prima: #{doc.to_s}"
+    if self.tags.nil?
+      doc=REXML::Document.new
+      doc.add_element('r')
+    else
+      doc=REXML::Document.new(self.tags)
+    end
+    puts "in edit_tags, prima: #{doc.to_s}"
     hash.each_pair do |k,v|
       t=k.to_s
+      puts "accedo a elemento #{t} che contiene elemento di tipo #{v.class}"
       el = doc.root.elements[t]
-      # puts "el: #{el.class} => '#{el.to_s}'"
+      puts "(#{k}=>#{v}) - el: #{el.class} => '#{el.to_s}'"
       doc.root.elements.delete(el) if !el.nil?
-      el=REXML::Element.new(t)
-      el.add_text(v)
-      doc.root.elements << el
+      next if v.blank?
+      if v.class==String
+        el=REXML::Element.new(t)
+        el.add_text(v)
+        doc.root.elements << el
+      else
+        puts "Elemento hash da associare a #{t}: #{v.inspect}"
+        el = self.add_xlm_elements(t, v)
+        doc.root.add_element(el) if !el.elements.empty?
+      end
+    end
+    puts "in edit_tags, dopo: #{doc.to_s}"
+    self.tags=doc.to_s
+  end
+
+  def delete_blank_tags()
+    doc=REXML::Document.new(self.tags)
+    # puts "in edit_tags, prima: #{doc.to_s}"
+    doc.root.elements.each do |el|
+      # puts "el: #{el.class} => '#{el.to_s}'"
+      doc.root.elements.delete(el) if el.text.blank?
     end
     # puts "in edit_tags, dopo: #{doc.to_s}"
     self.tags=doc.to_s
@@ -202,6 +234,27 @@ module DigitalObjects
   def audioclips_basedir
     config = Rails.configuration.database_configuration
     config[Rails.env]["audioclips_basedir"]
+  end
+
+  def add_xlm_elements(tag, hash)
+    puts "ok add_xlm_elements:"
+    res=REXML::Element.new(tag)
+    hash.each_pair do |k,v|
+      puts "k: #{k} - v: #{v}"
+      next if v.blank?
+      el = REXML::Element.new(k.to_s).add_text(v)
+      res.elements << el
+    end
+    puts "res: #{res.to_s}"
+    res
+  end
+
+  def move(dest_folder_id)
+    if self.class==DObject
+      puts "sposto #{self.class} con id #{self.id} attualmente in folder #{self.d_objects_folder_id} in folder #{dest_folder_id}"
+    else
+      puts "sposto #{self.class} con id #{self.id} in folder #{dest_folder_id}"
+    end
   end
 
 end

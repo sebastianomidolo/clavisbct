@@ -475,4 +475,28 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     ActiveRecord::Base.connection.execute(sql).to_a.first['count'].to_i
   end
 
+  def ClavisItem.next_free_inventory_number(library_id, inventory_serie_id, range=nil)
+    conn=ClavisItem.connection
+    extra=''
+    if !range.nil?
+      from,to=range.split('-')
+      from=from.to_i
+      if to.nil?
+        extra="AND inventory_number > #{from}"
+      else
+        to=to.to_i
+        extra="AND inventory_number between #{from} and #{to}"
+      end
+    end
+    sql=%Q{select max(inventory_number)+1 as n from clavis.item where home_library_id = #{conn.quote(library_id)}
+       and owner_library_id != -1 and inventory_number notnull
+       and manifestation_id!=0 and inventory_serie_id=#{conn.quote(inventory_serie_id)}#{extra};}
+    res=conn.execute(sql).to_a.first['n'].to_i
+    if res==0
+      res = from.to_i
+    else
+      res = nil if res > to
+    end
+    res
+  end
 end

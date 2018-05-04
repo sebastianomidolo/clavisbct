@@ -4,26 +4,27 @@
 
 <%= content_tag(:div, "Palchetto: #{@collocazione.palchetto}") %>
 
-<%= content_tag(:div, "Filtro: #{@collocazione.filtro_colloc}") %>
+<%= content_tag(:div, "Filtro: #{@collocazione.filtro_colloc}") if !@collocazione.filtro_colloc.blank? %>
 
-<% if @collocazione.locked %>
-<%= content_tag(:div, "Collocazione bloccata") %>
-<% else %>
-<%= content_tag(:div, "Collocazione non bloccata") %>
+<% if can? :manage,SchemaCollocazioniCentrale %>
+ <% if @collocazione.locked %>
+ <%= content_tag(:div, "Collocazione bloccata") %>
+ <% else %>
+ <%= content_tag(:div, "Collocazione non bloccata") %>
+ <% end %>
+
+ <%= content_tag(:pre, @collocazione.sql_for_select_from_centrale_locations) %>
+
+ <%= content_tag(:pre, @collocazione.sql_for_update_centrale_locations) %>
+
+ <%= link_to('Modifica', edit_schema_collocazioni_centrale_path(@collocazione)) %> |
+
+ <%= link_to 'Elimina collocazione', @collocazione, method: :delete,
+   data: { confirm: "Confermi cancellazione?" }
+ %>
 <% end %>
 
-<%= content_tag(:pre, @collocazione.sql_for_select_from_centrale_locations) %>
-
-<%= content_tag(:pre, @collocazione.sql_for_update_centrale_locations) %>
-
-<%= link_to('Modifica', edit_schema_collocazioni_centrale_path(@collocazione)) %> |
 <%= content_tag(:span, link_to("Torna all'elenco", list_schema_collocazioni_centrales_path)) %>
-
-<%= link_to 'Elimina collocazione', @collocazione, method: :delete,
-   data: { confirm: "Confermi cancellazione?" }
-%>
-
-
 
 <br/>Esempi:
 <%= content_tag(:pre, schema_collocazioni_centrale_vedi_esempi(@collocazione)) %>

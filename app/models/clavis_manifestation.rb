@@ -556,6 +556,11 @@ class ClavisManifestation < ActiveRecord::Base
     ClavisManifestation.find_by_sql(sql)
   end
 
+  def self.free_pdf_filename(manifestation_id)
+    config = Rails.configuration.database_configuration
+    "#{File.join(config[Rails.env]["digital_objects_cache"], 'free', manifestation_id)}.pdf"
+  end
+
   def self.clavis_subscription_url(id)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']

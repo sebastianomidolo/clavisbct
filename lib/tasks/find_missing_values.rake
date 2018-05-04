@@ -164,6 +164,7 @@ task :find_missing_values => :environment do
   trova_numeri.call('AUT',2,1)
   trova_numeri.call('BOS',2,1)
   trova_numeri.call('CIO',2,1)
+  trova_numeri.call('CMA',2,1)
   trova_numeri.call('DL',2,1)
   trova_numeri.call('GIO',2,5001)
   trova_numeri.call('MIS',2,1)
@@ -179,10 +180,12 @@ task :find_missing_values => :environment do
   # trova_numeri.call('M',3,1) ; 
 
   # http://bctdoc.comperio.it/issues/240
-  trova_numeri.call('M',3,54800)
+  # trova_numeri.call('M',3,54800)
+  # Aumento il range dei numeri da verificare: parto da 50001
+  trova_numeri.call('M',3,50001)
 
   trova_numeri.call('MA',3,1)
-  trova_numeri.call('MP',3,1)
+  trova_numeri.call('MP',3,1732)
   trova_numeri.call('PRA',3,1)
   trova_numeri.call('PRE',3,1)
   

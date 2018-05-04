@@ -1,7 +1,7 @@
 # coding: utf-8
 class DObjectsFoldersController < ApplicationController
   layout 'navbar'
-  load_and_authorize_resource only: [:index,:show,:makepdf]
+  load_and_authorize_resource only: [:index,:show,:makepdf,:set_pdf_params]
 
   def index_old
     cond=[]
@@ -127,10 +127,25 @@ class DObjectsFoldersController < ApplicationController
     end
   end
 
+  def set_pdf_params
+    @d_objects_folder = DObjectsFolder.find(params[:id])
+  end
+
   def makepdf
-    f=DObjectsFolder.find(params[:id])
-    fn=f.to_pdf(params)
-    send_file(fn, filename:'temp.pdf', type:'application/pdf', disposition:'inline')
+    @d_objects_folder=DObjectsFolder.find(params[:id])
+    @d_objects_folder.access_right_id=params[:access_right_id].to_i
+    params[:force] = params[:overwrite]=='1' ? true : false
+    params[:nologo] = params[:include_logo].blank? ? true : false
+    @d_objects_folder.pdf_params={include_logo:params[:include_logo],resize_ratio:params[:resize_ratio],access_right_id:params[:access_right_id],gray_scale:params[:gray_scale]}
+    fn=@d_objects_folder.to_pdf(params)
+    @d_objects_folder.save if @d_objects_folder.changed?
+    respond_to do |format|
+      format.pdf {
+        send_file(fn, filename:'temp.pdf', type:'application/pdf', disposition:'inline')
+      }
+      format.js {
+      }
+    end
   end
 
   def set_cover_image
@@ -147,4 +162,20 @@ class DObjectsFoldersController < ApplicationController
     @d_objects=d_objects.paginate(page:1,per_page:d_objects.size)
   end
 
+  def derived
+    @d_objects_folder=DObjectsFolder.find(params[:id])
+    if @d_objects_folder.x_mid.nil?
+      filename="temp_#{@d_objects_folder.id}.pdf"
+    else
+      cm=ClavisManifestation.find(@d_objects_folder.x_mid)
+      filename=cm.title.strip
+    end
+    render(text:"Risorsa non accessibile", content_type:'text/plain') and return if @d_objects_folder.access_right_id!=0
+    respond_to do |format|
+      format.html {render :text=>"folder: #{@d_objects_folder.derived_pdf_filename}"}
+      format.pdf {
+        send_file(@d_objects_folder.derived_pdf_filename, filename:filename, type:'application/pdf', disposition:'inline')
+      }
+    end
+  end
 end

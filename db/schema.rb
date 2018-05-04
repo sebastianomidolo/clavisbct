@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20180223103806) do
+ActiveRecord::Schema.define(:version => 20180409144240) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -192,6 +192,16 @@ ActiveRecord::Schema.define(:version => 20180223103806) do
     t.integer "manifestation_id"
   end
 
+  create_table "comuni_italiani", :id => false, :force => true do |t|
+    t.string "codnaz",        :limit => 4
+    t.string "provincia",     :limit => 5
+    t.string "denominazione", :limit => 62
+    t.string "varcodnaz",     :limit => 4
+    t.string "varcodcat",     :limit => 4
+    t.string "varprov",       :limit => 5
+    t.string "vardenom",      :limit => 62
+  end
+
   create_table "container_items", :force => true do |t|
     t.string  "label",               :limit => 16
     t.integer "row_number"
@@ -238,8 +248,9 @@ ActiveRecord::Schema.define(:version => 20180223103806) do
   add_index "d_objects", ["type"], :name => "index_d_objects_on_type"
 
   create_table "d_objects_folders", :force => true do |t|
-    t.text "name", :null => false
-    t.xml  "tags"
+    t.text    "name",            :null => false
+    t.xml     "tags"
+    t.integer "access_right_id"
   end
 
   add_index "d_objects_folders", ["name"], :name => "d_objects_folders_idx_name", :unique => true

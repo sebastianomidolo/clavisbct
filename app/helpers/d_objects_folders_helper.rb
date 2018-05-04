@@ -77,4 +77,43 @@ module DObjectsFoldersHelper
                   html_attrs:{size:record.basename.size+10})
   end
 
+  def d_objects_folder_list_content(records)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, '', class:'col-md-1') +
+                            content_tag(:td, 'Nome', class:'col-md-2') +
+                            content_tag(:td, 'Dimensioni', class:'col-md-1') +
+                            content_tag(:td, 'Tipo'))
+
+    records.each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(image_tag(view_d_object_path(r, :format=>'jpeg', :size=>'50x')),
+                                          view_d_object_path(r))) +
+                              content_tag(:td, r['name']) +
+                              content_tag(:td, number_to_human_size(r['bfilesize'])) +
+                              content_tag(:td, r['mime_type']))
+    end
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+    
+  end
+
+  def d_objects_folder_pdf_info(record)
+    res=[]
+    record.access_right_id = 1 if record.access_right_id.nil?
+    if record.access_right_id==0 and record.free_pdf_filename
+      publ=true
+    else
+      publ=false
+    end
+    fname=record.derived_pdf_filename
+    if fname and File.readable?(fname)
+      res << "Dimensioni del file PDF: #{number_to_human_size(File.size(fname))} (#{File.size(fname)} bytes), generato il #{File.ctime(fname).to_date}".html_safe
+      if publ==true
+        lnk="https://#{request.host_with_port}/getpdf/#{File.basename(record.free_pdf_filename)}"
+      else
+        lnk="https://#{request.host_with_port}/#{derived_d_objects_folder_path(record,format:'pdf')}"
+      end
+      res << "<br/><b>#{record.access_right.description}:<br/>#{lnk}</b><br/>[#{link_to(lnk,lnk)}]".html_safe
+    end
+    content_tag(:p, res.join("\n").html_safe)
+  end
 end

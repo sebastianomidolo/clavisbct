@@ -3,11 +3,12 @@ include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
   attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename
-  after_save :set_clavis_manifestation_attachments
+  after_save :set_clavis_manifestation_attachments, :derived_symlinks
   before_save :check_filesystem
   before_destroy :reset_sequence
   has_many :d_objects, order:'lower(name)'
   has_one :talking_book
+  belongs_to :access_right
 
   def filename
     self.name
@@ -51,11 +52,9 @@ class DObjectsFolder < ActiveRecord::Base
     self.d_objects.paginate(page:page,per_page:per_page)
   end
 
+  # Alternativa: usare gfx_size
   def contains_images?
-    self.d_objects.group_by {|x| x.mime_type}.keys.each do |mt|
-      return true if mt =~ /jpeg|jpg|tiff/
-    end
-    false
+    self.gfx_size==0 ? false : true
   end
 
   def cover_image=(t) self.edit_tags(cover_image:t.to_s) end
@@ -176,15 +175,49 @@ class DObjectsFolder < ActiveRecord::Base
     return nil if self.cover_image.blank? or !DObject.exists?(self.cover_image)
     DObject.find(self.cover_image)
   end
-  
-  def to_pdf(params={})
-    d_objects=self.folder_content(params).collect do |o|
+
+  def free_pdf_filename
+    return nil if self.x_mid.nil?
+    ClavisManifestation.free_pdf_filename(self.x_mid)
+  end
+
+  def derived_pdf_filename
+    config = Rails.configuration.database_configuration
+    "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s)}.pdf"
+  end
+
+  def restricted_pdf_filename
+    config = Rails.configuration.database_configuration
+    "#{File.join(config[Rails.env]["digital_objects_cache"], 'restricted', self.id.to_s)}.pdf"
+  end
+
+  def gfx_objects
+    objs=self.d_objects.collect do |o|
       mtype=o.mime_type.blank? ? '' : o.mime_type.split(';').first
       o if ['image/jpeg', 'image/tiff', 'image/png', 'application/pdf'].include?(mtype)
     end
-    d_objects.compact!
-    prm = params[:nologo].blank? ? {} : {nologo:true}
-    DObject.to_pdf(d_objects,"/home/seb/nome_provvisorio.pdf", prm)
+    objs.compact
+  end
+
+  def gfx_size
+    size=0
+    self.gfx_objects.each {|o| size+=o.bfilesize}
+    size
+  end
+
+  def to_pdf(params={})
+    DObject.to_pdf(self.gfx_objects,self.derived_pdf_filename, params)
+  end
+
+  def to_pdftest(params={})
+    DObject.to_pdftest(self.gfx_objects)
+  end
+
+  def pdf_params=(t) self.edit_tags(pdf_params:t) end
+  def pdf_params()
+    res=self.xmltag('pdf_params')
+    puts "ok res: #{res}"
+    res
   end
 
   def x_mid=(t) self.edit_tags(mid:t) end
@@ -231,6 +264,27 @@ class DObjectsFolder < ActiveRecord::Base
     end
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
+  end
+
+  def derived_symlinks
+    return if self.changes[:access_right_id].nil?
+    old,new=self.changes[:access_right_id]
+    # 0 - Risorsa libera
+    # 3 - Risorsa con accesso ristretto agli utenti autenticati con credenziali DiscoveryNG
+    case old
+    when 0
+      # puts "Era risorsa libera"
+      FileUtils.rm(self.free_pdf_filename, force:true) if self.free_pdf_filename
+    when 3
+      FileUtils.rm(self.restricted_pdf_filename, force:true)
+    end
+    case new
+    when 0
+      FileUtils.ln_s(self.derived_pdf_filename,self.free_pdf_filename,force:true) if self.free_pdf_filename
+    when 3
+      FileUtils.ln_s(self.derived_pdf_filename,self.restricted_pdf_filename,force:true)
+    end
+
   end
 
   def DObjectsFolder.makedir(dirname)

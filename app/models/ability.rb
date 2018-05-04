@@ -74,10 +74,12 @@ class Ability
 
     if user.role?('clavis_item_manager')
       can :manage, ClavisItem
+      can :show, SchemaCollocazioniCentrale
     end
 
     if user.role?('clavis_item_search')
       can [:search,:index], ClavisItem
+      can :show, SchemaCollocazioniCentrale
     end
 
     if user.role?('clavis_patron_wrong_contacts')

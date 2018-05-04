@@ -134,9 +134,6 @@ class DObject < ActiveRecord::Base
     nil
   end
 
-
-
-  
   def file_extension
     self.mime_type.split(';').first.split('/').last
   end
@@ -360,18 +357,35 @@ class DObject < ActiveRecord::Base
     DObjectsFolder.find_by_sql(sql).first
   end
 
-  # Usata da ClavisManifestation#attachments_generate_pdf
+  # Usata da ClavisManifestation#attachments_generate_pdf (e utilizzabile anche da altri)
+  # https://rmagick.github.io/
   def DObject.to_pdf(ids,pdf_filename,params={})
-    # return true if File.exists?(pdf_filename)
+    return pdf_filename if File.exists?(pdf_filename) and params[:force]!=true
     if params[:nologo].blank?
       logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.gif").first
     end
+
+    resize_ratio=params[:resize_ratio].to_f
+
     iList =  Magick::ImageList.new
     ids.each do |o|
-      # puts o.filename
+      # puts o.filename_with_path
       img=Magick::Image.read(o.filename_with_path).first
+      if !img.image_type.nil? and img.image_type==Magick::TrueColorType
+        # img.resize_to_fit!(600)
+      end
+
+      # img.resize_to_fit!(img.columns/4,img.rows/4)
+      # puts "resize da #{img.columns} a #{img.columns/resize_ratio}"
+      img.resize_to_fit!(img.columns/resize_ratio) if resize_ratio > 1.0
+      img.filter=Magick::TriangleFilter
+
+      # img=img.quantize(32, Magick::GRAYColorspace) if !params[:gray_scale].blank?
+      img = img.channel(Magick::GrayChannel) if !params[:gray_scale].blank?
+
+      # img.density='72x72'
       if params[:nologo].blank?
-        img.resize_to_fit!(2000)
+        # img.resize_to_fit!(2000)
         img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
         img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
       end
@@ -380,6 +394,44 @@ class DObject < ActiveRecord::Base
     iList.write(pdf_filename)
     iList.each {|i| i.destroy!}
     pdf_filename
+  end
+
+  def DObject.to_pdftest(ids)
+    iList =  Magick::ImageList.new
+    ids.each do |o|
+      puts o.filename_with_path
+      img=Magick::Image.read(o.filename_with_path).first
+      iList << img
+      # puts img.background_color
+      puts "base_columns x base_rows: #{img.base_columns} x #{img.base_rows}"
+      puts "columns x rows: #{img.columns} x #{img.rows}"
+      # puts img.border_color
+      puts "filesize: #{img.filesize}"
+      puts img.colorspace
+      puts img.compression
+      puts "img.density: #{img.density}"
+      puts "img.units: #{img.units}"
+
+      puts "depth: #{img.depth}"
+      # img.extract_info = Magick::Rectangle.new(100, 100, 10, 20)
+      # puts "extract_info: #{img.extract_info}"
+      puts "format: #{img.format}"
+      puts "filter: #{img.filter}"
+      puts "img.geometry: #{img.geometry}"
+      puts "img.image_type: #{img.image_type}"
+      puts "img.matte: #{img.matte}"
+      puts "img.mime_type: #{img.mime_type}"
+      # puts "img.number_colors: #{img.number_colors}"
+      # puts "img.total_colors: #{img.total_colors}"
+      puts "img.orientation: #{img.orientation}"
+      puts "img.quality: #{img.quality}" if img.format=='JPEG'
+
+      # puts "img.virtual_pixel_method: #{img.virtual_pixel_method}"
+
+      puts "img.x_resolution: #{img.x_resolution}"
+      puts "img.y_resolution: #{img.y_resolution}"
+    end
+    iList
   end
 
   def DObject.raggruppa_per_folder(attachments)

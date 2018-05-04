@@ -135,5 +135,16 @@ select cm.* from manifestations cm left join
       format.js {}
     end
   end
-end
 
+  def getpdf
+    pdf_file = ClavisManifestation.free_pdf_filename(params[:manifestation_id])
+    if File.readable?(pdf_file)
+      cm=ClavisManifestation.find(params[:manifestation_id])
+      filename="#{cm.title.strip}.pdf"
+      send_file(pdf_file, filename:filename, type:'application/pdf', disposition:'inline')
+    else
+      render text:"non esiste: #{pdf_file}"
+    end
+  end
+
+end

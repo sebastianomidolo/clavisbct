@@ -58,10 +58,15 @@
 <%
  res=[]	
  cnt=1
+ prec_piano=nil
  inputdata.each do |e|
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
-   res << "#{e.piano} & {\\Large #{e.collocazione[0..24]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} \\\\"
+   if !prec_piano.nil? and prec_piano!=e.piano
+     res << "--- & --- & --- \\\\"
+   end
+   prec_piano=e.piano
+   res << "#{e.piano} & {\\Large #{e.collocazione[0..16]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} \\\\"
    cnt+=1
  end
 %>
