@@ -216,8 +216,7 @@ class DObjectsFolder < ActiveRecord::Base
   def pdf_params=(t) self.edit_tags(pdf_params:t) end
   def pdf_params()
     res=self.xmltag('pdf_params')
-    puts "ok res: #{res}"
-    res
+    res.nil? ? '' : res
   end
 
   def x_mid=(t) self.edit_tags(mid:t) end
