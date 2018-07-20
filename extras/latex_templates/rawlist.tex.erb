@@ -36,7 +36,7 @@
 \renewcommand{\headrulewidth}{0pt}
 \pagestyle{fancy}
 
-<%= "\\chead{Elenco libri da prendere a magazzino --- Stampa: #{Time.now.to_date}}" %>
+<%= "\\chead{#{inputdata.titolo_elenco} --- Stampa: #{Time.now.to_date}}" %>
 
 \lfoot{}
 \cfoot{}
@@ -58,11 +58,12 @@
 <%
  res=[]	
  cnt=1
+ compact = inputdata.length > 60 ? true : false
  prec_piano=nil
  inputdata.each do |e|
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
-   if !prec_piano.nil? and prec_piano!=e.piano
+   if !prec_piano.nil? and prec_piano!=e.piano and compact
      res << "--- & --- & --- \\\\"
    end
    prec_piano=e.piano

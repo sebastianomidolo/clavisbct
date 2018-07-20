@@ -4,6 +4,7 @@
 class ClavisAuthoritiesController < ApplicationController
 
   def index
+    render template:'clavis_authorities/l_in_subjects' and return if params[:in_subjects]=='true'
     cond=[]
     cond << "authority_type=#{ClavisAuthority.connection.quote(params[:authority_type])}"
     cond << "bid is not null" if params[:bidnotnull]=='true'

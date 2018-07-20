@@ -1,0 +1,45 @@
+# coding: utf-8
+<!-- https://clavisbct.comperio.it/clavis_authorities?authority_type=L&in_subjects=true -->
+<!-- Soggetti contenenti errate specificazioni di luogo (cioè: che utilizzano il tipo di authority "L" invece di "G") -->
+
+
+<h4>Intestazioni di tipo "L" utilizzate in soggetti al posto di quelle di tipo "G" e/o "A"</h2>
+
+<%
+
+   sql=%Q{select ca.full_text as heading, ca.authority_id as l_id,cg.authority_id as g_id,
+     a.authority_id as a_id,count(*)
+      from clavis.authority ca
+       join clavis.l_subject ls using(authority_id)
+       left join clavis.authority cg on (cg.full_text=ca.full_text and cg.authority_type='G')
+       left join clavis.authority a on   (a.full_text=ca.full_text and  a.authority_type='A')
+      where ca.authority_type='L'
+   group by heading,l_id,g_id,a_id order by heading;}
+%>
+
+<% content_tag(:pre, sql) %>
+
+
+<table class="table">
+<% ActiveRecord::Base.connection.execute(sql).to_a.each do |r| %>
+<%=
+   lnk_l=ClavisAuthority.clavis_url(r['l_id'],:edit)
+   if r['g_id'].blank?
+     lnk_g='-'
+   else
+     lnk_g=link_to(r['heading'] + ' (G)', ClavisAuthority.clavis_url(r['g_id'],:edit),target:'_blank')
+   end
+   if r['a_id'].blank?
+     lnk_a='-'
+   else
+     lnk_a=link_to(r['heading'] + ' (A)', ClavisAuthority.clavis_url(r['a_id'],:edit),target:'_blank')
+   end
+   content_tag(:tr, content_tag(:td, link_to(r['heading'] + ' (L)',lnk_l,target:'_blank'), class:'col-md-2') +
+             content_tag(:td, lnk_g, class:'col-md-2') +
+             content_tag(:td, lnk_a, class:'col-md-2') +
+                content_tag(:td, r['count']))
+%>
+<% end %>
+
+</table>
+   
