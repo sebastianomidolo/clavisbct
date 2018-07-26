@@ -499,4 +499,14 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     end
     res
   end
+
+  def ClavisItem.find_by_home_library_id_and_manifestation_ids(library_id, manifestation_ids)
+    ids = manifestation_ids.join(',')
+    sql=%Q{select cl.collocazione,cl.piano,ci.item_status,ci.item_id,ci.manifestation_id
+             from clavis.item ci left join clavis.centrale_locations cl on(cl.item_id=ci.item_id)
+              where ci.home_library_id=#{library_id} and ci.manifestation_id in (#{ids}); }
+    puts sql
+    ClavisItem.connection.execute(sql).to_a
+  end
+
 end

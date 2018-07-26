@@ -214,6 +214,7 @@ Clavisbct::Application.routes.draw do
       get 'fifty_years'
       get 'controllo_valori_inventariali'
       get 'clear_user_data'
+      get 'find_by_home_library_id_and_manifestation_ids'
     end
   end
 

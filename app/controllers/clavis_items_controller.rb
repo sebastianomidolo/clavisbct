@@ -165,6 +165,12 @@ class ClavisItemsController < ApplicationController
         send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
       }
       format.pdf {
+
+        heading = params[:heading].blank? ? "Elenco libri a magazzino" : params[:heading]
+        @clavis_items.define_singleton_method(:titolo_elenco) do
+          heading
+        end
+
         if params[:pdf_template].blank?
           filename="#{@clavis_items.size}_segnaposto.pdf"
           lp=LatexPrint::PDF.new('labels', @clavis_items)
@@ -178,6 +184,17 @@ class ClavisItemsController < ApplicationController
                   :type=>'application/pdf')
       }
       format.json { render json: @clavis_items }
+    end
+  end
+
+  def find_by_home_library_id_and_manifestation_ids
+    headers['Access-Control-Allow-Origin'] = "*"
+    library_id=params[:library_id].to_i
+    manifestation_ids = params[:manifestation_ids].split
+    @records = ClavisItem.find_by_home_library_id_and_manifestation_ids(library_id,manifestation_ids)
+    respond_to do |format|
+      format.html
+      format.json { render :json => @records }
     end
   end
 
