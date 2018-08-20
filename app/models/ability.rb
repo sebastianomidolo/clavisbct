@@ -106,5 +106,8 @@ class Ability
       can :manage, SchemaCollocazioniCentrale
     end
 
+    if user.role?('clavis_librarian_search')
+      can  [:index,:show], ClavisLibrarian
+    end
   end
 end

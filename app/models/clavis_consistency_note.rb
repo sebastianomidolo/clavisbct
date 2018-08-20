@@ -35,23 +35,12 @@ class ClavisConsistencyNote < ActiveRecord::Base
     doc_key="1q69AxbCy4i_mchKvAm_-3iiVUUrvY0Ks0VzQIgqEmjo"
     url="https://docs.google.com/spreadsheets/d/#{doc_key}/export?format=csv"
 
-    # Url del foglio "Altre collocazioni"
-    url2="https://docs.google.com/spreadsheets/d/#{doc_key}/export?format=csv&gid=1308599185"
-
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
     request = Net::HTTP::Get.new(uri.request_uri)
     response = http.request(request)
     doc1=response.body
-
-    uri = URI.parse(url2)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Get.new(uri.request_uri)
-    response = http.request(request)
-    doc2=response.body
-
 
     fd.write("COPY clavis.periodici_in_casse(column_number,collocazione_per,consistenza,cassa,annata,note,consistency_note_id) FROM STDIN;\n")
     cnt=0
@@ -64,16 +53,6 @@ class ClavisConsistencyNote < ActiveRecord::Base
     end
     fd.write("\\.\n")
 
-    fd.write("COPY clavis.periodici_in_casse(column_number,consistency_note_id,cassa,annata,note) FROM STDIN;\n")
-    cnt=0
-    CSV.parse(doc2.toutf8) do |row|
-      row.shift
-      puts row.inspect
-      cnt+=1
-      next if cnt==1 or row.first.nil?
-      fd.write("#{cnt}\t#{row.join("\t")}\n")
-    end
-    fd.write("\\.\n")
     fd.close
 
     config = Rails.configuration.database_configuration

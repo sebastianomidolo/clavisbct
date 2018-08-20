@@ -110,7 +110,7 @@ clavis.item_request ir join clavis.manifestation cm
 using(manifestation_id) join clavis.item ci using(manifestation_id)
 where ir.request_status='A' and ci.manifestation_id!=0
 AND ci.loan_class IN('A','B') and ci.loan_status = 'A'
-AND ci.item_status IN ('F','K','S','V')
+AND ci.item_status IN ('B','F','K','S','V')
 GROUP BY ci.item_id;
 
 /*

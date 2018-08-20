@@ -99,6 +99,9 @@ select cm.* from manifestations cm left join
     end
   end
 
+  def confronto_consistenze_esemplari
+  end
+
   def controllo_provincia
     conn=ActiveRecord::Base.connection
     @sql=%Q{select * from comuni_italiani where denominazione ~* #{conn.quote(params[:city])} }

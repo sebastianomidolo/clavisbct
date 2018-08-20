@@ -1,3 +1,4 @@
+# coding: utf-8
 module ClavisItemsHelper
   def clavis_item_show(record)
     res=[]
@@ -378,8 +379,13 @@ module ClavisItemsHelper
         t="In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}"
       end
     end
-    return '' if t.blank?
-    content_tag(:span, content_tag(:b, "Collocazione in Civica Centrale: #{t}"),style:'margin-left: 180px')
+    prenot = record.controlla_prenotazioni
+    if t.blank?
+      content_tag(:span, content_tag(:b, "Sulla notizia è presente almeno una prenotazione"),style:'margin-left: 180px') if prenot
+    else
+      t << " <em>(sulla notizia è presente almeno una prenotazione)</em>" if prenot
+      content_tag(:span, content_tag(:b, "Collocazione in Civica Centrale: #{t}".html_safe),style:'margin-left: 180px')
+    end
   end
 
   def clavis_items_simple_list(records)

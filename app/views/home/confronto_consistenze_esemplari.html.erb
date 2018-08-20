@@ -1,0 +1,31 @@
+<%
+   sql=%Q{select cn.consistency_note_id,title,item_id,
+          cn.text_note as consistenza, manifestation_id,cn.collocation as cons_coll,ci.collocation from clavis.centrale_locations cl
+   join clavis.item ci using(item_id)
+   join clavis.consistency_note cn using(manifestation_id) 
+   where cn.library_id = ci.home_library_id and collocazione ~* '^Per'
+     and lower(trim(cl.collocazione))!=lower(trim(ci.collocation)) order by ci.manifestation_id,ci.item_id limit 100;}
+%>
+
+<% content_tag(:pre,sql) %>
+
+<table class='table'>
+  <tr>
+    <td class='col-md-1'></td>
+    <td class='col-md-2'>Collocazione (consistenza)</td>
+    <td class='col-md-2'>Collocazione (esemplare)</td>
+    <td class='col-md-2'>Consistenza</td>
+    <td>Titolo</td>
+    </tr>
+     
+<% cnt=0;ActiveRecord::Base.connection.execute(sql).to_a.each do |r| %>
+<tr>
+  <%= cnt+=1; content_tag(:td, cnt) +
+      content_tag(:td, r['cons_coll']) +
+      content_tag(:td, link_to(r['collocation'], ClavisItem.clavis_url(r['item_id'], :edit), target:'_blank')) +
+      content_tag(:td, link_to(r['consistenza'], clavis_consistency_note_path(r['consistency_note_id'], :edit), target:'_blank')) +
+      content_tag(:td, link_to(r['title'], ClavisManifestation.clavis_url(r['manifestation_id'], :show), target:'_blank'))
+  %>
+</tr>
+<% end %>
+</table>

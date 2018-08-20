@@ -257,6 +257,9 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :clavis_librarians, only: [:index,:show] do
+  end
+
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
   match '/metasearch' => 'metasearch#search'
@@ -285,6 +288,7 @@ Clavisbct::Application.routes.draw do
 
   get 'getpdf/:manifestation_id', to: 'home#getpdf'
 
-  
+  get 'cces/', to: 'home#confronto_consistenze_esemplari'
+
   root :to => 'home#index'
 end

@@ -1,0 +1,8 @@
+
+<%= link_to("#{@clavis_librarian.to_label}", @clavis_librarian.clavis_url, target:'_blank') %>
+
+<%= content_tag(:b, "Totale ore: #{@clavis_librarian.working_time}") %>
+
+<%= content_tag(:div, clavis_librarian_sessions(@clavis_librarian)) %>
+
+<%= link_to("Torna all'elenco", clavis_librarians_path) %>
