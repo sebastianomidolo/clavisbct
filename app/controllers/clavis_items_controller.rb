@@ -388,5 +388,19 @@ class ClavisItemsController < ApplicationController
     @clavis_items=ClavisItem.controllo_valori_inventariali(params)
   end
 
+  def senza_copertina
+    # 'j02','g03'
+    cond=[]
+    cond << "ci.home_library_id=#{params[:home_library_id]}" if !params[:home_library_id].blank?
+    cond << "cm.bib_type = #{ClavisItem.connection.quote(params[:bib_type])}" if !params[:bib_type].blank?
+    cond = cond==[] ? '' : "AND #{cond.join(' AND ')}"
+    @sql=%Q{select distinct cm."EAN", cm."ISBNISSN", cm.manifestation_id,trim(cm.title) as title from clavis.manifestation cm
+  join clavis.item ci using(manifestation_id)
+   left join clavis.attachment a on(a.object_id=cm.manifestation_id)
+       where ci.manifestation_id!=0 AND a.attachment_id is null #{cond}
+   order by cm.manifestation_id;}
+    @records=ClavisItem.connection.execute(@sql).to_a
+  end
+
 end
 

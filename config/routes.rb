@@ -215,6 +215,7 @@ Clavisbct::Application.routes.draw do
       get 'controllo_valori_inventariali'
       get 'clear_user_data'
       get 'find_by_home_library_id_and_manifestation_ids'
+      get 'senza_copertina'
     end
   end
 

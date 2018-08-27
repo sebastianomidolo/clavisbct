@@ -447,4 +447,23 @@ module ClavisItemsHelper
     "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nclink.join(', ')}".html_safe
   end
 
+  def clavis_items_senza_copertina(records)
+    res=[]
+    records.each do |r|
+      ean = ''
+      if r['EAN'].blank?
+        ean = r['ISBNISSN'].blank? if !r['ISBNISSN'].blank?
+      else
+        ean = r['EAN']
+      end
+      img_link = ean.blank? ? '' : image_tag("https://covers.comperio.it/calderone/viewmongofile.php?ean=#{ean}")
+      res << content_tag(:tr, content_tag(:td, img_link) +
+                              content_tag(:td, ean.blank? ? '-' : ean) +
+                              content_tag(:td, link_to(r['title'], ClavisManifestation.clavis_url(r['manifestation_id'],:edit))) +
+                              content_tag(:td, link_to('[opac]', ClavisManifestation.clavis_url(r['manifestation_id'],:opac))) +
+                              content_tag(:td, r[:title]))
+    end
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
 end
