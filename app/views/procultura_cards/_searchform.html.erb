@@ -1,7 +1,7 @@
 
 <%= form_tag(procultura_make_link(procultura_cards_path), method: "get") do %>
  <div style="padding-left: 2em; padding-top: 1em">
-  <%= content_tag(:div, label_tag(:procultura_searchform_q, "Ricerca per parole:")) %>
+  <%= content_tag(:div, label_tag(:procultura_searchform_q, "Ricerca per parole:", style:'font-size:90%')) %>
   <%= text_field_tag(:q, params[:q], id:'procultura_searchform_q') %>
   <%= hidden_field_tag(:resource,'procultura_cards') %>
   <%= submit_tag("Cerca") %>

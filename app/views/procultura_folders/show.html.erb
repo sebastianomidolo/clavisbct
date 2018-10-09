@@ -16,5 +16,5 @@ end
 <% if params[:reqfrom].blank? and (can? :edit, ProculturaCard) %>
  <%= content_tag(:div, procultura_cards_editable(@pf)) %>
 <% else %>
- <%= content_tag(:div, procultura_cards_singole_schede(@pf)) %>
+ <%= content_tag(:div, procultura_cards_singole_schede(@pf), style:'font-size:120%') %>
 <% end %>
