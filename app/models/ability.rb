@@ -94,6 +94,10 @@ class Ability
       can :manage, ClosedStackItemRequest
     end
 
+    if user.role?('clavis_patron_closed_stack_items_request')
+      can :show, ClavisPatron
+    end
+
     if user.role?('work_station_manager')
       can :manage, WorkStation
     end

@@ -33,7 +33,7 @@
   <% end %>
 
   <% if current_user.email=='seba' %>
-    <br/>Esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31'
+    <p>Filtro addizionale, esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31' oppure inventory_date < '2018-01-01'</p>
     <%= text_field_tag 'sql_and', params[:sql_and], size:80 %>
   <% else %>
    <%= hidden_field_tag('sql_and', params[:sql_and]) %>

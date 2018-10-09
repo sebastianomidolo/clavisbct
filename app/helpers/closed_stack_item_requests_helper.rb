@@ -20,18 +20,38 @@ module ClosedStackItemRequestsHelper
                            
     content_tag(:h3, %Q{<i id="print_request_tag" class="fa fa-print" aria-hidden="true"></i> Richieste a magazzino}.html_safe, class:'pending') +
       content_tag(:table, res.join.html_safe, class:'table text-success')
+
+    content_tag(:h3, %Q{Richieste a magazzino}.html_safe) +
+      content_tag(:table, res.join.html_safe, class:'table text-success')
   end
 
-  def closed_stack_item_requests_index(records)
+  def closed_stack_item_requests_index(records, patron)
+    return if records.size==0
     res=[]
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, r['piano']) +
-                              content_tag(:td, r['collocazione']) +
-                              content_tag(:td, link_to(r['lastname'], print_request_clavis_patron_path(r['patron_id'], :format=>:pdf))) +
-                              content_tag(:td, r['request_time']) +
+      res << content_tag(:tr, content_tag(:td, r.piano) +
+                              content_tag(:td, r.collocazione) +
+                              content_tag(:td, r.request_time.in_time_zone('Europe/Rome')) +
+                              content_tag(:td, r.daily_counter) +
                               content_tag(:td, r['title']))
     end
+    lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_request_path(patron.id, format:'js')}"
+    cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Invia richieste alla coda di stampa', method: :get, data: {confirm: 'Confermi invio richieste?'})}</span>}.html_safe
+    content_tag(:h2, "Richieste a magazzino per #{@patron.to_label} #{cmd}".html_safe) +
+      content_tag(:table, res.join.html_safe, class:'table text-success')
+  end
+
+  def closed_stack_item_requests_patrons(records)
+    res=[]
+    records.each do |r|
+      lnk1 = link_to("<b>#{r['barcode']}</b>".html_safe, ClavisPatron.clavis_url(r['patron_id'],:newloan), target:'_blank')
+      # lnk2 = link_to("<b>#{r['lastname']}</b>".html_safe, closed_stack_item_requests_path(patron_id:r['patron_id']))
+      lnk2 = link_to("<b>#{r['lastname']}</b>".html_safe, clavis_patron_path(r['patron_id']))
+      res << content_tag(:tr, content_tag(:td, lnk1, class:'col-md-2') +
+                              content_tag(:td, lnk2, class:'col-md-2') +
+                              content_tag(:td, r['count']))
+    end
+    content_tag(:h3, "Richieste pendenti (contatore giornaliero: <b>#{DailyCounter.last.id}</b>)".html_safe) +
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
-  
 end

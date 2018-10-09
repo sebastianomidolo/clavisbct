@@ -89,11 +89,7 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :clavis_patrons, only: [:index] do
-    member do
-      get 'print_request'
-    end
-  end
+  resources :clavis_patrons, only: [:show]
 
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
     member do
@@ -252,9 +248,12 @@ Clavisbct::Application.routes.draw do
   resources :closed_stack_item_requests, only: [:index,:show] do
     member do
       get 'item_delete'
+      get 'confirm_request'
     end
     collection do
       get 'check'
+      get 'random_insert'
+      get 'print'
     end
   end
 

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20180409144240) do
+ActiveRecord::Schema.define(:version => 20180912160141) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -153,16 +153,6 @@ ActiveRecord::Schema.define(:version => 20180409144240) do
   add_index "bncf_terms", ["id"], :name => "bncf_terms_id_ndx", :unique => true
   add_index "bncf_terms", ["term"], :name => "bncf_terms_term_ndx"
 
-  create_table "casse_periodici", :id => false, :force => true do |t|
-    t.integer "collocazione_per",               :null => false
-    t.integer "catena"
-    t.string  "catena_string",    :limit => 8
-    t.string  "cassa",            :limit => 8,  :null => false
-    t.string  "annata",           :limit => 24
-    t.string  "note",             :limit => 64
-    t.integer "manifestation_id"
-  end
-
   create_table "centrorete_clavis", :id => false, :force => true do |t|
     t.integer "manifestation_id"
     t.integer "id"
@@ -174,6 +164,7 @@ ActiveRecord::Schema.define(:version => 20180409144240) do
     t.integer  "dng_session_id",                    :null => false
     t.boolean  "printed",        :default => false, :null => false
     t.datetime "request_time"
+    t.integer  "daily_counter"
   end
 
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
@@ -289,6 +280,9 @@ ActiveRecord::Schema.define(:version => 20180409144240) do
     t.date    "date_updated"
     t.text    "note"
     t.text    "note_interne"
+  end
+
+  create_table "daily_counters", :force => true do |t|
   end
 
   create_table "dng_sessions", :force => true do |t|

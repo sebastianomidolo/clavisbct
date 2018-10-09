@@ -5,7 +5,33 @@ class ClosedStackItemRequestsController < ApplicationController
   load_and_authorize_resource only: [:index]
 
   def index
-    @csir = ClosedStackItemRequest.list
+    patron_id = params[:patron_id]
+    pending = params[:pending]=='1' ? true : false
+    printed = params[:printed]=='1' ? true : false
+    today = params[:all].blank? ? true : false
+    if patron_id.blank?
+      @patrons = ClosedStackItemRequest.patrons(today:today)
+    else
+      @patron = ClavisPatron.find(patron_id)
+      @csir = ClosedStackItemRequest.list(@patron.id,pending,printed,today)
+    end
+    respond_to do |format|
+      format.html {}
+      format.js {
+        render template:'closed_stack_item_requests/index'
+      }
+    end
+  end
+
+  def confirm_request
+    headers['Access-Control-Allow-Origin'] = "*"
+    @clavis_patron=ClavisPatron.find(params[:id])
+    @daily_counter = ClosedStackItemRequest.assign_daily_counter(@clavis_patron)
+    respond_to do |format|
+      format.html { render text:'ok'}
+      format.js { }
+    end
+
   end
 
   def item_delete
@@ -38,6 +64,25 @@ class ClosedStackItemRequestsController < ApplicationController
                   :type=>'application/pdf')
       }
     end
+  end
+
+  def print
+    @records=ClosedStackItemRequest.richieste_magazzino
+    respond_to do |format|
+      format.html {
+      }
+      format.pdf {
+        filename="elenco.pdf"
+        send_data(ClosedStackItemRequest.list_pdf(@records),
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
+      }
+    end
+  end
+
+  def random_insert
+    ClosedStackItemRequest.random_insert
+    redirect_to controller:'closed_stack_item_requests'
   end
 
   private

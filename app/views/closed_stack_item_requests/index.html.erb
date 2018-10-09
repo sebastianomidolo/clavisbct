@@ -1,5 +1,13 @@
-<%= content_tag(:div, "#{@closed_stack_item_requests.count} richieste a magazzino") %>
+<%=
+ if @patron.nil?
+  content_tag(:div, closed_stack_item_requests_patrons(@patrons)) +
+    content_tag(:h3, link_to('Inserisci richieste casuali', random_insert_closed_stack_item_requests_path)) +
+    content_tag(:h3, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))
+  else
+   content_tag(:div, closed_stack_item_requests_index(@csir, @patron)) +
+      content_tag(:h3, button_to('Elenco richieste pendenti', closed_stack_item_requests_path, method:'get'))
+ end
+%>
 
-<%= content_tag(:div, closed_stack_item_requests_index(@csir)) %>
 
 

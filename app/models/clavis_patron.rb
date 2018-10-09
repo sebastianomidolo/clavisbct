@@ -117,7 +117,7 @@ class ClavisPatron < ActiveRecord::Base
   end
 
   def closed_stack_item_requests_by_session
-    time_limit = "request_time-now() > interval '60 minutes ago'"
+    time_limit = "request_time-now() > interval '600 minutes ago'"
     ActiveRecord::Base.connection.execute("SET timezone to 'UTC'")
     sql=%Q{SELECT DISTINCT ir.* FROM closed_stack_item_requests ir
         JOIN dng_sessions s ON(ir.dng_session_id=s.id)
@@ -146,10 +146,12 @@ class ClavisPatron < ActiveRecord::Base
     lp.makepdf
   end
 
-  def ClavisPatron.clavis_url(id)
+  def ClavisPatron.clavis_url(id,mode=:view)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
-    "#{host}/index.php?page=Circulation.PatronViewPage&id=#{id}"
+    r="#{host}/index.php?page=Circulation.PatronViewPage&id=#{id}" if mode==:view
+    r="#{host}/index.php?page=Circulation.NewLoan&patronId=#{id}" if mode==:newloan
+    r
   end
 
 end
