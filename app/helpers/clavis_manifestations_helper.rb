@@ -207,7 +207,8 @@ module ClavisManifestationsHelper
       # testo_avviso="d_object_id #{d_object.id} - request.format: #{request.format}"
       content = clavis_manifestation_attachments_render(record,true)
     end
-
+    # Disabilitato 31 ottobre 2018 - verificare il funzionamento
+    return [nil,nil]
     return [nil,nil] if content.blank?
     [tabtitle,content_tag(:span, testo_avviso) + content_tag(:div, content.html_safe)]
   end

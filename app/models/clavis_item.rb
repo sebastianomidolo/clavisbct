@@ -191,6 +191,10 @@ class ClavisItem < ActiveRecord::Base
   def self.clavis_url(item_id,mode=:show)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
+    if item_id.class==Array
+      ids = item_id.collect{|x| "id[]=#{x}"}.join('&')
+       return "#{host}/index.php?page=Catalog.ItemListPage&#{ids}"
+    end
     r=''
     if mode==:show
       r="#{host}/index.php?page=Catalog.ItemViewPage&id=#{item_id}"
@@ -227,7 +231,7 @@ class ClavisItem < ActiveRecord::Base
 
   def self.home_library
     sql=%Q{select library_id as key,label from clavis.library
-      where library_status='A' AND library_internal='1' order by label}
+      where library_internal='1' order by label}
     r=self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
     r << ['Tutte',0]
   end
