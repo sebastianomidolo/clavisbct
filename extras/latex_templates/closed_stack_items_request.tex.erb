@@ -54,22 +54,22 @@
 %\tablehead{\hline}
 %\tabletail{\hline}
 
-\begin{supertabular}{r|l|l|c}
+\begin{supertabular}{r|l|l|l|l}
 <%
  res=[]	
  cnt=1
  records = inputdata[0]
- compact = records.length > 60 ? true : false
 
  prec_piano=nil
- records.each do |e|
-   if !prec_piano.nil? and prec_piano!=e['piano'] and compact
+ records.first.each do |e|
+   e['title'].gsub!("&", '\\\&')
+   e['title'].gsub!("%", '\\\%')
+   if !prec_piano.nil? and prec_piano!=e['piano']
      res << "--- & --- & --- \\\\"
    end
-   # Da sistemare
-   next
+   prec_piano=e['piano']
 
-   res << "#{e['piano']} & {\\Large #{e['collocazione'][0..16]}} & #{e['title'][0..45]} & #{e['lastname']}-#{e['daily_counter']} \\\\"
+   res << "#{e['piano']} & {\\Large\\bf #{e['collocazione'][0..16]}} & #{e['lastname']} & {\\bf\\huge #{e['daily_counter']}} & #{e['title'][0..50]}\\\\"
    cnt+=1
  end
 %>

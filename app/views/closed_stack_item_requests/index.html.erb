@@ -1,6 +1,6 @@
 <%=
  if @patron.nil?
-  content_tag(:div, closed_stack_item_requests_patrons(@patrons)) +
+  content_tag(:div, closed_stack_item_requests_patrons_index) +
     content_tag(:h3, link_to('Inserisci richieste casuali', random_insert_closed_stack_item_requests_path)) +
     content_tag(:h3, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))
   else

@@ -12,7 +12,7 @@ class ClosedStackItemRequest < ActiveRecord::Base
   end
 
   def ClosedStackItemRequest.richieste_magazzino
-    sql=%Q{select cl.piano,cc.collocazione,cp.lastname,ir.daily_counter,ci.title
+    sql=%Q{select ir.id,cl.piano,cc.collocazione,cp.lastname,ir.daily_counter,ci.title
        from closed_stack_item_requests ir 
          join clavis.patron cp using(patron_id)
          join clavis.item ci using(item_id)
@@ -25,29 +25,40 @@ class ClosedStackItemRequest < ActiveRecord::Base
   def ClosedStackItemRequest.list(patron_id=nil,pending=true,printed=false,today=true)
     sql=%Q{select ir.*,ci.title,cl.piano,cl.collocazione,cp.lastname from closed_stack_item_requests ir join clavis.item ci using(item_id)
         join clavis.patron cp on(cp.patron_id=ir.patron_id)
-        join clavis.centrale_locations cl using(item_id) #{self.sql_and_conditions_for_list(patron_id,pending,printed,today)}
+        join clavis.centrale_locations cl using(item_id) where #{self.sql_and_conditions_for_list(patron_id,pending,printed,today)}
          order by cl.piano, espandi_collocazione(cl.collocazione)}
     ClosedStackItemRequest.find_by_sql(sql)
   end
 
   def ClosedStackItemRequest.sql_and_conditions_for_list(patron_id=nil,pending=true,printed=false,today=true)
     cond = []
-    cond << (patron_id.blank? ? 'where true' : "where cp.patron_id=#{self.connection.quote(patron_id)}")
+    cond << (patron_id.blank? ? 'true' : "cp.patron_id=#{self.connection.quote(patron_id)}")
     cond << (pending ? 'daily_counter is null' : 'daily_counter is not null')
-    cond << (printed ? 'printed' : 'not printed')
+    cond << (printed ? 'printed' : 'not printed') if printed!=:both
     cond << 'request_time > CURRENT_DATE' if today
     cond.join(' and ')
+  end
+
+  def ClosedStackItemRequest.mark_as_printed(records)
+    ids=records.collect{|x| x['id']}.join(',')
+    return if ids.blank?
+    sql=%Q{update closed_stack_item_requests set printed=true where id in(#{ids})}
+    self.connection.execute(sql)
   end
 
   def ClosedStackItemRequest.list_pdf(records)
     inputdata=[]
     inputdata << [records]
-    lp=LatexPrint::PDF.new('closed_stack_items_request', inputdata)
+    lp=LatexPrint::PDF.new('closed_stack_items_request', inputdata, false)
     lp.makepdf
   end
   
-  def ClosedStackItemRequest.patrons(today:true)
-    cond = 'where request_time > CURRENT_DATE' if today==true
+  def ClosedStackItemRequest.patrons(pending=:true,printed=:false,today=:true)
+    cond = []
+    cond << 'request_time > CURRENT_DATE' if today
+    cond << "printed is #{printed}"
+    cond << "daily_counter is #{(pending == true ? 'null' : 'not null')}"
+    cond = cond.size==0 ? '' : "WHERE #{cond.join(' AND ')}"
     self.connection.execute(%Q{select cp.name,cp.lastname,patron_id,barcode,count(*)
       from closed_stack_item_requests r join clavis.patron cp using(patron_id)
        #{cond}

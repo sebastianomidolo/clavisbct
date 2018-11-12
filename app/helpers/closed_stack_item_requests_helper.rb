@@ -28,7 +28,9 @@ module ClosedStackItemRequestsHelper
   def closed_stack_item_requests_index(records, patron)
     return if records.size==0
     res=[]
+    confirm_request=false
     records.each do |r|
+      confirm_request = true if r.daily_counter.nil?
       res << content_tag(:tr, content_tag(:td, r.piano) +
                               content_tag(:td, r.collocazione) +
                               content_tag(:td, r.request_time.in_time_zone('Europe/Rome')) +
@@ -36,9 +38,28 @@ module ClosedStackItemRequestsHelper
                               content_tag(:td, r['title']))
     end
     lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_request_path(patron.id, format:'js')}"
-    cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Invia richieste alla coda di stampa', method: :get, data: {confirm: 'Confermi invio richieste?'})}</span>}.html_safe
-    content_tag(:h2, "Richieste a magazzino per #{@patron.to_label} #{cmd}".html_safe) +
-      content_tag(:table, res.join.html_safe, class:'table text-success')
+    if confirm_request
+      cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Invia richieste alla coda di stampa', method: :get, data: {confirm: 'Confermi invio richieste?'})}</span>}.html_safe
+    else
+      cmd=''
+    end
+    ids = records.collect{|x| x.item_id}
+    link = link_to('In Clavis', ClavisItem.clavis_url(ids))
+    content_tag(:h2, "#{cmd}".html_safe) +
+      content_tag(:table, res.join.html_safe, class:'table text-success') +
+      content_tag(:p, link)
+  end
+
+  def closed_stack_item_requests_patrons_index
+    res = []
+    res << content_tag(:h3, "Richieste di oggi (ultimo contatore giornaliero: <b>#{DailyCounter.last.id}</b>)".html_safe)
+    res << content_tag(:h2, "Da confermare")
+    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
+    res << content_tag(:h2, "Da stampare")
+    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
+    res << content_tag(:h2, "Stampate")
+    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true))
+    res.join.html_safe
   end
 
   def closed_stack_item_requests_patrons(records)
@@ -51,7 +72,9 @@ module ClosedStackItemRequestsHelper
                               content_tag(:td, lnk2, class:'col-md-2') +
                               content_tag(:td, r['count']))
     end
-    content_tag(:h3, "Richieste pendenti (contatore giornaliero: <b>#{DailyCounter.last.id}</b>)".html_safe) +
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
+
+
+  
 end

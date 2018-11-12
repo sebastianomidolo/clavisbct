@@ -9,9 +9,7 @@ class ClosedStackItemRequestsController < ApplicationController
     pending = params[:pending]=='1' ? true : false
     printed = params[:printed]=='1' ? true : false
     today = params[:all].blank? ? true : false
-    if patron_id.blank?
-      @patrons = ClosedStackItemRequest.patrons(today:today)
-    else
+    if !patron_id.blank?
       @patron = ClavisPatron.find(patron_id)
       @csir = ClosedStackItemRequest.list(@patron.id,pending,printed,today)
     end
@@ -72,7 +70,8 @@ class ClosedStackItemRequestsController < ApplicationController
       format.html {
       }
       format.pdf {
-        filename="elenco.pdf"
+        ClosedStackItemRequest.mark_as_printed(@records)
+        filename="elenco_richieste_a_magazzino.pdf"
         send_data(ClosedStackItemRequest.list_pdf(@records),
                   :filename=>filename,:disposition=>'inline',
                   :type=>'application/pdf')
