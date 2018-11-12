@@ -36,8 +36,14 @@ p {
 </head>
 
 <body>
-<h1>Città di Torino - Biblioteche civiche torinesi</h1>
-<h1>Catalogo dei libri parlati</h1>
+  <h1>Città di Torino - Biblioteche civiche torinesi</h1>
+  <%=
+    if params[:title].blank?
+      content_tag(:h1, "Catalogo dei libri parlati")
+    else
+      content_tag(:h1, "Catalogo dei libri parlati - #{params[:title]}")
+    end
+  %>
 
 <% if params[:filename]=='ultimi-libri-parlati.html' %>
 <%= content_tag(:h1, "Novità a catalogo (negli ultimi #{params[:mesi]} mesi)") %>
