@@ -10,7 +10,7 @@ module DObjectsFoldersHelper
                                          d_objects_folder_path(f)))
       end
       # lnk = f.x_mid
-      if f.x_mid.to_i > 0
+      if !f.x_mid.blank? && f.x_mid.to_i > 0
         # clavis_title=link_to(ClavisManifestation.find(f.x_mid).title, ClavisManifestation.clavis_url(f.x_mid))
         clavis_title=link_to(ClavisManifestation.find(f.x_mid).title, clavis_manifestation_path(f.x_mid))
       else

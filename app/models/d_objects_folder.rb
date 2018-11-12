@@ -177,7 +177,7 @@ class DObjectsFolder < ActiveRecord::Base
   end
 
   def free_pdf_filename
-    return nil if self.x_mid.nil?
+    return nil if self.x_mid.blank?
     ClavisManifestation.free_pdf_filename(self.x_mid)
   end
 

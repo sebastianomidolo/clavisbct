@@ -164,7 +164,7 @@ class DObjectsFoldersController < ApplicationController
 
   def derived
     @d_objects_folder=DObjectsFolder.find(params[:id])
-    if @d_objects_folder.x_mid.nil?
+    if @d_objects_folder.x_mid.blank?
       filename="temp_#{@d_objects_folder.id}.pdf"
     else
       cm=ClavisManifestation.find(@d_objects_folder.x_mid)

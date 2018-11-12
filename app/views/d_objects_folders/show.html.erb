@@ -1,6 +1,6 @@
 <%= content_tag(:h3, d_objects_folder_split(@d_objects_folder)) %>
 
-<% if !@d_objects_folder.x_mid.nil? %>
+<% if !@d_objects_folder.x_mid.blank? %>
 <%
    cm=ClavisManifestation.find(@d_objects_folder.x_mid)
 %>

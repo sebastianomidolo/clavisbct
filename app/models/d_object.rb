@@ -390,6 +390,7 @@ class DObject < ActiveRecord::Base
         img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
       end
       iList << img
+      GC.start
     end
     iList.write(pdf_filename)
     iList.each {|i| i.destroy!}

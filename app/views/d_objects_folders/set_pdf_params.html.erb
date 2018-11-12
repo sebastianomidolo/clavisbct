@@ -1,6 +1,6 @@
 <%= content_tag(:pre, "Impostazioni PDF per la cartella #{link_to(@d_objects_folder.name, d_objects_folder_path)}".html_safe) %>
 
-<% if !@d_objects_folder.x_mid.nil? %>
+<% if !@d_objects_folder.x_mid.blank? %>
 <%
    cm=ClavisManifestation.find(@d_objects_folder.x_mid)
 %>
