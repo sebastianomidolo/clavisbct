@@ -3,4 +3,9 @@ Pagina in allestimento. In questa pagina si troveranno
 tutte le informazioni relative alle richieste a magazzino
 per un dato utente:
 </p>
+
 <%= content_tag(:div, clavis_patron_show(@patron)) %>
+
+<p>
+<%= link_to("vai al banco prestiti per #{@patron.to_label}", ClavisPatron.clavis_url(@patron.id,:newloan), target:'_blank') %>
+</p>
