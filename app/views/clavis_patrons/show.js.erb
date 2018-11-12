@@ -1,0 +1,7 @@
+function load_js(filepath) {
+    var s = document.createElement('script');
+    s.src = filepath;
+    document.body.appendChild(s);
+}
+load_js('https://clavisbct.comperio.it/assets/application.js');
+jQuery("#clavisbct_unique_id").html('<%= content_tag(:div, clavis_patron_show(@patron)).html_safe -%>');
