@@ -29,7 +29,12 @@ class ClavisPatronsController < ApplicationController
   end
 
   def show
+    headers['Access-Control-Allow-Origin'] = "*"
     @patron=ClavisPatron.find(params[:id])
+    respond_to do |format|
+      format.html { }
+      format.js { }
+    end
   end
 
 end

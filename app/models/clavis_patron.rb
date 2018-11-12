@@ -26,6 +26,10 @@ class ClavisPatron < ActiveRecord::Base
     dng.log_session_id
   end
 
+  def richieste_a_magazzino_attive
+    ClosedStackItemRequest.list(self.id,pending=false,printed=:both).collect{|x| x.daily_counter}.uniq.sort.join(', ')
+  end
+
   def appellativo
     s = self.gender=='F' ? 'Gent.ma' : 'Gentile'
     "#{s} #{self.name} #{self.lastname}"
