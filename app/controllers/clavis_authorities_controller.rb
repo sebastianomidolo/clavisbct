@@ -6,10 +6,17 @@ class ClavisAuthoritiesController < ApplicationController
   def index
     render template:'clavis_authorities/l_in_subjects' and return if params[:in_subjects]=='true'
     cond=[]
-    cond << "authority_type=#{ClavisAuthority.connection.quote(params[:authority_type])}"
+    if params[:authority_type].blank?
+      cond << 'authority_type is null'
+    else
+      if params[:authority_type]!='all'
+        cond << "authority_type=#{ClavisAuthority.connection.quote(params[:authority_type])}"
+      end
+    end
     cond << "bid is not null" if params[:bidnotnull]=='true'
     cond << "bid is null" if params[:bidnotnull]=='false'
     cond << "authority_rectype = #{ClavisAuthority.connection.quote(params[:rectype])}" if !params[:rectype].blank?
+    cond << "full_text ~* #{ClavisAuthority.connection.quote(params[:qs])}" if !params[:qs].blank?
     cond = cond.join(' AND ')
     order=params[:sort].blank? ? 'sort_text' : params[:sort]
     @sql_conditions=cond

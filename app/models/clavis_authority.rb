@@ -38,11 +38,12 @@ class ClavisAuthority < ActiveRecord::Base
     r
   end
 
-  def ClavisAuthority.list
+  def ClavisAuthority.list(include_all=:false)
     sql=%Q{SELECT lv.value_key AS authority_type,lv.value_label as label
              FROM clavis.lookup_value lv WHERE value_language='it_IT' AND value_class = 'AUTHTYPE'
               ORDER by value_label}
-    ClavisAuthority.connection.execute(sql).collect{|x| [x['label'],x['authority_type']]}
+    r=ClavisAuthority.connection.execute(sql).collect{|x| [x['label'],x['authority_type']]}
+    r << ['Tutte le tipologie',:all]
   end
 
 end

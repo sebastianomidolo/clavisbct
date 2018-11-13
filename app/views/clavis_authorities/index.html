@@ -2,12 +2,13 @@
 <%= form_tag(clavis_authorities_path, method: 'get') do %>
   <%= hidden_field_tag(:sort,@sort) %>
   <%= select_tag(:authority_type, options_for_select(ClavisAuthority.list,
-      params[:authority_type]), :onchange=>'submit();') %>
+      params[:authority_type]), :onchange=>'submit();', include_blank:true) %>
   <%= select_tag(:bidnotnull, options_for_select([['Tutte',nil],['Con BID',true],['Senza BID',false]],
       params[:bidnotnull]), :onchange=>'submit();') %>
   <%= select_tag(:rectype, options_for_select([['-',nil],['Termine apicale','k'],['Termine non preferito','y'],
                   ['Etichetta di nodo','z'],['Termine accettato','x']],
       params[:rectype]), :onchange=>'submit();') %>
+  <%= text_field_tag(:qs, params[:qs], size:8) %>
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 <% end %>
 
