@@ -201,8 +201,14 @@ class BioIconograficoCard < DObject
   end
 
   def self.conta(params={})
-    sql="select count(*) from bio_iconografico_cards where lettera = '#{params[:lettera]}' and namespace = '#{params[:namespace]}'"
-    self.connection.execute(sql).first['count']
+    cond = params[:lettera].blank? ? '' : "AND lettera = #{self.connection.quote(params[:lettera])}"
+    sql="select count(*) from bio_iconografico_cards where namespace = '#{params[:namespace]}' #{cond}"
+    self.connection.execute(sql).first['count'].to_i
+  end
+
+  def self.doppi(params={})
+    sql=%Q{select o.* from bio_iconografico_cards b join d_objects o using(id) where b.id in (select unnest(array_agg(id)) as ids from bio_iconografico_cards where namespace=#{self.connection.quote(params[:namespace])} and numero>0 group by lettera,numero having count(*)>1) order by lettera,numero}
+    self.find_by_sql(sql)
   end
 
   #def self.editors
@@ -227,17 +233,26 @@ class BioIconograficoCard < DObject
     self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
   end
 
-  def self.total_filesize
-    sql="select sum(bfilesize) as size from bio_iconografico_cards b join d_objects o using (id)"
+  def self.total_filesize(params={})
+    cond = params[:namespace].blank? ? '' : "WHERE b.namespace=#{self.connection.quote(params[:namespace])}"
+    sql="select sum(bfilesize) as size from bio_iconografico_cards b join d_objects o using (id) #{cond}"
     self.connection.execute(sql).first['size'].to_i
   end
 
   def self.namespaces
+    # {
+    #   bioico:'Repertorio bio-iconografico',
+    #   catarte:'Catalogo Arte',
+    #   cattor:'Catalogo Torino'
+    # }
     {
-      bioico:'Repertorio bio-iconografico',
       catarte:'Catalogo Arte',
       cattor:'Catalogo Torino'
     }
+  end
+
+  def BioIconograficoCard.default_namespace
+    self.namespaces.first.first.to_s
   end
 
   def BioIconograficoCard.find_by_filename(fname)

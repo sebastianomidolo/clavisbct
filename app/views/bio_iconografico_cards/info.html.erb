@@ -1,9 +1,15 @@
+<%
+  numfiles=BioIconograficoCard.conta(params)
+  fsize=BioIconograficoCard.total_filesize(params)
+  doppi=BioIconograficoCard.doppi(params)
+%>
 
-<%= content_tag(:div, "Totale files: #{BioIconograficoCard.count}") %>
 
+<%= content_tag(:div, "Totale files: #{numfiles}") %>
 
-<%= content_tag(:div, "Spazio occupato: #{number_to_human_size(BioIconograficoCard.total_filesize, precision:3)}") %>
-<%= content_tag(:div, "Spazio occupato (bytes): #{BioIconograficoCard.total_filesize}") %>
-<%= content_tag(:div, "Media per file: #{BioIconograficoCard.total_filesize/BioIconograficoCard.count} bytes") %>
+<%= content_tag(:div, "Spazio occupato: #{number_to_human_size(fsize, precision:3)}") %>
+<%= content_tag(:div, "Spazio occupato (bytes): #{fsize}") %>
+<%= content_tag(:div, "Media per file: #{fsize/numfiles} bytes") if numfiles>0 %>
 
-<%= content_tag(:div, bio_iconografico_cards_list(@doppi)) %>
+<%= content_tag(:pre, "Trovate #{doppi.size} schede doppie per numerazione") %>
+<%= content_tag(:div, bio_iconografico_cards_list(doppi)) %>

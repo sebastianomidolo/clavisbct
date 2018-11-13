@@ -8,7 +8,7 @@ class BioIconograficoCardsController < ApplicationController
   respond_to :html
 
   def index
-    params[:namespace] = 'bioico' if params[:namespace].blank?
+    params[:namespace] = BioIconograficoCard.default_namespace if params[:namespace].blank?
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_card].blank?
@@ -44,8 +44,7 @@ class BioIconograficoCardsController < ApplicationController
   end
 
   def info
-    sql=%Q{select o.* from bio_iconografico_cards b join d_objects o using(id) where b.id in (select unnest(array_agg(id)) as ids from bio_iconografico_cards where numero>0 group by lettera,numero having count(*)>1) order by lettera,numero}
-    @doppi=BioIconograficoCard.find_by_sql(sql)
+    params[:namespace] = BioIconograficoCard.default_namespace if params[:namespace].blank?
   end
 
   def numera

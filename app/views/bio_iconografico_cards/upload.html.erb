@@ -1,4 +1,5 @@
-<h2>Bio iconografico - caricamento scheda digitalizzata</h2>
+<h2><%= content_tag(:b, BioIconograficoCard.namespaces[params[:namespace].to_sym]) -%> - caricamento scheda digitalizzata</h2>
+
 <%= content_tag(:h2, "Lettera #{params[:lettera]}", style:"font-size:140%") %>
 
 <%= form_tag({action: :upload}, multipart: true) do %>
