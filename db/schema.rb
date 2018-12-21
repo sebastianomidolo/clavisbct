@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20180912160141) do
+ActiveRecord::Schema.define(:version => 20181113125638) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -103,6 +103,19 @@ ActiveRecord::Schema.define(:version => 20180912160141) do
     t.text    "label"
     t.integer "library_id"
   end
+
+  create_table "bio_icon_namespaces", :id => false, :force => true do |t|
+    t.string "label", :limit => 8,   :null => false
+    t.string "title", :limit => 32
+    t.string "descr", :limit => 128
+  end
+
+  create_table "bio_icon_namespaces_users", :id => false, :force => true do |t|
+    t.string  "label",   :null => false
+    t.integer "user_id", :null => false
+  end
+
+  add_index "bio_icon_namespaces_users", ["label", "user_id"], :name => "bio_icon_namespaces_users_idx", :unique => true
 
   create_table "bio_iconografico_topics", :force => true do |t|
     t.xml "tags"
