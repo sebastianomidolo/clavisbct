@@ -5,7 +5,7 @@
  t=@bio_iconografico_card.bio_iconografico_topic
  if !t.nil?
   if can? :edit, BioIconograficoTopic
-   lnk=link_to(t.intestazione, bio_iconografico_topic_path(t))
+   lnk=link_to(t.intestazione.html_safe, bio_iconografico_topic_path(t))
   else
    lnk=t.intestazione
   end
@@ -14,3 +14,4 @@
 %>
 
 <%= image_tag(bio_iconografico_card_path(@bio_iconografico_card, :format=>'jpg', :size=>'375x516')) %>
+

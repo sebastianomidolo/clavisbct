@@ -9,17 +9,18 @@ module BioIconograficoCardsHelper
 
   def bio_iconografico_cards_table_row(record)
     r=[]
+    intestazione = (record.intestazione.blank? or record.intestazione.size==0) ? 'Intestazione mancante' : record.intestazione.html_safe
     if can? :manage, BioIconograficoCard
       r << content_tag(:tr,
                        content_tag(:td, record.numero_scheda) +
-                       content_tag(:td, link_to(record.intestazione, bio_iconografico_card_path(record), remote:false) + "<br/>#{record.filename}".html_safe) +
+                       content_tag(:td, link_to(intestazione, bio_iconografico_card_path(record), remote:false) + "<br/>#{record.filename}".html_safe) +
                        content_tag(:td, link_to(bio_iconografico_card_image(record),
                                                 edit_bio_iconografico_card_path(record)), style:'width:70%'),
                        :id=>record.id)
     else
       r << content_tag(:tr,
                        content_tag(:td, record.numero_scheda) +
-                       content_tag(:td, link_to(record.intestazione, bio_iconografico_card_path(record), remote:false)) +
+                       content_tag(:td, link_to(intestazione, bio_iconografico_card_path(record), remote:false)) +
                        content_tag(:td, link_to(bio_iconografico_card_image(record),
                                                 edit_bio_iconografico_card_path(record)), style:'width:70%'),
                        :id=>record.id)
@@ -65,9 +66,9 @@ module BioIconograficoCardsHelper
     image_tag(bio_iconografico_card_path(record, :format=>'jpg', :size=>'300x300'))
   end
 
-  def bio_iconografico_cards_namespaces
+  def bio_iconografico_cards_namespaces(user=nil)
     res = []
-    BioIconograficoCard.namespaces.each do |n|
+    BioIconograficoCard.namespaces(user).each do |n|
       if n.first.to_s == params[:namespace]
         res << content_tag(:b, n.last)
       else

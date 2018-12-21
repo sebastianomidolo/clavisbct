@@ -2,13 +2,13 @@ class BioIconograficoCardsController < ApplicationController
   layout 'bio_iconografico'
   before_filter :set_bio_iconografico_card, only: [:show, :edit, :update, :destroy]
   before_filter :authenticate_user!, only: [:edit,:update,:upload,:numera,:index,:destroy]
-  load_and_authorize_resource except: [:show]
+  load_and_authorize_resource
 
 
   respond_to :html
 
   def index
-    params[:namespace] = BioIconograficoCard.default_namespace if params[:namespace].blank?
+    params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_card].blank?

@@ -1,14 +1,13 @@
 class BioIconograficoTopicsController < ApplicationController
   layout 'bio_iconografico'
-  load_and_authorize_resource
-
   before_filter :set_bio_iconografico_topic, only: [:show, :edit, :update, :destroy]
-  before_filter :authenticate_user!, only: [:edit,:update,:destroy]
+  before_filter :authenticate_user!, only: [:edit,:update,:destroy,:index,:show]
+  load_and_authorize_resource
 
   respond_to :html
 
   def index
-    params[:namespace] = 'bioico' if params[:namespace].blank?
+    params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
 
     if params[:lettera].blank?
       @show_searchbox = true
@@ -24,7 +23,7 @@ class BioIconograficoTopicsController < ApplicationController
   end
 
   def show
-    params[:namespace] = 'bioico' if params[:namespace].blank?
+    params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
     respond_with(@bio_iconografico_topic)
   end
 

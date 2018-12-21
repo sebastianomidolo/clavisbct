@@ -30,7 +30,7 @@
 access_link=[]
 if user_signed_in?
  access_link << "Sei #{link_to(current_user.email, edit_user_registration_path)}".html_safe
- access_link << bio_iconografico_cards_namespaces
+ access_link << bio_iconografico_cards_namespaces(current_user)
  access_link << link_to("<b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete)
  access_link.flatten!
 else
@@ -51,7 +51,7 @@ end
 				</div>
 				<div class="lefts">
 				  <h1><a href="http://www.comune.torino.it/cultura/biblioteche/">Biblioteche Civiche Torinesi</a></h1>
-				  <%= content_tag(:h2, BioIconograficoCard.namespaces[params[:namespace].to_sym]) %>
+				  <%= content_tag(:h2, BioIconograficoCard.namespaces(current_user)[params[:namespace].to_sym]) %>
 				</div>
 	</div>
 	

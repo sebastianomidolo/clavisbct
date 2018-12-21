@@ -23,10 +23,10 @@ class BioIconograficoCard < DObject
     return if self.intestazione.blank?
 
     sql=%Q{select * from bio_iconografico_topics_view where intestazione=#{self.connection.quote(self.intestazione)}}
-    puts sql
+
     t=BioIconograficoTopic.find_by_sql(sql).first
     if t.nil?
-      puts "creazione per intestazione #{self.intestazione}"
+      # puts "creazione per intestazione #{self.intestazione}"
       t=BioIconograficoTopic.new
       t.intestazione=self.intestazione
       t.save
@@ -130,7 +130,10 @@ class BioIconograficoCard < DObject
   def var5=(t) self.edit_tags(var5:t) end
 
 
-  def intestazione() self.xmltag('intestazione') end
+  def intestazione()
+    self.xmltag('intestazione')
+  end
+
   def lettera() self.xmltag('l') end
   def numero() self.xmltag('n') end
   def namespace() self.xmltag('ns') end
@@ -239,20 +242,20 @@ class BioIconograficoCard < DObject
     self.connection.execute(sql).first['size'].to_i
   end
 
-  def self.namespaces
-    # {
-    #   bioico:'Repertorio bio-iconografico',
-    #   catarte:'Catalogo Arte',
-    #   cattor:'Catalogo Torino'
-    # }
-    {
-      catarte:'Catalogo Arte',
-      cattor:'Catalogo Torino'
-    }
+  def self.namespaces(user=nil)
+    cond = user.nil? ? '' :  "where user_id=#{user.id}"
+    sql=%Q{select distinct n.label,n.title from bio_icon_namespaces_users nu join bio_icon_namespaces n using(label)#{cond} order by n.title;}
+    h=Hash.new
+    self.connection.execute(sql).to_a.each do |r|
+      h[r['label'].to_sym]=r['title']
+    end
+    return h
   end
 
-  def BioIconograficoCard.default_namespace
-    self.namespaces.first.first.to_s
+  def BioIconograficoCard.default_namespace(user=nil)
+    ns=self.namespaces(user)
+    return nil if ns.first.nil?
+    ns.first.first.to_s
   end
 
   def BioIconograficoCard.find_by_filename(fname)
