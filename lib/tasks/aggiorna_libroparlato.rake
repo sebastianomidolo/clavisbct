@@ -19,7 +19,7 @@ end
 def esamina_cartella_di_provenienza(sourcedir,destdir)
   fn=TalkingBook.logfilename
   fdout=File.open(fn, 'w')
-  fdout.write("#{Time.now}: INIZIO ESECUZIONE script 'aggiorna_libroparlato'\n\n")
+  fdout.write("#{Time.now}: INIZIO ESECUZIONE script 'aggiorna_libroparlato.rake'\n\n")
   fdout.close
   logmessage "esamino #{sourcedir}"
 
@@ -42,8 +42,12 @@ def esamina_cartella_di_provenienza(sourcedir,destdir)
         end
       end
       logmessage %Q{produco audio.zip per <a href="https://clavisbct.comperio.it/talking_books/#{t_book.id}/edit">#{t_book.titolo}</a> - collocazione #{collocazione}}
-      source_folder=File.join(slot,File.basename(folder))
-      t_book.book_update(source_folder)
+      begin
+        source_folder=File.join(slot,File.basename(folder))
+        t_book.book_update(source_folder)
+      rescue
+        logmessage "errore dopo t_book.book_update(#{source_folder}: #{$!}"
+      end
     end
   end
 

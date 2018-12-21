@@ -24,7 +24,7 @@ def analizza_foglio(excel, sheet_number, sheet_name, excel_file)
     puts "importati #{es.sql_count} records da #{excel_file.file_name}"
   end
   es.postload_sql_exec
-  es.alter_data_types
+  # es.alter_data_types
   return es
 end
 

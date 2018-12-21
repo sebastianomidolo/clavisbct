@@ -91,8 +91,8 @@ module DigitalObjects
   end
 
   def xmltag(tag)
-    tag=tag.to_s if tag.class==Symbol
     return nil if self.tags.nil?
+    tag=tag.to_s if tag.class==Symbol
     doc = REXML::Document.new(self.tags)
     elem=doc.root.elements[tag]
     return nil if elem.nil?

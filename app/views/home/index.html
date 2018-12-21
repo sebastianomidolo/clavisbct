@@ -63,7 +63,7 @@
   
   <%= content_tag(:li, link_to('Schema collocazioni Centrale', schema_collocazioni_centrales_path)) if can? :manage, SchemaCollocazioniCentrale %>
 
-  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path)) if can? :read, BioIconograficoCard %>
+  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path)) if !current_user.nil? and !BioIconograficoCard.default_namespace(current_user).nil? %>
 
   <%= content_tag(:li, link_to('Monografie senza soggetto e senza altri legami', '/senzasoggetto')) if can? :manage, ClavisItem %>
   
