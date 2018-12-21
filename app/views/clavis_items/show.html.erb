@@ -1,3 +1,5 @@
+<%= link_to('[Ricolloca]', ClavisItem.clavis_url(@clavis_item.id,:ricolloca,'yes')) if can? :manage, ClavisItem %>
+
 <%= content_tag(:div, clavis_item_show(@clavis_item)) %>
 
 <%= content_tag(:div, attachments_render_old_style(@clavis_item.attachments)) %>

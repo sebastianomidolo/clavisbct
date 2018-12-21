@@ -173,9 +173,22 @@ class ClavisItem < ActiveRecord::Base
 
   def item_info
     sql=%Q{select c.*,os.*,l.label as nomebib from clavis.item ci left join container_items i on(i.item_id=ci.item_id) left join containers c on(c.id=i.container_id) left join clavis.library l on(l.library_id=c.library_id) left join open_shelf_items os on(os.item_id=ci.item_id) where ci.item_id = #{self.id}}
-    r=ActiveRecord::Base.connection.execute(sql).first
-    return nil if (r['label'].nil? and r['os_section'].nil?)
-    r
+    sql=%Q{select c.*,ci.item_id, os.*,l.label as nomebib, pp.*, ir.*,cp.lastname,cl.piano
+  from clavis.item ci
+  left join clavis.items_con_prenotazioni_pendenti pp
+   using(item_id) left join closed_stack_item_requests ir
+    on (ir.item_id=ci.item_id and ir.request_time > CURRENT_DATE)
+   left join clavis.patron cp on(cp.patron_id=ir.patron_id)
+  left join 
+ container_items i on(i.item_id=ci.item_id) left join containers c
+ on(c.id=i.container_id) left join clavis.library l
+ on(l.library_id=c.library_id) left join open_shelf_items os
+ on(os.item_id=ci.item_id)
+ left join clavis.centrale_locations cl on(cl.item_id=ci.item_id)
+  where ci.item_id = #{self.id}}
+    puts "#{sql};"
+    return ActiveRecord::Base.connection.execute(sql).first
+    # return nil if (r['label'].nil? and r['os_section'].nil?)
   end
 
   def controlla_prenotazioni
@@ -188,7 +201,7 @@ class ClavisItem < ActiveRecord::Base
     ClavisItem.clavis_url(self.id,mode)
   end
 
-  def self.clavis_url(item_id,mode=:show)
+  def self.clavis_url(item_id,mode=:show,newcolloc=:nil)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
     if item_id.class==Array
@@ -203,7 +216,11 @@ class ClavisItem < ActiveRecord::Base
       r="#{host}/index.php?page=Catalog.ItemInsertPage&id=#{item_id}"
     end
     if mode==:ricolloca
-      r="#{host}/index.php?page=Catalog.ItemInsertPage&bctricolloca=1&id=#{item_id}"
+      if newcolloc.blank?
+        r="#{host}/index.php?page=Catalog.ItemInsertPage&bctricolloca=1&id=#{item_id}"
+      else
+        r="#{host}/index.php?page=Catalog.ItemInsertPage&bctricolloca=2&id=#{item_id}"
+      end
     end
     if mode==:loan
       r="#{host}/index.php?page=Circulation.NewLoan&itemId=#{item_id}"
