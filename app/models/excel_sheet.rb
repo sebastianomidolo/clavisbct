@@ -10,11 +10,14 @@ class ExcelSheet < ActiveRecord::Base
 
   def sync
     ef=self.excel_file
-    mtime=File.mtime(ef.file_name)
+    mtime=File.mtime(ef.file_name).in_time_zone('CET') - 2.hour
+    puts "verifico se #{mtime} maggiore di #{ef.updated_at}: #{mtime > ef.updated_at}"
+    return
     if mtime > ef.updated_at
+      puts "necessario chiamare rebuild_table in quanto #{mtime} maggiore di #{ef.updated_at}"
       begin
         self.rebuild_table
-        ef.updated_at=mtime
+        ef.updated_at=mtime + 2.hours
         ef.file_size=File.size(ef.file_name)
         ef.save if ef.changed?
       rescue
@@ -35,7 +38,7 @@ class ExcelSheet < ActiveRecord::Base
     order=''
 
     if !qs.blank?
-      qs.gsub!(/\(|\)|&/,' ')
+      qs.gsub!(/\(|\)|&|:/,' ')
       dtypes=self.data_types
       fields=[]
       cn=search_options[:column_number]
@@ -251,7 +254,7 @@ class ExcelSheet < ActiveRecord::Base
     self.reload
     self.import_from_sourcefile(excel)
     self.postload_sql_exec
-    self.alter_data_types
+    # self.alter_data_types
   end
 
   def load_row(row_id)
