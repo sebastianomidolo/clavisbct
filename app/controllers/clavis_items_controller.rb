@@ -39,7 +39,7 @@ class ClavisItemsController < ApplicationController
       when 'title'
         # ts=ClavisItem.connection.quote_string(value.split.join(' & '))
         ts=ClavisItem.connection.quote_string(textsearch_sanitize(value))
-        cond << "to_tsvector('simple', title) @@ to_tsquery('simple', '#{ts}')"
+        cond << "to_tsvector('simple', clavis.item.title) @@ to_tsquery('simple', '#{ts}')"
       when 'manifestation_id'
         cond << "manifestation_id=0" if value.blank?
       when 'home_library_id'
@@ -69,8 +69,11 @@ class ClavisItemsController < ApplicationController
         end
       end
     end
+
+    join_clavis_loans=''
     if !params[:sql_and].blank?
       cond << params[:sql_and]
+      join_clavis_loans=' join clavis.loan using(item_id)' if params[:sql_and] =~ /loan\./i
     end
     if !params[:manifestation_ids].blank? and !params[:library_id].blank?
       items=ClavisItem.esemplari_disponibili(params[:manifestation_ids],params[:library_id])
@@ -143,8 +146,23 @@ class ClavisItemsController < ApplicationController
         join_prenotazioni='join clavis.items_con_prenotazioni_pendenti icpp using(item_id)'
         select_prenotazioni='icpp.*,'
       end
-      per_page = params[:per_page].blank? ? 135 : params[:per_page]
-      @clavis_items = ClavisItem.paginate(:conditions=>cond,:page=>params[:page], per_page:per_page, :select=>"#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label",:joins=>"#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)", :order=>order_by)
+      if params[:unique_items].blank?
+        join_unique_items=''
+      else
+        join_unique_items=' join clavis.unique_items using(item_id)'
+      end
+
+      qparm={
+        conditions:cond,
+        page:params[:page],
+        per_page:params[:per_page].blank? ? 135 : params[:per_page],
+      }
+      qparm[:select]="#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label"
+      qparm[:joins]="#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)#{join_unique_items}#{join_clavis_loans}"
+      qparm[:order]=order_by      
+
+      @clavis_items = ClavisItem.paginate(qparm)
+
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end

@@ -368,24 +368,27 @@ module ClavisItemsHelper
   end
 
   def clavis_item_info(record)
-    if record.item_info.nil?
-      t = record.piano_centrale
-    else
-      info=record.item_info
-      t=''
-      if !info['os_section'].blank?
-        t="Scaffale aperto - sezione #{info['os_section']}"
-      else
-        t="In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}"
-      end
+    # return clavis_item_formatta_info('test')
+    info=record.item_info
+    return '' if info.nil?
+    res=[]
+    res << "Scaffale aperto - sezione #{info['os_section']}" if !info['os_section'].blank?
+    res << "In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}" if !info['label'].blank?
+    res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}") if !info['piano'].blank?
+    res << " <em>(sulla notizia è presente almeno una prenotazione)</em>" if record.controlla_prenotazioni
+    if !info['daily_counter'].blank?
+      res << %Q{<h2>Richiesta a magazzino numero <b>#{info['daily_counter']}</b>
+         - utente #{link_to(info['lastname'], ClavisPatron.clavis_url(info['patron_id'],:newloan), target:'_blank')}</h2>}
+      res << %Q{Ora della conferma di richiesta: <em>#{closed_stack_item_requests_ora(info['confirm_time'])}</em>,
+                #{info['printed']=='t' ? "" : "non "}stampata #{closed_stack_item_requests_ora(info['print_time'])} [#{info['csir_id']}]}
     end
-    prenot = record.controlla_prenotazioni
-    if t.blank?
-      content_tag(:span, content_tag(:b, "Sulla notizia è presente almeno una prenotazione"),style:'margin-left: 180px') if prenot
-    else
-      t << " <em>(sulla notizia è presente almeno una prenotazione)</em>" if prenot
-      content_tag(:span, content_tag(:b, "Collocazione in Civica Centrale: #{t}".html_safe),style:'margin-left: 180px')
-    end
+    clavis_item_formatta_info(res.join.html_safe)
+  end
+
+  def clavis_item_formatta_info(string)
+    return '' if string.blank?
+    # content_tag(:span, content_tag(:b, string.html_safe),style:'margin-left: 180px')
+    content_tag(:div, string, style:'margin-left: 180px')
   end
 
   def clavis_items_simple_list(records)

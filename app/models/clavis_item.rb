@@ -172,8 +172,7 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def item_info
-    sql=%Q{select c.*,os.*,l.label as nomebib from clavis.item ci left join container_items i on(i.item_id=ci.item_id) left join containers c on(c.id=i.container_id) left join clavis.library l on(l.library_id=c.library_id) left join open_shelf_items os on(os.item_id=ci.item_id) where ci.item_id = #{self.id}}
-    sql=%Q{select c.*,ci.item_id, os.*,l.label as nomebib, pp.*, ir.*,cp.lastname,cl.piano
+    sql=%Q{select c.*,ci.item_id, os.*,l.label as nomebib, pp.*, ir.id as csir_id, ir.*,cp.lastname,cl.piano
   from clavis.item ci
   left join clavis.items_con_prenotazioni_pendenti pp
    using(item_id) left join closed_stack_item_requests ir
@@ -186,9 +185,7 @@ class ClavisItem < ActiveRecord::Base
  on(os.item_id=ci.item_id)
  left join clavis.centrale_locations cl on(cl.item_id=ci.item_id)
   where ci.item_id = #{self.id}}
-    puts "#{sql};"
     return ActiveRecord::Base.connection.execute(sql).first
-    # return nil if (r['label'].nil? and r['os_section'].nil?)
   end
 
   def controlla_prenotazioni

@@ -11,6 +11,10 @@
    Con prenotazioni pendenti e in grado di essere soddisfatte da almeno una biblioteca <%= check_box_tag 'con_prenotazioni', 'S', params[:con_prenotazioni] %>
   </div>
 
+   <div class='control-group'>
+   Copie uniche <%= check_box_tag 'unique_items', 'S', params[:unique_items] %>
+  </div>
+
   <% if can? :manage, Container %>
    <%= content_tag(:b, link_to(@clavis_item.container.info, container_path(@clavis_item.container))) if !@clavis_item.container.nil? and !@clavis_item.container.closed %>
    <%= f.input :in_container, as: 'boolean', label: 'Solo volumi nei contenitori' %>
@@ -32,7 +36,7 @@
   Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
   <% end %>
 
-  <% if current_user.email=='seba' %>
+  <% if current_user.email=='seba' or current_user.email=='mgzunnui' %>
     <p>Filtro addizionale, esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31' oppure inventory_date < '2018-01-01'</p>
     <%= text_field_tag 'sql_and', params[:sql_and], size:80 %>
   <% else %>
