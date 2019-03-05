@@ -1,11 +1,13 @@
-% Lista di items generica
+% Lista di esemplari richiesti da utenti
+% inputdata[0]: lista esemplari in ordine di piano e collocazione
+% inputdata[1] (facoltativo): patron_id del quale si vuole la stampa richieste
+% inputdata[2] (facoltativo): richiede ristampa di un richiesta già stampata
 
 \documentclass[a4paper,11pt]{article}
 
-% \usepackage[a4paper]{geometry}
-
-
+\usepackage{caption}
 \usepackage[a4paper, top=20mm, bottom=10mm, left=2.5cm, right=1.25in]{geometry}
+\usepackage{needspace}
 
 \usepackage{fancyhdr}
 \setlength{\headheight}{1pt}
@@ -36,25 +38,15 @@
 \renewcommand{\headrulewidth}{0pt}
 \pagestyle{fancy}
 
-<%= "\\chead{Elenco richieste degli utenti stampato il #{Time.now.to_date}}" %>
+<%= "\\chead{Richieste a magazzino --- #{Time.now.to_time.in_time_zone('Europe/Rome').strftime("%d-%m-%Y %H:%M")}}" %>
 
 \lfoot{}
 \cfoot{}
 \rfoot{}
 
-
-
 \begin{document}
 
-
-% \pagestyle{empty}
-
-% \head{x}
-
-%\tablehead{\hline}
-%\tabletail{\hline}
-
-\begin{supertabular}{r|l|l|l|l}
+\begin{supertabular}{r|l|lll}
 <%
  res=[]	
  cnt=1
@@ -65,16 +57,43 @@
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
    if !prec_piano.nil? and prec_piano!=e['piano']
-     res << "--- & --- & --- \\\\"
+     res << "--- & --- & --- & --- & --- \\\\"
    end
    prec_piano=e['piano']
 
-   res << "#{e['piano']} & {\\Large\\bf #{e['collocazione'][0..16]}} & #{e['lastname']} & {\\bf\\huge #{e['daily_counter']}} & #{e['title'][0..50]}\\\\"
+   res << "#{e['piano']} & {\\Large\\bf #{e['collocazione'][0..16]}} & #{e['lastname']} & {\\bf\\huge\\fbox{#{e['daily_counter']}}} & #{e['title'][0..40]}\\\\"
    cnt+=1
  end
 %>
-<%= res.join("\n") %>
+<% res.join("\n") %>
 
 \end{supertabular}
+
+\bigskip\hrule\medskip\hrule\bigskip
+
+<%
+  res=[]
+  patron_id = inputdata[1]
+  reprint = inputdata[2]
+  records=ClosedStackItemRequest.richieste_magazzino(patron_id, reprint, false, :per_piano)
+  patrons = records.group_by {|x| "#{x['patron_id']}"}
+  patrons.keys.sort.each do |p|
+    patron=ClavisPatron.find(p)
+    ticket=patron.csir_tickets.join(', ')
+    res << "\\needspace{#{(patrons[p].size*2.5).to_i+1}\\baselineskip}"
+    # res << "\\needspace{10\\baselineskip}"
+    res << "\\topcaption*{\\Huge\\bf\\fbox{#{ticket}} #{patron.lastname}}"
+    res << "\\begin{supertabular}{l|l|l}"
+    patrons[p].each do |t|
+      title = t['title'].strip
+      title.gsub!("&", '\\\&')
+      title.gsub!("%", '\\\%')
+      res << "\\Large\\textbf{#{t['collocazione']}} & #{t['piano']} & #{title[0..70]} \\\\"
+    end
+    res << "\\end{supertabular}"
+    res << "\\bigskip\\hrule\\bigskip"
+  end
+%>
+<%= res.join("\n") %>
 
 \end{document}

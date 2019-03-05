@@ -2,20 +2,31 @@ module ClosedStackItemRequestsHelper
 
   def closed_stack_item_requests_list(dng_session,target_div)
     res = []
+    heading = content_tag(:tr, content_tag(:th, '', class:'col-md-1') +
+                               content_tag(:th, "<b>Collocazione</b>".html_safe, class:'col-md-1') +
+                               content_tag(:th, 'Titolo', class:'col-md-2') +
+                               content_tag(:th, 'Richiesto alle') +
+                               content_tag(:th, 'Confermato alle') +
+                               content_tag(:th, 'Stampato alle'))
+
     patron=ClavisPatron.find(dng_session.patron_id)
     patron.closed_stack_item_requests.each do |ir|
       item=ClavisItem.find(ir.item_id)
-      lnk=link_to(item.title, ClavisManifestation.clavis_url(item.manifestation_id, :opac))
+      title=link_to(item.title[0..50], ClavisManifestation.clavis_url(item.manifestation_id, :opac))
 
       url="https://#{request.host_with_port}#{item_delete_closed_stack_item_request_path(ir,dng_user:patron.opac_username,target_div:target_div,format:'js')}"
-      canc_lnk=link_to('cancella',url,remote:true,title:'Elimina questa richiesta', method: :get, data: {confirm: 'Vuoi eliminare la richiesta?'})
+      # canc_lnk=link_to('cancella',url,remote:true,title:'Elimina questa richiesta', method: :get, data: {confirm: 'Vuoi eliminare la richiesta?'})
+      canc_lnk=link_to('cancella',url,remote:true,title:'Elimina questa richiesta', method: :get)
 
-      res << content_tag(:tr, content_tag(:td, item.la_collocazione) +
-                         content_tag(:td, lnk) +
-                         content_tag(:td, ir.request_time) +
-                         content_tag(:td, canc_lnk))
+      res << content_tag(:tr, content_tag(:td, canc_lnk) +
+                              content_tag(:td, item.la_collocazione) +
+                              content_tag(:td, title) +
+                              content_tag(:td, closed_stack_item_requests_ora(ir.request_time)) +
+                              content_tag(:td, closed_stack_item_requests_ora(ir.confirm_time)) +
+                              content_tag(:td, closed_stack_item_requests_ora(ir.print_time)))
     end
     return '' if res == []
+    res.unshift(heading)
     # <h3 class="pending"><i class="fa fa-clock-o"></i> Prestiti in elaborazione</h3>
                            
     content_tag(:h3, %Q{<i id="print_request_tag" class="fa fa-print" aria-hidden="true"></i> Richieste a magazzino}.html_safe, class:'pending') +
@@ -25,44 +36,93 @@ module ClosedStackItemRequestsHelper
       content_tag(:table, res.join.html_safe, class:'table text-success')
   end
 
-  def closed_stack_item_requests_index(records, patron)
+  def closed_stack_item_requests_ora(time)
+    if time.class==String
+      time = time.to_time
+    end
+    # time.blank? ? '' : time.in_time_zone('Europe/Rome').strftime('%H:%M')
+    time.blank? ? '' : time.in_time_zone('Europe/Rome').strftime('%H:%M')
+  end
+
+  def closed_stack_item_requests_index(records, patron, javascript=false)
     return if records.size==0
+    heading = content_tag(:tr, content_tag(:th, '', class:'col-md-1') +
+                               content_tag(:th, "Piano", class:'col-md-1') +
+                               content_tag(:th, "<b>Collocazione</b>".html_safe) +
+                               content_tag(:th, 'Titolo', class:'col-md-2') +
+                               content_tag(:th, 'Inventario') +
+                               content_tag(:th, 'Richiesta') +
+                               content_tag(:th, 'Conferma') +
+                               content_tag(:th, 'Stampa') +
+                               content_tag(:th, 'Numero per il ritiro'))
     res=[]
     confirm_request=false
+    print_request=false
+    archived_request=false
     records.each do |r|
       confirm_request = true if r.daily_counter.nil?
-      res << content_tag(:tr, content_tag(:td, r.piano) +
-                              content_tag(:td, r.collocazione) +
-                              content_tag(:td, r.request_time.in_time_zone('Europe/Rome')) +
-                              content_tag(:td, r.daily_counter) +
-                              content_tag(:td, r['title']))
+      archived_request = true if r.archived==true
+      # confirm_time = r.confirm_time.nil? ? '' : r.confirm_time.in_time_zone('Europe/Rome').strftime('%d-%m-%Y %H:%M')
+      confirm_time = r.confirm_time.nil? ? '' : r.confirm_time.in_time_zone('Europe/Rome').strftime('%H:%M')
+      if r.print_time.nil?
+        print_time = ''
+        lnk = link_to('[elimina]', "https://#{request.host_with_port}#{csir_delete_closed_stack_item_request_path(r.id, format:'js')}", remote:true, method: :get)
+      else
+        print_time = r.print_time.in_time_zone('Europe/Rome').strftime('%H:%M')
+        txt = r.archived? ? 'dearchivia' : 'archivia'
+        lnk = link_to("[#{txt}]", "https://#{request.host_with_port}#{csir_archive_closed_stack_item_request_path(r.id, format:'js')}", remote:true, method: :get)
+      end
+      lnk = '' if javascript
+      res << content_tag(:tr, content_tag(:td, lnk) +
+                              content_tag(:td, r.piano) +
+                              content_tag(:td, "<b>#{r.collocazione}</b>".html_safe) +
+                              content_tag(:td, r['title'][0..20]) +
+                              content_tag(:td, r.serieinv) +
+                              content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%H:%M')) +
+                              content_tag(:td, confirm_time) +
+                              content_tag(:td, print_time) +
+                              content_tag(:td, r.daily_counter),
+                         id:"csir_#{r.id}")
+      print_request = true if !print_time.blank?
     end
-    lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_request_path(patron.id, format:'js')}"
-    if confirm_request
-      cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Invia richieste alla coda di stampa', method: :get, data: {confirm: 'Confermi invio richieste?'})}</span>}.html_safe
-    else
-      cmd=''
+    if !archived_request
+      if confirm_request
+        lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_requests_path(patron_id:patron.id, format:'js')}"
+        cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Conferma le richieste', method: :get)}</span>}.html_safe
+      else
+        if print_request.blank?
+          cmd = link_to("<b>[Stampa richieste a magazzino]</b>".html_safe, print_closed_stack_item_requests_path(patron_id:patron), title:"Stampa richieste per singolo utente")
+        else
+          cmd = link_to("<b>[Ristampa richieste a magazzino]</b>".html_safe, print_closed_stack_item_requests_path(patron_id:patron,reprint:true), title:"Ristampa richieste per singolo utente")
+        end
+      end
     end
     ids = records.collect{|x| x.item_id}
     link = link_to('In Clavis', ClavisItem.clavis_url(ids))
+    res.unshift(heading)
+    cmd = '' if javascript
     content_tag(:h2, "#{cmd}".html_safe) +
-      content_tag(:table, res.join.html_safe, class:'table text-success') +
+      content_tag(:table, res.join("\n\n").html_safe, class:'table text-success') +
       content_tag(:p, link)
   end
 
   def closed_stack_item_requests_patrons_index
     res = []
-    res << content_tag(:h3, "Richieste di oggi (ultimo contatore giornaliero: <b>#{DailyCounter.last.id}</b>)".html_safe)
-    res << content_tag(:h2, "Da confermare")
-    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
-    res << content_tag(:h2, "Da stampare")
-    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
-    res << content_tag(:h2, "Stampate")
-    res << closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true))
+    res << content_tag(:h3, "Richieste di oggi (prossimo numero di ticket: <b>#{DailyCounter.last.id}</b>)".html_safe)
+
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
+    (res << content_tag(:h3, "Da Confermare"); res << t) if !t.blank?
+
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
+    (res << content_tag(:h3, "Confermate, da stampare"); res << t;  res << content_tag(:h3, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))) if !t.blank?
+
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true))
+    (res << content_tag(:h3, "Richieste stampate"); res << t) if !t.blank?
     res.join.html_safe
   end
 
   def closed_stack_item_requests_patrons(records)
+    return '' if records.size==0
     res=[]
     records.each do |r|
       lnk1 = link_to("<b>#{r['barcode']}</b>".html_safe, ClavisPatron.clavis_url(r['patron_id'],:newloan), target:'_blank')
