@@ -1,5 +1,25 @@
-# See http://www.robotstxt.org/wc/norobots.html for documentation on how to use the robots.txt file
-#
-# To ban all spiders from the entire site uncomment the next two lines:
-# User-Agent: *
-# Disallow: /
+User-Agent: *
+Disallow: /audio_visuals
+Disallow: /audio_visuals/*
+Disallow: /clavis_authorities
+Disallow: /clavis_authorities/*
+
+Disallow: /clavis_consistency_notes
+Disallow: /clavis_consistency_notes/*
+
+Disallow: /clavis_items/*
+
+Disallow: /clavis_manifestations
+Disallow: /clavis_manifestations/*
+Disallow: /d_objects
+Disallow: /d_objects/random_mp3
+Disallow: /excel_files
+Disallow: /excel_files/*
+Disallow: /excel_sheets/*
+Disallow: /iss_articles
+Disallow: /iss_articles/*
+
+Disallow: /schema_collocazioni_centrales/*
+
+Disallow: /talking_books
+Disallow: /talking_books/*
