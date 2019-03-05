@@ -1,0 +1,2 @@
+$("#issue_<%= @iss_issue.id -%>").html("<%=j iss_issue_toc(@iss_issue) -%>");
+$("#copertina_<%= @iss_issue.id -%>").html("<%=j iss_article_link_to_pdf(@iss_article,500) -%>");

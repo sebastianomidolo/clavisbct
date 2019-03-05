@@ -1,0 +1,22 @@
+/*
+ * lastmod 9 dicembre 2008
+ */
+
+
+.titolo_sezione {
+  font-size: 160%;
+}
+
+.cover {
+  margin: 2px 2px 2px 2px;
+}
+
+.selected_item {
+  background-image: url(right-arrow.jpeg);
+  background-repeat: no-repeat;
+  background-position: center left;
+}
+
+#side-bar {
+  background-image: url(/iss_journals/logo_bct.gif);
+}

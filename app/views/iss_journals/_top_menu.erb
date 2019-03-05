@@ -1,0 +1,13 @@
+<% if user_signed_in? %>
+ <a href="/journal">Riviste</a> |
+ <a href="/issue">Fascicoli</a> |
+ <a href="/article?page=1">Articoli</a> |
+ <a href="/page">Pagine</a> |
+ <a href="/tables.html">Informazioni sul db</a> |
+ <a href="/account/cambio_password">Cambio password</a> |
+ <a href="/account/logout">Esci</a>
+ (<%= current_user.login.titleize -%>)
+
+<% else %>
+
+<% end %>

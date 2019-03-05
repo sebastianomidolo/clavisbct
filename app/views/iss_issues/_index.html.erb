@@ -1,0 +1,26 @@
+<%= content_tag(:div, "#{@iss_issues.size} fascicoli") %>
+
+
+<table class="elenco_fascicoli">
+<% @iss_issues.each do |f| %>
+
+<tr>
+ <td colspan="2">
+   <%= link_to("#{f.id} - #{f.numerazione}", toc_iss_issue_url(f), remote:true, method: :get,
+       onclick: "jQuery('#copertina_#{f.id}').toggle();jQuery('#issue_#{f.id}').toggle()") %>
+ </td>
+</tr>
+
+<tr class="dettaglio_fascicolo">
+<td class="immagine_pagina" style="display: none" id="<%= "copertina_#{f.id}" -%>">
+<img src="/iss_journals/indicator.gif"></img>
+</td>
+<td style="display: none" id="<%= "issue_#{f.id}" -%>">
+<img src="/iss_journals/indicator.gif"></img>
+</td>
+</tr>
+
+<% end %>
+</table>
+
+

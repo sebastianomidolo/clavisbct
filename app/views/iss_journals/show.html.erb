@@ -1,0 +1,11 @@
+<%= content_tag(:h2, @iss_journal.title) %>
+
+<h3>
+<%=
+ link_to("Scheda bibliografica completa", "http://www.comune.torino.it/cultura/biblioteche/sbn?#{@iss_journal.bid}") if @iss_journal.id!=23
+%>
+</h3>
+
+<%= render :partial=>'iss_issues/index' %>
+
+

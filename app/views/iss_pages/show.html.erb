@@ -1,0 +1,7 @@
+<%= content_tag(:h2, link_to(@iss_page.to_label,iss_article_path(@iss_page.article))) %>
+
+<%= iss_page_link_to_pdf(@iss_page,600) %>
+
+<pre>
+  <%= @iss_page.fulltext %>
+</pre>

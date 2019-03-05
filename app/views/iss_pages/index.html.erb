@@ -1,0 +1,17 @@
+<%= content_tag(:h2, "Ricerca full text") %>
+
+<%= form_tag(iss_pages_url, :method=>:get) do %>
+
+<%= text_field_tag('qs', params[:qs]) %>
+
+<%= submit_tag('Cerca') %>
+
+<% end %>
+
+<%= content_tag(:pre, @sql) %>
+
+<%= content_tag(:h2, "Trovate #{@iss_pages.total_entries} pagine") if @cond!='false' %>
+<%= will_paginate @iss_pages %>
+
+<hr/>
+<%= content_tag(:div, iss_pages_index(@iss_pages)) %>

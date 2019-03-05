@@ -1,0 +1,22 @@
+<table class="elenco_fascicoli">
+<% @fascicoli.each do |f| %>
+
+<tr>
+ <td colspan="2">
+  <%= link_to_remote(f.numerazione, :url=>{:action=>'toc', :id=>f.id},
+       :html=>{:onclick=>"$('issue_#{f.id}').toggle();$('copertina_#{f.id}').toggle();"}) %>
+  <% " id: #{f.id}" -%>
+ </td>
+</tr>
+
+<tr class="dettaglio_fascicolo">
+<td class="immagine_pagina" style="display: none" id="<%= "copertina_#{f.id}" -%>">
+<img src="/images/active_scaffold/default/indicator.gif"></img>
+</td>
+<td style="display: none" id="<%= "issue_#{f.id}" -%>">
+<img src="/images/active_scaffold/default/indicator.gif"></img>
+</td>
+</tr>
+
+<% end %>
+</table>

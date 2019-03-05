@@ -1,16 +1,16 @@
-<%= content_tag(:h2, "ISS articles") %>
+<%= content_tag(:h2, "Ricerca per parole nel titolo degli articoli") %>
 
 <%= form_tag(iss_articles_url, :method=>:get) do %>
 
 <%= text_field_tag('qs', params[:qs]) %>
 
-<br/>
-
 <%= submit_tag('Cerca') %>
 
 <% end %>
 
-<%= content_tag(:h2, "Trovati #{@iss_articles.total_entries}") %>
+<%= content_tag(:pre, @sql) %>
+
+<%= content_tag(:h2, "Trovati #{@iss_articles.total_entries} titoli") if @cond!='false' %>
 <%= will_paginate @iss_articles %>
 
 <hr/>
