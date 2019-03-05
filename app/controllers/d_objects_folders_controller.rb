@@ -1,7 +1,7 @@
 # coding: utf-8
 class DObjectsFoldersController < ApplicationController
   layout 'navbar'
-  load_and_authorize_resource only: [:index,:show,:makepdf,:set_pdf_params]
+  load_and_authorize_resource only: [:index,:show,:makepdf,:set_pdf_params,:destroy,:delete_contents]
 
   def index_old
     cond=[]
@@ -102,12 +102,22 @@ class DObjectsFoldersController < ApplicationController
 
   def destroy
     f=DObjectsFolder.find(params[:id])
+    parent=f.parent
     if f.d_objects.size==0
       f.destroy
     end
-    redirect_to d_objects_folders_path
+    if parent.nil?
+      redirect_to d_objects_folders_path
+    else
+      redirect_to parent
+    end
   end
 
+  def delete_contents
+    f=DObjectsFolder.find(params[:id])
+    f.delete_contents(current_user)
+    redirect_to f
+  end
 
   def update
     @d_objects_folder = DObjectsFolder.find(params[:id])

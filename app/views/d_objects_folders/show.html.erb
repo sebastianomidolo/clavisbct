@@ -29,9 +29,13 @@
 
 <%= d_objects_view(@d_objects) %>
 
- <% if @d_objects.size==0 and @d_objects_folder.dir.size==0 and @d_objects_folder.writable_by?(current_user) %>
-  <%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
+ <% if @d_objects_folder.writable_by?(current_user) %>
+   <% if @d_objects.size==0 and @d_objects_folder.dir.size==0 %>
+     <%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
+   <% end %>
+   <% if @d_objects.size>0 %>
+     <%= content_tag(:span, link_to("[Elimina tutti i files presenti nella cartella]", delete_contents_d_objects_folder_path, method: :delete, data: {confirm: 'Confermi cancellazione di tutti i files presenti nella cartella?'})) if can? :destroy, DObjectsFolder %>
+   <% end %>
  <% end %>
-
 
 <%= link_to("Scheda libro parlato #{@d_objects_folder.talking_book.n}", edit_talking_book_path(@d_objects_folder.talking_book)) if !@d_objects_folder.talking_book.nil? %>

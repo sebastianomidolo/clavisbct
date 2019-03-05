@@ -3,7 +3,7 @@ require 'RMagick'
 class DObjectsController < ApplicationController
   layout 'navbar'
   # before_filter :authenticate_user!, only: [:upload]
-  load_and_authorize_resource only: [:index,:view,:list_folder_content,:makepdf,:upload,:edit,:destroy]
+  load_and_authorize_resource only: [:index,:view,:list_folder_content,:makepdf,:upload,:edit,:destroy,:set_as_cover_image,:download]
 
 
   def index
@@ -127,7 +127,7 @@ class DObjectsController < ApplicationController
         render :template=>'d_objects/file_non_specificato'
       else
         @d_object = DObject.new.save_new_record(params,current_user)
-        render :action=>:view
+        redirect_to @d_objects_folder
       end
     else
       @d_object = DObject.new

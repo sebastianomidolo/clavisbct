@@ -45,7 +45,7 @@ class Ability
       can :estrazione_da_magazzino, OpenShelfItem
     end
 
-    if user.role?('d_object_manager')
+    if user.role?('d_objects_manager')
       can :manage, DObject
       can :manage, DObjectsFolder
       can :upload, OmekaFile

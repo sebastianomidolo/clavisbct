@@ -19,6 +19,10 @@ class DObject < ActiveRecord::Base
     File.delete record.filename_with_path if File.exists?(record.filename_with_path)
   end
 
+  def folder
+    self.d_objects_folder
+  end
+
   def check_filesystem
     return if (self.filename =~ /^bm::/)==0
     if !self.changes['name'].nil? and !changes['name'].first.nil?
@@ -149,10 +153,14 @@ class DObject < ActiveRecord::Base
     FileUtils.mkdir_p(destdir)
     Zip::File.open(self.filename_with_path) do |zip_file|
       zip_file.each do |entry|
-        next if entry.directory?
-        dest_file=File.join(destdir, File.basename(entry.name))
-        next if File.exist?(dest_file)
-        entry.extract(dest_file)
+        if entry.directory?
+          newdir=File.join(destdir,entry.name)
+          FileUtils.mkdir_p(newdir)
+        else
+          dest_file=File.join(destdir, entry.name)
+          next if File.exist?(dest_file)
+          entry.extract(dest_file)
+        end
       end
     end
     DObject.fs_scan(destdir.sub(self.digital_objects_mount_point,''))

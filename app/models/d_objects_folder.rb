@@ -1,4 +1,5 @@
 # coding: utf-8
+s# coding: utf-8
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
@@ -9,13 +10,36 @@ class DObjectsFolder < ActiveRecord::Base
   has_many :d_objects, order:'lower(name)'
   has_one :talking_book
   belongs_to :access_right
-
+  before_destroy do |record|
+    # puts "record con id #{record.id} - cancellare file #{record.filename_with_path}"
+    FileUtils.rmdir record.filename_with_path, :verbose => false
+  end
+  
   def filename
     self.name
   end
 
   def basename
     File.basename(self.name)
+  end
+
+  def delete_contents(user, d_objects_ids=nil)
+    # puts "Cancello il contenuto del folder #{self.name}"
+    ids=self.d_objects.collect{|x| x.id if x.writable_by?(user)}.compact
+    if d_objects_ids.nil?
+      # puts "cancello tutti i files contenuti in #{self.name}"
+      self.delete_contents(user, ids)
+    else
+      # puts "cancello gli ids: #{d_objects_ids.inspect}"
+      # Escludo eventuali ids non appartenenti ai d_objects del folder (self)
+      d_objects_ids.reject! {|e| !ids.include? e}
+      d_objects_ids.compact!
+      # puts "DOPO il filtro, ids: #{d_objects_ids.inspect}"
+      d_objects_ids.each do |o|
+        # puts "Cancello #{o}"
+        DObject.find(o).destroy
+      end
+    end
   end
 
   def basename=(newname)
