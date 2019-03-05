@@ -17,6 +17,18 @@ class HomeController < ApplicationController
     render json: {ip: DngSession.format_client_ip(request)}.to_json
   end
 
+  def logxhr
+    headers['Access-Control-Allow-Origin'] = "http://bctwww.comperio.it"
+    # headers['Access-Control-Allow-Methods'] = "POST"
+    # headers['Access-Control-Allow-Credentials'] = true
+    # headers['Access-Control-Allow-Headers'] = 'Content-Type'
+
+    ip=DngSession.format_client_ip(request)
+    res = [ip:ip, datetime: Time.now, target: params[:target], query_string: params[:qs]]
+    XhrRequest.create(target:params[:target],timestamp:Time.now,ip:ip,qs:params[:qs])
+    render text: res.to_s
+  end
+
   def periodici_musicale_in_ritardo
   end
 
