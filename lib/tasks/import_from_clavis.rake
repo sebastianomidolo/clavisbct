@@ -37,20 +37,17 @@ task :import_from_clavis => :environment do
   source=config[Rails.env]["clavis_datasource"]
   cmd=config[Rails.env]["clavis_getcmd"]
   (puts cmd; Kernel.system(cmd)) if !cmd.blank?
-  cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{source}"
-  puts cmd
-  puts "import_from_clavis, inizio esecuzione #{cmd}: #{Time.now}"
-  Kernel.system(cmd)
-  puts "import_from_clavis, fine esecuzione #{cmd}: #{Time.now}"
 
-  insertdir=File.join(File.dirname(source),'inserts')
-  puts insertdir
-  Dir.glob(File.join(insertdir, "*.sql")).sort.each do |f|
+  cmd=%Q{/usr/bin/psql -c "BEGIN" -c "DROP SCHEMA clavis CASCADE" -c "COMMIT" -c "CREATE SCHEMA clavis" #{dbname} #{username}}
+  puts cmd
+  Kernel.system(cmd)
+
+  Dir.glob(File.join(source, "*.sql")).sort.each do |f|
     cmd="/usr/bin/psql --no-psqlrc --quiet -d #{dbname} #{username}  -f #{f}"
-    puts cmd
-    puts "import_from_clavis, inizio esecuzione #{cmd}: #{Time.now}"
+    tab=File.basename(f)
+    puts "import_from_clavis - inizio inserimento tabella #{tab}:\t\t #{Time.now}"
     Kernel.system(cmd)
-    puts "import_from_clavis, fine esecuzione #{cmd}: #{Time.now}"
+    puts "import_from_clavis -   fine inserimento tabella #{tab}:\t\t #{Time.now}"
   end
 
   puts "import_from_clavis: chiamo clavis_init: #{Time.now}"
