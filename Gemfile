@@ -101,3 +101,7 @@ gem 'rest-client', '~> 1.8'
 gem 'turnout'
 
 gem 'codice-fiscale'
+
+gem 'tzinfo'
+
+gem 'faraday'
