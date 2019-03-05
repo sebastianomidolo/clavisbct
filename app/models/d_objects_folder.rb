@@ -1,5 +1,4 @@
 # coding: utf-8
-s# coding: utf-8
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
