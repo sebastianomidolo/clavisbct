@@ -26,8 +26,9 @@
 </p>
 
 
-<%= link_to 'Edit', edit_work_station_path(@work_station) %> |
-<%= link_to 'Back', work_stations_path %>
+<%= link_to 'Modifica', edit_work_station_path(@work_station) %> |
+<%= link_to 'Segnalibri della postazione', bookmarks_work_station_path(@work_station) %> |
+<%= link_to 'Elenco postazioni', work_stations_path %>
 
 
 <%= content_tag(:pre, @work_station.print_config) %>

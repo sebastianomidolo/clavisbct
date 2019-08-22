@@ -1,6 +1,6 @@
 class WorkStationsController < ApplicationController
-  before_filter :set_work_station, only: [:show, :edit, :update, :destroy]
-
+  before_filter :set_work_station, only: [:show, :edit, :update, :destroy, :bookmarks, :bookmarks_save]
+  before_filter :authenticate_user!
   respond_to :html
 
   def index
@@ -28,6 +28,25 @@ class WorkStationsController < ApplicationController
   def create
     @work_station = WorkStation.new(params[:work_station])
     @work_station.save
+    respond_with(@work_station)
+  end
+
+  def bookmarks
+  end
+
+  def bookmarks_save
+    labels=params[:label]
+    urls=params[:url]
+    config=[]
+    urls.keys.each do |k|
+      next if urls[k].blank?
+      line = urls[k]
+      line += "|#{labels[k].gsub(' ','_')}" if !labels[k].blank?
+      config << "#{line}"
+    end
+    @work_station.edit_and_save_config(['managed_bookmarks', config.join(' ')])
+    @work_station.edit_and_save_config(['homepage', params[:homepage]])
+    # render text:"<pre>#{@work_station.managed_bookmarks.join(' ')}\n#{config.join(' ')}\nx:#{x}</pre>"
     respond_with(@work_station)
   end
 

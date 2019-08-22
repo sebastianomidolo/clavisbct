@@ -1,3 +1,4 @@
+# coding: utf-8
 class WorkStation < ActiveRecord::Base
   attr_accessible :clavis_library_id, :id, :location, :processor, :monitor_id
 
@@ -51,9 +52,50 @@ class WorkStation < ActiveRecord::Base
   def print_config
     File.read(self.config_filename)
   end
+
+  def get_config_keyword(keyword)
+    return nil if keyword.blank?
+    rg=Regexp.new("^#{keyword}")
+    File.open(self.config_filename ).each do |line|
+      next if (line =~ rg) != 0
+      return line[line.index('=')+1..-1]
+    end
+    nil
+  end
+
+  # Riscrive il file di configurazione sostituendo il parametro "configline" che deve
+  # essere un array il cui primo elemento è una keyword tra quelle accettate da Porteus
+  # e il secondo è il contenuto
+  def edit_and_save_config(configline)
+    keyword,content=configline
+    return if content.blank?
+
+    rg=Regexp.new("^#{keyword}")
+    newcontent=[]
+    fname=self.config_filename
+    debugmsg=[]
+    File.open(fname).each do |line|
+      # puts line
+      debugmsg << "linea: #{line}"
+      if (line =~ rg) != 0
+        newcontent << line
+      else
+        newcontent << "#{keyword}=#{content}\n"
+      end
+    end
+    File.write(self.config_filename, newcontent.join)
+  end
   
+  def managed_bookmarks
+    bm = self.get_config_keyword('managed_bookmarks')
+    bm.split(' ')
+  end
+
+  def homepage
+    bm = self.get_config_keyword('homepage')
+  end
+
   def write_config
-    puts "in write_config"
     fname=self.config_filename
     return if !self.owned_config? and File.exists?(fname)
     tag=WorkStation.tagline

@@ -1,0 +1,7 @@
+<%= content_tag(:h3, "Segnalibri per postazione #{@work_station.id}".html_safe) %>
+<%= content_tag(:p, @work_station.location) %>
+<%= content_tag(:p, "Homepage: #{@work_station.homepage}") %>
+
+<%= work_station_managed_bookmarks_edit(@work_station) %>
+
+
