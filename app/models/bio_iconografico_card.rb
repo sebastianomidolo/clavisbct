@@ -5,6 +5,15 @@ class BioIconograficoCard < DObject
   :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
   before_save :check_record, :bio_iconografico_topic
 
+  def bio_iconografico_topic_show
+    return nil if self.id.nil?
+    sql=%Q{SELECT t.* FROM
+      bio_iconografico_topics t join attachments a
+        on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id and a.d_object_id=#{self.id})
+    }
+    BioIconograficoTopic.find_by_sql(sql).first
+  end
+
   def bio_iconografico_topic
     return nil if self.id.nil?
     sql=%Q{SELECT t.* FROM
@@ -170,6 +179,50 @@ class BioIconograficoCard < DObject
     ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
   end
 
+  def self.search_qs(qs)
+    sql=%Q{select c.*,o.* from bio_iconografico_topics_view t
+     join attachments a on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id)
+     join bio_iconografico_cards c on(c.id=a.d_object_id)
+     join d_objects o on(o.id=a.d_object_id)
+     where t.intestazione ~* #{self.connection.quote(qs)}}
+    self.find_by_sql(sql)
+  end
+  def self.search_topic(topic_id)
+    sql=%Q{select c.*,o.* from bio_iconografico_topics_view t
+     join attachments a on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id)
+     join bio_iconografico_cards c on(c.id=a.d_object_id)
+     join d_objects o on(o.id=a.d_object_id)
+     where t.id=#{self.connection.quote(topic_id)}}
+    self.find_by_sql(sql)
+  end
+
+  def self.search(params)
+    cond = []
+    namespace = params[:namespace]
+    cond << "c.lettera=#{self.connection.quote(params[:lettera])}" if !params[:lettera].blank?
+    cond << "t.intestazione ~* #{self.connection.quote(params[:qs])}" if !params[:qs].blank?
+    cond << "t.id = #{self.connection.quote(params[:topic_id].to_i)}" if !params[:topic_id].blank?
+    return [] if cond.size==0
+    cond << "c.namespace=#{self.connection.quote(namespace)}" if !namespace.blank?
+    cond = "WHERE #{cond.join(" and ")}"
+    if !params[:lettera].blank?
+      sql=%Q{select c.*,o.tags,o.name,o.d_objects_folder_id
+      from bio_iconografico_cards c join d_objects o using(id)
+      #{cond}
+      order by lettera, numero}
+    else
+      sql=%Q{select c.*,o.* from bio_iconografico_topics_view t
+       join attachments a on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id)
+       join bio_iconografico_cards c on(c.id=a.d_object_id)
+       join d_objects o on(o.id=a.d_object_id) #{cond} order by lettera, numero}
+    end
+    fd=File.open("/home/seb/log.txt", 'w')
+    fd.write(sql)
+    fd.close
+    pp=params[:per_page].blank? ? 50 : params[:per_page]
+    self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
+  end
+
   def self.list(params, bio_iconografico_card=nil)
     cond = []
     if bio_iconografico_card.nil?
@@ -181,7 +234,6 @@ class BioIconograficoCard < DObject
       if !params[:range].blank?
         from,to=params[:range].split('-')
         cond << "b.numero between #{from} and #{to}"
-        
       end
     else
       b=bio_iconografico_card

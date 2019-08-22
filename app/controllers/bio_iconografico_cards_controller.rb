@@ -8,7 +8,7 @@ class BioIconograficoCardsController < ApplicationController
   respond_to :html
 
   def index
-    params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
+    # params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_card].blank?

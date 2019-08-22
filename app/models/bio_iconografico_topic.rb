@@ -105,8 +105,20 @@ class BioIconograficoTopic < ActiveRecord::Base
       group by t.id,tv.intestazione
       order by lower(intestazione)}
     # self.find_by_sql(sql)
-    puts sql
+    # puts sql
     self.paginate_by_sql(sql, :per_page=>50, :page=>params[:page])
+  end
+
+  # create table topics_cloud as
+  # select (xpath('//r/ns/text()'::text, o.tags))[1]::text as namespace,
+  #  t.intestazione,t.id,count(*) from bio_iconografico_topics_view t join attachments a
+  #      on (a.attachable_type='BioIconograficoTopic' and a.attachable_id=t.id)
+  #       join d_objects o on (o.id=a.d_object_id and
+  #           (xpath('//r/intestazione/text()'::text, o.tags))[1]::text = t.intestazione)
+  #       where length(trim(t.intestazione))>3 group by namespace,t.intestazione,t.id having count(*)>5;
+  def BioIconograficoTopic.tagcloud(max,namespace=nil)
+    where=namespace.blank? ? '' : "where namespace=#{BioIconograficoCard.connection.quote(namespace)}"
+    self.connection.execute("select * from topics_cloud #{where} order by random() limit #{max}").to_a
   end
 
 end
