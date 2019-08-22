@@ -1,8 +1,11 @@
+# coding: utf-8
 class ClosedStackItemRequestsController < ApplicationController
   layout 'navbar'
   before_filter :set_dng_session, only: [:index, :check, :item_delete]
 
   load_and_authorize_resource only: [:index,:print,:confirm_request,:csir_delete, :csir_archive]
+
+  respond_to :html
 
   def index
     patron_id = params[:patron_id]
@@ -23,6 +26,8 @@ class ClosedStackItemRequestsController < ApplicationController
 
   def confirm_request
     @clavis_patron=ClavisPatron.find(params[:patron_id])
+    n = ClosedStackItemRequest.list(@clavis_patron.id).size
+    flash[:notice] = n==1 ? "Richiesta confermata" : "Confermate #{n} richieste"
     @daily_counter = ClosedStackItemRequest.assign_daily_counter(@clavis_patron)
     respond_to do |format|
       format.html { render text:'ok'}
@@ -31,11 +36,13 @@ class ClosedStackItemRequestsController < ApplicationController
   end
 
   def csir_delete
-    headers['Access-Control-Allow-Origin'] = '*'
+    # headers['Access-Control-Allow-Origin'] = '*'
     @csir=ClosedStackItemRequest.find(params[:id])
+    @clavis_item = @csir.clavis_item
     m=@csir.attributes
     @csir.destroy
     @clavis_patron=ClavisPatron.find(@csir.patron_id)
+    flash[:notice]="Cancellata richiesta per #{@clavis_item.to_label}"
     respond_to do |format|
       format.html { render text:"richiesta cancellata: #{m}" }
       format.js
@@ -43,11 +50,14 @@ class ClosedStackItemRequestsController < ApplicationController
   end
 
   def csir_archive
-    headers['Access-Control-Allow-Origin'] = '*'
+    # headers['Access-Control-Allow-Origin'] = '*'
     @csir=ClosedStackItemRequest.find(params[:id])
+    @clavis_item = @csir.clavis_item
     @clavis_patron=ClavisPatron.find(@csir.patron_id)
     @csir.archived=!(@csir.archived)
     @csir.save
+    msg = @csir.archived==true ? "Archiviata" : "De-archiviata"
+    flash[:notice]="#{msg} richiesta per #{@clavis_item.to_label}"
     respond_to do |format|
       format.html { render text:"richiesta archiviata" }
       format.js
@@ -64,27 +74,17 @@ class ClosedStackItemRequestsController < ApplicationController
       format.js {
         @target_div=params[:target_div]
         ir=ClosedStackItemRequest.find(params[:id])
-        logger.warn("destroy_closed_stack_item_request #{ir.id}")
-        ir.destroy if !@dng_session.nil?
+        @orario = ir.confirm_time
+        if ir.confirm_time.nil?
+          logger.warn("destroy_closed_stack_item_request #{ir.id}")
+          ir.destroy if !@dng_session.nil?
+        else
+          logger.warn("la richiesta non id #{ir.id} non può essere cancellata perché è già stata confermata")
+        end
         # render template:'closed_stack_item_requests/deleted_ok'
         render template:'closed_stack_item_requests/check'
       }
     end
-  end
-
-  def insert_item_for_patron
-    patron=ClavisPatron.find(params[:patron_id])
-    serieinv=params[:serieinv].strip.upcase
-    serie,inv=serieinv.split('-')
-    if inv.blank?
-      item_id=serie
-      item = ClavisItem.exists?(item_id) ? ClavisItem.find(item_id) : nil
-    else
-      item=ClavisItem.find_by_inventory_serie_id_and_inventory_number(serie.upcase,inv)
-    end
-    render text:"Esemplare non trovato: #{serieinv}" and return if item.nil?
-    ClosedStackItemRequest.create(patron_id:patron.id,item_id:item.id,dng_session_id:0,request_time:Time.now,created_by:current_user.id)
-    redirect_to clavis_patron_path(patron)
   end
 
   def check
@@ -106,14 +106,39 @@ class ClosedStackItemRequestsController < ApplicationController
 
   def print
     @patron_id = params[:patron_id].blank? ? nil : ClavisPatron.find(params[:patron_id]).id
+    if @patron_id.nil?
+      render template:'closed_stack_item_requests/da_stampare'
+      return
+    end
     @reprint = params[:reprint]=='true' ? true : false
     # @records=ClosedStackItemRequest.richieste_magazzino(@patron_id,@reprint)
     @records=ClosedStackItemRequest.list(@patron_id,pending=false,printed=false,today=true,archived=false,reprint=@reprint)
+    @totale_records=@records.size
+    @records=@records[0..5]
     # @records=ClosedStackItemRequest.list(@patron_id,reprint=@reprint)
     respond_to do |format|
       format.html {
       }
       format.pdf {
+        filename="elenco_richieste_a_magazzino.pdf"
+        send_data(ClosedStackItemRequest.list_pdf(@records,@patron_id,@reprint),
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
+        ClosedStackItemRequest.mark_as_printed(@records)
+      }
+    end
+  end
+
+  def autoprint
+    respond_to do |format|
+      format.html {
+        render template:'closed_stack_item_requests/autoprint_list', layout:nil
+      }
+      format.pdf {
+        @patron_id = ClavisPatron.find(params[:patron_id]).id
+        @records=ClosedStackItemRequest.list(@patron_id,pending=false,printed=false,today=true,archived=false,reprint=false)
+        @totale_records=@records.size
+        @records=@records[0..5]
         filename="elenco_richieste_a_magazzino.pdf"
         send_data(ClosedStackItemRequest.list_pdf(@records,@patron_id,@reprint),
                   :filename=>filename,:disposition=>'inline',

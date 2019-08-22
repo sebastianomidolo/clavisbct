@@ -1,0 +1,9 @@
+
+<%= form_for(:patron, url: csir_insert_clavis_patron_url(@patron), method: :post, remote: false) do %>
+
+Serie-Inventario o collocazione: <%= text_field_tag('serieinv') %>
+ <%= submit_tag('Inserisci richiesta a magazzino') %>
+
+ <% end %>
+
+  

@@ -1,0 +1,8 @@
+<%=
+res=[];
+ClosedStackItemRequest.patrons(false,false).each do |r|
+  res << r['patron_id']
+end
+res.join(' ')
+%>
+

@@ -1,5 +1,5 @@
 <% if @records.length>0 %>
-<%= content_tag(:b, "Sono presenti #{@records.length} richieste") %>
+<%= content_tag(:b, "Stampa di #{@records.length} richieste su #{@totale_records}") %>
 <br/>
 <%=
   if @patron_id.blank?

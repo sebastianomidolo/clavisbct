@@ -17,6 +17,7 @@ class ClavisPatron < ActiveRecord::Base
   self.primary_key='patron_id'
 
   has_many :loans, :class_name=>'ClavisLoan', :foreign_key=>'patron_id'
+  has_many :purchase_proposals, :class_name=>'ClavisPurchaseProposal', :foreign_key=>'patron_id'
   has_many :dng_sessions, :foreign_key=>'patron_id'
 
   # Esempio: '70067cfc7e1429cfd7b710a19519d913027eb7a3','158.102.56.204, 158.102.162.9'
@@ -26,13 +27,17 @@ class ClavisPatron < ActiveRecord::Base
     dng.log_session_id
   end
 
-  def richieste_a_magazzino_attive
-    ClosedStackItemRequest.list(self.id,pending=false,printed=:both).collect{|x| x.daily_counter}.uniq.sort.join(', ')
+  def csir_tickets(archived=false)
+    ClosedStackItemRequest.list(self.id,pending=false,printed=nil,today=true,archived=archived,reprint=nil).collect{|x| x.daily_counter}.uniq.sort
   end
 
   def appellativo
     s = self.gender=='F' ? 'Gent.ma' : 'Gentile'
     "#{s} #{self.name} #{self.lastname}"
+  end
+
+  def lettore
+    self.gender=='F' ? 'Lettrice' : 'Lettore'
   end
 
   def to_label
@@ -130,10 +135,7 @@ class ClavisPatron < ActiveRecord::Base
     ClosedStackItemRequest.find_by_sql(sql)
   end
   def closed_stack_item_requests
-    sql=%Q{SELECT * FROM closed_stack_item_requests
-              WHERE patron_id=#{self.id} and printed is false;}
-    puts sql
-    ClosedStackItemRequest.find_by_sql(sql)
+    ClosedStackItemRequest.list(self.patron_id,nil,nil,true,false,nil,'request_time ASC')
   end
 
   def closed_stack_item_request_pdf(dng_session)
@@ -148,6 +150,23 @@ class ClavisPatron < ActiveRecord::Base
     inputdata << self
     lp=LatexPrint::PDF.new('closed_stack_item_request', inputdata, false)
     lp.makepdf
+  end
+
+  # Conta le proposte di acquisto escluse quelle annullate dall'utente
+  # Se "since" è nil, conta le proposte dall'inizio dell'anno corrente,
+  # altrimenti le conta dall'intervallo espresso dal parametro since, esempio "1 year", "6 months", "45 days" etc.
+  def purchase_proposals_count(since=nil)
+    if since.nil?
+      y=Time.now.year
+      interval = " AND proposal_date >= '#{y}-01-01'"
+    else
+      interval = " AND proposal_date between now() - interval '#{since}' and now()"
+    end
+    self.purchase_proposals.where("status IN ('A','B','C','E' )#{interval}").count
+  end
+
+  def clavis_url(mode=:view)
+    ClavisPatron.clavis_url(self.id,mode)
   end
 
   def ClavisPatron.clavis_url(id,mode=:view)

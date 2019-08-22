@@ -1,6 +1,8 @@
 <%= render :partial => 'searchform' %>
 
-<%= @clavis_purchase_proposals.total_entries %>
+<%= "Numero totale di proposte inserite: #{@clavis_purchase_proposals.total_entries}" %>
+
+<%= "Proposte inserite nel corso degli ultimi 12 mesi: #{@clavis_patron.purchase_proposals_count('1 year')}" if !@clavis_patron.nil? %>
 
 <%= will_paginate @clavis_purchase_proposals, renderer: BootstrapPagination::Rails %>
 

@@ -47,7 +47,7 @@
   <%= content_tag(:li, link_to('Interrogazione prestiti', clavis_loans_path)) if can? :manage, ClavisLoan %>
   <%= content_tag(:li, link_to('Interrogazione prestiti Goethe Institut', view_goethe_loans_clavis_loans_path)) if can? :view_goethe_loans, ClavisLoan %>
 
-  <%= content_tag(:li, link_to('Closed stack items requests', closed_stack_item_requests_path)) if can? :manage, ClosedStackItemRequest %>
+  <%= content_tag(:li, link_to('Richieste a magazzino Civica Centrale', closed_stack_item_requests_path)) if can? :manage, ClosedStackItemRequest %>
 
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 
@@ -63,7 +63,7 @@
   
   <%= content_tag(:li, link_to('Schema collocazioni Centrale', schema_collocazioni_centrales_path)) if can? :manage, SchemaCollocazioniCentrale %>
 
-  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path)) if !current_user.nil? and !BioIconograficoCard.default_namespace(current_user).nil? %>
+  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path(namespace:BioIconograficoCard.default_namespace(current_user)))) if !current_user.nil? and !BioIconograficoCard.default_namespace(current_user).nil? %>
 
   <%= content_tag(:li, link_to('Monografie senza soggetto e senza altri legami', '/senzasoggetto')) if can? :manage, ClavisItem %>
   

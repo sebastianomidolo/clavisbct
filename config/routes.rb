@@ -1,6 +1,11 @@
 Clavisbct::Application.routes.draw do
 
-  resources :work_stations
+  resources :work_stations do
+    member do
+      get 'bookmarks'
+      put 'bookmarks_save'
+    end
+  end
 
 
   resources :bio_iconografico_topics
@@ -27,6 +32,7 @@ Clavisbct::Application.routes.draw do
   resources :bct_letters do
     collection do
       get 'random_letter'
+      get 'static_intro'
     end
   end
   resources :bct_people
@@ -69,6 +75,7 @@ Clavisbct::Application.routes.draw do
   devise_for :clavis_patrons
 
   match 'jsonip' => 'home#jsonip'
+  match 'logxhr' => 'home#logxhr'
 
   match 'obj/:id/:key' => 'd_objects#objshow'
 
@@ -89,7 +96,14 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :clavis_patrons, only: [:show]
+  resources :clavis_patrons, only: [:show] do
+    collection do
+      get 'purchase_proposals_count'
+    end
+    member do
+      post 'csir_insert'
+    end
+  end
 
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
     member do
@@ -100,9 +114,12 @@ Clavisbct::Application.routes.draw do
       get 'filenames'
       get 'set_pdf_params'
       get 'derived'
+      delete 'delete_contents'
     end
   end
-  
+
+  resources :bctcards, only: [:index,:show]
+
   resources :bio_iconografico_cards do
     collection do
       get 'upload'
@@ -139,7 +156,20 @@ Clavisbct::Application.routes.draw do
       get 'digitalizzati_non_presenti'
     end
   end
+  resources :iss_journals do
+    collection do
+      get 'infopage'
+    end
+  end
+  resources :iss_issues do
+    member do
+      get 'toc'
+      get 'cover_image'
+    end
+  end
   resources :iss_articles
+  resources :iss_pages
+
   resources :audio_visuals
 
 
@@ -245,15 +275,18 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :closed_stack_item_requests, only: [:index,:show] do
+  resources :closed_stack_item_requests, only: [:index,:show,:destroy] do
     member do
       get 'item_delete'
-      get 'confirm_request'
+      get 'csir_delete'
+      get 'csir_archive'
     end
     collection do
       get 'check'
       get 'random_insert'
       get 'print'
+      get 'autoprint'
+      get 'confirm_request'
     end
   end
 

@@ -38,7 +38,11 @@ class ClosedStackItemRequest < ActiveRecord::Base
   end
 
   def ClosedStackItemRequest.list(patron_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false,order=:per_piano)
-    order = order == :per_piano ? 'cl.piano desc,espandi_collocazione(cl.collocazione)' : 'espandi_collocazione(cl.collocazione)'
+    if order.class==String
+      order = order
+    else
+      order = order == :per_piano ? 'cl.piano desc,espandi_collocazione(cl.collocazione)' : 'espandi_collocazione(cl.collocazione)'
+    end
     sql=%Q{select ir.*,ci.title,regexp_replace(cl.piano,'^0. ','') as piano,cl.collocazione,cp.lastname, 
             ci.inventory_serie_id || '-' || ci. inventory_number as serieinv
        from closed_stack_item_requests ir join clavis.item ci using(item_id)
@@ -51,10 +55,10 @@ class ClosedStackItemRequest < ActiveRecord::Base
   def ClosedStackItemRequest.sql_and_conditions_for_list(patron_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false)
     cond = []
     cond << (patron_id.blank? ? 'true' : "cp.patron_id=#{self.connection.quote(patron_id)}")
-    cond << (pending ? 'daily_counter is null' : 'daily_counter is not null')
+    cond << (pending ? 'daily_counter is null' : 'daily_counter is not null') if !pending.nil?
     if archived==false
       if reprint == false
-        cond << (printed ? 'printed' : 'not printed')
+        cond << (printed ? 'printed' : 'not printed') if !printed.nil?
       end
       cond << 'not archived'
     else
@@ -93,7 +97,7 @@ class ClosedStackItemRequest < ActiveRecord::Base
   end
 
   def ClosedStackItemRequest.random_insert
-    num_items=((rand() * 8)+1).to_i
+    num_items=((rand() * 6)+1).to_i
     self.connection.execute %Q{
      insert into closed_stack_item_requests(dng_session_id,patron_id,item_id,request_time)
       (select -1,
