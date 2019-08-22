@@ -2,7 +2,7 @@ class IssJournalsController < ApplicationController
   layout 'iss_journals'
 
   def index
-    @iss_journals=IssJournal.where('pubblicato')
+    @iss_journals=IssJournal.where('pubblicato').order(:keytit)
   end
   def infopage
   end

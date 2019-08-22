@@ -10,7 +10,8 @@ class IssIssue < ActiveRecord::Base
 
   def numerazione
     r = "#{self.annata}, #{self.fascicolo}"
-    r << " (#{self.info_fascicolo})" if self.info_fascicolo!=self.annata
+    r << " (#{self.info_fascicolo})" if self.info_fascicolo!=self.annata and !self.info_fascicolo.nil?
+    r << " #{self.extra_info}"
     r
   end
 

@@ -3,8 +3,7 @@ module IssArticlesHelper
   def iss_journals_index(records)
     res=[]
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))) +
-                              content_tag(:td, r.id))
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))))
     end
     content_tag(:table, res.join.html_safe)
   end
@@ -22,10 +21,17 @@ module IssArticlesHelper
   def iss_pages_index(records)
     res=[]
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, link_to(r.imagepath, iss_page_path(r.id))) +
-                              content_tag(:td, link_to(r.article_title, iss_article_path(r.article_id), style:'font-size:140%' )) +
-                              content_tag(:td, link_to(r.journal_title, iss_journal_path(r.journal_id))) +
-                              content_tag(:td, link_to(r.annata, iss_issue_path(r.issue_id))))
+      pagine=r.pagine.gsub(/{|}/,'').split(',')
+      page_ids=r.page_ids.gsub(/{|}/,'')
+      i=0
+      links=[]
+      page_ids.split(',').each do |id|
+        links << link_to(pagine[i], iss_page_path(id,qs:"#{params[:qs]}"))
+        i+=1
+      end
+      res << content_tag(:tr, content_tag(:td, link_to(r.article_title, iss_article_path(r.article_id))) +
+                              content_tag(:td, r.journal_title) +
+                              content_tag(:td, links.join(', ').html_safe), style:'font-size:140%')
     end
     content_tag(:table, res.join.html_safe)
   end

@@ -5,9 +5,17 @@
 <% @iss_issues.each do |f| %>
 
 <tr>
- <td colspan="2">
-   <%= link_to("#{f.id} - #{f.numerazione}", toc_iss_issue_url(f), remote:true, method: :get,
-       onclick: "jQuery('#copertina_#{f.id}').toggle();jQuery('#issue_#{f.id}').toggle()") %>
+  <td colspan="2">
+
+
+    <% if !current_user.nil? and current_user.email=='seba' %>
+     <%= link_to("#{f.id} - #{f.numerazione}", toc_iss_issue_url(f), remote:true, method: :get,
+      onclick: "jQuery('#copertina_#{f.id}').toggle();jQuery('#issue_#{f.id}').toggle()") %>
+    <% else %>
+     <%= link_to("#{f.numerazione}", toc_iss_issue_url(f), remote:true, method: :get,
+	 onclick: "jQuery('#copertina_#{f.id}').toggle();jQuery('#issue_#{f.id}').toggle()") %>
+    <% end %>
+
  </td>
 </tr>
 

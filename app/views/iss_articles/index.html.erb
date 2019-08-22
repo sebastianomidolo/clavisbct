@@ -8,7 +8,7 @@
 
 <% end %>
 
-<%= content_tag(:pre, @sql) %>
+<% content_tag(:pre, @sql) %>
 
 <%= content_tag(:h2, "Trovati #{@iss_articles.total_entries} titoli") if @cond!='false' %>
 <%= will_paginate @iss_articles %>

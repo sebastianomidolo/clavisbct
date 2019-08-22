@@ -11,7 +11,7 @@ class IssPage < ActiveRecord::Base
 
   def d_object
     DObject.find_by_sql(%Q{select o.* from d_objects o join attachments a on (a.d_object_id=o.id)
-        join iss.pages i on(a.attachable_type='IssPage' and a.attachable_id=i.id) where i.id=#{self.id}}).first
+       join iss.pages i on(a.attachable_type='IssPage' and a.attachable_id=i.id) where i.id=#{self.id}}).first
   end
 
   def diskfilename
@@ -31,6 +31,7 @@ class IssPage < ActiveRecord::Base
 
   def fulltext_store
     o=self.d_object
+    return false if o.nil?
     text=self.extract_fulltext_from_pdf.encode(:xml=>:text)
     o.edit_tags(fulltext:text)
     o.save
@@ -38,7 +39,7 @@ class IssPage < ActiveRecord::Base
   end
 
   def fulltext
-    self.d_object.xmltag(:fulltext)
+    self.d_object.nil? ? '' : self.d_object.xmltag(:fulltext)
   end
 
 

@@ -1,0 +1,18 @@
+<%=
+  if @iss_journal.blank?
+   content_tag(:h2, "Ricerca full text")
+  else
+   content_tag(:h2, "Ricerca full text in <em>#{@iss_journal.title}</em>".html_safe)
+  end
+ %>
+
+<%= form_tag(iss_pages_url, :method=>:get) do %>
+
+<%= text_field_tag('qs', params[:qs]) %>
+
+<%= hidden_field_tag(:journal_id, @iss_journal.id) if !@iss_journal.nil? %>
+
+
+<%= submit_tag('Cerca') %>
+
+<% end %>
