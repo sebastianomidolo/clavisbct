@@ -1,0 +1,6 @@
+<%= content_tag(:div, "Repertorio: <b>#{@bio_iconografico_card.namespace_to_label}</b><br/>Scheda: <b>#{@bio_iconografico_card.numero_scheda}</b>".html_safe) %>
+
+<%= content_tag(:p, "Intestazione: <b>#{@bio_iconografico_card.intestazione}</b>".html_safe) %>
+
+<%= link_to(image_tag(bctcard_path(@bio_iconografico_card, :format=>'jpg', :size=>'400x600')), bctcard_path(@bio_iconografico_card, format:'jpg')) %>
+

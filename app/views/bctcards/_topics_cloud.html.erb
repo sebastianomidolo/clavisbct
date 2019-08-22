@@ -1,0 +1,22 @@
+<link rel="stylesheet" type="text/css" href="/jqcloud.css" />
+
+<%
+  @tag_cloud=BioIconograficoTopic.tagcloud(60,params[:namespace]).collect do |t|
+  heading = t['intestazione'].gsub('&amp;lt;', '<').gsub('&amp;gt;', '>').gsub('&amp;apos;', "'");
+  heading = heading.gsub('&lt;', '<').gsub('&gt;','>');
+  w=t['count'].to_i
+  {text: heading, weight: w, link: bctcards_path(topic_id:t['id'],namespace:params[:namespace])}
+ end
+%>
+
+<script type="text/javascript">
+  var word_array =  <%= raw @tag_cloud.to_json %> ;
+  $(function() {
+    // When DOM is ready, select the container element and call
+    // the jQCloud method, passing the array of words as the first argument.
+    $("#topics_cloud_div").jQCloud(word_array);
+  });
+</script>
+
+<div class="container" id="topics_cloud_div" style="width: 800px; height: 350px; margin-left: 20px;" align="center"></div>
+

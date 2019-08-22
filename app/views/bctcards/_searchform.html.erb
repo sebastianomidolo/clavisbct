@@ -1,0 +1,5 @@
+<%= form_tag(bctcards_url, :method=>:get) do %>
+ <%= text_field_tag('qs', params[:qs]) %>
+ <%= hidden_field_tag(:namespace, @namespace) %>
+ <%= submit_tag('Cerca') %>
+<% end %>

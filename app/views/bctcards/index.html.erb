@@ -1,0 +1,34 @@
+<% if params[:lettera].blank? %>
+<% content_tag(:div, "Totale schede inserite: #{BioIconograficoCard.conta(params)}") %>
+<% else %>
+<%= info = params[:numero].blank? ? '' : " (a partire dalla numero #{params[:numero]})"
+ content_tag(:div, "<b>#{BioIconograficoCard.conta(params)}</b> schede per la lettera #{params[:lettera]}#{info}".html_safe) %>
+<% end %>
+
+<% if flash[:notice] %>
+    <div class="notice"><%= flash[:notice] %></div>
+<% end %>
+
+
+<% if @show_searchbox %>
+ <%= render partial:'searchform' %>
+<% end %>
+
+<% if @bio_iconografico_cards.respond_to?('total_pages') %>
+<%=
+  if params[:namespace].blank?
+   "Trovate #{@bio_iconografico_cards.total_entries} schede".html_safe
+  else
+   "Trovate #{@bio_iconografico_cards.total_entries} schede in <b>#{BioIconograficoCard.namespaces[params[:namespace].to_sym]}</b>".html_safe
+  end
+%>
+<%= will_paginate @bio_iconografico_cards, renderer: BootstrapPagination::Rails %>
+<% else %>
+Poiché non tutte le intestazioni sono già state normalizzate ed è comunque possibile
+l’interrogazione tramite parole tronche, si consiglia, per quanto possibile, l’utilizzo di termini
+puntuali.<br/>
+<% end %>
+
+<%= bctcards_list(@bio_iconografico_cards) %>
+
+<%= content_tag(:div, (render(partial:'topics_cloud')),style:'margin-top:82px;margin-left:12px') if @bio_iconografico_cards==[] %>
