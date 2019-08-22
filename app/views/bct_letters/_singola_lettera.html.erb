@@ -62,7 +62,11 @@
 
 <%= content_tag(:tr, content_tag(:th, 'Allegati') + content_tag(:td, @bct_letter.allegati)) if !@bct_letter.allegati.blank? %>
 
+<!--
 <tr><th>Fondo</th><td><%= "#{@bct_letter.bct_fondo.to_label} - <b>ID lettera: #{@bct_letter.id}</b>".html_safe-%></td></tr>
+-->
+
+<tr><th>Fondo</th><td><%= "#{@bct_letter.bct_fondo.to_label}".html_safe-%></td></tr>
 
 <%= content_tag(:tr, content_tag(:th, 'Provenienza') + content_tag(:td, @bct_letter.provenienza)) if !@bct_letter.provenienza.blank? %>
 

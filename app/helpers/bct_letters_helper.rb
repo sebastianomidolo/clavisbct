@@ -23,7 +23,7 @@ module BctLettersHelper
   def bct_letters_menu_orizzontale
     r=[]
     links=[
-           ['ClavisBCT', '/'],
+           ['Home', '/bct_letters/static_intro'],
            ['Lettere', '/bct_letters'],
            ['Mittenti e destinatari', '/bct_people'],
           ]

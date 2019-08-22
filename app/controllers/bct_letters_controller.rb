@@ -4,7 +4,7 @@ class BctLettersController < ApplicationController
   # before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
-  load_and_authorize_resource
+  load_and_authorize_resource only: [:edit,:create,:update]
 
 
   layout 'lettereautografe'
@@ -49,8 +49,6 @@ class BctLettersController < ApplicationController
   end
 
 
-
-
   def show
     respond_with(@bct_letter)
   end
@@ -91,6 +89,9 @@ class BctLettersController < ApplicationController
   def random_letter
     # @bct_letter=BctLetter.random_letter_with_abstract
     @bct_letter=BctLetter.random_letter_with_pdf
+  end
+
+  def static_intro
   end
 
   private

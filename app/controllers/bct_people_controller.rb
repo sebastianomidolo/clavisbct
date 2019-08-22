@@ -1,7 +1,7 @@
 class BctPeopleController < ApplicationController
   before_filter :set_bct_person, only: [:show, :edit, :update, :destroy]
-  # before_filter :authenticate_user!, only: [:edit, :update, :destroy]
-  before_filter :authenticate_user!
+  before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  # before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
   layout 'lettereautografe'

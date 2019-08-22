@@ -1,6 +1,6 @@
 
 <%= simple_form_for(@bct_person, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
-  <%= f.input :denominazione, hint: 'nome', placeholder: 'autore o destinatario della lettera' %>
+  <%= f.input :denominazione, hint: '', placeholder: 'autore o destinatario della lettera' %>
   <%= hidden_field_tag(:fondo_id,@fondo_corrente.id) if !@fondo_corrente.nil? %>
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
 <% end %>

@@ -1,10 +1,10 @@
 class BctPlacesController < ApplicationController
   before_filter :set_bct_place, only: [:show, :edit, :update, :destroy]
-  # before_filter :authenticate_user!, only: [:edit, :update, :destroy]
-  before_filter :authenticate_user!
+  before_filter :authenticate_user!, only: [:edit, :update, :destroy]
+  # before_filter :authenticate_user!
   before_filter :trova_fondo_corrente
 
-  # layout 'lettereautografe'
+  layout 'lettereautografe'
 
   def show
     @bct_person=BctPerson.find(params[:bct_person_id]) if !params[:bct_person_id].nil?
