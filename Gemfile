@@ -44,7 +44,7 @@ gem 'will_paginate', '~> 3.0.0'
 
 gem 'rmagick'
 
-# gem "ruby-tcl", "~> 0.1.1"
+gem "ruby-tcl", "~> 0.1.1"
 
 gem 'htmlentities'
 

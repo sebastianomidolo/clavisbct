@@ -1,12 +1,8 @@
 <% content_tag(:div, link_to("Ultima scheda inserita...", build_link('sp_items/last'))) %>
 <% content_tag(:div, link_to("Una scheda a caso...", build_link('sp_items/random'))) %>
 
-<%= will_paginate @sp_bibliographies %> (non funzionano ancora questi links, lo so)
+<%= will_paginate_wrapper @sp_bibliographies %>
 
-
-<% links=will_paginate @sp_bibliographies %>
-
-
-<%= content_tag(:div, sp_bibliographies_list(@sp_bibliographies)) %>
+<%= content_tag(:div, sp_bibliographies_list(@sp_bibliographies), style:'margin-top: 2em; margin-left: 0 em') %>
 
 

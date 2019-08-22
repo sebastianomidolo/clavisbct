@@ -2,7 +2,11 @@
 
 <%= content_tag(:div, sp_bibliography_cover_image(@sp_bibliography)) %>
 
-<%= content_tag(:h4, "La bibliografia") %>
+<% content_tag(:h4, "La bibliografia") %>
+
+
+<%= content_tag(:div, @sp_bibliography.html_description.html_safe, style:'padding-top: 2em;padding-bottom: 1em') %>
+
 
 <%= content_tag(:div, sp_section_list_sections(@sp_bibliography.toplevel_sections)) %>
 

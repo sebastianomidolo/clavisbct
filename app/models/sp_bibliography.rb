@@ -100,7 +100,7 @@ class SpBibliography < ActiveRecord::Base
     end
     SpItem.connection.execute("update sp.sp_items set updated_at = created_at where bibliography_id=#{SpItem.connection.quote(self.id)} AND updated_at isnull;")
     puts "items per bibliografia #{self.id}"
-    last_item=SpItem.find_all_by_bibliography_id(self.id, :order=>'updated_at desc', :limit=>1).first
+    last_item=SpItem.find_all_by_bibliography_id(self.id, :order=>'updated_at asc', :limit=>1).first
     if last_item.nil?
       # puts "nessun titolo"
     else
@@ -109,11 +109,11 @@ class SpBibliography < ActiveRecord::Base
     timestamp = last_item.nil? ? nil : last_item.updated_at
     # puts timestamp
     SenzaParola::sp_items_updated_after(self.id, timestamp).each do |item_id|
-      # puts "leggo item con item_id #{item_id} e bibliography_id=#{self.id}"
+      puts "leggo item con item_id #{item_id} e bibliography_id=#{self.id}"
       iteminfo=sp_read_item_info(self.id, item_id)
       sp_item=SpItem.find_by_bibliography_id_and_item_id(self.id,item_id)
       if sp_item.nil?
-        # puts "nuovo sp_item per #{self.id} => #{item_id}"
+        puts "nuovo sp_item per #{self.id} => #{item_id}"
         next
       else
         # puts "aggiorno sp_item.id: #{sp_item.id} #{sp_item.item_id}"
@@ -123,14 +123,19 @@ class SpBibliography < ActiveRecord::Base
         end
         sp_item.attributes.keys.each do |k|
           k=k.to_sym; next if [:id, :item_id, :bibliography_id].include?(k)
-          next if k==:updated_at or iteminfo[k].blank?
-
-          val = iteminfo[k].force_encoding('utf-8').encode('utf-8')
-          sp_item[k]=enc.decode(val)
+          if k==:updated_at
+            puts "Attenzione: updated_at: #{iteminfo[k]}"
+          end
+          if k==:updated_at or iteminfo[k].blank?
+            sp_item[k] = iteminfo[k]
+          else
+            val = iteminfo[k].force_encoding('utf-8').encode('utf-8')
+            sp_item[k]=enc.decode(val)
+          end
 
         end
       end
-      sp_item.updated_at=Time.now
+      # sp_item.updated_at=Time.now
       sp_item.save!
       # puts "sp_item: #{sp_item.inspect}"
     end

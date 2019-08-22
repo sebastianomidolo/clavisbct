@@ -28,16 +28,22 @@ module SpBibliographiesHelper
   end
 
   def sp_bibliography_cover_image(record)
-    image_tag(cover_image_sp_bibliography_path(record)) if !record.cover_image.nil?
+    image_tag("https://#{request.host_with_port}#{cover_image_sp_bibliography_path(record)}") if !record.cover_image.nil?
   end
 
   def sp_bibliography_short_description(record)
     return '' if record.html_description.blank?
     res=SpBibliography.sanifica_html(record.html_description)
+
     i=res.index('<br')
-    i = (i.nil? or i>300) ? 300 : i-1
-    # content_tag(:div, res[0..i].html_safe)
-    content_tag(:div, res.html_safe)
+    i = (i.nil? or i>100) ? 100 : i-1
+    if res.length > 100
+      add=' [...]'
+    else
+      add=''
+    end
+    content_tag(:div, "#{res[0..i]}#{add}".html_safe)
+    # content_tag(:div, res.html_safe)
   end
 
   def sp_bibliography_check_items(record)
