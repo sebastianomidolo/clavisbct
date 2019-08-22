@@ -535,4 +535,8 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     ClavisItem.connection.execute(sql).to_a
   end
 
+  def ClavisItem.trova_item_ricollocato(item)
+    return nil if item.custom_field1.to_i == 0
+    return self.find(item.custom_field1)
+  end
 end

@@ -23,6 +23,7 @@ module SchemaCollocazioniCentraleHelper
         col2=r.scaffale
         col3=r.piano
       end
+      col2 = content_tag(:b, col2) if !col2.nil? and r.locked
       lnk = user_signed_in? ? link_to('[vedi]', schema_collocazioni_centrale_path(r)) : ''
       res << content_tag(:tr, content_tag(:td, lnk) +
                               content_tag(:td, col2) +

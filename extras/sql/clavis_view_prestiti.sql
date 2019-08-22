@@ -85,6 +85,9 @@ durata,renew_count,item_media,last_seen,patron_id
 /*
  * Comando da dare a mano per estrarre i dati necessari a Fabrizio Sciutti per le statistiche annuali 
 
+\o /home/storage/preesistente/static/stat/2018_prestiti_bct.csv
+\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2017-11-01' AND '2017-12-31' ORDER BY loan_id) TO stdout csv header
+\o
 
 \o /home/storage/preesistente/static/stat/2017_prestiti_bct.csv
 \copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2016-11-01' AND '2016-12-31' ORDER BY loan_id) TO stdout csv header

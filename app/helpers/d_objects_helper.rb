@@ -29,7 +29,7 @@ module DObjectsHelper
           [:fulltext,:album,:title,:artist,:tracknumber,:au,:ti,:an].each do |tg|
             v=record.xmltag(tg)
             next if v.blank?
-            res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v))
+            res << content_tag(:tr, content_tag(:td, tg) + content_tag(:td, v.html_safe))
           end
         end
         next

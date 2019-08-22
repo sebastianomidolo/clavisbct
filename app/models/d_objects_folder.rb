@@ -3,7 +3,8 @@ include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
   attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename
-  after_save :set_clavis_manifestation_attachments, :derived_symlinks
+  # after_save :set_clavis_manifestation_attachments, :derived_symlinks
+  after_save :derived_symlinks
   before_save :check_filesystem
   before_destroy :reset_sequence
   has_many :d_objects, order:'lower(name)'
@@ -291,11 +292,14 @@ class DObjectsFolder < ActiveRecord::Base
   def derived_symlinks
     return if self.changes[:access_right_id].nil?
     old,new=self.changes[:access_right_id]
+    puts "qui: old = #{old}"
+    puts "qui: new = #{new}"
+    puts "free_pdf_filename: #{self.free_pdf_filename}"
     # 0 - Risorsa libera
     # 3 - Risorsa con accesso ristretto agli utenti autenticati con credenziali DiscoveryNG
     case old
     when 0
-      # puts "Era risorsa libera"
+      puts "Era risorsa libera"
       FileUtils.rm(self.free_pdf_filename, force:true) if self.free_pdf_filename
     when 3
       FileUtils.rm(self.restricted_pdf_filename, force:true)
@@ -304,6 +308,7 @@ class DObjectsFolder < ActiveRecord::Base
     when 0
       FileUtils.ln_s(self.derived_pdf_filename,self.free_pdf_filename,force:true) if self.free_pdf_filename
     when 3
+      puts "#{self.derived_pdf_filename} => #{self.restricted_pdf_filename}"
       FileUtils.ln_s(self.derived_pdf_filename,self.restricted_pdf_filename,force:true)
     end
 

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20181113125638) do
+ActiveRecord::Schema.define(:version => 20190228144254) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -178,6 +178,10 @@ ActiveRecord::Schema.define(:version => 20181113125638) do
     t.boolean  "printed",        :default => false, :null => false
     t.datetime "request_time"
     t.integer  "daily_counter"
+    t.integer  "created_by"
+    t.boolean  "archived",       :default => false, :null => false
+    t.datetime "confirm_time"
+    t.datetime "print_time"
   end
 
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
@@ -390,6 +394,11 @@ ActiveRecord::Schema.define(:version => 20181113125638) do
 
   create_table "manifestations_d_objects", :id => false, :force => true do |t|
     t.integer "d_object_id"
+    t.integer "manifestation_id"
+  end
+
+  create_table "manifestations_d_objects_folders", :id => false, :force => true do |t|
+    t.integer "d_object_folder_id"
     t.integer "manifestation_id"
   end
 
@@ -707,6 +716,13 @@ ActiveRecord::Schema.define(:version => 20181113125638) do
     t.string  "processor",         :limit => 2
     t.string  "location",          :limit => 80
     t.integer "monitor_id"
+  end
+
+  create_table "xhr_requests", :force => true do |t|
+    t.string   "ip"
+    t.string   "target"
+    t.string   "qs"
+    t.datetime "timestamp"
   end
 
 end

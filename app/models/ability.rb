@@ -98,6 +98,10 @@ class Ability
       can :show, ClavisPatron
     end
 
+    if user.role?('iss_page__manager')
+      can :manage, IssPage
+    end
+
     if user.role?('work_station_manager')
       can :manage, WorkStation
     end

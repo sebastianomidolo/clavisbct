@@ -180,6 +180,9 @@ class DObject < ActiveRecord::Base
     end
   end
 
+  def fulltext=(t) self.edit_tags(fulltext:t) end
+  def fulltext() self.xmltag('fulltext') end
+
   def x_mid=(t) self.edit_tags(mid:t) end
   def x_mid() self.xmltag('mid') end
 

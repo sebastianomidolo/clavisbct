@@ -25,7 +25,8 @@ select xmlelement(
   from clavis.manifestation cm
    left join clavis.export_copie c using(manifestation_id)
    left join clavis.export_authorities a using(manifestation_id)
-   where cm.bib_level='m'
+   where cm.bib_level in ('m','s','a')
+         and cm.bid_source='SBN'
   -- limit 10
 ;
 SELECT xmlcomment('intermedio: ' || now());

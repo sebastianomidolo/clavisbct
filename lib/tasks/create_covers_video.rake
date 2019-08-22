@@ -28,8 +28,8 @@ def get_manifestations
   FROM clavis.item ci JOIN clavis.manifestation cm USING(manifestation_id)
     JOIN clavis.collocazioni cc USING(item_id)
      WHERE length(cm."EAN")=13 AND home_library_id = 2
-    and loan_status='B' and manifestation_id!=0 and item_media='F'
-    order by ci.check_out DESC limit 200;}
+    and loan_status='A' and ci.check_in notnull and manifestation_id!=0 and item_media='F'
+    order by ci.check_in DESC limit 200;}
   puts sql
   ClavisManifestation.connection.execute(sql).to_a
 end
@@ -67,12 +67,17 @@ def raggruppa_copertine(workdir)
     if seq > 4
       if (outcnt % 2) == 0
         titolo='Muovi il mouse per accedere al catalogo'
-        bcolor='none'
-        fcolor='SkyBlue'
+        # bcolor='none'
+        # fcolor='SkyBlue'
+
+        bcolor='white'
+        fcolor='black'
+
       else
         bcolor='white'
         fcolor='black'
-        titolo='Libri prestati ieri dalle BCT'
+        titolo="#{Time.now}"
+        titolo="Libri da poco restituiti alla biblioteca"
       end
       outfile="#{wdir}/frame_#{format '%02d',outcnt}.jpg"
       # cmd=%Q{/usr/bin/montage #{files.join(' ')} -tile x2 -background none -title '#{titolo}' -shadow #{outfile}}
@@ -102,6 +107,17 @@ def sovrapponi_con_video_di_sfondo(workdir)
   Kernel.system(cmd)
 end
 
+def create_covers_zipfile(workdir)
+  wdir=File.join(workdir, 'video')
+  zip_filename="/home/storage/preesistente/static/porteus_screensaver.zip"
+  File.delete(zip_filename) if File.exists?(zip_filename)
+  Zip::File.open(zip_filename, Zip::File::CREATE) do |zipfile|
+    Dir.glob("#{wdir}/frame_*").sort.each do |f|
+      zipfile.add(File.basename(f), f)
+    end
+  end
+  puts "Scritto in #{zip_filename}"
+end
 
 
 task :create_covers_video => :environment do
@@ -109,6 +125,7 @@ task :create_covers_video => :environment do
   recupera_copertine(workdir,ean_and_ids)
   etichetta_copertine(workdir,ean_and_ids)
   raggruppa_copertine(workdir)
-  produci_video(workdir)
-  sovrapponi_con_video_di_sfondo(workdir)
+  create_covers_zipfile(workdir)
+  # produci_video(workdir)
+  # sovrapponi_con_video_di_sfondo(workdir)
 end

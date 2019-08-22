@@ -1,7 +1,9 @@
 <% html=clavis_consistency_note_casse(@clavis_consistency_note).html_safe %>
 jQuery('.panel-title a',jQuery('#issues').parent()).text('Fascicoli (click per maggiori informazioni)');
+// jQuery('.collapsed').first().attr('class', 'in')
+// jQuery('#issues').toggle();
 <% if !html.blank? %>
-jQuery('#issues').after('<p>Materiale in deposito esterno (è necessaria la prenotazione presso la Biblioteca Civica Centrale)<%= html -%></p>');
+jQuery('#issues').after('<p>Solo per il materiale della <b>Biblioteca Civica Centrale</b> in deposito esterno è necessario effettuare la prenotazione presso la Biblioteca:<%= html -%></p>');
 <% end %>
 
 

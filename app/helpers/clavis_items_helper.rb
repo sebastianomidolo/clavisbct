@@ -370,11 +370,12 @@ module ClavisItemsHelper
   def clavis_item_info(record)
     # return clavis_item_formatta_info('test')
     info=record.item_info
+    # return "info: #{record.inspect}"
     return '' if info.nil?
     res=[]
     res << "Scaffale aperto - sezione #{info['os_section']}" if !info['os_section'].blank?
     res << "In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}" if !info['label'].blank?
-    res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}") if !info['piano'].blank?
+    res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}") if !info['piano'].blank? and record.home_library_id==2
     res << " <em>(sulla notizia è presente almeno una prenotazione)</em>" if record.controlla_prenotazioni
     if !info['daily_counter'].blank?
       res << %Q{<h2>Richiesta a magazzino numero <b>#{info['daily_counter']}</b>

@@ -208,7 +208,11 @@ module ClavisManifestationsHelper
       content = clavis_manifestation_attachments_render(record,true)
     end
     # Disabilitato 31 ottobre 2018 - verificare il funzionamento
-    return [nil,nil]
+    if dng_session and dng_session.patron.opac_username=='sebastiano'
+      return ['Versione elettronica', 'link al pdf qui']
+    else
+      return [nil,nil]
+    end
     return [nil,nil] if content.blank?
     [tabtitle,content_tag(:span, testo_avviso) + content_tag(:div, content.html_safe)]
   end

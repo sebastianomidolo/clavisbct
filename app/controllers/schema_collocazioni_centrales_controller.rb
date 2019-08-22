@@ -12,7 +12,8 @@ class SchemaCollocazioniCentralesController < ApplicationController
       fd.write "sshd: #{request.remote_addr}\n"
       fd.close
     end
-    order = params[:order]=='p' ? 'bs.name,scaffale,palchetto' : 'locked desc,scaffale,bs.name,palchetto'
+    # order = params[:order]=='p' ? 'bs.name,scaffale,palchetto' : 'locked desc,scaffale,bs.name,palchetto'
+    order = params[:order]=='p' ? 'bs.name,scaffale,palchetto' : 'scaffale,bs.name,palchetto'
     cond = []
     cond << "bib_section_id=#{params[:bib_section_id]}" if !params[:bib_section_id].blank?
     @collocazioni=SchemaCollocazioniCentrale.list({order:order,conditions:cond})

@@ -47,18 +47,22 @@ module DigitalObjects
   def get_bibdata_from_filename
     res={}
     self.filename.split('/').each do |part|
+      # puts part.inspect
       part.split('#').each do |e|
         next if e.blank?
         tag,data=e.split('_')
-        if tag=='mid'
+        if tag=='mid' and !data.nil?
           data.strip!
-          puts "tag #{tag} contiene '#{data}'"
+          # puts "tag #{tag} contiene '#{data}'"
           # Causa errore nella formulazione della stringa nome file, ci sono casi in cui
           # il campo "mid" ha un contenuto errato, nel senso che oltre al numero della manifestation_id
           # c'è altro testo che non va considerato
           data = data.split(/ |\./).first.strip
+          # Controllo che sia un integer:
+          data = nil if (data =~ /^\d*$/).nil?
           puts "ora tag #{tag} contiene '#{data}'"
         end
+        next if data.blank?
         ts=tag.to_sym
         res[ts]=data if FILENAME_METADATA_TAGS.include?(ts) and !data.blank?
       end
@@ -68,13 +72,13 @@ module DigitalObjects
   end
 
   def write_tags_from_filename(do_save=true)
-    puts "in write_tags_from_filename id #{self.id}"
+    # puts "in write_tags_from_filename id #{self.id}"
     v=self.get_bibdata_from_filename
     if self.tags.nil?
       # puts "nuovo: v = #{v}"
       self.tags=v.to_xml(:root=>:r,:skip_instruct=>true,:indent=>0)
     else
-      puts "tags esiste, aggiungo #{v} A: #{self.tags}"
+      # puts "tags esiste, aggiungo #{v} A: #{self.tags}"
       doc = REXML::Document.new(self.tags)
       if doc.root.name!='r'
         puts "cambio elemento root da '#{doc.root.name}' a 'r'"
@@ -113,12 +117,12 @@ module DigitalObjects
     else
       doc=REXML::Document.new(self.tags)
     end
-    puts "in edit_tags, prima: #{doc.to_s}"
+    # puts "in edit_tags, prima: #{doc.to_s}"
     hash.each_pair do |k,v|
       t=k.to_s
-      puts "accedo a elemento #{t} che contiene elemento di tipo #{v.class}"
+      # puts "accedo a elemento #{t} che contiene elemento di tipo #{v.class}"
       el = doc.root.elements[t]
-      puts "(#{k}=>#{v}) - el: #{el.class} => '#{el.to_s}'"
+      # puts "(#{k}=>#{v}) - el: #{el.class} => '#{el.to_s}'"
       doc.root.elements.delete(el) if !el.nil?
       next if v.blank?
       if v.class==String
@@ -126,12 +130,12 @@ module DigitalObjects
         el.add_text(v)
         doc.root.elements << el
       else
-        puts "Elemento hash da associare a #{t}: #{v.inspect}"
+        # puts "Elemento hash da associare a #{t}: #{v.inspect}"
         el = self.add_xlm_elements(t, v)
         doc.root.add_element(el) if !el.elements.empty?
       end
     end
-    puts "in edit_tags, dopo: #{doc.to_s}"
+    # puts "in edit_tags, dopo: #{doc.to_s}"
     self.tags=doc.to_s
   end
 
@@ -194,7 +198,7 @@ module DigitalObjects
   def digital_object_read_metadata
     fm=FileMagic.mime
     fname = File.join(digital_objects_mount_point,filename)
-    puts "fname: #{fname}"
+    # puts "fname: #{fname}"
     fstat = File.stat(fname)
     self.mime_type = fm.file(fname)
     self.bfilesize = fstat.size

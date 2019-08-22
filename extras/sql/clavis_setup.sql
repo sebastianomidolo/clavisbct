@@ -126,3 +126,15 @@ V - In vetrina
 */
 
 
+create table clavis.unique_items as select i1.home_library_id,i1.item_id from clavis.item as i1
+   left join clavis.item as i2 on(i1.manifestation_id=i2.manifestation_id and i1.item_id!=i2.item_id)
+       where i1.manifestation_id != 0 AND i1.item_status!='E' AND i2.item_id is null;
+alter table clavis.unique_items add primary key(item_id);
+
+create index ean_clavis_purchase_proposal_ndx on clavis.purchase_proposal(ean) where ean!='';
+create index ean_clavis_manifestation_ndx on clavis.manifestation("EAN") where "EAN"!='';
+
+
+alter table clavis.item add column digitalized boolean;
+update clavis.item set digitalized = true where manifestation_id in (select attachable_id from attachments
+   where attachable_type = 'ClavisManifestation');

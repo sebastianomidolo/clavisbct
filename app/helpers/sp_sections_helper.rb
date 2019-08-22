@@ -28,7 +28,7 @@ module SpSectionsHelper
                                      link_to(s.title,
                                              build_link(sp_section_path(s, :number=>s.number)))) + ski + sublist)
     end
-    res.size==0 ? '' : content_tag(:ul, res.join("\n").html_safe)
+    res.size==0 ? '' : content_tag(:ul, res.join("\n").html_safe, style:'font-size: 120%')
   end
 
 end

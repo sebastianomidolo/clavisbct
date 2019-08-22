@@ -1,0 +1,12 @@
+<%= simple_form_for(@d_object) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.text_area :fulltext, value:@d_object.fulltext.html_safe %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva modifiche' %>
+  </div>
+<% end %>
+
