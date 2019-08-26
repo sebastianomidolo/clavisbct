@@ -24,7 +24,7 @@ def recupera_copertine(workdir,ean_and_ids)
 end
 
 def get_manifestations
-  sql=%Q{SELECT cm."EAN", cm.manifestation_id, cc.collocazione
+  sql=%Q{SELECT cm."EAN", cm.manifestation_id, cc.collocazione, cm.title
   FROM clavis.item ci JOIN clavis.manifestation cm USING(manifestation_id)
     JOIN clavis.collocazioni cc USING(item_id)
      WHERE length(cm."EAN")=13 AND home_library_id = 2
@@ -34,10 +34,11 @@ def get_manifestations
   ClavisManifestation.connection.execute(sql).to_a
 end
 
-def etichetta_copertine(workdir,ids_and_collocazione)
+def etichetta_copertine(workdir,ids_and_collocazione,summary_fd)
   Kernel.system("rm -f #{workdir}/video/???.png")
   cnt=0
   ids_and_collocazione.each do |r|
+    summary_fd.write("<tr><td>#{r['collocazione']}</td><td><a href=https://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}>#{r['title'].strip}</a></td></tr>\n\n")
     fname="#{workdir}/cover_#{r['manifestation_id']}"
     # puts %Q{#{fname}: #{File.size(fname)} - collocazione: #{r['collocazione']}}
     next if File.size(fname)==185
@@ -123,7 +124,14 @@ end
 task :create_covers_video => :environment do
   ean_and_ids=get_manifestations
   recupera_copertine(workdir,ean_and_ids)
-  etichetta_copertine(workdir,ean_and_ids)
+  summary_fd=File.open(File.join(workdir, "video", "summary.html"), 'w')
+  summary_fd.write(%Q{<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Elenco libri del salvaschermo</title></head>
+<body><h2>Libri del salvaschermo di oggi</h2>
+<table>
+})
+  etichetta_copertine(workdir,ean_and_ids,summary_fd)
+  summary_fd.write("</table></body></html>\n")
+  summary_fd.close
   raggruppa_copertine(workdir)
   create_covers_zipfile(workdir)
   # produci_video(workdir)
