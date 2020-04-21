@@ -138,3 +138,22 @@ create index ean_clavis_manifestation_ndx on clavis.manifestation("EAN") where "
 alter table clavis.item add column digitalized boolean;
 update clavis.item set digitalized = true where manifestation_id in (select attachable_id from attachments
    where attachable_type = 'ClavisManifestation');
+
+
+-- 17 aprile 2020
+drop table if exists clavis.buchi_dvd;
+create table clavis.buchi_dvd as
+ select item_id,collocation,specification from clavis.item where item_media='Q' and collocation like 'DVD%' and owner_library_id=2;
+update clavis.buchi_dvd set specification = NULL where specification='';
+update clavis.buchi_dvd set collocation=replace(collocation, '/', ',') where specification is null and collocation ~ '/';
+alter table clavis.buchi_dvd alter COLUMN specification type integer USING specification::integer;
+update clavis.buchi_dvd set collocation=replace(collocation, ' ', '.')  where collocation ~ ' ' and specification is null;
+update clavis.buchi_dvd set collocation=replace(collocation, ',', '.')  where collocation ~ ',' and specification is null;
+delete from clavis.buchi_dvd where split_part(collocation, '.', 2) ~* '[a-z]';
+update clavis.buchi_dvd set specification = split_part(collocation, '.', 2)::integer
+where specification is null and split_part(collocation, '.', 2) ~ '\d';
+delete from clavis.buchi_dvd where specification is null;
+
+------------------
+
+
