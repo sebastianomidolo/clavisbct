@@ -112,7 +112,7 @@ task :find_missing_values => :environment do
       return "#{section}.#{collocation} (#{k.min}-#{k.max})#{msg}\n"
     end
 
-    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCTA'].each do |s|
+    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCT20','BCTA'].each do |s|
       outfile="/usr/local/www/html/mn/00_#{s}_missing_numbers.txt"
       puts outfile
       File.delete(outfile) if File.exists?(outfile)
@@ -131,25 +131,18 @@ task :find_missing_values => :environment do
 
 
   def trova_salti_dvd
-    sql=%Q{
-     create temp table buchi_dvd as select item_id,collocation,
-       split_part(collocation, '.', 1) AS sigla, 
-       split_part(replace(collocation, '/', '.'), '.', 2) AS catena
-     from clavis.item
-     where collocation like 'DVD.%' and owner_library_id=2;
-     delete from buchi_dvd  where catena ~* '[a-z]';
-     alter table buchi_dvd alter COLUMN catena type integer using catena::integer;
-     with ids as (select catena from generate_series(1,(select max(catena) from buchi_dvd)) as catena) select catena from ids left join buchi_dvd b using(catena) where b.catena is null;}
+  # Vedi extras/sql/clavis_setup.sql 
+  sql=%Q{with ids as
+       (select specification from generate_series(1,(select max(specification) from clavis.buchi_dvd)) as specification)
+     select specification from ids left join clavis.buchi_dvd b using(specification) where b.specification is null;}
+
     cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/02_Centrale_DVD_buchi_collocazione.html -q -d clavisbct_development informhop --command "#{sql}"}
     cmd.gsub!("\n", ' ')
     puts cmd
     Kernel.system(cmd)
   end
   trova_salti_dvd
-
-  # trova_numeri.call('V',2,280000)
-  # exit
-
+  
   # trova_numeri.call('01',2,280000)
   # exit
 
@@ -269,6 +262,10 @@ task :find_missing_values => :environment do
   # http://bctdoc.comperio.it/issues/300
   trova_numeri.call('BPE',803,1)
   trova_numeri.call('STO',803,2288)
+
+  trova_numeri.call('0 - Generale',1125,27000)
+  trova_numeri.call('0',1125,1)
+
 
   # Trova bid duplicati (18 ottobre 2016: spostato in ClavisManifestationsController#bid_duplicati)
   # cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d clavisbct_development informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
