@@ -1,0 +1,15 @@
+<%= form_tag(adabas_inventories_url, :method=>:get) do %>
+
+<p>
+  <%= text_field_tag('qs', params[:qs]) %>
+  <%= label_tag  "qs", "&nbsp;inserire (serie-)inventario / BID / parole in ISBD".html_safe %>
+</p>
+<p>
+
+<p>&nbsp;
+  <%= submit_tag('Cerca') %>
+ <%= link_to("Azzera ricerca", adabas_inventories_path) %>
+</p>
+
+
+<% end %>

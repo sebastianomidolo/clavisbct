@@ -1,0 +1,27 @@
+<%= content_tag(:h2, "Ricerca inventari Adabas 2011") %>
+
+<%= content_tag(:p, "Tipo di ricerca: <b>#{@tipo_ricerca}</b>".html_safe) if !@tipo_ricerca.blank? %>
+
+<%= render partial:'search_form' %>
+
+<%=
+  if @adabas_inventories==[]
+   if params[:qs].blank?
+    ""
+   else
+    "non trovato"
+   end
+  else
+   if @adabas_inventories.total_entries==1
+    "Trovato un esemplare #{content_tag(:div, adabas_inventory_show(AdabasInventory.find(@adabas_inventories.first)))}".html_safe
+   else
+    @showtitles=true
+    "Trovati #{@adabas_inventories.total_entries} esemplari"
+   end
+  end
+%>
+
+
+<%= will_paginate @talking_books, renderer: BootstrapPagination::Rails if @showtitles %>
+
+<%= content_tag(:div, adabas_inventory_list(@adabas_inventories)) if @showtitles %>
