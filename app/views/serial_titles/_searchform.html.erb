@@ -1,0 +1,24 @@
+<%= simple_form_for(@serial_title, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+  <%= hidden_field_tag('serial_list_id', params[:serial_list_id]) %>
+
+  <%= select_tag(:library_id, options_for_select(@serial_list.library_select,
+      params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();') %>
+
+  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select,
+		params[:tipo_fornitura]), :onchange=>'submit();', include_blank:true) %>
+
+  
+  <br/>Pubblicazione <%= select_tag(:sospeso,
+      options_for_select([['Corrente','f'],['Sospesa o cessata','t']],
+		params[:sospeso]), :onchange=>'submit();', include_blank:true) %>
+
+    Lotto <%= select_tag(:estero,
+      options_for_select([['Italiani','f'],['Stranieri','t']],
+		params[:estero]), :onchange=>'submit();', include_blank:true) %>
+
+  <%= link_current_params 'Inserimento nuovo titolo...', new_serial_title_path, params %>
+ 
+
+
+<% end %>

@@ -1,0 +1,9 @@
+<%= content_tag(:h3, "Stampe per #{link_to(@serial_list.to_label,serial_list_path(@serial_list))}".html_safe) %>
+
+<%= render :partial => 'print_searchform' %>
+
+<%= content_tag(:p, "Titolo selezionati per la stampa: #{@serial_titles.count}") %>
+
+<%= link_current_params('[PDF]', print_serial_titles_path(format:'pdf'), params) if @serial_titles.count>0%>
+
+<%= serial_titles_list_readonly(@serial_titles) %>

@@ -1,0 +1,26 @@
+<%= content_tag(:h4, "Importazione dati da archivio testuale") %>
+
+<%= content_tag(:h4, "Lista: #{@serial_list.title}") %>
+
+<%= content_tag(:pre, @serial_list.note) %>
+
+<%=
+  if @sourcefile.blank?
+    content_tag(:div, periodici_import_list_files(@sourcedir))
+  else
+    sourcefname=File.join(@sourcedir,@sourcefile)
+    data=File.read(sourcefname)
+    data=Iconv.conv('utf-8', 'iso-8859-15', data)
+    if File.exists?("#{sourcefname}-siglebib")
+      siglebib_fname="#{sourcefname}-siglebib"
+    else
+      siglebib_fname=File.join(@sourcedir, 'siglebib-default.txt')
+    end
+    siglebib = "Tabella biblioteche: #{siglebib_fname}\n#{File.read(siglebib_fname)}"
+    content_tag(:h4, %Q{Conferma importazione dal file #{link_to(@sourcefile,import_serial_list_path(sourcefile:@sourcefile), method: :put, data: { confirm: 'Confermi importazione titoli?'})}}.html_safe) + content_tag(:h4, link_to("Vedi altri files", import_serial_list_path)) + content_tag(:pre, siglebib) + "Dati: da #{sourcefname}\n" + content_tag(:pre, data)
+
+end
+%>
+
+
+

@@ -1,0 +1,12 @@
+<%= content_tag(:h4, "Fai una copia della lista: #{@serial_list.title}")  %>
+
+<%= simple_form_for(@serial_list, url:clone_serial_list_path) do |f| %>
+  <%= f.error_notification %>
+  <div class="form-inputs">
+    <%= f.input :title, hint: "Titolo della nuova lista", label:false %>
+    <%= f.input :note, as: :text, hint: "Note", label:false, input_html: {cols: 80, rows: 2}  %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value:'Effettua la copia' %>
+  </div>
+<% end %>

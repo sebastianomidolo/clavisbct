@@ -1,0 +1,13 @@
+<%= content_tag(:h3, link_to(@serial_list.to_label,serial_list_path(@serial_list))) %>
+
+<%= render :partial => 'searchform' %>
+
+<%=
+  print = link_current_params('[stampe]', print_serial_titles_path, params)
+  prezzo = @serial_list.sum_prezzo_stimato(params)
+  prezzo_selezione = params[:tipo_fornitura].blank? ? '' : "<b>#{number_to_currency(prezzo)}</b>"
+  prezzo_totale = @serial_list.sum_prezzo_stimato({library_id:params[:library_id],tipo_fornitura:'a,g'})
+  content_tag(:h4, "#{@serial_titles.count} titoli #{print} #{prezzo_selezione} (totale abbonamenti+edicola: <b>#{number_to_currency(prezzo_totale)}</b>)".html_safe)
+%>
+
+<%= @serial_list.locked? ? serial_titles_list_readonly(@serial_titles) : serial_titles_list(@serial_titles) %>

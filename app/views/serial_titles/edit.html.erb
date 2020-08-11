@@ -1,0 +1,15 @@
+<% if !@serial_title.manifestation_id.blank? %>
+  <% cm=ClavisManifestation.find(@serial_title.manifestation_id) %>
+  <p>Titolo in Clavis: <%= link_to(cm.title,ClavisManifestation.clavis_url(cm.id,:show)) %></p>
+<% end %>
+
+<%= render partial:'form' if !@serial_list.locked? %>
+
+<ul>
+<% @serial_title.clavis_libraries.each do |l| %>
+<%= content_tag(:li, "<b>#{l.tipo_fornitura}</b> #{l.label}".html_safe) %>
+<% end %>
+</ul>
+
+<%= content_tag(:pre, @serial_title.textdata) %>
+

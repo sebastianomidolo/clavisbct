@@ -1,0 +1,65 @@
+% Lista periodici
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=2.5cm, right=1.25in]{geometry}
+% \usepackage[a4paper]{geometry}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{32pt}
+
+\usepackage[utf8x]{inputenc}
+
+\textheight=24cm
+
+\renewcommand{\headrulewidth}{.5pt}
+\pagestyle{fancy}
+
+<% params=inputdata.params
+titolo_lista = SerialList.find(params[:serial_list_id]).formula_titolo(params,'---')
+%>
+
+\cfoot{}
+<%= "\\lhead{#{titolo_lista}}" %>
+<%= "\\lfoot{Stampa: #{Time.now.to_date}}" %>
+
+\rfoot{\thepage}
+
+
+\begin{document}
+
+
+
+
+<%=
+if params[:numera_titoli].blank?
+ "\\begin{itemize}"
+   else
+ "\\begin{enumerate}"
+end
+%>
+
+<%
+  res=[]
+  inputdata.each do |e|
+    title = e.title
+    title << " (#{e.library_names})" if !params[:includi_bib].blank?
+    title << " [copie: #{e.libraries.split(',').size}]" if !params[:includi_numcopie].blank?
+    title << " --- #{e.prezzo_stimato} euro" if !params[:includi_prezzi].blank? and !e.prezzo_stimato.blank?
+    res << "\\item{#{title}}\n"
+  end
+%>
+<%= res.join("\n") %>
+
+<%=
+if params[:numera_titoli].blank?
+ "\\end{itemize}"
+   else
+ "\\end{enumerate}"
+end
+%>
+
+
+
+
+\end{document}

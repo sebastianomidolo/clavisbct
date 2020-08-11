@@ -1,0 +1,29 @@
+<%= content_tag(:h3, "Liste periodici") %>
+
+<%= link_current_params 'Creazione nuova lista', new_serial_list_path, params if can? :manage, SerialList %>
+
+<table class='table table-bordered table-condensed table-striped'>
+
+<% @canmanage = true if can? :manage, SerialList %>
+  
+<% @serial_lists.each do |l|
+   note = l.note.blank? ? '' : "<br/>Note: <em>#{l.note}</em>".html_safe
+   %>
+  <tr>
+    <%= content_tag(:td, link_to(l.title, l) + note) %>
+
+    <%= if l.count.to_i==0
+	content_tag(:td, link_to('Importa titoli', import_serial_list_path(l)))
+	else
+	content_tag(:td, "#{l.count} titoli")
+	end
+    %>
+    <%= content_tag(:td, (l.locked? ? 'chiusa' : 'aperta')) %>
+    <%= content_tag(:td, l.year) %>
+    <%= content_tag(:td, link_to('Elimina', l, method: :delete, data: { confirm: 'Are you sure?' })) if l.count.to_i==0 %>
+
+  </tr>
+<% end %>
+</table>
+
+

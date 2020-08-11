@@ -1,0 +1,15 @@
+<%= simple_form_for(@serial_list) do |f| %>
+  <%= f.error_notification %>
+  <div class="form-inputs">
+    <%= f.input :title, hint: "Titolo", label:false %>
+    <%= f.input :year, hint: "Anno", label:false  %>
+    <%= f.input :locked, label:false, hint:'Chiusa' %> 
+    <%= f.input :note, as: :text, hint: "Note", label:false, input_html: {cols: 80, rows: 3}  %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value:'Salva le modifiche' %>
+    <%= link_to("Ignora le modifiche e torna all'indice".html_safe, serial_lists_path) %>
+
+    
+  </div>
+<% end %>

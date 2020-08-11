@@ -1,0 +1,49 @@
+<%= content_tag(:h3, @serial_list.to_label) %>
+
+<%= content_tag(:pre, @serial_list.note) %>
+
+<%= content_tag(:h4, "Stato: #{@serial_list.locked? ? 'Lista a sola lettura, non può essere modificata' : 'Lista attiva, dati modificabili'}") %>
+
+<%= content_tag(:p, "Dati importati da #{@serial_list.import_file}") if !@serial_list.import_file.blank? %>
+
+
+<%= content_tag(:div, "Numero totale dei titoli in lista: #{@serial_list.serial_titles.count}") %>
+<%= content_tag(:div, link_to("#{@serial_list.subscribed_serial_titles_count} titoli acquisiti", serial_titles_path(serial_list_id:@serial_list))) %>
+<%= cnt=@serial_list.unsubscribed_serial_titles_count
+    lnk = cnt==0 ? '' : link_to(' [Cancella titoli non acquisiti]', delete_titles_serial_list_path, method: :delete, data: { confirm: "Confermi cancellazione dei titoli non acquisiti?" }) if !@serial_list.locked? and current_user.email=='seba'
+    if cnt==0
+      content_tag(:div, "Titoli non acquisiti: nessuno".html_safe)
+    else
+      lnk2 = link_to("#{cnt} titoli non acquisiti", serial_titles_path(serial_list_id:@serial_list,library_id:-1))
+      content_tag(:div, "#{lnk2} #{lnk}".html_safe)
+    end
+%>
+
+
+<br/>
+<%= link_to("Accedi alla lista <b>#{@serial_list.title}</b>".html_safe, serial_titles_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) %>
+
+<br/>
+<%= link_to("Importa titoli da archivio testuale (emacs)", import_serial_list_path) if @serial_list.serial_titles.count == 0 %>
+
+<br/>
+<%= link_to("Fornitura per la biblioteca corrente", serial_subscriptions_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) if !@serial_list.locked? %>
+
+<% if can? :manage, SerialList %>
+<br/>
+<%= link_to("Modifica impostazioni lista", edit_serial_list_path)  %>
+<br/>
+<%= link_to("Duplica la lista", clone_serial_list_path) %>
+<% end %>
+
+
+<br/>
+<%= link_to("Biblioteche di questa lista", serial_libraries_path(serial_list_id:@serial_list.id)) %>
+
+
+
+
+<% if !params[:errors].blank? %>
+<%= content_tag(:h4, "Errori di importazione da #{@serial_list.import_file}") %>
+<%= content_tag(:pre, params[:errors]) %>
+<% end %>

@@ -1,0 +1,41 @@
+<%= simple_form_for(@serial_title, :url=>print_serial_titles_path(params), :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+  <%= hidden_field_tag('serial_list_id', params[:serial_list_id]) %>
+
+  <%= select_tag(:library_id, options_for_select(@serial_list.library_select,
+      params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();') %>
+
+  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select,
+		params[:tipo_fornitura]), :onchange=>'submit();', include_blank:true) %>
+
+  
+  <br/>Pubblicazione <%= select_tag(:sospeso,
+      options_for_select([['Corrente','f'],['Sospesa o cessata','t']],
+		params[:sospeso]), :onchange=>'submit();', include_blank:true) %>
+
+    Lotto <%= select_tag(:estero,
+      options_for_select([['Italiani','f'],['Stranieri','t']],
+		params[:estero]), :onchange=>'submit();', include_blank:true) %>
+
+<p>
+  <%= check_box_tag('numera_titoli', 'yes', (params[:numera_titoli]=='yes' ? true : false), :onchange=>'submit()') %>
+  <%= label_tag(:numera_titoli, 'numera titoli') %>
+</p>
+<p>
+  <%= check_box_tag('includi_prezzi', 'yes', (params[:includi_prezzi]=='yes' ? true : false), :onchange=>'submit()') %>
+  <%= label_tag(:includi_prezzi, 'includi prezzi') %>
+</p>
+<p>
+  <%= check_box_tag('includi_bib', 'yes', (params[:includi_bib]=='yes' ? true : false), :onchange=>'submit()') %>
+  <%= label_tag(:includi_bib, 'includi nomi delle biblioteche') %>
+</p>
+<p>
+  <%= check_box_tag('includi_numcopie', 'yes', (params[:includi_numcopie]=='yes' ? true : false), :onchange=>'submit()') %>
+  <%= label_tag(:includi_numcopie, 'includi numero di copie ordinate') %>
+</p>
+
+
+
+
+
+<% end %>
