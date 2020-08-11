@@ -14,7 +14,7 @@ class CreateSubjects < ActiveRecord::Migration
     execute <<-SQL
           ALTER TABLE public.subject_subject add primary key(linktype,s1_id,s2_id);
           CREATE INDEX subjects_heading_idx on public.subjects(heading);
-        SQL
+    SQL
   end
   
   def down
