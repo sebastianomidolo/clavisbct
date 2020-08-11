@@ -1,0 +1,72 @@
+<%= form_tag(talking_books_url, :method=>:get) do %>
+
+<%= hidden_field_tag(:talking_book_reader_id, params[:talking_book_reader_id]) %>
+
+<p>
+  <%= text_field_tag('qs', params[:qs]) %>
+  <%= label_tag  "qs", "&nbsp;indica autore, titolo o collocazione".html_safe %>
+</p>
+<p>
+<%=
+ checked = params[:digitalized]=='yes' ? true : false
+ check_box_tag('digitalized', 'yes', checked)
+%>
+<%= label_tag(:digitalized, 'digitalizzati scaricabili') %>
+</p>
+
+<p>
+<%=
+ checked = params[:cdmp3]=='yes' ? true : false
+ check_box_tag('cdmp3', 'yes', checked)
+%>
+<%= label_tag(:cdmp3, "&nbsp;digitalizzati su CD".html_safe) %>
+</p>
+
+<p>
+<%=
+ checked = params[:colloc]=='yes' ? true : false
+ check_box_tag('colloc', 'yes', checked)
+%>
+<%= label_tag(:colloc, "&nbsp;senza collocazione".html_safe) %>
+</p>
+
+<p>
+<%=
+ checked = params[:lettore]=='yes' ? true : false
+ check_box_tag('lettore', 'yes', checked)
+%>
+<%= label_tag(:lettore, "&nbsp;con lettore da normalizzare".html_safe) %>
+</p>
+
+
+
+<!--
+<p>
+<%=
+ checked = params[:htmloutput]=='yes' ? true : false
+ check_box_tag('htmloutput', 'yes', checked)
+%>
+<%= label_tag(:htmloutput, 'risultati in unica pagina html') %>
+</p>
+-->
+
+<p>
+<%=
+ checked = params[:novita]=='yes' ? true : false
+ check_box_tag('novita', 'yes', checked)
+%>
+<%= label_tag(:novita, 'novità degli ultimi') %>
+
+<%= mesi = params[:mesi].blank? ? '12' : params[:mesi]
+    label_tag(:type, 'novita') %>
+<%= text_field_tag('mesi', mesi) %> mesi
+</p>
+
+<% link_to('Lista libri con audio mp3', libriparlati_con_audio_clavis_manifestations_path(:colloc=>'CD')) %>
+
+<p>&nbsp;
+<%= submit_tag('Cerca') %>
+</p>
+
+<% end %>
+

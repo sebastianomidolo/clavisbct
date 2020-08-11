@@ -1,0 +1,41 @@
+<p><strong>Cerca un libro parlato (digita l&#39;autore o il titolo, oppure il codice di collocazione)</strong>
+  </p>
+
+<%= form_tag(talking_books_url, :method=>:get) do %>
+
+<p>
+  <%= text_field_tag('qs', params[:qs], size:35) %>
+  <%= label_tag  "qs", "&nbsp;".html_safe %>
+</p>
+
+<!--
+<p>
+<%=
+ checked = params[:novita]=='yes' ? true : false
+ check_box_tag('novita', 'yes', checked)
+%>
+<%= label_tag(:novita, 'novità degli ultimi') %>
+
+<%= mesi = params[:mesi].blank? ? '12' : params[:mesi]
+    label_tag(:type, 'novita') %>
+<%= text_field_tag('mesi', mesi) %> mesi
+</p>
+-->
+
+<p>
+<%=
+ checked = params[:audiocassette]=='yes' ? true : false
+ check_box_tag('audiocassette', 'yes', checked)
+%>
+<%= label_tag(:audiocassette, 'mostra anche le audiocassette') %>
+</p>
+
+
+
+<% link_to('Lista libri con audio mp3', libriparlati_con_audio_clavis_manifestations_path(:colloc=>'CD')) %>
+
+<p>&nbsp;
+<%= submit_tag('Cerca') %>
+</p>
+
+<% end %>

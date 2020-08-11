@@ -1,0 +1,16 @@
+<%= simple_form_for(@talking_book) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %> | <%= link_to('Annulla modifiche', @talking_book) %>
+  </div>
+  
+  <div class="form-inputs">
+    <%= talking_book_edit(f, @talking_book) %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %> | <%= link_to('Annulla modifiche', @talking_book) %>
+  </div>
+
+<% end %>

@@ -1,3 +1,5 @@
 <p id="notice"><%= notice %></p>
 
 <%= content_tag(:div, talking_book_show_record(@talking_book)) %>
+
+<%= link_to('modifica', edit_talking_book_path) if can? :manage, TalkingBook %>

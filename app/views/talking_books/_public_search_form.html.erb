@@ -1,0 +1,28 @@
+
+<!- non usata al momento (maggio 2020) %>
+
+<form id="searchform" method="get" action="search">
+
+<div id="masktab">
+ <div id="etichette">
+  <br/><label for="fautore">Autore</label>
+  <br/><label style="margin-top: 4px; display: block" for="ftitolo">Titolo</label>
+  <br/><label style="margin-top: -18px; display: block" for="fcoll">Collocazione</label>
+ </div>
+ <div id="inputs">
+  <br/><input id="fautore" class="input" type="text" size="35" name="autore" value="<%= params[:autore] -%>" />
+  <br/><input id="ftitolo" class="input" type="text" size="35" name="titolo" value="<%= params[:titolo] -%>" />
+  <br/><input id="fcoll" class="input" type="text" size="10" name="inventario" value="<%= params[:inventario] -%>" />
+  </div>
+ <div id="info_cassette">
+ </div>
+</div>
+
+<p>
+  <input title="Avvia la ricerca" type="image" src="/libroparlato_cerca.png" alt="Cerca" value="Cerca" />&nbsp;&nbsp;&nbsp;
+
+<a title="Cancella dati inseriti" href="search">  
+<img src="/libroparlato_reset.png" alt="Azzera tutto" /></a>&nbsp;&nbsp;&nbsp;
+<a title="Lista novit&agrave;"  href="search?listanovita=1">
+<img src="/libroparlato_nuovi.png" alt="Lista novit&agrave;"/></a>
+</p>

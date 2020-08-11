@@ -1,0 +1,5 @@
+<%=
+  html=TalkingBook.connection.execute("select html_intro from libroparlato.opac where html_id='a'").to_a.first['html_intro'].html_safe
+  content_tag(:div, html)
+%>
+

@@ -1,0 +1,16 @@
+<%= content_tag(:h3, 'Modifica testo introduttivo alla maschera di ricerca') %>
+
+<%= form_tag() do %>
+
+<%= hidden_field_tag(:html_id, @record['html_id']) %>
+<pre>
+<%= text_area_tag(:html_text, @record['html_intro'], :size => "80x10") %>
+</pre>
+
+<div><%= submit_tag('Salva le modifiche') %></div>
+
+<% end %>
+
+<br/>
+<%= content_tag(:div, @record['html_intro'].html_safe) %>
+

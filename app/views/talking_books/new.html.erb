@@ -1,5 +1,3 @@
-<h1>New talking_book</h1>
-
-<%= render 'form' %>
-
-<%= link_to 'Back', talking_books_path %>
+<h2>Inserimento nuovo libro parlato</h2>
+<%= render partial:'edit' %>
+<%= link_to 'Annulla inserimento nuovo titolo', talking_books_path, data: { confirm: "Vuoi interrompere l'inserimento del titolo?" } %>

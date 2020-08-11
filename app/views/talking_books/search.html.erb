@@ -1,0 +1,18 @@
+
+<div id="risposta">
+
+<%= render partial:'public_search_form' %>
+  
+
+<p title="Opere in ordine alfabetico per autore" class="barra">
+  <%= render partial:'public_alphasearch' %>
+</p>
+
+<%= content_tag(:h2, "trovati #{@talking_books.total_entries}") if @talking_books.total_entries>0 %>
+</div>
+
+<%= talking_books_listatitoli(@talking_books) %>
+
+ 
+
+
