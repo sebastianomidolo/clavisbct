@@ -118,8 +118,9 @@ class ProculturaCard < ActiveRecord::Base
     sql=%{select c.*,a.name as archive_name, f.label as folder_label, f.id as folder_id
      from procultura.cards c join procultura.folders f on (f.id=c.folder_id)
        join procultura.archives a on(a.id=f.archive_id) where #{conditions} order by lower(c.sort_text)}
-    # ProculturaCard.paginate(conditions:conditions,page:params[:page],per_page:params[:per_page],order:'lower(sort_text)')
-    ProculturaCard.paginate_by_sql(sql,page:params[:page],per_page:params[:per_page])
+    # sql=%Q{select * from procultura.cards where #{conditions} order by lower(sort_text)}
+    #    sql=%Q{select * from procultura.cards where heading ~* 'sera' order by lower(sort_text)}
+    ProculturaCard.paginate_by_sql(sql,per_page:100,page:params[:page])
   end
 
 end

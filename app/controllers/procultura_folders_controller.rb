@@ -1,11 +1,13 @@
 class ProculturaFoldersController < ApplicationController
   # layout 'procultura'
-  layout 'navbar'
+  # layout 'navbar'
+  layout 'procult/procult'
   before_filter :authenticate_user!, only: [:update]
   load_and_authorize_resource only: :update
 
 
   def index
+    @pagetitle='Procultura femminile - catalogo delle schede digitalizzate'
     archive_id=params[:archive_id]
     # logger.warn("reqfrom: #{params[:reqfrom]}")
     if !archive_id.blank?
@@ -23,8 +25,11 @@ class ProculturaFoldersController < ApplicationController
 
   def show
     @pf=ProculturaFolder.find(params[:id])
+    @pagetitle="Procultura femminile - Catalogo delle schede digitalizzate - #{@pf.archive.name} - #{@pf.label}"
     if !params[:reqfrom].blank?
       render :layout=>nil
+    else
+      @procultura_cards=@pf.cards_paginate(params)
     end
   end
 

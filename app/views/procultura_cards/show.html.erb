@@ -1,10 +1,1 @@
-<%=
-pf=@procultura_card.folder
-txt="#{pf.archive.name}"
-content_tag(:h1, link_to(txt, procultura_make_link(procultura_folders_path(:archive_id=>pf.archive.id))))
-%>
-<%=
-txt="Cassetto #{pf.label}"
-content_tag(:h3, link_to(txt, procultura_make_link(procultura_folder_path(pf))))
-%>
 <%= render(:partial=>'show', :locals=>{:card=>@procultura_card}) %>

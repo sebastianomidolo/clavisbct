@@ -1,8 +1,7 @@
 <%
 # lastmod 6 marzo 2013
 %>
-<%= link_to('Elenco cataloghi', procultura_make_link('/procultura'),style:'padding-left:15px') %>
-<%= content_tag(:h3, @procultura_archive.name,style:'padding-left:1em') %>
+<%= content_tag(:h3, @procultura_archive.to_label,style:'padding-left:1em') %>
 <%= content_tag(:div, procultura_folders(@procultura_archive), style:'padding-left:2em;font-size:100%') %>
 
 

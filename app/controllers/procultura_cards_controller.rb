@@ -1,11 +1,13 @@
 class ProculturaCardsController < ApplicationController
   # layout 'procultura'
-  layout 'navbar'
+  # layout 'navbar'
+  layout 'procult/procult'
 
   before_filter :authenticate_user!, only: [:edit, :update]
   load_and_authorize_resource only: [:update]
 
   def index
+    @pagetitle='Procultura femminile - catalogo delle schede digitalizzate'
     ids=params[:ids]
     if ids.blank?
       if params[:lettera].blank?
@@ -31,9 +33,11 @@ class ProculturaCardsController < ApplicationController
   end
 
   def show
+    @pagetitle='Procultura femminile - catalogo delle schede digitalizzate'
     @reqfrom=params[:reqfrom]
     @reqfrom="http://#{@reqfrom.split('?').first}" if !@reqfrom.blank?
     @procultura_card=ProculturaCard.find(params[:id])
+    @pf = @procultura_card.folder
     respond_to do |format|
       format.html {
         # render :layout=>nil
@@ -54,8 +58,14 @@ class ProculturaCardsController < ApplicationController
         @procultura_card.get_image(:jpg)
         img=Magick::Image.read(@procultura_card.cached_filename(:jpg)).first
         # img.resize_to_fit!(800)
-        img.resize!(800,491)
+        if !params[:size].blank?
+          s=params[:size].split('x')
+          img.resize_to_fit!(s[0].to_i) if s[0].to_i!=-1
+        else
+          img.resize!(800,491)
+        end
         send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
+        img.destroy!
       }
       format.gif {
         @procultura_card.get_image(:gif)

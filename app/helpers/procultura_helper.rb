@@ -16,8 +16,8 @@ module ProculturaHelper
   def procultura_archivi
     r=[]
     ProculturaArchive.list.each do |e|
-      lnk=procultura_make_link(procultura_folders_path(:archive_id=>e['id']))
-      r << content_tag(:li, link_to("Schede del catalogo " + e['name'].downcase, lnk) + " (#{e['count']})")
+      lnk=procultura_make_link(procultura_folders_path(:archive_id=>e.id))
+      r << content_tag(:li, link_to(e.to_label, lnk) + " (#{e.count})")
     end
     content_tag(:ul, r.join.html_safe)
   end
@@ -31,7 +31,7 @@ module ProculturaHelper
       cnt=0 if prec!=c.intestazione
       cnt+=1
       # lnk=procultura_make_link(procultura_card_path(c, :format=>:jpg))
-      lnk="http://clavisbct.comperio.it/procultura_cards/#{c.id}.jpg"
+      lnk="https://clavisbct.comperio.it/procultura_cards/#{c.id}.jpg"
       if cnt==1
         text=c.intestazione
       else
@@ -48,6 +48,31 @@ module ProculturaHelper
     content_tag(:ol, r.join("\n").html_safe)
   end
 
+  def procultura_cards_singole_schede_tabella(cards)
+    r=[]
+    cnt=0
+    prec=nil
+    cards.each do |c|
+      cnt=0 if prec!=c.intestazione
+      cnt+=1
+      lnk="https://clavisbct.comperio.it/procultura_cards/#{c.id}.jpg?size=-1x"
+      text=c.intestazione
+      if cnt==1
+        hlnk=link_to(text, procultura_cards_path(q:text))
+        r << content_tag(:tr, content_tag(:th, "<h3>#{hlnk}</h3>".html_safe, class:'col-xs-12'))
+      end
+      r << content_tag(:tr, content_tag(:td, link_to(image_tag(procultura_card_path(c, :format=>'jpg',size:'300x')), procultura_card_path(c))), class:'col-xs-12')
+      prec=c.intestazione
+    end
+    pag=(will_paginate cards, renderer: BootstrapPagination::Rails)
+    if pag.nil?
+      content_tag(:div, "Trovate #{cards.size} schede") + content_tag(:table, r.join("\n").html_safe)
+    else
+      (will_paginate cards, renderer: BootstrapPagination::Rails) + content_tag(:table, r.join("\n").html_safe)
+    end
+  end
+
+  
   def procultura_cards(folder)
     r=[]
     folder.schede.each do |c|
@@ -140,7 +165,7 @@ module ProculturaHelper
   end
 
   def procultura_link_to_image(record,format)
-    "http://#{request.host_with_port}#{procultura_card_path(record, {:format=>format})}"
+    "https://#{request.host_with_port}#{procultura_card_path(record, {:format=>format})}"
   end
 
   def procultura_menu_orizzontale(archive_id=nil)
@@ -157,6 +182,29 @@ module ProculturaHelper
       r << content_tag(:li, lnk)
     end
     content_tag(:ul, r.join.html_safe)
+  end
+
+  def procultura_breadcrumbs
+    # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
+    links=[]
+    links << link_to('Biblioteca della Pro Cultura femminile', 'https://bct.comune.torino.it/biblioteca-della-pro-cultura-femminile')
+    if params[:controller]=='procultura_folders' and params[:action]=='index' and !params[:archive_id].blank?
+      links << link_to('Elenco cataloghi', '/procultura')
+    end
+    if params[:controller]=='procultura_folders' and params[:action]=='show' and !params[:id].blank?
+      links << link_to('Elenco cataloghi', '/procultura')
+      links << link_to(@pf.archive.name, procultura_make_link(procultura_folders_path(:archive_id=>@pf.archive.id)))
+    end
+    if params[:controller]=='procultura_cards' and params[:action]=='show' and !params[:id].blank?
+      links << link_to('Elenco cataloghi', '/procultura')
+      links << link_to(@pf.archive.name, procultura_make_link(procultura_folders_path(:archive_id=>@pf.archive.id)))
+      links << link_to("Cassetto " + @pf.label, procultura_make_link(procultura_folder_path(@pf)))
+    end
+    if params[:controller]=='procultura_cards' and params[:action]=='index'
+      links << link_to('Elenco cataloghi', '/procultura')
+    end
+    # return '' if links==[]
+    %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
   end
 
 end

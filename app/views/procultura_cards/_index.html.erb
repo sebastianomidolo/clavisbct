@@ -5,6 +5,10 @@
    "Nessuna scheda corrisponde al criterio di ricerca impostato: \"<b>#{params[:q]}</b>\"".html_safe,
     style:"padding:1em") %>
 <% else %>
- <%= content_tag(:div, procultura_cards_singole_schede(@procultura_cards), style:"padding:1em;font-size:110%") %>
+ <% if params[:reqfrom].blank? %>
+  <%= content_tag(:div, procultura_cards_singole_schede_tabella(@procultura_cards), id:'elencoschede') %>
+ <% else %>
+  <%= content_tag(:div, procultura_cards_singole_schede(@procultura_cards), style:"padding:1em;font-size:110%") %>
+ <% end %>
 <% end %>
 

@@ -13,4 +13,10 @@ class ProculturaFolder < ActiveRecord::Base
     ProculturaCard.find_by_sql(sql)
   end
 
+  def cards_paginate(params)
+    sql = %Q{SELECT * FROM procultura.cards
+       WHERE folder_id=#{self.id} order by lower(heading)}
+    ProculturaCard.paginate_by_sql(sql,per_page:100,page:params[:page])
+  end
+
 end
