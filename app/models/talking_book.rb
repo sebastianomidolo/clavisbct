@@ -7,8 +7,17 @@ require 'mp3info'
 class TalkingBook < ActiveRecord::Base
   self.table_name='libroparlato.catalogo'
   self.primary_key = 'id'
+  attr_accessible :n, :intestatio, :titolo, :respons, :edizione, :editore, :collana, :isbn, :cassette, :richiamo1, :richiamo2, :soggetto, :soggetto2, :dewey, :note, :lingua, :chiave, :ordine, :abstract, :lettore, :utente, :stampa_bollini, :cd, :da_inserire_in_informix, :non_disponibile, :bid, :manifestation_id, :data_collocazione, :data_ritiro, :data_consegna, :digitalizzato, :talking_book_reader_id
+  
+  before_save :controlla_collocazione
+  
   has_many :attachments, :as => :attachable
   belongs_to :d_objects_folder
+  belongs_to :talking_book_reader
+
+  def controlla_collocazione
+    self.n=self.n.squeeze(' ').strip
+  end
 
   def main_entry
     # self.intestatio.blank? ? "#{self.titolo}" : "#{self.intestatio}. "
@@ -282,7 +291,7 @@ class TalkingBook < ActiveRecord::Base
 
 
   def TalkingBook.filename2colloc(fname)
-    regexp_collocazione = /(NA|NB|NT|MP) +((\d+)[ -]|(\d+$))/
+    regexp_collocazione = /(NA|NB|NT|MP|MD) +((\d+)[ -]|(\d+$))/
     regexp_collocazione =~ fname
     if $1=='MP'
       p="CD MP"
@@ -317,6 +326,7 @@ class TalkingBook < ActiveRecord::Base
   end
 
   def TalkingBook.updated_at
+    return Time.now.to_date
     config = Rails.configuration.database_configuration
     begin
       File.mtime(config[Rails.env]["libroparlato_mdb_filename"]).to_date
