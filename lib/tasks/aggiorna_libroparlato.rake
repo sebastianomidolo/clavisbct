@@ -32,8 +32,9 @@ def esamina_cartella_di_provenienza(sourcedir,destdir)
       target=File.join(destdir,slot)
       collocazione=TalkingBook.filename2colloc(newfolder)
       t_book=TalkingBook.where("n = replace('#{collocazione}','CD ','')").first
+      puts "cerco per collocazione '#{collocazione}'"
       if t_book.nil?
-        logmessage "Record non trovato nel catalogo libro parlato per la collocazione #{collocazione}"
+        logmessage "Record non trovato nel catalogo libro parlato per la collocazione #{collocazione} (folder: #{newfolder})"
         next
       else
         if t_book.manifestation_id.nil?

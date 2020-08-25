@@ -4,9 +4,13 @@
 # RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop
 # RAILS_ENV=production  rake libroparlato_collocazioni | psql clavisbct_production informhop
 
-desc 'Creazione tabella import_libroparlato_colloc per libro parlato e creazione attachments'
+desc 'Creazione tabella import_libroparlato_colloc per libro parlato e creazione attachments - disabilitato 30 aprile 2020'
 
 task :libroparlato_collocazioni => :environment do
+  puts "task da non usare più (disabilitato dal 30 aprile 2020)"
+  exit
+
+  
   sql=%Q{select f.name as filename,o.id from d_objects_folders f join d_objects o on(o.d_objects_folder_id=f.id)
       where f.name ~ '^libroparlato'  AND o.mime_type
         IN('audio/mpeg; charset=binary','application/octet-stream; charset=binary','audio/x-wav; charset=binary')

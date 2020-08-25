@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+ 
+<html>
+<head>
+<title>Catalogo dei libri parlati - BCT</title>
+
+<script type="text/javascript">global_titolo='';global_autore=''</script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<meta name="description" content="Catalogo dei libri parlati delle Biblioteca civica centrale di Torino">
+<meta name="keywords" content="libro parlato libri parlati biblioteca civica torino bct">
+<meta name="language" content="IT">
+
+
+<link rel="stylesheet" type="text/css" href="/libroparlato.css">
+
+<!--[if IE]>
+<link rel="stylesheet" type="text/css" href="/libroparlato_ie.css">
+<![endif]-->
+
+</head>
+
+
+<!--#if expr="${ESEGUI_CGI}=1" -->
+
+<body>
+
+
+<form onsubmit="return(AnalizzaForm2());" id="searchform" method="get" action="search.shtml">
+ <div id="submasktab">
+ <label for="fautore">Autore:</label>
+ <input id="fautore" class="input" type="text" size="16" name="autore" value=""> Titolo <input id="ftitolo" class="input" type="text" size="16" name="titolo" value="">
+ <input type="submit" value="Cerca"><div id="inforicerca"></div>
+ </div>
+</form>
+
+<!--#endif -->
+
+<!--#include virtual="../dispo.cgi?${QUERY_STRING}" -->
+
+
+</div>
+
+<!--#else -->
+
+<body onload="InizializzaPagina();">
+
+<div id="mainpage">
+
+<img alt="CATALOGO DEI LIBRI PARLATI" src="/libroparlato_titolo.png"/>
+
+<form onsubmit="return(AnalizzaForm());" id="searchform" method="get" action="search.shtml">
+
+<div id="masktab">
+ <div id="etichette">
+  <br/><label for="fautore">Autore</label>
+  <br/><label for="ftitolo">Titolo</label>
+  <br/><label for="fcoll">Collocazione</label>
+ </div>
+ <div id="inputs">
+  <br/><input id="fautore" class="input" type="text" size="35" name="autore" value="" />
+  <br/><input id="ftitolo" class="input" type="text" size="35" name="titolo" value="" />
+  <br/><input id="fcoll" class="input" type="text" size="10" name="inventario" value="" />
+  </div>
+ <div id="info_cassette">
+ </div>
+</div>
+
+<p>
+<input title="Avvia la ricerca" type="image" src="/libroparlato_cerca.png" alt="Cerca" value="Cerca" />&nbsp;&nbsp;&nbsp;
+<img title="Cancella dati inseriti" onclick="ResetForm();" class="link_attivo" src="/libroparlato_reset.png" alt="Azzera tutto" />&nbsp;&nbsp;&nbsp;
+<a title="Lista novit&agrave;"  href="search.shtml?listanovita=1">
+<img src="/libroparlato_nuovi.png" alt="Lista novit&agrave;"/></a>
+</p>
+
+<p title="Opere in ordine alfabetico per autore" class="barra">
+<!--#include virtual="alpha.shtml" -->
+</p>
+
+</form>
+
+</div>
+
+
+<!--#endif -->
+
+</body>
+</html>

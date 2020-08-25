@@ -1,0 +1,223 @@
+
+body {
+ background-color: #000000;
+ color:#FFFF00;
+}
+
+
+A {
+  font-size: 130%;
+  color:#FFFF00;
+  background-color:#000000;
+  text-decoration: none;
+}
+
+#mainpage {
+   text-align: center;
+   margin-top: 50px;
+   font: normal large Sans;
+}
+
+#risposta {
+   text-align: center;
+   margin-top: 0px;
+   font: normal large Sans;
+}
+
+#listatitoli {
+   /* margin: 0px; */
+   /* border: 2px dashed grey; */
+   padding: 0em;
+   font-size: 120%;
+}
+
+#listatitoli caption {
+  font-size: 130%;
+  text-align: center;
+  margin-top: 2em;
+  margin-left: 80px;
+  margin-right: 80px;
+  background-color: #FFFF00;
+  color:#000000;
+}
+
+#listatitoli tbody tr {
+  vertical-align: top;
+}
+
+#listatitoli tbody td {
+  padding: 2px;
+  border-bottom: 1px solid #808080;
+  border-right:  1px solid #808080;
+}
+
+#listatitoli tbody td:first-child {
+  border-bottom: 1px solid #808080;
+  border-left: 2px solid #808080;
+  border-top: 0;
+  border-right: 0;
+  padding: 2px;
+}
+
+.info_copia {
+  font-weight: bold;
+  font-size: 110%;
+  color: #FFFF00;
+  background-color: #000000;
+}
+
+#masktab
+{
+ text-align: left;
+ width:800px;
+ height:200px;
+ color:#FFFF00;
+ background-color:#000000;
+ margin:0em auto;
+ padding:1em;
+ position:relative;
+ border: 1px inset navy;
+}
+
+
+/* font: small-caps x-large "Sans" "Times New Roman"; */
+
+#submasktab
+{
+ font: small-caps x-large "Sans";
+ text-align: left;
+ width:800px;
+ height:50px;
+
+ color:#FFFF00;
+
+ background-color:#000000;
+ margin:0em auto;
+ padding:1em;
+ position:relative;
+ border: 1px inset navy;
+}
+
+#etichette
+{
+ position: absolute;
+ height:200px;
+ color:#FFFF00;
+ font: normal small-caps x-large "Sans";
+ text-align: right;
+ border: 0px solid red;
+ width: 200px;
+ padding: 0em;
+ margin-right: 5px;
+}
+
+#inputs
+{
+ position: absolute;
+ height:200px;
+ color:#FFFF00;
+ font: normal small-caps x-large "Sans";
+ text-align: right;
+ border: 0px solid red;
+ width: 600px;
+ padding: 0em;
+ margin-left: 210px; /* firefox */
+ text-align: left;
+}
+
+.input
+{
+  color: #FFFF00;
+  background-color: #A0A0A0;
+  font: normal x-large "Sans";
+  /* font-weight: bold; */
+  /* font-size: 90%;*/
+}
+
+.barra
+{
+   /* width:800px; */
+   font: normal small-caps x-large "Sans";
+   font-size: 130%;
+   color:#FFFF00;
+   margin: auto;
+   border: 2px outset navy;
+}
+
+
+
+#info_cassette
+{
+ position: absolute;
+ height:200px;
+ color:#FFFF00;
+ background-color:#000000;
+ text-align: left;
+ border: 0px solid red;
+ width: 520px;
+ height: 80px;
+ padding: 0em;
+ margin-left: 210px;
+ margin-top: 130px;
+}
+
+
+.mtab
+{
+   background-color: #000000;
+   margin-left: auto;
+   margin-right: auto;
+   text-align: center;
+   /* margin-top: 1cm; */
+}
+
+.sectionlab
+{
+   text-align: left;
+   /* text-decoration: underline; */
+   font: normal normal bold large times,"Times New Roman";
+   text-indent: 0.5cm;
+}
+
+.situazione {
+  font-size: 120%;
+  /* border-left: 2px solid grey; */
+  margin: 1em;
+  padding: 1px;
+  background-color: #0000FF;
+  color: #FFFF00;
+}
+
+#inforicerca {
+  font-size: 100%;
+  color: #000000;
+  background-color: #FFFF00;
+  padding: 0px;
+  margin-top: 10px;
+  margin-left: 90px;
+  width: 400px;
+}
+
+.abstract
+{
+  color: #FFFFFF;
+/*  font-size: 120%; */
+}
+
+SPAN:hover { background: #808080 }
+
+.submit
+{
+   text-align: center;
+   font: normal large times,"Times New Roman";
+   text-indent: 0.5cm;
+}
+
+img
+{
+   border:0;
+}
+
+.link_attivo {
+ cursor: pointer;
+}

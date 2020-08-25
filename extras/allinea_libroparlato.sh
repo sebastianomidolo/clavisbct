@@ -4,10 +4,11 @@
 
 (cd /home/ror/bctaudio; RAILS_ENV=development /usr/local/bin/rake mdb_export)
 
-psql -c "DROP SCHEMA libroparlato CASCADE" clavisbct_development informhop
-pg_dump -n libroparlato -U informhop bctaudio_development | psql clavisbct_development informhop -f -
-(cd /home/ror/clavisbct;psql -f extras/sql/libroparlato_setup.sql clavisbct_development informhop)
-(cd /home/ror/clavisbct; RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop)
+# Non allineo libroparlato da aprile 2020 perché la gestione adesso è su ClavisBCT e non più su access
+# psql -c "DROP SCHEMA libroparlato CASCADE" clavisbct_development informhop
+# pg_dump -n libroparlato -U informhop bctaudio_development | psql clavisbct_development informhop -f -
+# (cd /home/ror/clavisbct;psql -f extras/sql/libroparlato_setup.sql clavisbct_development informhop)
+# (cd /home/ror/clavisbct; RAILS_ENV=development rake libroparlato_collocazioni | psql clavisbct_development informhop)
 
 psql -c "DROP SCHEMA bm_audiovisivi CASCADE" clavisbct_development informhop
 pg_dump -n bm_audiovisivi -U informhop bctaudio_development | psql clavisbct_development informhop -f -
@@ -28,8 +29,8 @@ pg_dump -n bm_periodici_old -U informhop bctaudio_development | psql clavisbct_d
 # 8 gennaio 2014:
 (psql -f /home/ror/clavisbct/extras/sql/create_av_manifestations.sql clavisbct_development informhop)
 
-# 10 gennaio 2014:
-(cd /home/ror/clavisbct; sh extras/export_to_bctaudio.sh > /home/sites/456.selfip.net/html/export_bctaudio.xml)
+# 10 gennaio 2014 (ma disabilitato 30 aprile 2020 in considerazione del fatto che il sisgema audio musicale non funziona da tempo)
+# (cd /home/ror/clavisbct; sh extras/export_to_bctaudio.sh > /home/sites/456.selfip.net/html/export_bctaudio.xml)
 
 # 16 gennaio 2014: (eliminato dal 16 marzo 2016, visto che non veniva usato)
 # (cd /home/ror/clavisbct; ./extras/create_musicbrainz_artists_clavis_authorities.sh)
@@ -38,6 +39,10 @@ pg_dump -n bm_periodici_old -U informhop bctaudio_development | psql clavisbct_d
 # /bin/rm -rf /home/sites/456.selfip.net/html/clavis/mn
 # /usr/bin/wget --quiet -O /dev/stdout http://libroparlato.selfip.net/ProgettiCivica/IntraVedo/html/costellazione_clavis.tar.bz2 | /usr/bin/tar -j -C /home/sites/456.selfip.net/html/clavis -xf -
 
-(cd /home/ror/clavisbct/extras/libroparlato; /usr/bin/make)
+# Commentato 15 maggio 2020
+# (cd /home/ror/clavisbct/extras/libroparlato; /usr/bin/make)
 
+# Questo aggiorna i file audio del libro parlato, ma lo sospendo a maggio 2020
+# in attesa di allestire nuove procedure di caricamento dell'audio, in modalità smartworking
+# Riattivato sperimentalmente il 23 maggio 2020
 (cd /home/ror/clavisbct; RAILS_ENV=development rake aggiorna_libroparlato)

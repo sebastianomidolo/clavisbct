@@ -1,0 +1,39 @@
+#inputs
+{
+ position: absolute;
+ height:200px;
+ color:#FFFF00;
+ font: normal small-caps x-large "Sans";
+ text-align: right;
+ border: 0px solid red;
+ width: 600px;
+ padding: 0em;
+ margin-left: 110px;
+ text-align: left;
+}
+
+.info_copia {
+  font-weight: bold;
+  font-size: 110%;
+  color: #FFFF00;
+  background-color: #000000;
+  text-align: left;
+}
+
+#info_cassette
+{
+ position: absolute;
+ height:200px;
+ color:#FFFF00;
+ background-color:#000000;
+ text-align: left;
+ border: 0px solid red;
+ width: 520px;
+ height: 80px;
+ padding: 0em;
+ margin-left: 210px;
+ margin-top: 130px;
+ display: none;
+}
+
+
