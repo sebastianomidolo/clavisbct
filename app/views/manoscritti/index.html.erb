@@ -1,0 +1,30 @@
+<h3>Catalogo ordinato per autore/titolo</h3>
+
+<p>
+  <a href="http://www.comune.torino.it/cultura/biblioteche/sistema_bibliotecario/elenco_manoscritti.shtml">
+    Elenco su vecchio sito BCT</a>
+</p>
+
+<table class='table table-bordered table-condensed table-striped'>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @canmanage = true if can? :manage, Manoscritto %>
+  
+<% @manoscritti.each do |m|
+   path = @canmanage ? edit_manoscritto_path(m) : m
+   %>
+  <tr>
+    <td><%= m.autore %>
+    <td><%= link_to(m.titolo, path) %>
+    <td><b><%= m.collocazione %></b>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<% link_to 'New Manoscritto', new_manoscritto_path %>

@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<%= manoscritto_browse(@manoscritto) %>
+<%= content_tag(:div, manoscritto_show(@manoscritto)) %>
+
+<% if can? :manage, Manoscritto %>
+<%= link_to '[Modifica]', edit_manoscritto_path(@manoscritto) %> 
+<%=
+  f=@manoscritto.d_objects_folder
+  link_to('[Vedi scansioni]', f) if !f.nil?  
+%>
+<% end %>
+
+<% link_to '[Vai a Elenco manoscritti]', manoscritti_path %>
+

@@ -1,0 +1,12 @@
+<pre>
+<%= simple_form_for(@manoscritto) do |f| %>
+  <%= f.error_notification %>
+  <div class="form-inputs">
+    <%= f.input :titolo, hint: "Titolo", :input_html => { 'rows' => 4, 'cols' => 80 } %>
+    <%= f.input :note, hint: "Note", :input_html => { 'rows' => 12, 'cols' => 80 } %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value:'Salva le modifiche' %>
+  </div>
+<% end %>
+</pre>
