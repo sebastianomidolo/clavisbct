@@ -90,7 +90,7 @@ module ClosedStackItemRequestsHelper
     if !archived_request
       if confirm_request
         lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_requests_path(patron_id:patron.id, format:'js')}"
-        cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste]</b>'.html_safe, lnk,remote:true,title:'Conferma le richieste', method: :get)}</span>}.html_safe
+        cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste (solo in presenza dell\'utente che le ha inserite)]</b>'.html_safe, lnk,remote:true,title:'Conferma le richieste', method: :get)}</span>}.html_safe
       else
         if print_request.blank?
           cmd = link_to("<b>[Stampa richieste a magazzino]</b>".html_safe, print_closed_stack_item_requests_path(patron_id:patron), title:"Stampa richieste per singolo utente")
@@ -108,12 +108,54 @@ module ClosedStackItemRequestsHelper
       content_tag(:p, link)
   end
 
+  def closed_stack_item_requests_stats(params)
+    cond = ''
+    if !params[:days].blank?
+      cond = "and print_time between now() - interval '#{params[:days]} days' and now()"
+    end
+    print_time=params[:current_date].blank? ? 'notnull' : '> CURRENT_DATE'
+    sql=%Q{select piano,count(*) from closed_stack_item_requests ir join clavis.centrale_locations cl using(item_id)
+         where print_time #{print_time} #{cond} group by piano order by count(*) desc}
+    q=ActiveRecord::Base.connection.execute(sql).to_a
+    res=[]
+    res << content_tag(:tr, content_tag(:th, 'Piano', class:'col-md-3') +
+                            content_tag(:th, 'Numero richieste stampate'))
+    totale=0
+    q.each do |r|
+      totale = totale + r['count'].to_i
+      res << content_tag(:tr, content_tag(:td, r['piano']) +
+                              content_tag(:td, r['count']))
+    end
+    res << content_tag(:tr, content_tag(:th, 'Totale') +
+                            content_tag(:th, totale))
+    links = []
+    links << link_to('Oggi', stats_closed_stack_item_requests_path(current_date:true))
+    links << link_to('Ultimi 30 giorni', stats_closed_stack_item_requests_path(days:30))
+    links << link_to('Tutte', stats_closed_stack_item_requests_path)
+
+    content_tag(:div, "Richieste a magazzino Civica Centrale: #{links.join(' | ')}".html_safe) +
+      content_tag(:table, res.join("\n\n").html_safe, class:'table text-success') +
+      content_tag(:pre, sql)
+  end
+
+  def closed_stack_item_requests_autoprint_requests(all=nil)
+    fname='/home/seb/autoprintweb.log'
+    if all.nil?
+      require 'open3'
+      cmd = "/usr/bin/tail -60  #{fname} | /usr/bin/tac"
+      a,b,c,d=Open3.popen3(cmd)
+      b.read
+    else
+      File.read(fname)
+    end
+  end
+
   def closed_stack_item_requests_patrons_index
     res = []
     res << content_tag(:h3, "Richieste di oggi (prossimo numero di ticket: <b>#{DailyCounter.last.id}</b>)".html_safe)
 
     t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
-    (res << content_tag(:h3, "Da Confermare"); res << t) if !t.blank?
+    (res << content_tag(:h3, "Da Confermare [solo in presenza di chi ha fatto le richieste]"); res << t) if !t.blank?
 
     t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
     (res << content_tag(:h3, "Confermate, da stampare"); res << t;  res << content_tag(:h3, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))) if !t.blank?
@@ -152,14 +194,61 @@ module ClosedStackItemRequestsHelper
     records.each do |r|
       lnk1 = link_to("<b>#{r['barcode']}</b>".html_safe, ClavisPatron.clavis_url(r['patron_id'],:newloan), target:'_blank')
       # lnk2 = link_to("<b>#{r['lastname']}</b>".html_safe, closed_stack_item_requests_path(patron_id:r['patron_id']))
-      lnk2 = link_to("<b>#{r['lastname']}</b>".html_safe, clavis_patron_path(r['patron_id']))
+      lnk2 = link_to("#{r['name']} <b>#{r['lastname']}</b>".html_safe, clavis_patron_path(r['patron_id']))
       res << content_tag(:tr, content_tag(:td, lnk1, class:'col-md-2') +
-                              content_tag(:td, lnk2, class:'col-md-2') +
+                              content_tag(:td, lnk2, class:'col-md-3') +
                               content_tag(:td, r['count']))
     end
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
 
+  def closed_stack_item_requests_oggi
+    res=[]
+    cnt=0
+    ClosedStackItemRequest.oggi.each do |r|
+      cnt+=1
+      lnk1 = link_to("#{r.name} <b>#{r.lastname}</b>".html_safe, clavis_patron_path(r.patron_id), target:'_blank')
+      itemlnk = link_to(r.title, ClavisItem.clavis_url(r.item_id))
+      res << content_tag(:tr, content_tag(:td, cnt, class:'col-md-1') +
+                              content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%H:%M'), class:'col-md-1') +
+                              content_tag(:td, r.collocazione, class:'col-md-2') +
+                              content_tag(:td, lnk1, class:'col-md-2') +
+                              content_tag(:td, itemlnk, class:'col-md-6'))
+    end
+    content_tag(:table, res.join.html_safe, class:'table text-success')
+  end
 
-  
+  def closed_stack_item_requests_logfile(requests)
+    res=[]
+    res << content_tag(:tr, content_tag(:td, "titolo")+
+                            content_tag(:td, "richiesto da") +
+                            content_tag(:td, "ora richiesta") +
+                            content_tag(:td, "ora conferma") +
+                            content_tag(:td, "confermato da") +
+                            content_tag(:td, "ora stampa") +
+                            content_tag(:td, "IP o Inserito da"))
+
+    requests.each do |r|
+      lnk_tit = 1;
+      itemlnk = link_to(r.title, ClavisItem.clavis_url(r.item_id))
+      patronlnk = link_to(r.patron_barcode, ClavisPatron.clavis_url(r.patron_id))
+      if r.client_ip.nil?
+        ip_or_created_by = r.u_created_by
+        ip_or_created_by_title = "inserito da #{r.u_created_by}"
+      else
+        ip_or_created_by = r.client_ip
+        ip_or_created_by_title = "inserito da Opac"
+      end
+      confirm_time = r.confirm_time.nil? ? 'non confermato' : r.confirm_time.in_time_zone('Europe/Rome').strftime('%H:%M')
+      print_time = r.print_time.nil? ? 'non stampato' : r.print_time.in_time_zone('Europe/Rome').strftime('%H:%M')
+      res << content_tag(:tr, content_tag(:td, itemlnk)+
+                              content_tag(:td, patronlnk, {title:"#{r.patron_name} #{r.patron_lastname}"}) +
+                              content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%d/%m/%Y %H:%M'), class:'col-md-1') +
+                              content_tag(:td, confirm_time, class:'col-md-1') +
+                              content_tag(:td, r.u_confirmed_by, {title:"confermato da #{r.l_confirmed_by}"}) +
+                              content_tag(:td, print_time, class:'col-md-1') +
+                              content_tag(:td, ip_or_created_by, {title:ip_or_created_by_title}))
+    end
+    content_tag(:table, res.join.html_safe, class:'table text-success')
+  end
 end

@@ -3,11 +3,12 @@ class ClosedStackItemRequestsController < ApplicationController
   layout 'navbar'
   before_filter :set_dng_session, only: [:index, :check, :item_delete]
 
-  load_and_authorize_resource only: [:index,:print,:confirm_request,:csir_delete, :csir_archive]
+  load_and_authorize_resource only: [:index,:print,:confirm_request,:csir_delete, :csir_archive, :search]
 
   respond_to :html
 
   def index
+    @pagetitle='Richieste a magazzino - Civica centrale'
     patron_id = params[:patron_id]
     pending = params[:pending]=='1' ? true : false
     printed = params[:printed]=='1' ? true : false
@@ -28,7 +29,7 @@ class ClosedStackItemRequestsController < ApplicationController
     @clavis_patron=ClavisPatron.find(params[:patron_id])
     n = ClosedStackItemRequest.list(@clavis_patron.id).size
     flash[:notice] = n==1 ? "Richiesta confermata" : "Confermate #{n} richieste"
-    @daily_counter = ClosedStackItemRequest.assign_daily_counter(@clavis_patron)
+    @daily_counter = ClosedStackItemRequest.assign_daily_counter(@clavis_patron, current_user.id)
     respond_to do |format|
       format.html { render text:'ok'}
       format.js { }
@@ -79,7 +80,7 @@ class ClosedStackItemRequestsController < ApplicationController
           logger.warn("destroy_closed_stack_item_request #{ir.id}")
           ir.destroy if !@dng_session.nil?
         else
-          logger.warn("la richiesta non id #{ir.id} non può essere cancellata perché è già stata confermata")
+          logger.warn("la richiesta con id #{ir.id} non può essere cancellata perché è già stata confermata")
         end
         # render template:'closed_stack_item_requests/deleted_ok'
         render template:'closed_stack_item_requests/check'
@@ -129,9 +130,25 @@ class ClosedStackItemRequestsController < ApplicationController
     end
   end
 
+  def autoprint_requests
+    #require 'open3'
+    #cmd = "/usr/bin/tail -60  /home/seb/autoprintweb.log | /usr/bin/tac"
+    #a,b,c,d=Open3.popen3(cmd)
+    #render text:"<pre>#{b.read}</pre>", layout:'navbar'
+    @all=params[:all].blank? ? nil : true
+  end
+
   def autoprint
     respond_to do |format|
       format.html {
+        res=[];
+        ClosedStackItemRequest.patrons(false,false).each do |r|
+          res << r['patron_id']
+        end
+        res=res.join(' ')
+        fd=File.open("/home/seb/autoprintweb.log", 'a')
+        fd.write("#{Time.now} autoprint #{res}\n")
+        fd.close
         render template:'closed_stack_item_requests/autoprint_list', layout:nil
       }
       format.pdf {
@@ -148,6 +165,18 @@ class ClosedStackItemRequestsController < ApplicationController
     end
   end
 
+  def search
+    @pagetitle='Ricerca richieste a magazzino - Civica centrale'
+    if !params[:patron_id].blank?
+      @patron=ClavisPatron.find(params[:patron_id])
+    end
+    @requests=ClosedStackItemRequest.logfile(params,@patron)
+  end
+
+  def stats
+    @pagetitle='Statistiche ricerca richieste a magazzino - Civica centrale'
+  end
+  
   def random_insert
     ClosedStackItemRequest.random_insert
     redirect_to controller:'closed_stack_item_requests'

@@ -1,0 +1,19 @@
+ <pre>
+   Nota: il server di stampa è un normale PC collocato al terzo piano, ufficio applicazioni informatiche.
+   Esegue una richiesta di stampa ogni minuto e, se ci sono richieste a magazzino pendenti, le invia alla
+   stampante situata al secondo piano. Se nell'elenco che segue non appaiono richieste recenti,
+   vuol dire che il server di stampa non sta funzionando. Potrebbe essersi spento, e in tal caso
+   bisogna riaccenderlo, oppure potrebbe essersi bloccato e va riavviato.
+   Ci potrebbero anche essere problemi di rete o cose peggiori...
+</pre>
+
+<%= content_tag(:pre, closed_stack_item_requests_autoprint_requests(@all)) %>
+
+
+<%=
+  if @all.nil?
+    content_tag(:span, link_to('[vedi tutte le richieste di oggi]', autoprint_requests_closed_stack_item_requests_path(all:true)), style:'font-size:90%')
+  else
+    content_tag(:span, link_to('[vedi ultime richieste]', autoprint_requests_closed_stack_item_requests_path), style:'font-size:90%')
+  end
+%>

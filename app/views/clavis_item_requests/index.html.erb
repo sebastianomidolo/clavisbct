@@ -1,0 +1,6 @@
+<%=
+  data_richiesta = params[:request_date].blank? ? '' : params[:request_date]
+  content_tag(:h3, %Q{<a href="/clavis_item_requests">Prenotazioni</a> <b>su esemplare</b> pendenti #{data_richiesta} (aggiornate a ieri)}.html_safe)
+  %>
+
+<%= content_tag(:div, clavis_item_requests_index(@clavis_item_requests,@request_date)) %>

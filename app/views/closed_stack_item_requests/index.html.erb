@@ -1,12 +1,23 @@
+
+<%= form_tag(clavis_patrons_path, method:'get') do %>
+Barcode o id utente: <%= text_field_tag('barcode') %>
+<%= submit_tag 'cerca', :class=>'btn btn-info' %>
+<%= content_tag(:span, link_to('[controlla server di stampa]', autoprint_requests_closed_stack_item_requests_path), style:'font-size:40%') %>
+<% end %>
+<%= javascript_tag("jQuery('#barcode').select().focus()") %>
+
 <%=
  if @patron.nil?
-  content_tag(:div, closed_stack_item_requests_patrons_index) +
-    content_tag(:p, link_to('[Inserisci richieste casuali]', random_insert_closed_stack_item_requests_path))
+  content_tag(:div, closed_stack_item_requests_patrons_index)
+  # content_tag(:p, link_to('[Inserisci richieste casuali]', random_insert_closed_stack_item_requests_path))
   else
    content_tag(:div, closed_stack_item_requests_index(@csir, @patron)) +
       content_tag(:h3, button_to('Elenco richieste pendenti', closed_stack_item_requests_path, method:'get'))
  end
 %>
 
+ <%= content_tag(:h3, "Elenco delle richieste di oggi (dalla più recente)", style:'margin-top: 80px; border-top: dotted; padding: 1em' ) %>
+ <%= closed_stack_item_requests_oggi %>
 
+ <hr/>
 
