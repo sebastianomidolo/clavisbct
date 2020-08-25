@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="it"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <%= @pagetitle.nil? ? content_tag(:title, params[:controller] + ': ' + params[:action]) : content_tag(:title, @pagetitle) %>
+    <%= stylesheet_link_tag "clonebct", :media => "all" %>
+    <%= javascript_include_tag "application" %>
+    <%= csrf_meta_tags %>
+    
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+
+    <div class="container">
+      <div class="jumbotron">
+      <a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
+
+      <div class="briciole">
+	<a href="https://bct.comune.torino.it"><img src="/bct-homepage.png" alt="Biblioteche Civiche Torinesi" width="20" height="20" style="margin-bottom: 5px"></a><%= procultura_breadcrumbs -%>
+      </div>
+
+      
+          
+      <div style=" width="275" height="45"font-size: 110%">
+	<%= yield %>
+      </div>
+      
+    </div> <!-- /container -->
+    
+  </body>
+</html>
+
