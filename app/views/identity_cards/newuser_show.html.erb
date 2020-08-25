@@ -1,0 +1,12 @@
+ok
+<%= identity_card_show(@identity_card) %>
+
+<% if @identity_card.doc_uploaded %>
+
+<%= content_tag(:div, identity_card_image(@identity_card,'',false)) %>
+
+<% else %>
+Manca ancora il documento
+<% end %>
+
+<%= content_tag(:div, link_to('link', "/ors/#{@identity_card.unique_id}")) %>

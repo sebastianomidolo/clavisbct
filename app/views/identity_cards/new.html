@@ -1,0 +1,19 @@
+
+<h2>Pre iscrizione alle Biblioteche civiche torinesi</h2>
+
+<%= simple_form_for(@identity_card, url:'/or_create', html: {multipart: true} ) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= identity_card_edit(f, @identity_card) %>
+    <span><b>Documento di identità</b> <%= file_field_tag 'filename', :multiple => false %></span>
+  </div>
+  
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Invia richiesta' %> |
+    <%= link_to 'Interrompi la richiesta di pre-iscrizione e torna al catalogo BCT', 'https://bct.comperio.it', data: { confirm: "Vuoi interrompere la richiesta di pre-iscrizione alle BCT?" } %>
+  </div>
+
+<% end %>
+
+<%= javascript_tag("jQuery('#identity_card_name').select().focus()") %>
