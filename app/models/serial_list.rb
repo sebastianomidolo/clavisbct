@@ -131,10 +131,9 @@ class SerialList < ActiveRecord::Base
     end
     cond = cond.join(' and ')
     cond = "AND #{cond}" if cond!=''
-    sql = %Q{select sum(prezzo_stimato)::numeric
+    sql = %Q{select sum(prezzo_stimato*numero_copie)::numeric
           FROM serial_titles st JOIN serial_subscriptions ss ON(ss.serial_title_id=st.id)
             WHERE st.serial_list_id=#{self.id} #{cond}}
-    puts sql
     res=self.connection.execute(sql).to_a.first['sum']
     res.nil? ? 0 : res
   end

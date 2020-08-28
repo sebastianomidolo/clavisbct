@@ -28,6 +28,7 @@
 
 <hr/>
 <%= content_tag(:div, "Prezzo stimato: #{number_to_currency(@serial_title.prezzo_stimato)}") %>
+<% content_tag(:div, "Prezzo stimato per numero copie: #{number_to_currency(@serial_title.prezzo_stimato_per_numero_copie)}") %>
 
 <%= hidden_field_tag('serial_title_id', @serial_title.id) %>
 
@@ -49,9 +50,15 @@
         col=l.tipo_fornitura
       end
       # perlib=PeriodicoBiblioteca.new(per_id:@periodico_id,library_id:l.ok_library_id,prezzo:l.prezzo)
+      if !l.numero_copie.nil?
+        numcopie = "#{l.numero_copie} copie" if l.numero_copie.to_i>1
+      else
+        numcopie = ''
+      end
       content_tag(:tr,
           content_tag(:td, l.label) +
           content_tag(:td, col) +
+          content_tag(:td, numcopie) +
           content_tag(:td, l.tipo_fornitura, :id=>span_id) +
           content_tag(:td, number_to_currency(l.prezzo)))
       %>

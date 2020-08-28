@@ -8,7 +8,11 @@ class SerialTitle < ActiveRecord::Base
   validates_uniqueness_of :title, scope: :serial_list_id
 
   before_save :set_date_updated
-  
+
+  def prezzo_stimato_per_numero_copie
+    self.prezzo_stimato
+  end
+
   def get_manifestation_id
     return self.manifestation_id if !self.manifestation_id.nil?
     bid=self.get_field('BID: ').first
@@ -35,12 +39,14 @@ class SerialTitle < ActiveRecord::Base
               WHERE l.library_internal='1' and l.library_code!='SBCT' order by p.serial_title_id,ll.library_id,p.library_id,l.label;}
 
       # Nuova versione che usa serial_libraries
-      sql = %Q{SELECT cl.label, l.*,l.clavis_library_id as ok_library_id,s.*,ll.librarian_id as okgest
+      sql = %Q{SELECT cl.label, l.*,l.clavis_library_id as ok_library_id,s.*,ll.librarian_id as okgest,
+               st.prezzo_stimato, s.numero_copie
               FROM serial_libraries l LEFT JOIN #{SerialSubscription.table_name} s
                  ON(s.library_id=l.clavis_library_id and s.serial_title_id=#{self.id})
              LEFT JOIN clavis.l_library_librarian ll 
                  ON(ll.library_id = l.clavis_library_id AND ll.librarian_id=#{user.clavis_librarian.id})
              LEFT JOIN clavis.library cl ON(cl.library_id=l.clavis_library_id)
+ 	     LEFT JOIN serial_titles st ON(st.serial_list_id=l.serial_list_id and st.id=s.serial_title_id)
              WHERE l.serial_list_id=#{self.serial_list.id}
               ORDER BY s.serial_title_id,ll.library_id,s.library_id,l.nickname;}
       
@@ -52,7 +58,6 @@ class SerialTitle < ActiveRecord::Base
     fd.write(sql)
     fd.close
 
-    
     puts sql
     ClavisLibrary.find_by_sql(sql)
   end
@@ -105,31 +110,36 @@ class SerialTitle < ActiveRecord::Base
   end
 
   def self.trova(params={},user=nil)
-    cond = []
+    cond = with_cond = []
     cond << "sospeso=#{self.connection.quote(params[:sospeso])}" if !params[:sospeso].blank?
     cond << "estero=#{self.connection.quote(params[:estero])}" if !params[:estero].blank?
 
     if params[:library_id].to_i==-1
       cond = cond==[] ? '' : " AND #{cond.join(' AND ')}"
-      sql=%Q{select st.title,st.id,st.prezzo_stimato,st.note,'[vai a acquisizioni]' as library_names,0 as count
+      sql=%Q{select st.title,st.id,st.prezzo_stimato,st.prezzo_stimato as prezzo_totale_stimato,st.note,
+        '[vai a acquisizioni]' as library_names,0 as tot_copie, 0 as numero_copie
            from #{SerialTitle.table_name} st left join #{SerialSubscription.table_name} ss
        on(st.id=ss.serial_title_id) where st.serial_list_id=#{params[:serial_list_id]}
            and ss is null #{cond} order by st.sortkey, lower(st.title);}
     else
-      cond << "library_id=#{params[:library_id].to_i}" if !params[:library_id].blank?
-      cond << "tipo_fornitura=#{self.connection.quote(params[:tipo_fornitura])}" if !params[:tipo_fornitura].blank?
+      with_cond << "library_id=#{params[:library_id].to_i}" if !params[:library_id].blank?
+      with_cond << "tipo_fornitura=#{self.connection.quote(params[:tipo_fornitura])}" if !params[:tipo_fornitura].blank?
       cond = cond==[] ? '' : " AND #{cond.join(' AND ')}"
-      
+      with_cond = with_cond==[] ? '' : " AND #{with_cond.join(' AND ')}"
+
       sql=%Q{with abb as (
-        select t.id as title_id,array_agg(l.sigla order by nickname) as sigle,
-                          array_agg(l.clavis_library_id order by nickname) as libraries,
-          array_to_string(array_agg(l.nickname order by nickname), ', ') as library_names, count(*)
+        select t.id as title_id,
+                          array_to_string(array_agg(l.clavis_library_id order by nickname), ',') as libraries,
+                          array_to_string(array_agg(s.numero_copie order by nickname), ',') as numero_copie,
+  			  sum(s.numero_copie) as tot_copie,
+          array_to_string(array_agg(l.nickname order by nickname), ', ') as library_names
        from serial_titles         t
         join serial_subscriptions s on (s.serial_title_id=t.id)
             join serial_libraries l on (l.clavis_library_id=s.library_id and l.serial_list_id=t.serial_list_id)
-       where t.serial_list_id=#{params[:serial_list_id]} group by t.id
+       where t.serial_list_id=#{params[:serial_list_id]} #{with_cond} group by t.id
      )
-    select st.title,st.id,st.prezzo_stimato,st.note,abb.sigle,abb.libraries,abb.library_names,count(*)
+    select st.title,st.id,st.prezzo_stimato*abb.tot_copie as prezzo_totale_stimato,st.prezzo_stimato,
+             st.note,abb.libraries,abb.library_names,abb.tot_copie,abb.numero_copie
           from serial_libraries sl join serial_subscriptions ss
               on (ss.library_id=sl.clavis_library_id)
             join serial_titles st on(st.id=ss.serial_title_id)
@@ -137,10 +147,11 @@ class SerialTitle < ActiveRecord::Base
          where sl.serial_list_id=#{params[:serial_list_id]}
           and st.serial_list_id=sl.serial_list_id
           #{cond}
-          group by st.title,st.id,st.prezzo_stimato,st.note,abb.sigle,abb.libraries,abb.library_names order by st.sortkey, lower(st.title);\n}
+          group by st.title,st.id,st.prezzo_stimato,st.note,abb.libraries,abb.library_names, abb.tot_copie, abb.numero_copie
+            order by st.sortkey, lower(st.title);\n}
     end
-    
-    fd=File.open("/home/seb/provasql.sql", "w")
+
+    fd=File.open("/home/seb/serial_title_trova.sql", "w")
     fd.write(sql)
     fd.close
     self.find_by_sql(sql)

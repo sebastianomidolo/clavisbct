@@ -224,7 +224,7 @@ class DObjectsController < ApplicationController
       }
       format.jpeg {
         # logo = Magick::Image.read("/home/storage/preesistente/testzone/logo.jpg").first
-        logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.gif").first
+        logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.png").first
         if !@d_object.get_pdfimage.nil?
           img=Magick::Image.read(@d_object.get_pdfimage).first
         else
@@ -240,10 +240,14 @@ class DObjectsController < ApplicationController
         else
           # img.resize_to_fit!(800, 800)
         end
+        logo.resize_to_fit!(img.columns - img.columns/5)
+        # logo=logo.wave
+
         # http://www.imagemagick.org/RMagick/doc/image3.html#watermark
         # img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
         # img=img.watermark(logo,0.1,0.5,Magick::SouthGravity,0,0)
-        img=img.watermark(logo,0.5,0.5,Magick::SouthGravity,0,0)
+        # img=img.watermark(logo,0.5,0.5,Magick::SouthGravity,0,0)
+        img=img.dissolve(logo,0.25,0.5,Magick::SouthGravity,0,0)
 
         send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
         # send_file(@d_object.get_pdfimage, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
@@ -261,16 +265,62 @@ class DObjectsController < ApplicationController
     end
   end
 
-  def showfile
-    # Controlli sull'autorizzazione da inserire qui
-    @d_object = DObject.find(params[:id])
-    # render :text=>'@d_object.filename'
-    respond_to do |format|
-      format.txt 
-      format.json { render json: @d_object }
+  # Rendering oggetto digitale senza autenticazione
+  def dnl
+    mid=params[:manifestation_id]
+    if mid.blank?
+      @d_object = DObject.find(params[:id])
+    else
+      if mid.to_i==0
+        @d_object = DObject.find(1034649)
+      else
+        cm=ClavisManifestation.find(params[:manifestation_id])
+        @d_object = cm.clavis_cover_cached
+        # params[:id]=@d_object.id
+      end
     end
+    @d_object = DObject.find(1034649) if @d_object.nil?
 
-    render :text=>@d_object.mime_type
+    if @d_object.access_right_id==0
+      @pagetitle="#{@d_object.id} - #{@d_object.filename}"
+    else
+      @pagetitle="#{@d_object.id} accesso non autorizzato"
+      render text:"non autorizzato d_object_id #{@d_object.id}", layout:'d_objects'
+      return
+    end
+    respond_to do |format|
+      format.html { render layout:'d_objects' }
+      format.json { render json: @d_object }
+      format.pdf {
+        send_file(@d_object.filename_with_path, :type=>@d_object.mime_type)
+      }
+      format.jpeg {
+        if !@d_object.get_pdfimage.nil?
+          img=Magick::Image.read(@d_object.get_pdfimage).first
+        else
+          img=Magick::Image.read(@d_object.filename_with_path).first
+          img.format='jpeg'
+        end
+        if !params[:size].blank? and @d_object.name!='nocover.jpg'
+          s=params[:size].split('x')
+          img.resize_to_fit!(s[0].to_i)
+        else
+          # img.resize_to_fit!(800, 800)
+        end
+        # logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.png").first
+        # logo.resize_to_fit!(img.columns - img.columns/5)
+        # img=img.dissolve(logo,0.25,0.5,Magick::SouthGravity,0,0)
+        send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
+      }
+      format.mp3 {
+        if @d_object.audioclip_exists?
+          fname=@d_object.libroparlato_audioclip_filename
+        else
+          fname=@d_object.filename_with_path
+        end
+        send_file(fname, :type => @d_object.mime_type, :disposition => 'inline')
+      }
+    end
   end
 
   def random_mp3
