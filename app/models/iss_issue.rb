@@ -29,6 +29,36 @@ class IssIssue < ActiveRecord::Base
     p.pdf_2_jpg
   end
 
-  
+  def prepara_pdf_completo
+    if File.exists?(self.pdf_cached_fname)
+      # puts "esiste #{self.pdf_cached_fname}"
+      return
+    end
+    flist=[]
+    self.articles.each do |a|
+      if not a.esiste_pdf_cached?
+        # puts "devo creare pdf per articolo #{a.id}"
+        a.prepara_pdf_completo
+      end
+      fn=a.pdf_cached_fname
+      flist << fn
+      # puts "#{fn} Size #{File.size(fn)} - #{a.esiste_pdf_cached?}"
+      # break provvisorio, debug only
+      # break if flist.size>0
+    end
+    if flist.size>0
+      cmd="/usr/bin/pdfunite #{flist.join(' ')} #{self.pdf_cached_fname}"
+      # puts cmd
+      # puts "flist size: #{flist.size}"
+      Kernel.system(cmd)
+    end
+    nil
+  end
+
+  def pdf_cached_fname
+    config = Rails.configuration.database_configuration
+    File.join(config[Rails.env]["iss_cache"], 'issues',"#{self.id}.pdf")
+  end
+
 end
 
