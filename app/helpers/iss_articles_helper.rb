@@ -99,4 +99,23 @@ module IssArticlesHelper
     link_to(image_tag(iss_page_path(record, format:'jpeg',size:size)), iss_page_path(record, format:'pdf'))
   end
 
+  def iss_journals_breadcrumbs
+    # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
+    links=[]
+
+    # links << link_to('Liste periodici', serial_lists_path) if params[:controller]!='lperiodici'
+    links << link_to('Introduzione', infopage_iss_journals_path)
+    
+    if params[:controller] == 'iss_journals' and params[:action]=='show' 
+      links << link_to('Elenco riviste', iss_journals_path)
+    end
+
+    return '' if links.size==0
+
+    
+    %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
+  end
+
+
+  
 end
