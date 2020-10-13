@@ -11,8 +11,6 @@ module ClavisPurchaseProposalsHelper
            ]
     records.each do |r|
       lnk=clavis_purchase_proposal_path(r)
-      patron_path="http://sbct.comperio.it/index.php?page=Circulation.PatronViewPage&id=#{r.patron.id}"
-      patron_path=clavis_purchase_proposals_path(patron_id:r.patron_id)
       tv=[]
       fields.each do |f|
         tv << content_tag(:td, r.send(f))
@@ -29,11 +27,19 @@ module ClavisPurchaseProposalsHelper
       end
 
       notes=r.librarian_notes
+
+      if r.patron.nil?
+        patron_label = "Utente #{r.patron_id} non presente in ClavisBCT a causa di un errore di importazione"
+        patronpath=ClavisPatron.clavis_url(r.patron_id)
+      else
+        patron_label = r.patron.to_label
+        patronpath=clavis_purchase_proposals_path(patron_id:r.patron_id)
+      end
       res << content_tag(:tr, content_tag(:td, r.proposal_date.to_date) +
                          content_tag(:td, link_to(r['title'], lnk) + "<br/>#{notes}".html_safe) +
                          content_tag(:td, r.status_label) +
                          tv.join.html_safe +
-                         content_tag(:td, link_to(r.patron.to_label, patron_path, target:'_blank')))
+                         content_tag(:td, link_to(patron_label, patronpath, target:'_blank')))
     end
     content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
