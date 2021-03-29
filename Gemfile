@@ -5,6 +5,8 @@ source 'https://rubygems.org'
 gem 'rails', '3.2.22'
 
 
+gem 'rake', '12.3.2'
+
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
 
@@ -46,6 +48,7 @@ gem 'rmagick'
 
 gem 'iconv'
 
+# Abilitare solo per importazione da SenzaParola
 gem "ruby-tcl", "~> 0.1.1"
 
 gem 'htmlentities'
@@ -107,3 +110,9 @@ gem 'codice-fiscale'
 gem 'tzinfo'
 
 gem 'faraday'
+
+gem 'sixarm_ruby_unaccent'
+
+# attenzione a non decommentare la linea seguente perché pare che altrimenti rake via crontab non funziona (problema da risolvere)
+# gem 'rinruby'
+gem 'concurrent-ruby'
