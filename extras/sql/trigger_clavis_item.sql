@@ -164,3 +164,21 @@ $$ LANGUAGE pltcl;
 CREATE TRIGGER aggiorna_clavis_ricollocati AFTER UPDATE
   ON clavis.item FOR EACH ROW EXECUTE PROCEDURE aggiorna_clavis_ricollocati();
 
+
+CREATE OR REPLACE FUNCTION aggiorna_clavisitem_talking_book_id() RETURNS trigger AS $$
+switch $TG_op {
+    "UPDATE" {
+	set NEW(talking_book_id) $NEW(custom_field1);
+	elog NOTICE "custom field 1: $NEW(custom_field1) ; talking_book_id old: $OLD(talking_book_id) => $NEW(talking_book_id)";
+        elog NOTICE "aggiornamento da [array get OLD]";
+	elog NOTICE "diventa [array get NEW]";
+	return [array get NEW];
+    }
+}
+$$ LANGUAGE pltcl;
+
+CREATE TRIGGER aggiorna_clavisitem_talking_book_id BEFORE UPDATE
+  ON clavis.item FOR EACH ROW
+   WHEN (NEW.custom_field1 ~ '^[0-9\.]+$' AND NEW.item_media='T' AND NEW.section='LP')
+  EXECUTE PROCEDURE aggiorna_clavisitem_talking_book_id();
+
