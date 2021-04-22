@@ -2,19 +2,20 @@
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
-  attr_accessible :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename
-  # after_save :set_clavis_manifestation_attachments, :derived_symlinks
-  after_save :derived_symlinks
+  attr_accessible :readme, :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename, :name
+  after_save :set_clavis_manifestation_attachments, :derived_symlinks
+  # after_save :derived_symlinks
   before_save :check_filesystem
   before_destroy :reset_sequence
-  has_many :d_objects, order:'lower(name)'
+  # has_many :d_objects, order:'lower(name)'
+  has_many :d_objects, order:'naturalsort(lower(name))'
   has_one :talking_book
   belongs_to :access_right
   before_destroy do |record|
     # puts "record con id #{record.id} - cancellare file #{record.filename_with_path}"
     FileUtils.rmdir record.filename_with_path, :verbose => false
   end
-  
+
   def filename
     self.name
   end
@@ -114,16 +115,27 @@ class DObjectsFolder < ActiveRecord::Base
   end
 
   def writable_by?(user)
-    sql=%Q{#{self.sql_conditions_for_user(user)} AND mode='rw'}
+    sql=%Q{#{self.sql_conditions_for_user(user)} AND mode in('rw','rd')}
     res=self.connection.execute(sql).to_a.first
     res.nil? ? false : true
   end
+
+  def deletable_by?(user)
+    sql=%Q{#{self.sql_conditions_for_user(user)} AND mode='rd'}
+    res=self.connection.execute(sql).to_a.first
+    res.nil? ? false : true
+  end
+
   def readable_by=(user)
     self.set_permission(user,'ro')
   end
   def writable_by=(user)
     self.set_permission(user,'rw')
   end
+  def deletable_by=(user)
+    self.set_permission(user,'rd')
+  end
+
   def disable_user(user)
     user_id=user.class==Fixnum ? user : user.id
     sql=%Q{DELETE FROM d_objects_folders_users WHERE user_id=#{user_id} AND d_objects_folder_id=#{self.id}}
@@ -173,26 +185,20 @@ class DObjectsFolder < ActiveRecord::Base
     res.reverse
   end
 
-  def dir
+  def dir(sort='asc',condition=nil,limit=nil)
     name=self.connection.quote_string(self.name)
-    puts "name: #{name}"
-    sql=%Q{with dirnames as (
-      select string_to_array(substr(name, length('#{name}')+2), '/') as dirname
-       from d_objects_folders where name like '#{name}/%'
-      )
-       select distinct dirname[1] from dirnames order by dirname[1]}
-    res=self.connection.execute(sql).to_a
-    # Decommentare in produzione:
-    # return res
-    res.each do |r|
-      name=File.join(self.name,r['dirname'])
-      f=DObjectsFolder.find_by_name(name)
-      if f.nil?
-        # puts "NON trovato: #{name}"
-        DObjectsFolder.makedir(name)
-      end
-    end
-    res
+    limit = limit.nil? ? '' : "LIMIT #{limit}"
+    cond = condition.nil? ? '' : " AND #{condition}"
+    # order by regexp_replace(name, E'\\D','','g')
+    sql=%Q{select * from d_objects_folders where (name like '#{name}/%') and\n not (name ~ '#{name}/(.*)(/)') #{cond}
+             order by naturalsort(name) #{sort} #{limit};}
+    fd=File.open('/home/seb/test.sql', 'a')
+    fd.write("-- dir(sort=#{sort}, condition=#{condition},limit=#{limit})\n#{sql};\n")
+    fd.close
+    # Alternativa (bisogna calcolare slash_count
+    # slash_count = ?
+    #      select * from d_objects_folders where array_length(string_to_array(name, '/'),1)=#{slash_count} and name like '#{name}/%' order by name;
+    DObjectsFolder.find_by_sql(sql)
   end
 
   def d_object_cover_image
@@ -205,9 +211,32 @@ class DObjectsFolder < ActiveRecord::Base
     ClavisManifestation.free_pdf_filename(self.x_mid)
   end
 
-  def derived_pdf_filename
+  def derived_pdf_filename(seqnum=nil)
     config = Rails.configuration.database_configuration
-    "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s)}.pdf"
+    if seqnum.nil?
+      "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s)}.pdf"
+    else
+      "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s + '-' + seqnum.to_s)}.pdf"
+    end
+  end
+
+  def pdf_url
+    self.access_right_id = 1 if self.access_right_id.nil?
+    if self.access_right_id==0 and self.free_pdf_filename
+      publ=true
+    else
+      publ=false
+    end
+    url=nil
+    fname=self.derived_pdf_filename
+    if fname and File.readable?(fname)
+      if publ==true
+        url="getpdf/#{File.basename(self.free_pdf_filename)}"
+      else
+        url="d_objects_folders/#{self.id}/derived.pdf"
+      end
+    end
+    url
   end
 
   def restricted_pdf_filename
@@ -229,8 +258,35 @@ class DObjectsFolder < ActiveRecord::Base
     size
   end
 
+  def automake_pdf(max_per_page=200)
+    puts "automake_pdf: max_per_page #{max_per_page}"
+  end
+
   def to_pdf(params={})
-    DObject.to_pdf(self.gfx_objects,self.derived_pdf_filename, params)
+    params=self.pdf_params if params.size==0
+    h=Hash.new
+    params.each do |k,v|
+      h[k.to_sym]=v if k.class==String
+    end
+    pages=self.gfx_objects
+    puts pages.size
+    puts "pdf_params: #{self.pdf_params}"
+    page_ranges=self.pdf_params['pages']
+    if !page_ranges.blank?
+      puts "page_ranges: #{page_ranges}"
+      cnt=0
+      images=self.gfx_objects
+      page_ranges.split(',').each do |p|
+        cnt+=1
+        from,to=p.split('-')
+        from = from.to_i - 1
+        to = to.to_i - 1
+        puts "p: #{p} - from: #{from} ; to: #{to} - #{self.derived_pdf_filename(cnt)}"
+        DObject.to_pdf(images[from..to],self.derived_pdf_filename(cnt), params.merge(h))
+      end
+    else
+      DObject.to_pdf(self.gfx_objects,self.derived_pdf_filename, params.merge(h))
+    end
   end
 
   def to_pdftest(params={})
@@ -245,6 +301,9 @@ class DObjectsFolder < ActiveRecord::Base
 
   def x_mid=(t) self.edit_tags(mid:t) end
   def x_mid() self.xmltag('mid') end
+
+  def x_item_id=(t) self.edit_tags(item_id:t) end
+  def x_item_id() self.xmltag('item_id') end
 
   def x_ti=(t) self.edit_tags(ti:t) end
   def x_ti() self.xmltag('ti') end
@@ -267,6 +326,15 @@ class DObjectsFolder < ActiveRecord::Base
   def x_dc=(t) self.edit_tags(dc:t) end
   def x_dc() self.xmltag('dc') end
 
+  def pdf_disabled=(t) self.edit_tags(pdf_disabled:t) end
+  def pdf_disabled() self.xmltag('pdf_disabled') end
+
+  def attachment_category=(t) self.edit_tags(attachment_category:t) end
+  def attachment_category() self.xmltag('attachment_category') end
+
+  def readme=(t) self.edit_tags(readme:t) end
+  def readme() self.xmltag('readme') end
+
   def set_clavis_manifestation_attachments
     f_mid=self.x_mid
     # Se esiste una manifestation_id a livello di folder, questa viene usata per gli oggetti
@@ -274,19 +342,44 @@ class DObjectsFolder < ActiveRecord::Base
     position=1
     sql=[]
     prec_manifestation_id=0
+    ac = self.attachment_category
+    attachment_category_id = ac.blank? ? 'NULL' : self.connection.quote(ac)
     self.d_objects.each do |o|
       # if (f_mid==0 and (o.x_mid==0 or o.x_mid.blank?)) or (o.x_mid==0 and (f_mid==0 or f_mid.blank?))
-      sql << "DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation' AND d_object_id=#{o.id};"
+      # sql << "DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation' AND d_object_id=#{o.id};"
       if !(f_mid.blank? and o.x_mid.blank?)
         manifestation_id=o.x_mid.blank? ? f_mid : o.x_mid
         position=1 if manifestation_id!=prec_manifestation_id
         prec_manifestation_id=manifestation_id
-        sql << "INSERT INTO public.attachments (attachable_type, attachable_id, d_object_id, position) VALUES('ClavisManifestation', #{manifestation_id}, #{o.id}, #{position});"
+        sql << %Q{INSERT INTO public.attachments (attachable_type, attachable_id, d_object_id, position, attachment_category_id)
+                    VALUES('ClavisManifestation', #{manifestation_id}, #{o.id}, #{position}, #{attachment_category_id})
+                      ON CONFLICT (attachable_type, attachable_id, d_object_id) DO
+                       UPDATE set attachment_category_id = #{attachment_category_id};}
         position += 1
       end
     end
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
+  end
+
+  def browse_object(cmd)
+    return nil if self.parent.nil?
+    fname=self.connection.quote(self.name)
+    case cmd
+    when 'prev'
+      r=self.parent.dir('desc',"name < #{fname}",1).first
+    when 'next'
+      r=self.parent.dir('asc',"name > #{fname}",1).first
+    when 'first'
+      r=self.parent.dir('asc',nil,1).first
+    when 'last'
+      r=self.parent.dir('desc',nil,1).first
+    else
+      raise "browse_object('prev'|'next'|'first'|'last')"
+    end
+    return nil if r.nil?
+    # puts "self.id = #{self.id} - r.id = #{r.id}"
+    r
   end
 
   def derived_symlinks
@@ -314,6 +407,91 @@ class DObjectsFolder < ActiveRecord::Base
 
   end
 
+  def references(include_d_objects=false)
+    if include_d_objects
+      select="a.*,o.*"
+    else
+      select="a.*"
+    end
+    sql=%Q{select #{select} from d_objects o join attachments a on (a.d_object_id=o.id) where o.d_objects_folder_id=#{self.id}
+       AND a.position=1 order by o.id desc}
+    puts sql
+    a=Attachment.find_by_sql(sql)
+    if a==[]
+      sql=%Q{select a.* from d_objects o join attachments a on (a.d_object_id=o.id) where o.d_objects_folder_id=#{self.id} limit 1}
+      a=Attachment.find_by_sql(sql)
+    end
+    a
+  end
+
+  def files_caricati_oggi
+    self.connection.execute("select count(*) from d_objects where d_objects_folder_id=#{self.id} and f_ctime >= now()::date + interval '1h'").to_a.first['count'].to_i
+  end
+
+  def manifestation_ids_duplicati
+    self.connection.execute("select attachable_type,attachable_id,count(*) from attachments a join d_objects o on(o.id=a.d_object_id) where o.d_objects_folder_id=#{self.id} group by attachable_type,attachable_id having count(*)>1").to_a
+  end
+
+  def download
+    retval={}
+    prefix='clavisbct'
+    http_prefix='https://bctwww.comperio.it/static'
+    destdir='/home/storage/preesistente/static'
+    filepath_prefix="#{prefix}/#{self.name}"
+    pattern_name = filepath_prefix.gsub('/','_')
+    filenames    = "#{destdir}/#{pattern_name}_filelist.txt"
+    tarfile      = "#{destdir}/#{pattern_name}.tar"
+    sql_inserts  = "#{destdir}/#{pattern_name}_sql_inserts.sql"
+
+    cmd = %Q{tar cvf #{tarfile} -C #{self.filename_with_path} --files-from=#{filenames}}
+    puts "prefix:            #{prefix}"
+    puts "destdir:           #{destdir}"
+    puts "filepath_prefix:   #{filepath_prefix}"
+    puts "pattern_name:      #{pattern_name}"
+    puts "tarfile:           #{tarfile}"
+    puts "filenames:         #{filenames}"
+    puts "sql_inserts:       #{sql_inserts}"
+    puts "cmd:               #{cmd}"
+    retval[:tarfile]="#{http_prefix}/#{pattern_name}.tar"
+    retval[:sql_inserts]="#{http_prefix}/#{pattern_name}_sql_inserts.sql"
+    fd=File.open(filenames, 'w')
+    fdsql=File.open(sql_inserts, 'w')
+    fdsql.write("-- File: #{tarfile};\n");
+    fdsql.write("delete from attachment where file_path like '#{filepath_prefix}/%';\n");
+    cnt=0
+    self.references(true).each do |r|
+      next if r.access_right_id!='0'
+      cnt += 1
+      filename_in_archive = "file_#{format('%08d',r.attachable_id)}.jpg"
+      filepath = ActiveRecord::Base.connection.quote("#{filepath_prefix}/#{filename_in_archive}")
+      filename = ActiveRecord::Base.connection.quote(r.name)
+      fdsql.write(%Q{INSERT INTO attachment (attachment_type,object_id,object_type,mime_type,
+              file_size,file_path,file_label,license,file_description,
+              file_name,date_created,date_updated,created_by,modified_by)
+        VALUES ('E',#{r.attachable_id},'Manifestation','#{r.mime_type.split(';').first}',
+                #{r.bfilesize},#{filepath},NULL,'A',NULL,
+                '#{filename_in_archive}','#{r.f_ctime}','#{r.f_mtime}',1,1);
+        UPDATE turbomarc_cache SET dirty=1 WHERE manifestation_id=#{r.attachable_id};\n})
+      fd.write("--transform 's|.*|#{filename_in_archive}|;s,^,#{filepath_prefix}/,'\n#{r.name}\n");
+      # puts DObject.find(r.object_id).name
+    end
+    fdsql.close
+    fd.close
+    cmd = %Q{tar cf #{tarfile} -C #{self.filename_with_path} --files-from=#{filenames}}
+    Kernel.system(cmd)
+    # cmd = %Q{tar uvf #{tarfile} --transform 's,^,clavisbct/,' -C #{File.dirname(sql_inserts)} #{File.basename(sql_inserts)}}
+    # cmd = %Q{tar uvf #{tarfile} --transform 's,^,#{filepath_prefix}/,' -C #{File.dirname(sql_inserts)} #{File.basename(sql_inserts)}}
+    # Kernel.system(cmd)
+    retval
+  end
+
+  # Non usata, è una prova del 18 dicembre 2019
+  def DObjectsFolder.estrai_collocazione(start,string)
+    r=Regexp.new "#{start}(\\d+)(\\D*)"
+    m=string.match r
+    m.nil? ? nil : m[1]
+  end
+  
   def DObjectsFolder.makedir(dirname)
     folder=DObjectsFolder.find_or_create_by_name(dirname)
     folder.write_tags_from_filename
@@ -327,4 +505,42 @@ class DObjectsFolder < ActiveRecord::Base
     sql=%Q{UPDATE #{self.table_name} set name = regexp_replace(name, #{old}, #{new}) WHERE name ~ #{old}}
     self.connection.execute(sql)
   end
+
+  def DObjectsFolder.import_folders(sourcedir, destdir)
+    puts "Importazione oggetti digitali da #{sourcedir} a #{destdir}"
+    dirlist=Hash.new
+    Dir.glob("#{sourcedir}/**/*").each do |dirname|
+      next if File.file?(dirname)
+      slot=File.basename(dirname)
+      # puts "Entro in #{slot}"
+      dir_ok = false
+      Dir.glob("#{dirname}/*").each do |fname|
+        dir_ok=true if File.file?(fname)
+      end
+      if dir_ok
+        dirname[dirname.index(destdir)..-1]
+        folder = DObjectsFolder.new(name:dirname[dirname.index(destdir)..-1])
+        next if !File.exists?(folder.filename_with_path)
+        puts "Scansione contenuti di #{folder.name}"
+        DObject.fs_scan(folder.name)
+        s=folder.name
+        while true
+          i=s.rindex('/')
+          break if i.nil?
+          s=s[0..i-1]
+          dirlist[s]=true
+        end
+      end
+    end
+    # Verifico che esistano sul DB le cartelle parents di quelle indicizzate nel loop precedente
+    dirlist.keys.each do |f|
+      dbf=DObjectsFolder.find_by_name(f)
+      next if !dbf.nil?
+      puts "creo istanza di DObjectsFolder per #{f}"
+      folder = DObjectsFolder.create(name:f)
+      folder.write_tags_from_filename
+    end
+    nil
+  end
+
 end
