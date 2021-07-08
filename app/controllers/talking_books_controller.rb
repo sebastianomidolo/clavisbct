@@ -5,7 +5,7 @@ class TalkingBooksController < ApplicationController
 
   before_filter :set_talking_book, only: [:show, :edit, :update, :destroy]
   # load_and_authorize_resource only: [:edit,:check,:check_duplicates,:digitalizzati_non_presenti,:new,:create,:update,:destroy]
-  load_and_authorize_resource except: [:index,:show]
+  load_and_authorize_resource except: [:index,:show,:download_mp3]
 
   respond_to :html
 
@@ -73,20 +73,19 @@ class TalkingBooksController < ApplicationController
 
     type=params[:novita]
     if type=='yes'
-      order='data_collocazione desc'
-      # cond << "data_collocazione notnull"
       mesi = params[:mesi].blank? ? 12 : params[:mesi].to_i
       mesi = 12 if mesi==0
       cond << "data_collocazione > now() - interval '#{mesi} months'"
-    else
-      order='chiave,ordine'
     end
     # Ordinamento per amministratore:
     if @talking_books_manager
       order = 'id desc'
     else
-      order='data_collocazione desc'
-      order='id desc'
+      if params[:qs].blank?
+        order='id desc'
+      else
+        order='chiave,ordine'
+      end
     end
 
     respond_to do |format|
@@ -94,20 +93,40 @@ class TalkingBooksController < ApplicationController
         if params[:htmloutput]=='yes'
           cond << "n != ''"
           cond = cond.join(" AND ")
-          if params[:type]=='novita'
-            @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
-          else
-            @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
-          end
+          @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
           render :partial=>'talking_books/html_catalog'
           return
         else
           # @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page], :include=>[:clavis_item])
+          joins = [:clavis_items]
+          joins = []
           cond = cond.join(" AND ")
-          @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page],:order=>order)
+          sql=%Q{
+          select tb.*,
+  array_to_string(array_agg(ci.collocation order by item_id), '|') as collocations,
+  array_to_string(array_agg(ci.manifestation_id order by item_id), '|') as manifestation_ids,
+  array_to_string(array_agg(ci.item_id order by item_id), '|') as item_ids,
+  array_to_string(array_agg(ci.opac_visible order by item_id), '|') as opac_visibilities,
+  array_to_string(array_agg((xpath('//d215/sa/text()',cm.unimarc::xml))[1]::text order by item_id), '|') AS descr_fisica,
+  count(*)
+    from libroparlato.catalogo as tb join clavis.item ci on(ci.talking_book_id=tb.id)
+    join clavis.manifestation cm on(cm.manifestation_id=ci.manifestation_id)
+    where ci.item_media = 'T' and #{cond}
+     group by tb.id
+    order by #{order}}
+
+          @talking_books = TalkingBook.paginate_by_sql(sql, page:params[:page])
         end
-        render :index, layout:'navbar' if @talking_books_manager
+        render :index, layout:'talking_books' if @talking_books_manager
       }
+
+      format.js {
+        # @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
+        @talking_books = TalkingBook.paginate(:conditions=>cond,:page=>params[:page],:order=>order)
+      
+        @targetdiv=params[:targetdiv]
+      }
+
       format.csv {
         require 'csv'
         cond = cond.join(" AND ")
@@ -128,11 +147,6 @@ class TalkingBooksController < ApplicationController
         send_data(pdf, :disposition=>'inline', :type=>'application/pdf')
       }
 
-      format.js {
-        @talking_books = TalkingBook.find(:all,:conditions=>cond, :order=>order)
-        @targetdiv=params[:targetdiv]
-      }
-
     end
   end
 
@@ -140,13 +154,13 @@ class TalkingBooksController < ApplicationController
   # GET /talking_books/1.json
   def show
     respond_to do |format|
-      format.html { render :show, layout:'navbar' if can? :manage, TalkingBook}
+      format.html { render :show }
       format.json { render json: @talking_book }
     end
   end
 
   def edit
-    render layout:'navbar'
+    # render layout:'navbar'
   end
 
   def new
@@ -187,7 +201,7 @@ class TalkingBooksController < ApplicationController
   def download_mp3
     ack=DngSession.access_control_key(params,request)
     if ack!=params[:ac]
-      render :text=>'error', :content_type=>'text/plain'
+      render :text=>"error - params: #{params} - request: #{request}", :content_type=>'text/plain'
       return
     end
     @talking_book = TalkingBook.find(params[:id])
@@ -235,6 +249,9 @@ class TalkingBooksController < ApplicationController
 
   def check
     # render layout:'navbar'
+  end
+
+  def stats
   end
 
   def opac_edit_intro
