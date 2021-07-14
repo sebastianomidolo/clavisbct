@@ -347,6 +347,9 @@ class DObjectsFolder < ActiveRecord::Base
     self.d_objects.each do |o|
       # if (f_mid==0 and (o.x_mid==0 or o.x_mid.blank?)) or (o.x_mid==0 and (f_mid==0 or f_mid.blank?))
       # sql << "DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation' AND d_object_id=#{o.id};"
+      if f_mid.blank?
+        sql << "DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation' AND d_object_id=#{o.id};"
+      end
       if !(f_mid.blank? and o.x_mid.blank?)
         manifestation_id=o.x_mid.blank? ? f_mid : o.x_mid
         position=1 if manifestation_id!=prec_manifestation_id
@@ -357,6 +360,13 @@ class DObjectsFolder < ActiveRecord::Base
                        UPDATE set attachment_category_id = #{attachment_category_id};}
         position += 1
       end
+    end
+    if f_mid.blank?
+      puts "Cancello entry in manifestations_d_objects_folders per folder #{self.id}"
+      sql << "DELETE FROM manifestations_d_objects_folders WHERE d_objects_folder_id = #{self.id};"
+    else
+      sql << "INSERT INTO manifestations_d_objects_folders (d_objects_folder_id, manifestation_id)
+                   VALUES (#{self.id}, #{f_mid}) on conflict(d_objects_folder_id) DO NOTHING;"
     end
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
