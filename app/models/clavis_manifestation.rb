@@ -5,12 +5,9 @@ include DigitalObjects
 include REXML
 
 class ClavisManifestation < ActiveRecord::Base
-  attr_accessible :bid, :bid_source, :manifestation_id, :title
+  attr_accessible :bib_level, :bid, :bid_source, :manifestation_id, :title, :prestito_inizio_periodo, :prestito_fine_periodo, :prestito_max_titoli
   self.table_name = 'clavis.manifestation'
   self.primary_key = 'manifestation_id'
-
-
-  # self.per_page = 10
 
   has_many :clavis_items, :foreign_key=>'manifestation_id'
   has_many :clavis_issues, :foreign_key=>'manifestation_id'
@@ -63,12 +60,75 @@ class ClavisManifestation < ActiveRecord::Base
     "http://10.106.68.96:9000/fascicoli?bid=#{self.bid}"
   end
 
+  def prestito_inizio_periodo
+    self[:prestito_inizio_periodo]
+  end
+
+  def prestito_inizio_periodo=(val)
+    self[:prestito_inizio_periodo] = convert_params_to_date(val)
+  end
+
+  def prestito_fine_periodo
+    self[:prestito_fine_periodo]
+  end
+
+  def prestito_fine_periodo=(val)
+    self[:prestito_fine_periodo] = convert_params_to_date(val)
+  end
+
+  def prestito_max_titoli
+    self[:prestito_max_titoli]
+  end
+
+  def prestito_max_titoli=(val)
+    self[:prestito_max_titoli] = val
+  end
+
   def iccu_opac_url
     return nil if !['SBN','SBNBCT'].include?(self.bid_source)
     return "http://opac.sbn.it/bid/#{self.bid}"
     template="http://www.sbn.it/opacsbn/opaclib?db=solr_iccu&rpnquery=%2540attrset%2Bbib-1%2B%2540attr%2B1%253D1032%2B%2540attr%2B4%253D2%2B%2522IT%255C%255CICCU%255C%255C__POLO__%255C%255C__NUMERO__%2522&select_db=solr_iccu&nentries=1&rpnlabel=Preferiti&resultForward=opac%2Ficcu%2Ffull.jsp&searchForm=opac%2Ficcu%2Ferror.jsp&do_cmd=search_show_cmd&brief=brief&saveparams=false&&fname=none&from=1"
     template.sub!('__POLO__',bid[0..2])
     template.sub('__NUMERO__',numero=bid[3..9])
+  end
+
+  def form_richiesta_a_magazzino(opac_username,library_id)
+    # return 'Civica Centrale: per richiedere il materiale bisogna autenticarsi con le proprie credenziali' if opac_username.blank?
+    return '' if opac_username.blank?
+
+    form_entries = {
+      'name':854286914,
+      'phone':708660104,
+      'email':15851921,
+      'title':58383296,
+    }      
+    uri= "https://docs.google.com/forms/d/e/1FAIpQLScUEdr4erxsLjXTwzJGU9Qm6ivxq3MsgOVqPgxykHV2kuOO3g/viewform?"
+
+    req_ok=false
+    self.clavis_consistency_notes.each do |r|
+      next if r.library_id!=library_id
+      if r.collocation =~ /P.G/
+        req_ok=true
+      end
+    end
+    return '' if !req_ok
+    sql=%Q{SELECT "#{self.connection.quote(self.title)}" as title}
+    uri << "entry.#{form_entries[:title]}=#{URI::encode(self.title)}"
+    p=ClavisPatron.find_by_opac_username(opac_username)
+    puts p.id
+    return uri if p.nil?
+    email=phone=''
+    self.connection.execute("SELECT * FROM clavis.contact WHERE patron_id=#{p.id}").each do |r|
+      phone=r['contact_value'] if r['contact_type']=='C' and phone.blank?
+      email=r['contact_value'] if r['contact_type']=='E' and email.blank?
+    end
+    # puts "email: #{email} - phone: #{phone}"
+    utente = "#{p.to_label} [barcode: #{p.barcode}]"
+    uri << "&entry.#{form_entries[:name]}=#{URI::encode(utente)}"
+    # uri << "&entry.#{form_entries[:email]}=#{URI::encode(email)}"
+    # uri << "&entry.#{form_entries[:phone]}=#{URI::encode(phone)}"
+    %Q{<a href=#{uri}>Modulo richiesta del periodico (solo per la Civica Centrale)</a>}
+    return ''
   end
 
   def attachments_folders
@@ -142,15 +202,69 @@ class ClavisManifestation < ActiveRecord::Base
   end
 
   def attachments_with_folders
-    sql=%Q{select a.attachment_category_id,f.name as folder_name,f.id as folder_id,
-(xpath('//r/cover_image/text()'::text, f.tags))[1]::text as cover_image_id,count(*)
- from attachments a join d_objects o on(a.d_object_id=o.id)
-  join d_objects_folders f on(f.id=o.d_objects_folder_id) where attachable_type='ClavisManifestation'
-      AND attachable_id = #{self.id} group by a.attachment_category_id,f.name,f.id,cover_image_id}
+    sql=%Q{
+ select a.attachable_id,a.attachment_category_id,f.name as folder_name,f.id as folder_id,
+ (case when
+  (xpath('//r/cover_image/text()'::text, f.tags))[1] is not null
+   then
+      (xpath('//r/cover_image/text()'::text, f.tags))[1]::text::integer
+   else
+     null
+ end)
+  as cover_image_id,
+  array_agg(o.id order by a.position) as "d_objects_ids", count(*)
+  from attachments a join d_objects o on(a.d_object_id=o.id)
+    join d_objects_folders f on(f.id=o.d_objects_folder_id) where attachable_type='ClavisManifestation'
+  AND attachable_id=#{self.id}
+  group by a.attachable_id,a.attachment_category_id,f.name,f.id,cover_image_id order by attachable_id desc;
+}
     self.connection.execute(sql).to_a
   end
 
-  
+  def d_objects_folders
+    DObjectsFolder.find_by_sql("select f.* from manifestations_d_objects_folders mf join d_objects_folders f on(f.id=mf.d_objects_folder_id) where mf.manifestation_id=#{self.id}")
+  end
+
+  def clavis_attachments_cache(destfolder)
+
+
+    
+  end
+
+  def clavis_cover_cached
+    folder=DObjectsFolder.find_by_name('ClavisCoversCache')
+    fname = format('%08d',self.id)
+    fullname = File.join(folder.filename_with_path, fname)
+    if File.exists?(fullname) and File.size(fullname)>0
+      obj = DObject.find_by_name_and_d_objects_folder_id(fname,folder.id)
+    else
+      uri=''
+      if self.clavis_cover_id.nil?
+        # Non esiste una copertina caricata come allegato, provo con EAN/ISBN
+        ['EAN','ISBNISSN'].each do |nt|
+          number=self.send(nt)
+          uri="https://covers.comperio.it/calderone/viewmongofile.php?ean=#{number}" and break if !number.blank?
+        end
+      else
+        uri="https://sbct.comperio.it/index.php?file=lcover&id=#{self.id}"
+      end
+      if !uri.blank?
+        res = Net::HTTP.get_response(URI(uri))
+        if res.class==Net::HTTPOK and res.body.size>185
+          obj=DObject.new(d_objects_folder_id:folder.id, name:fname, access_right_id:0)
+          obj.x_mid=self.id.to_s
+          fd=File.open(fullname,'wb')
+          fd.write(res.body)
+          fd.close
+          obj.save
+        else
+          obj = DObject.find(1034649)
+        end
+      end
+    end
+    obj
+  end
+
   # Va chiamata controllando prima che ci sia almeno un attachment, altrimenti produce un errore
   def main_attachment
     f=self.attachments.first.d_object.d_objects_folder
@@ -174,6 +288,11 @@ class ClavisManifestation < ActiveRecord::Base
     else
       return Attachment.find_by_attachable_type_and_attachable_id_and_d_object_id('ClavisManifestation',self.id,x.to_i)
     end
+  end
+
+  def clavisbct_cover
+    # select * from attachments where attachable_id=50972 and attachable_type='ClavisManifestation' and attachment_category_id='F';
+    DObject.find_by_sql(%Q{select o.* from attachments a join d_objects o on (o.id=a.d_object_id) where attachable_id=#{self.id} and attachable_type='ClavisManifestation' and attachment_category_id='F'}).first
   end
 
   def attachments_zip
@@ -224,6 +343,17 @@ class ClavisManifestation < ActiveRecord::Base
 
   def kardex_adabas_issues_count
     ClavisManifestation.connection.execute("SELECT count(*) from kardex_adabas where bid='#{self.bid}'")[0]['count'].to_i
+  end
+
+  def sp_item_ids_with_d_objects
+    sql=%Q{select distinct i.id from sp.sp_items i
+     join public.attachments a on(i.manifestation_id=a.attachable_id) join
+      public.d_objects o on(o.id=a.d_object_id) join
+      public.d_objects_folders f on (f.id=o.d_objects_folder_id) where
+      a.attachable_type='ClavisManifestation' and i.manifestation_id=#{self.id}
+      and a.position=1 and (attachment_category_id!='F' or
+      attachment_category_id is null);}
+    self.connection.execute(sql).to_a.map {|i| i['id'].to_i}
   end
 
   def collocazioni_e_siglebib_per_senzaparola
@@ -342,6 +472,19 @@ class ClavisManifestation < ActiveRecord::Base
     r.nil? ? nil : r['value_label']
   end
 
+  def update_isbd_cache
+    begin
+      sql = %Q{INSERT INTO public.isbd (manifestation_id) values(#{self.manifestation_id}) ON CONFLICT DO NOTHING;
+        UPDATE public.isbd SET date_updated=#{self.connection.quote(self.date_updated)},
+              isbd=#{self.connection.quote(to_isbd)} WHERE manifestation_id=#{self.manifestation_id};}
+      self.connection.execute sql
+      return 1
+    rescue
+      puts "Errore date update_isbd_cache, manifestation_id #{self.id} : #{$!}"
+      return 0
+    end
+  end
+
   def thebid
     self.bid.blank? ? 'nobid' : "#{self.bid_source}-#{self.bid}"
   end
@@ -371,8 +514,9 @@ class ClavisManifestation < ActiveRecord::Base
     connection.execute(sql).to_a
   end
 
-  def cover_id
-    sql=%Q{SELECT attachment_id FROM clavis.attachment WHERE object_type='Manifestation' AND object_id=#{self.id}}
+  def clavis_cover_id
+    sql=%Q{SELECT attachment_id FROM clavis.attachment WHERE object_type='Manifestation' and attachment_type='E' AND object_id=#{self.id}}
+    puts sql
     r=self.connection.execute(sql).to_a.first
     return nil if r.nil?
     r['attachment_id'].to_i
@@ -480,17 +624,48 @@ class ClavisManifestation < ActiveRecord::Base
     TalkingBook.find_by_sql(sql).first
   end
 
+  def clone_attachment_sql(from_attachment_id)
+    sql=%Q{
+     INSERT INTO attachment (attachment_type, object_id, object_type, mime_type, file_size, file_path,
+                   file_label, file_description,
+                  license, file_name, date_created, date_updated, created_by, modified_by)
+      (SELECT attachment_type, #{self.id}, object_type, mime_type, file_size, file_path,
+                  file_label, file_description,
+                  license, file_name, now(), now(), created_by, 1
+             FROM attachment WHERE attachment_id=#{from_attachment_id});
+     UPDATE turbomarc_cache SET dirty=1 WHERE manifestation_id=#{self.id};
+     }
+    sql
+  end
+
+  # reload!;doc=ClavisManifestation.find(623049).unimarc_edit
+  # doc.elements.first.elements
+  def unimarc_edit
+    context = {ignore_whitespace_nodes: :all, compress_whitespace: :all}
+    doc=REXML::Document.new(self.unimarc.sub(%Q{<?xml version=\"1.0\"?>},''), context)
+    nf = REXML::Element.new('d300', doc.root)
+    sa = REXML::Element.new('sa', nf)
+    sa.text = "<URL>iccu URL"
+
+    
+    return doc
+    el = doc.root.elements['/r/d856']
+    url  = el.get_elements('su').first.text
+    nota = el.get_elements('sz').first.text
+    # puts "URL: #{url['/su'].text}"
+    puts "url: #{url}"
+    puts "nota: #{nota}"
+    doc
+  end
+
   def to_isbd
     res=[]
     unixml=REXML::Document.new(self.unimarc.sub(%Q{<?xml version=\"1.0\"?>},''))
     elements=unixml.first.elements
     titolo=elements['d200/sa'].text
-
-    luogo=elements['d210/sa'].text
+    luogo=elements['d210/sa'].text if !elements['d210/sa'].nil?
     editore=elements['d210/sc'].text if !elements['d210/sc'].nil?
-    anno=elements['d210/sd'].text
-
-    
+    anno=elements['d210/sd'].text if !elements['d210/sd'].nil?
 
     res << self.title.strip
     # res << " / #{elements['d200/sf'].text}" if !elements['d200/sf'].nil?
@@ -503,12 +678,15 @@ class ClavisManifestation < ActiveRecord::Base
     # Illustrazioni:
     coll << " : #{elements['d215/sc'].text}" if !elements['d215/sc'].blank?
     # Misura:
-    coll << " ; #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
-    res << coll if !coll.blank?
+    # coll << " ; #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
+    coll << " ; #{elements['d215/sd'].text}" if !elements['d215/sd'].blank?
+
+    # Elemino eventuali "." finali della collazione:
+    res << coll.sub(/\.+$/,'') if !coll.blank?
 
     res=res.join('. - ')
     # Collana:
-    sql=%Q{select cm.title,lm.link_sequence from clavis.l_manifestation lm
+    sql=%Q{select trim(cm.title) as title,lm.link_sequence from clavis.l_manifestation lm
    join clavis.manifestation cm on(lm.link_type=410 and lm.manifestation_id_down=cm.manifestation_id)
     where lm.manifestation_id_up=#{self.id};}
     r=ClavisManifestation.connection.execute(sql).to_a.first
@@ -520,7 +698,16 @@ class ClavisManifestation < ActiveRecord::Base
       res << ")"
     end
     res << ". - ISBN #{self.ISBNISSN}" if !self.ISBNISSN.blank?
-    res
+    ClavisManifestation.fix_sbn_isbd(res)
+  end
+
+  def ClavisManifestation.fix_sbn_isbd(src)
+    # Fix errata formulazione elementi tra parentesi quadre (sbn-style), esempio:
+    # \\1995! invece di [1995]
+    res = src.gsub(/(\\)(\d+)+(!)/) { "[#{$2}]" }
+    # oppure anche: [1995! invece di [1995]
+    res.gsub(/(\[)(\d+)+(!)/) { "[#{$2}]" }.sub("' ", "'")
+    # l'ultimo sub() elimina eventuali spazi dopo il primo apostrovo di un titolo, tipo "L' olfatto" => "L'olfatto"
   end
 
   def self.clavis_url(id,mode=:show)
@@ -552,8 +739,40 @@ class ClavisManifestation < ActiveRecord::Base
           ci.loan_alert_note as note, ci.item_id as item_id, c.prenotabile, ci.issue_description
          from clavis.item ci join container_items cit using(item_id,manifestation_id)
        join containers c on(cit.container_id=c.id) join clavis.library cl on(cl.library_id=c.library_id)
+       where ci.manifestation_id=#{self.id} and c.prenotabile ORDER BY cit.row_number,cit.item_title}
+    sql=%Q{select cit.item_title as consistenza, c.label as contenitore, cl.description as deposito,
+          ci.loan_alert_note as note, ci.item_id as item_id, c.prenotabile, ci.issue_description
+         from clavis.item ci join container_items cit using(item_id,manifestation_id)
+       join containers c on(cit.container_id=c.id) join clavis.library cl on(cl.library_id=c.library_id)
        where ci.manifestation_id=#{self.id} ORDER BY cit.row_number,cit.item_title}
     ClavisManifestation.find_by_sql(sql)
+  end
+
+  # Vale solo per i periodici Civica centrale con collocazione "Per", esempio "Per.15"
+  def periodici_in_casse
+    res = []
+    self.clavis_consistency_notes.each do |r|
+      res << r.casse
+    end
+    res.flatten.uniq
+  end
+
+  def unimarc_field(tag, subfield)
+    doc = REXML::Document.new(self.unimarc)
+    t = "d#{tag}"
+    sf = "s#{subfield}"
+    res = ''
+    REXML::XPath.each(doc, "//r/#{t}") do |e|
+      v = REXML::XPath.first(e, sf)
+      next if v.nil?
+      res = v.text.strip
+    end
+    res
+  end
+
+  def ClavisManifestation.unimarc_serial_frequencies_select
+    sql=%Q{select label,code_value from clavis.unimarc_codes where language='it_IT' and field_number = 110 and pos=1 order by code_value;}
+    self.connection.execute(sql).collect {|i| [i['label'],i['code_value']]}
   end
 
   def self.free_pdf_filename(manifestation_id)
@@ -561,10 +780,118 @@ class ClavisManifestation < ActiveRecord::Base
     "#{File.join(config[Rails.env]["digital_objects_cache"], 'free', manifestation_id)}.pdf"
   end
 
+  def self.loans_per_library(library_id, class_code, edition_date)
+    # Solo dal 300 al 309
+    # Biblioteca,manifestation_id,ISBN,Titolo,Autore,Editore,CDD,Numero prestiti
+    # Se library_id è nil, viene aggiunta in testa una colonna con il nome della biblioteca
+    library_conditions = library_id.nil? ? '' : "and ci.home_library_id = #{library_id}"
+    sql=%Q{select l.label as "Biblioteca",cm.manifestation_id,cm."ISBNISSN",cm.title,cm.author,cm.publisher,ca.class_code,
+        count(cl.loan_id) as prestiti
+  from clavis.item ci join clavis.manifestation cm using(manifestation_id)
+       join clavis.l_authority_manifestation lam 
+     on(lam.manifestation_id=cm.manifestation_id) join clavis.authority ca  
+     on (ca.authority_id=lam.authority_id)
+          left join clavis.loan cl on(cl.item_id=ci.item_id and cl.item_home_library_id=ci.home_library_id)
+	  join clavis.library l on(l.library_id=ci.home_library_id)
+       where ca.subject_class='676' and 
+     ca.class_code ~ '#{class_code}' and cm.edition_date=#{edition_date}
+     and ci.inventory_date between '#{edition_date}-01-01' and '#{edition_date}-12-31'
+     #{library_conditions}
+     group by l.label,cm.manifestation_id,cm."ISBNISSN",cm.title,cm.author,cm.publisher,ca.class_code
+	  order by l.label,ca.class_code;}
+
+    puts sql
+
+    csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
+      csv << ['Biblioteca','record_id','ISBN','Titolo','Autore','Editore','CDD','Numero prestiti']
+      self.connection.execute(sql).to_a.each do |r|
+        csv << [r['Biblioteca'],r['manifestation_id'],r['ISBNISSN'],r['title'],r['author'],r['publisher'],r['class_code'],r['prestiti']]
+      end
+    end
+    csv_string
+  end
+
+  def ClavisManifestation.in_shelf(shelf_id,library_id=nil,limit=200)
+    if library_id.nil?
+      sql=%Q{select cm.title,cm.manifestation_id,cm.*,substr(array_to_string(array_agg(DISTINCT coll.collocazione
+              ORDER BY coll.collocazione), ', '),1,512) as collocazione
+	      from clavis.shelf_item si
+   join clavis.manifestation cm on(cm.manifestation_id=si.object_id) join clavis.item ci using(manifestation_id)
+    join clavis.collocazioni coll using(item_id)
+     where si.object_class='manifestation' and si.shelf_id = #{shelf_id}
+     group by cm.title,cm.manifestation_id LIMIT #{limit};}
+    else
+      sql=%Q{select cm.*,coll.collocazione from clavis.shelf_item si
+             join clavis.manifestation cm on(cm.manifestation_id=si.object_id)
+             left join lateral (SELECT item_id FROM clavis.item WHERE manifestation_id=cm.manifestation_id
+                     AND home_library_id=#{library_id} and owner_library_id>0 limit 1) as items on true 
+             left join clavis.collocazioni coll using(item_id)
+             where si.object_class='manifestation' and si.shelf_id = #{shelf_id} LIMIT #{limit}}
+    end
+    puts sql
+    ClavisManifestation.find_by_sql(sql)
+  end
+
+  def ClavisManifestation.update_url_sbn
+    sql = %Q{SELECT manifestation_id, unimarc FROM clavis.manifestation where (unimarc ~ '<sa>&lt;URL&gt' or unimarc ~ '<d856')}
+    tempdir = File.join(Rails.root.to_s, 'tmp')
+    tf = Tempfile.new('url_sbn',tempdir)
+    outfile = tf.path
+    fdout=File.open(outfile,'w')
+    fdout.write "TRUNCATE clavis.url_sbn;\n"
+    fdout.write "COPY clavis.url_sbn(manifestation_id,unimarc_tag,url,nota) FROM STDIN;\n"
+    conn = ClavisManifestation.connection
+    conn.execute(sql).to_a.each do |r|
+      doc = REXML::Document.new(r['unimarc'].sub(%Q{<?xml version=\"1.0\"?>},''))
+      unimarc_tag=url=nota=nil
+      doc.root.elements.each do |el|
+        next if !['d856','d300'].include?(el.name)
+        if el.name == 'd300'
+          iccu_url  = el.get_elements('sa').first.text
+          next if (iccu_url =~ /^<URL> ?(.*)/).nil?
+          nota, url = $1.split(' | ')
+          if url.blank?
+            url = nota
+            nota = '\\N'
+          end
+          unimarc_tag='300'
+        else
+          url  = el.get_elements('su').first.text
+          nota = el.get_elements('sz').first
+          nota = nota.blank? ? '\\N' : (nota.text.blank? ? '\\N' : nota.text)
+          unimarc_tag='856'
+        end
+      end
+      next if unimarc_tag.nil?
+      fdout.write "#{r['manifestation_id']}\t#{unimarc_tag}\t#{url}\t#{nota}\n"
+    end
+    fdout.write "\\.\n"
+    fdout.close
+    config   = Rails.configuration.database_configuration
+    dbname=config[Rails.env]["database"]
+    username=config[Rails.env]["username"]
+    cmd="/usr/bin/psql --no-psqlrc -d #{dbname} #{username} -f #{outfile}"
+    Kernel.system(cmd)
+  end
+
   def self.clavis_subscription_url(id)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']
     "#{host}/index.php?page=Acquisition.SubscriptionViewPage&id=#{id}"
+  end
+
+  def self.bib_level
+    sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
+       where value_language = 'it_IT' and value_class='LIVBIBL' order by value_key}
+    self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+  end
+
+  def ClavisManifestation.update_all_isbd_cache
+    sql = %Q{select cm.* from clavis.manifestation cm left join public.isbd i using(manifestation_id)
+      where cm.manifestation_id>0 and cm.unimarc notnull and (i is null or cm.date_updated > i.date_updated)}
+    cnt=0
+    self.find_by_sql(sql).each {|m| cnt+=1;m.update_isbd_cache}
+    cnt
   end
 
   def self.periodici_ordini(ordine_template,page_number=1,per_page=50,extra_sql_conditions='')
@@ -619,5 +946,13 @@ GROUP BY
     # self.connection.execute(sql).to_a
   end
 
-
+  private
+  # val può essere o un oggetto di tipo Date o una stringa nel formato "yyyy-mm-dd"
+  def convert_params_to_date(val)
+    if val.class==String
+      val=val.split('-')
+      val=Date.new(val[0].to_i,val[1].to_i,val[2].to_i)
+    end
+    val
+  end
 end
