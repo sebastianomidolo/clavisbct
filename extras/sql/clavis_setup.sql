@@ -19,17 +19,34 @@ CREATE INDEX item_home_library_id_idx ON clavis.item(home_library_id);
 CREATE INDEX item_section_idx ON clavis.item("section");
 CREATE INDEX item_specification_idx ON clavis.item(specification);
 CREATE INDEX item_supplier_id_idx ON clavis.item(supplier_id);
+CREATE INDEX item_barcode_idx ON clavis.item(barcode);
+CREATE INDEX item_barcode_item_status_idx ON clavis.item(barcode,item_status);
 
 CREATE INDEX rfid_code_idx ON clavis.item(rfid_code);
 
+CREATE INDEX item_request_item_id ON clavis.item_request(item_id);
+
+
 CREATE TABLE clavis.uni856 AS
   SELECT manifestation_id,
-  (xpath('//d856/su/text()',unimarc::xml))[1]::varchar(128) AS url,
-  (xpath('//d856/sz/text()',unimarc::xml))[1]::varchar(128) AS nota
+  (xpath('//d856/su/text()',unimarc::xml))[1]::text AS url,
+  (xpath('//d856/sz/text()',unimarc::xml))[1]::text AS nota
 FROM clavis.manifestation WHERE (xpath('//d856/su/text()',unimarc::xml))[1] NOTNULL;
 CREATE index uni856_manifestation_id_idx ON clavis.uni856(manifestation_id);
 
+create table clavis.url_sbn
+  as select manifestation_id
+from clavis.manifestation where (unimarc ~ '<sa>&lt;URL&gt' or unimarc ~ '<d856');
+alter table clavis.url_sbn add column url text;
+alter table clavis.url_sbn add column nota text;
+alter table clavis.url_sbn add column unimarc_tag char(3);
+create index url_sbn_manifestation_id_idx on clavis.url_sbn(manifestation_id);
 
+alter table clavis.item add column talking_book_id integer;
+update clavis.item set talking_book_id = custom_field1::integer where custom_field1 ~ '^[0-9\.]+$'
+  and  item_media='T' and section='LP';
+create index item_talking_book_id_ndx on clavis.item(talking_book_id) where talking_book_id notnull;
+  
 
 CREATE INDEX clavis_authorities_full_text ON clavis.authority(full_text);
 CREATE INDEX clavis_authorities_authority_id ON clavis.authority(authority_id);
@@ -76,7 +93,8 @@ create or replace view soggetti_non_presenti_in_nuovo_soggettario as
 create or replace view bio_iconografico_cards as
   select id,(xpath('//r/ns/text()',tags))[1]::varchar as namespace,
        (xpath('//r/l/text()',tags))[1]::varchar as lettera,
-       (xpath('//r/n/text()',tags))[1]::text::integer as numero
+       (xpath('//r/n/text()',tags))[1]::text::integer as numero,
+       (xpath('//r/parent/text()',tags))[1]::text::integer as parent
   from d_objects where type = 'BioIconograficoCard';
 
 create or replace view bio_iconografico_topics_view as
@@ -133,6 +151,7 @@ alter table clavis.unique_items add primary key(item_id);
 
 create index ean_clavis_purchase_proposal_ndx on clavis.purchase_proposal(ean) where ean!='';
 create index ean_clavis_manifestation_ndx on clavis.manifestation("EAN") where "EAN"!='';
+create index isbnissn_clavis_manifestation_ndx on clavis.manifestation("ISBNISSN") where "ISBNISSN"!='';
 
 
 alter table clavis.item add column digitalized boolean;
@@ -155,5 +174,6 @@ where specification is null and split_part(collocation, '.', 2) ~ '\d';
 delete from clavis.buchi_dvd where specification is null;
 
 ------------------
-
-
+create index item_media_type_ndx on clavis.item(item_media);
+create index item_status_ndx on clavis.item(item_status);
+create index loan_patron_id_ndx on clavis.loan(patron_id);
