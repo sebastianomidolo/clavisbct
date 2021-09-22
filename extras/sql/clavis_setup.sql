@@ -34,12 +34,7 @@ CREATE TABLE clavis.uni856 AS
 FROM clavis.manifestation WHERE (xpath('//d856/su/text()',unimarc::xml))[1] NOTNULL;
 CREATE index uni856_manifestation_id_idx ON clavis.uni856(manifestation_id);
 
-create table clavis.url_sbn
-  as select manifestation_id
-from clavis.manifestation where (unimarc ~ '<sa>&lt;URL&gt' or unimarc ~ '<d856');
-alter table clavis.url_sbn add column url text;
-alter table clavis.url_sbn add column nota text;
-alter table clavis.url_sbn add column unimarc_tag char(3);
+create table clavis.url_sbn (manifestation_id integer, url text, nota text, unimarc_tag char(3));
 create index url_sbn_manifestation_id_idx on clavis.url_sbn(manifestation_id);
 
 alter table clavis.item add column talking_book_id integer;
