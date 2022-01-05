@@ -2,9 +2,11 @@
 # lastmod 19 dicembre 2012
 
 class ClavisAuthoritiesController < ApplicationController
-
+  # load_and_authorize_resource only: [:index]
+  
   def index
     render template:'clavis_authorities/l_in_subjects' and return if params[:in_subjects]=='true'
+    render template:'clavis_authorities/l_in_keywords' and return if params[:in_keywords]=='true'
     cond=[]
     if params[:authority_type].blank?
       cond << 'authority_type is null'
@@ -52,4 +54,9 @@ class ClavisAuthoritiesController < ApplicationController
     r[:letterebct]=@ca.letterebct_person
     render xml:r.to_xml
   end
+
+  def dupl
+    @authorities=ClavisAuthority.dupl(params[:authority_type])
+  end
+
 end
