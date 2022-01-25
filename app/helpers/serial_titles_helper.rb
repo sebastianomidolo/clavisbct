@@ -179,6 +179,7 @@ module SerialTitlesHelper
   end
 
   def serial_invoices_list(serial_list)
+    return 'Nessuna fattura inserita per la lista corrente' if serial_list.serial_invoices_report.size == 1
     res = []
     rr=nil
     res << content_tag(:tr, content_tag(:td, 'Riferimento fattura') +
