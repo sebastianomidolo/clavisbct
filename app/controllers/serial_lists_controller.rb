@@ -2,13 +2,20 @@ class SerialListsController < ApplicationController
   layout 'periodici'
   before_filter :set_serial_list, only: [:show, :edit, :update, :destroy, :import, :clone, :delete_library]
 
-  load_and_authorize_resource
+  load_and_authorize_resource except: [:index]
   
   respond_to :html
 
   def index
-    user = (can? :manage, SerialList) ? nil : current_user
-    @serial_lists=SerialList.lista(params, user)
+    if current_user.nil?
+      @pagetitle="Liste periodici"
+      @serial_lists=SerialList.lista_public
+      render template:'serial_lists/index_public'
+    else
+      user = (can? :manage, SerialList) ? nil : current_user
+      @pagetitle="Liste periodici #{current_user.email}"
+      @serial_lists=SerialList.lista(params, user)
+    end
   end
 
   def import
@@ -40,7 +47,8 @@ class SerialListsController < ApplicationController
     if request.put?
       serial_list_id=@serial_list.id
       @serial_list=SerialList.new(params[:serial_list])
-      @serial_list.save
+      @serial_list.title += " - #{Time.now}"
+      @serial_list.save!
       @serial_list.clone_from_list(serial_list_id)
       redirect_to serial_titles_path(serial_list_id:@serial_list.id)
     else
