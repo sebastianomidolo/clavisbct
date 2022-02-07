@@ -98,8 +98,10 @@ class BioIconograficoCardsController < ApplicationController
   end
 
   def delete
+    lettera=@bio_iconografico_card.lettera
+    namespace=@bio_iconografico_card.namespace
     @bio_iconografico_card.destroy
-    redirect_to bio_iconografico_cards_path(:lettera=>@bio_iconografico_card.lettera), notice: 'Cancellazione effettuata' 
+    redirect_to bio_iconografico_cards_path(:lettera=>lettera, :namespace=>namespace), notice: 'Cancellazione effettuata' 
   end
 
   private

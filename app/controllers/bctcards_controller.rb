@@ -1,5 +1,8 @@
 class BctcardsController < ApplicationController
-  layout 'bctcards'
+  # layout 'bctcards'
+  layout 'bioico'
+  # layout 'procult/procult'
+
   before_filter :set_card, only: [:show]
 
   respond_to :html
