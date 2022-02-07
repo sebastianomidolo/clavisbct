@@ -16,4 +16,13 @@ class ApplicationController < ActionController::Base
     store_location_for(:user, request.fullpath)
   end
 
+  def filter_current_params(params)
+    prm={}
+    params.keys.each do |p|
+      next if ['id','utf8','action','controller','au'].include?(p)
+      prm[p]=params[p]
+    end
+    prm
+  end
+
 end
