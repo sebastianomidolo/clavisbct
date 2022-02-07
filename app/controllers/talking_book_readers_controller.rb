@@ -1,5 +1,5 @@
 class TalkingBookReadersController < ApplicationController
-  layout 'navbar'
+  layout 'talking_books'
   load_and_authorize_resource
   before_filter :set_talking_book_reader, only: [:show, :edit, :update, :destroy]
   respond_to :html

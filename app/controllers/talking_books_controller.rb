@@ -101,7 +101,22 @@ class TalkingBooksController < ApplicationController
           joins = [:clavis_items]
           joins = []
           cond = cond.join(" AND ")
-          sql=%Q{
+          if @talking_books_manager
+            sql=%Q{
+          select tb.*,
+  array_to_string(array_agg(ci.collocation order by item_id), '|') as collocations,
+  array_to_string(array_agg(ci.manifestation_id order by item_id), '|') as manifestation_ids,
+  array_to_string(array_agg(ci.item_id order by item_id), '|') as item_ids,
+  array_to_string(array_agg(ci.opac_visible order by item_id), '|') as opac_visibilities,
+  array_to_string(array_agg((xpath('//d215/sa/text()',cm.unimarc::xml))[1]::text order by item_id), '|') AS descr_fisica,
+  count(*)
+    from libroparlato.catalogo as tb left join clavis.item ci on(ci.talking_book_id=tb.id and ci.item_media = 'T')
+    left join clavis.manifestation cm on(cm.manifestation_id=ci.manifestation_id)
+    where #{cond}
+     group by tb.id
+    order by #{order}}
+          else
+            sql=%Q{
           select tb.*,
   array_to_string(array_agg(ci.collocation order by item_id), '|') as collocations,
   array_to_string(array_agg(ci.manifestation_id order by item_id), '|') as manifestation_ids,
@@ -114,7 +129,8 @@ class TalkingBooksController < ApplicationController
     where ci.item_media = 'T' and #{cond}
      group by tb.id
     order by #{order}}
-
+          end
+          
           @talking_books = TalkingBook.paginate_by_sql(sql, page:params[:page])
         end
         render :index, layout:'talking_books' if @talking_books_manager

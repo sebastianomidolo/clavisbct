@@ -6,6 +6,6 @@
    content_tag(:p, "Cartella mp3: <b>#{link_to(f.name, d_objects_folder_path(f))}</b>".html_safe) if !f.nil?
 %>
 
-
+<%= content_tag(:div, talking_book_clavis_items(@talking_book)) %>
 <% content_tag(:div, talking_book_show(@talking_book)) %>
 <%= render partial:'edit' %>

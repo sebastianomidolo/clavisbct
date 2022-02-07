@@ -1,13 +1,19 @@
 # coding: utf-8
+
 module TalkingBooksHelper
+
   def talking_books_index(records)
     res=[]
     records.each do |r|
-      tit = r.respons.blank? ? r.titolo : "#{r.titolo} / #{r.respons}"
-      res << content_tag(:tr, content_tag(:td, link_to(tit, "https://#{request.host_with_port}#{talking_book_path(r)}")) +
-                         content_tag(:td, r.n))
+      # tit = r.respons.blank? ? r.titolo : "#{r.titolo} / #{r.respons}"
+      intest = r.intestatio.nil? ? '' : "#{r.intestatio.sub(/\.$/, '')}. "
+      tit = r.respons.blank? ? r.titolo : "#{intest}#{r.titolo}"
+      disp = talking_book_disponibile(r)
+      lnk = content_tag(:h4, content_tag(:b, link_to(tit, "https://#{request.host_with_port}#{talking_book_path(r)}"))) + disp.html_safe
+      res << content_tag(:tr, content_tag(:td, lnk, class:'col-md-10'))
     end
-    content_tag(:table, res.join.html_safe)
+    content_tag(:div, content_tag(:table, res.join("\n").html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
   end
 
   def talking_books_listatitoli(records)
@@ -30,15 +36,67 @@ module TalkingBooksHelper
     records.each do |r|
       tit = r.respons.blank? ? r.titolo : "#{r.titolo} / #{r.respons}"
       f=r.d_objects_folder_id
-      img = f.nil? ? '' : link_to(image_tag('http://bctwww.comperio.it/static/libroparlato_scaricabile.jpg'), d_objects_folder_path(f))
+      img = f.nil? ? '' : link_to(image_tag('https://bctwww.comperio.it/static/libroparlato_scaricabile.jpg'), d_objects_folder_path(f))
+      disp = talking_book_disponibile(r)
+      lnk = "#{link_to(tit, edit_talking_book_path(r))}#{disp}".html_safe
       res << content_tag(:tr, content_tag(:td, r.n) +
-                              content_tag(:td, "#{r.cd} CD") +
                               content_tag(:td, img) +
-                              content_tag(:td, link_to(tit, edit_talking_book_path(r))) +
+                              content_tag(:td, lnk) +
                               content_tag(:td, r.digitalizzato))
     end
     content_tag(:table, res.join.html_safe, class:'table')
   end
+
+  def talking_book_disponibile_editable(record)
+    res = []
+    df = record.descr_fisica.split('|'), coll = record.collocations.split('|'), i = 0
+    record.item_ids.split('|').each do |e|
+      res << content_tag(:li, "Item: #{link_to(coll[i], ClavisItem.clavis_url(e))} (descrizione fisica: #{df[i]})".html_safe)
+      i += 1
+    end
+    res << content_tag(:li, "Scaricabile") if !record.d_objects_folder_id.blank?
+    "<br/>#{content_tag(:ul, res.join("\n").html_safe)}"
+  end
+
+  def talking_book_disponibile(record)
+    res = []
+    df = record.descr_fisica.split('|'), coll = record.collocations.split('|'), visib = record.opac_visibilities, i = 0
+    record.item_ids.split('|').each do |e|
+      next if visib[i]=='0'
+      str = coll[i].match(/CD/i).nil? ? "cassette. Codice: <b>#{coll[i]}</b>" : "CD. Codice: <b>#{coll[i]}</b>"
+      res << content_tag(:li, "Disponibile su #{str}".html_safe)
+      i += 1
+    end
+    res << content_tag(:li, "Scaricabile") if !record.d_objects_folder_id.blank?
+    # res << content_tag(:li, record.opac_visibilities)
+    "<br/>#{content_tag(:ul, res.join("\n").html_safe)}"
+  end
+
+
+  def talking_book_clavis_items(record)
+    res = []
+    record.clavis_items.each do |r|
+      cm = r.clavis_manifestation
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, r.clavis_url)) +
+                              content_tag(:td, r.manifestation_id) +
+                              content_tag(:td, r.opac_visible==1 ? 'Visibile in Opac' : 'Non visibile in Opac') +
+                              content_tag(:td, cm.unimarc_field(215,'a')) +
+                              content_tag(:td, r.collocation))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def talking_book_clavis_items_public(record)
+    res = []
+    record.clavis_items.each do |r|
+      next if !r.loan_class =~ /^B/
+      res << content_tag(:tr, content_tag(:td, r.la_collocazione) +
+                              content_tag(:td, r.id) +
+                              content_tag(:td, r.collocation))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
 
   def talking_book_show(record)
     res=[]
@@ -127,30 +185,28 @@ module TalkingBooksHelper
     res
   end
 
+  def talking_book_available_items(record)
+    res=[]
+    record.clavis_items.each do |r|
+      next if !r.loan_class =~ /^B/ or r.opac_visible != 1
+      str = r.collocation.match(/CD/i).nil? ? "cassette. Codice: <b>#{r.collocation}</b> - #{record.cassette} cassette" : "CD. Codice: <b>#{r.collocation}</b>"
+      res << content_tag(:li, "Disponibile su #{str}".html_safe)
+    end
+    res == [] ? '' : content_tag(:ul, res.join("\n").html_safe)
+  end
+
   def talking_book_show_record(record)
     res = []
     res << content_tag(:h3,%Q{#{record.main_entry}<em>#{record.titolo}</em>.}.html_safe)
     href=nil
     if !record.d_objects_folder_id.nil?
-      href=File.join('https://bctwww.comperio.it/tbda',File.basename(record.zip_filepath)) if !record.zip_filepath.nil?
+      href=File.join('https://bctwww.comperio.it/tbda',File.basename(record.zip_filepath)) if !record.zip_filepath.nil? and File.exists?(record.zip_filepath)
     end
     ad=[]
-    ad << "#{record.abstract}." if !record.abstract.blank?
-    ok=false
-    if !record.cd.nil? and record.da_inserire_in_informix=='0'
-      ad << content_tag(:div, "Codice cd mp3: CD #{record.n}.", :class=>'codice')
-      ok=true
-    end
-    if !record.cassette.nil?
-      ad << content_tag(:div, "Codice cassette: #{record.n}, #{record.cassette} cassette.", :class=>'codice')
-      ok=true
-    end
-    ad << content_tag(:div, "Collocazione: #{record.n} (id #{record.id})") if ok==false
-
-    ad << link_to("Scarica #{record.n}", href) if !href.nil?
-    ad << content_tag(:div, "Data collocazione: #{record.data_collocazione}")
+    ad << "<p>#{record.abstract}</p>" if !record.abstract.blank?
+    ad << talking_book_available_items(record)
+    ad << button_to("Scarica il libro".html_safe, href, method:'get') if !href.nil?
     res << content_tag(:div, ad.join("\n").html_safe)
-    # res << talking_book_opac(record)
     content_tag(:div, res.join.html_safe,  :class=>'scheda_libro_parlato')
   end
 
@@ -164,8 +220,8 @@ module TalkingBooksHelper
     end
     if !record.nil? and !access_control_key.blank? and authorized
       mid=clavis_manifestation.manifestation_id
-      lnk="http://#{request.host_with_port}/" + download_mp3_talking_book_path(record, :mid => mid, :dng_user => params[:dng_user], :ac => access_control_key)
-      res << image_tag("http://#{request.host_with_port}/assets/icona_download01.gif?mid=#{mid}", style: 'padding: 4px')
+      lnk="https://#{request.host_with_port}/" + download_mp3_talking_book_path(record, :mid => mid, :dng_user => params[:dng_user], :ac => access_control_key)
+      res << image_tag("https://#{request.host_with_port}/assets/icona_download01.gif?mid=#{mid}", style: 'padding: 4px')
       res << link_to(content_tag(:span, 'Scarica audio mp3 completo', class: "badge"), lnk)
 
       if clavis_manifestation.attachments.size>0
@@ -193,20 +249,36 @@ module TalkingBooksHelper
       fsize=File.size(record.zip_filepath)
       res << "Dimensioni file: #{number_to_human_size(fsize)} (#{fsize} bytes)"
       res << "Data del file: #{File.ctime(record.zip_filepath)}"
+      res << link_to("<b>[Cancella file zip (da realizzare)]</b>".html_safe, edit_talking_book_path(record), confirm:'Confermi cancellazione file zip?')
     else
       res << "file zip audio non presente"
+      res << link_to("<b>[Genera file zip (da realizzare)</b>]".html_safe, edit_talking_book_path(record), confirm:'Confermi generazione file zip?')
     end
-    content_tag(:pre, res.join("\n"))
+    content_tag(:pre, res.join("\n").html_safe)
   end
 
 
   def talking_books_breadcrumbs
-    # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
+    # return params.inspect
     links=[]
     links << link_to('Servizio del Libro Parlato', 'https://bct.comune.torino.it/programmi-progetti/programma/il-servizio-del-libro-parlato')
-    if params[:controller]=='talking_books' and params[:action]=='show' or (params[:action]=='index' and !params[:qs].blank?) 
+    if params[:controller]=='talking_books' and ['index','show','edit','check'].include?(params[:action])
       links << link_to('Catalogo dei libri parlati', talking_books_path)
     end
+    if params[:controller]=='talking_books' and ['check_duplicates','digitalizzati_non_presenti','opac_edit_intro','stats'].include?(params[:action])
+      links << link_to('Catalogo dei libri parlati', talking_books_path)
+      links << link_to('Admin', check_talking_books_path)
+    end
+
+
+    if params[:controller]=='talking_book_readers' and ['check','index','edit','new','show'].include?(params[:action])
+      links << link_to('Catalogo dei libri parlati', talking_books_path)
+      links << link_to('Admin', check_talking_books_path)
+      if !params[:id].blank?
+        links << link_to('Volontari', talking_book_readers_path)
+      end
+    end
+ 
     %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
   end
 

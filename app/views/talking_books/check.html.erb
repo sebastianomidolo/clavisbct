@@ -10,7 +10,9 @@
    content_tag(:li, link_to('Digitalizzati ancora da caricare su server', digitalizzati_non_presenti_talking_books_path)) +
    content_tag(:li, link_to('Controllo cartelle duplicate', check_duplicates_talking_books_path)) +
    content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path, data: { confirm: 'Sicuro sicuro di volerlo fare?' }) + " (richiede qualche minuto) - NB: il file Access catalogo.mdb non viene più utilizzato per determinare la data di aggiornamento}") +
-   content_tag(:li, link_to('Modifica il testo introduttivo alla maschera di ricerca pubblica', opac_edit_intro_talking_books_path)))
+  content_tag(:li, link_to('Dati su acquisizione libro parlato', stats_talking_books_path)) +
+  content_tag(:li, link_to('Modifica il testo introduttivo alla maschera di ricerca pubblica', opac_edit_intro_talking_books_path)))
+  
 %>
 
 <%= content_tag(:pre, File.read(TalkingBook.logfilename).html_safe) if File.exists?(TalkingBook.logfilename) %>

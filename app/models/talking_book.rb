@@ -15,6 +15,16 @@ class TalkingBook < ActiveRecord::Base
   belongs_to :d_objects_folder
   belongs_to :talking_book_reader
 
+  has_many :clavis_items
+  
+  def clavis_items_no
+    sql=%Q{select ci.* from libroparlato.catalogo c join clavis.item ci on
+ (ci.custom_field1!='' and ci.manifestation_id=c.manifestation_id and
+  ci.custom_field1::integer=c.id and item_media='T' and section='LP')
+    where c.id=#{self.id}}
+    ClavisItem.find_by_sql(sql)
+  end
+
   def controlla_collocazione
     self.n=self.n.squeeze(' ').strip
   end
@@ -107,6 +117,8 @@ class TalkingBook < ActiveRecord::Base
     self.update_d_objects_folder_id
   end
 
+  # Aggiornamento zip audio singolo libro parlato:
+  # tb=TalkingBook.find(11083);tb.book_update
   def book_update(folder=nil)
     config = Rails.configuration.database_configuration
     source=config[Rails.env]["libroparlato_upload"]
@@ -130,6 +142,8 @@ class TalkingBook < ActiveRecord::Base
     source_folder=File.join(source,folder)
     target_folder=File.join(destfolder,target)
     old_folder=File.join(target_folder,File.basename(folder))
+
+    puts "source_folder: #{source_folder}"
     if !Dir.exists?(source_folder)
       puts "non aggiornabile, non esiste #{source_folder}, proseguo con i files già presenti"
     else
@@ -143,20 +157,22 @@ class TalkingBook < ActiveRecord::Base
     end
     scan_dir=old_folder.sub(mount_point,'')
     puts "nuovo scan da effettuare in #{scan_dir}"
-
     numfiles=DObject.fs_scan(scan_dir)
     puts "Analizzati e importati nel db #{numfiles} files"
+
     collocazione=TalkingBook.filename2colloc(folder)
     collocazione = "CD #{collocazione}" if (collocazione =~ /^CD /).nil?
     puts "ora inserisco collocazione #{collocazione} in tabella import_libroparlato_colloc"
 
     newdestfolder=ActiveRecord::Base.connection.quote_string(scan_dir)
+    puts "newdestfolder: #{newdestfolder}"
     sql=%Q{DELETE FROM import_libroparlato_colloc WHERE collocation='#{collocazione}';
            INSERT INTO import_libroparlato_colloc(collocation,position,d_object_id)
        (SELECT '#{collocazione}',row_number() over(order by win_sortfilename(o.name)), o.id
          from d_objects_folders f join d_objects o on(o.d_objects_folder_id=f.id)
            where f.name ~ '^#{newdestfolder}');}
     puts sql
+
     ActiveRecord::Base.connection.execute(sql)
     self.attachments_insert
 
@@ -311,7 +327,8 @@ class TalkingBook < ActiveRecord::Base
   end
 
   def TalkingBook.digitalizzati_non_presenti_su_server
-    sql=%Q{select * from libroparlato.catalogo where digitalizzato notnull
+    sql=%Q{select *,'' as descr_fisica, '' as collocations, '' as item_ids, '' as opac_visibilities
+     from libroparlato.catalogo where digitalizzato notnull
       and cd notnull and d_objects_folder_id is null and n!= '' order by
        espandi_collocazione(n)}
     TalkingBook.find_by_sql(sql)
@@ -366,6 +383,21 @@ class TalkingBook < ActiveRecord::Base
   def TalkingBook.logfilename
     tempdir = File.join(Rails.root.to_s, 'tmp')
     File.join(tempdir, 'libroparlato.log')
+  end
+
+  def TalkingBook.auto_insert_covers_i05(attachment_id)
+    outfile='/tmp/insert_covers_cassette.sql'
+    fd=File.open(outfile, 'w');
+    puts fd=File.open('/tmp/insert_covers_cassette.sql', 'w');
+    sql=%Q{select m.* from clavis.manifestation m join clavis.item i using(manifestation_id)
+         left join clavis.attachment a on(a.object_id=m.manifestation_id) where a.attachment_id is null and m.bib_type='i05'
+           and i.item_media='T'}
+    cm=ClavisManifestation.find_by_sql(sql)
+    cm.each do |m|
+      fd.write(m.clone_attachment_sql(attachment_id))
+    end
+    fd.close
+    puts "ok scritto sql in #{outfile}"
   end
 
   def self.loadhelper

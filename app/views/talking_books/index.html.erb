@@ -22,8 +22,8 @@
 
 <%= javascript_tag("jQuery('#qs').select().focus()") %>
 
-<%= content_tag(:h2, "Trovati #{@talking_books.total_entries}") %>
-<%= will_paginate @talking_books, renderer: BootstrapPagination::Rails %>
+<%= content_tag(:h3, "Trovati #{@talking_books.total_entries} titoli") %>
+
 
 
 <hr/>
@@ -33,3 +33,5 @@
       content_tag(:div, talking_books_index(@talking_books))
     end
 %>
+
+<%= will_paginate @talking_books, renderer: BootstrapPagination::Rails %>
