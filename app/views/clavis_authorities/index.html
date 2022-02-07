@@ -5,15 +5,22 @@
       params[:authority_type]), :onchange=>'submit();', include_blank:true) %>
   <%= select_tag(:bidnotnull, options_for_select([['Tutte',nil],['Con BID',true],['Senza BID',false]],
       params[:bidnotnull]), :onchange=>'submit();') %>
+  <%= select_tag(:no_bncf, options_for_select([['Tutte',nil],['Con link a BNCF',true],['Senza link a BNCF',false]],
+      params[:no_bncf]), :onchange=>'submit();') %>
+  
   <%= select_tag(:rectype, options_for_select([['-',nil],['Termine apicale','k'],['Termine non preferito','y'],
                   ['Etichetta di nodo','z'],['Termine accettato','x']],
       params[:rectype]), :onchange=>'submit();') %>
-  <%= text_field_tag(:qs, params[:qs], size:8) %>
+  <br/><%= text_field_tag(:qs, params[:qs], size:8) %> (esempio di troncamento: '^abb' inizia con "abb" ; 'zia$' finisce con "zia")
   <%= submit_tag 'cerca', :class=>'btn btn-info' %>
 <% end %>
 
+<% content_tag(:pre, @sql_conditions) %>
 
-<%= content_tag(:p, "Trovate #{@clavis_authorities.total_entries} voci con #{@sql_conditions}") %>
+<%=
+  lnk=link_to('<br/><b>Duplicati...</b>'.html_safe, dupl_clavis_authorities_path(authority_type:params[:authority_type]))
+  content_tag(:p, "Trovate #{@clavis_authorities.total_entries} voci con #{@sql_conditions}#{lnk}".html_safe)
+%>
 
 
 <%= will_paginate @clavis_authorities, renderer: BootstrapPagination::Rails %>

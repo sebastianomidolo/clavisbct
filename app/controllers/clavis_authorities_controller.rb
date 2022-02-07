@@ -17,6 +17,8 @@ class ClavisAuthoritiesController < ApplicationController
     end
     cond << "bid is not null" if params[:bidnotnull]=='true'
     cond << "bid is null" if params[:bidnotnull]=='false'
+    cond << "bid_source = 'BNCF_THES'" if params[:no_bncf]=='true'
+    cond << "bid_source is null" if params[:no_bncf]=='false'
     cond << "authority_rectype = #{ClavisAuthority.connection.quote(params[:rectype])}" if !params[:rectype].blank?
     cond << "full_text ~* #{ClavisAuthority.connection.quote(params[:qs])}" if !params[:qs].blank?
     cond = cond.join(' AND ')
