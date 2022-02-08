@@ -1,0 +1,7 @@
+* Find a better way to handle magic_load than just defaulting to NULL
+* Find a way to make magic_check work on NULL
+* Refactor code into initialize instead of new
+
+* Properly document C methods
+* Convert tests to RSpec
+* Add Rake tasks

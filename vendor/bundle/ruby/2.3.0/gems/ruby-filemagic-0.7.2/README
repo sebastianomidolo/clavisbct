@@ -1,0 +1,120 @@
+= FileMagic Library Binding
+
+== VERSION
+
+This documentation refers to filemagic version 0.7.2
+
+
+== DESCRIPTION
+
+FileMagic extension module. See also libmagic(3), file(1) and magic(4).
+
+=== Constants
+
+<tt>MAGIC_NONE</tt>::     No flags
+<tt>MAGIC_DEBUG</tt>::    Turn on debugging
+<tt>MAGIC_SYMLINK</tt>::  Follow symlinks
+<tt>MAGIC_COMPRESS</tt>:: Check inside compressed files
+<tt>MAGIC_DEVICES</tt>::  Look at the contents of devices
+<tt>MAGIC_MIME</tt>::     Return a mime string
+<tt>MAGIC_CONTINUE</tt>:: Return all matches, not just the first
+<tt>MAGIC_CHECK</tt>::    Print warnings to stderr
+
+=== Methods
+
+<tt>file(filename)</tt>::    Returns a textual description of the contents
+                             of the filename argument
+<tt>buffer(string)</tt>::    Returns a textual description of the contents
+                             of the string argument
+<tt>check(filename)</tt>::   Checks the validity of entries in the database
+                             file passed in as filename
+<tt>compile(filename)</tt>:: Compiles the database file passed in as filename
+<tt>load(filename)</tt>::    Loads the database file passed in as filename
+<tt>close()</tt>::           Closes the magic database and frees any memory
+                             allocated
+
+=== Synopsis
+
+  require 'filemagic'
+
+  p FileMagic::VERSION
+  # => "0.7.2"
+  p FileMagic::MAGIC_VERSION
+  # => "5.28"
+
+  p FileMagic.new.flags
+  # => []
+
+  FileMagic.open(:mime) { |fm|
+    p fm.flags
+    # => [:mime_type, :mime_encoding]
+    p fm.file(__FILE__)
+    # => "text/plain; charset=us-ascii"
+    p fm.file(__FILE__, true)
+    # => "text/plain"
+
+    fm.flags = [:raw, :continue]
+    p fm.flags
+    # => [:continue, :raw]
+  }
+
+  fm = FileMagic.new
+  p fm.flags
+  # => []
+
+  mime = FileMagic.mime
+  p mime.flags
+  # => [:mime_type, :mime_encoding]
+
+=== Environment
+
+The environment variable +MAGIC+ can be used to set the default magic file name.
+
+=== Installation
+
+Install the gem:
+
+  sudo gem install ruby-filemagic
+
+The file(1) library and headers are required:
+
+Debian/Ubuntu:: +libmagic-dev+
+Fedora/SuSE::   +file-devel+
+Gentoo::        +sys-libs/libmagic+
+OS X::          <tt>brew install libmagic</tt>
+
+
+== LINKS
+
+Homepage::      http://www.darwinsys.com/file/
+Documentation:: https://blackwinter.github.com/ruby-filemagic
+Source code::   https://github.com/blackwinter/ruby-filemagic
+RubyGem::       https://rubygems.org/gems/ruby-filemagic
+Travis CI::     https://travis-ci.org/blackwinter/ruby-filemagic
+
+
+== AUTHORS
+
+* Travis Whitton <mailto:tinymountain@gmail.com> (Original author)
+* Jens Wille <mailto:jens.wille@gmail.com>
+
+
+== CREDITS
+
+* Martin Carpenter <mailto:mcarpenter@free.fr> for Ruby 1.9.2 compatibility
+  and other improvements.
+
+
+== COPYING
+
+The filemagic extension library is copywrited free software by Travis Whitton
+<tinymountain@gmail.com>. You can redistribute it under the terms specified in
+the COPYING file of the Ruby distribution.
+
+
+== WARRANTY
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.

@@ -1,0 +1,113 @@
+# markup: rd
+
+= Revision history for ruby-filemagic
+
+== 0.7.2 [2017-07-02]
+
+* Fix segfault on <tt>buffer(nil)</tt> when compiled with GCC (pull request
+  #24 by Yuya Tanaka).
+
+== 0.7.1 [2015-10-27]
+
+* List default lib and header directories (pull request #18 by Adam Wróbel).
+
+== 0.7.0 [2015-07-28]
+
+* Changed FileMagic#io to optionally rewind input afterwards.
+* New method FileMagic.library_version (+magic_version+).
+* New method FileMagic#descriptor (+magic_descriptor+).
+* New method FileMagic#fd.
+* Added new constants from file 5.23.
+
+== 0.6.3 [2015-02-06]
+
+* Fixed build error with Clang (issue #13 by Stan Carver II).
+
+== 0.6.2 [2015-02-06]
+
+* Improved Windows support (issue #10 by Matt Hoyle).
+* Fixed FileMagic.path to account for missing magic file.
+
+== 0.6.1 [2014-08-19]
+
+* Account for options passed to FileMagic.fm (issue #7 by Adam Wróbel).
+
+== 0.6.0 [2014-05-16]
+
+* Required Ruby version >= 1.9.3.
+* New method FileMagic#list (+magic_list+).
+* New method FileMagic#load (+magic_load+).
+* New method FileMagic.path (+magic_getpath+).
+* New method FileMagic.magic_version.
+* New method FileMagic.flags.
+* New flag +no_check_builtin+.
+* Tests print libmagic version and path.
+* Internal refactoring.
+
+== 0.5.2 [2014-04-24]
+
+* Use MAGIC_VERSION if available.
+* Made tests more robust.
+
+== 0.5.1 [2014-04-15]
+
+* New method FileMagic#io.
+* Housekeeping.
+
+== 0.5.0 [2013-12-19]
+
+* Removed usage of +RARRAY_PTR+ (cf. Ruby bug
+  {#8399}[https://bugs.ruby-lang.org/issues/8399]).
+* Housekeeping.
+
+== 0.4.2 [2010-09-16]
+
+* Not all versions/distributions have file/patchlevel.h
+
+== 0.4.1 [2010-09-15]
+
+* Added MAGIC_VERSION
+* Fixed example script
+
+== 0.4.0 [2010-09-14]
+
+* Brushed up C layer
+  * Moved most of the Ruby stuff to C
+  * No longer expose internal state (@closed, @flags)
+  * No longer expose internal C methods (fm_*)
+  * Updated for magic(4) version 5.04
+
+== 0.3.0 [2010-09-10]
+
+* Ruby 1.9.2 compatibility (Martin Carpenter)
+* Exposed flags as symbols (Martin Carpenter)
+
+== 0.2.2 [2010-03-02]
+
+* Allow '.' when abbreviating mime types (Eric Schwartz)
+* Cleanup and project file fixes
+
+== 0.2.1 [2008-09-18]
+
+* Added mahoro source file and tests for reference and inspiration
+* We have a Rubyforge project now! :-)
+
+== 0.2.0 [2008-09-12]
+
+* Modified C API
+  * Uniform C function prefix rb_magic_ (instead of magick_)
+  * Uniform Ruby method prefix fm_ (instead of none)
+  * More magic(4) constants (if available)
+* Added Ruby wrapper for more rubyish interface
+* Added extensions for File and String core classes
+* Added/updated project files
+* Now available as a Rubygem!
+
+== 0.1.1 [2003-07-30]
+
+* Added manual close method
+* Added unit test suite
+
+== 0.1.0 [2003-07-28]
+
+* Initial release.

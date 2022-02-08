@@ -1,0 +1,26 @@
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv
+/usr/bin/ruby2.3 -r ./siteconf20201206-18003-k83e3n.rb extconf.rb
+checking for rb_enc_get() in ruby/encoding.h... yes
+checking for rb_sys_fail_str() in ruby.h... yes
+checking for iconv() in iconv.h... yes
+checking signedness of size_t... unsigned
+checking for const of iconv() 2nd argument... no
+checking for iconvlist() in iconv.h... no
+checking for __iconv_free_list() in iconv.h... no
+creating Makefile
+
+To see why this extension failed to compile, please check the mkmf.log which can be found here:
+
+  /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/extensions/x86_64-linux/2.3.0/iconv-1.0.8/mkmf.log
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv
+make "DESTDIR=" clean
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv
+make "DESTDIR="
+compiling iconv.c
+linking shared-object iconv/iconv.so
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv
+make "DESTDIR=" install
+/usr/bin/install -c -m 0755 iconv.so ./.gem.20201206-18003-7pfqe2/iconv

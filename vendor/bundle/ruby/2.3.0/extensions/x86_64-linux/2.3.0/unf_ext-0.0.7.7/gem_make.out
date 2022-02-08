@@ -1,0 +1,20 @@
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/unf_ext-0.0.7.7/ext/unf_ext
+/usr/bin/ruby2.3 -r ./siteconf20201206-18003-2il3b.rb extconf.rb
+checking for main() in -lstdc++... yes
+creating Makefile
+
+To see why this extension failed to compile, please check the mkmf.log which can be found here:
+
+  /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/extensions/x86_64-linux/2.3.0/unf_ext-0.0.7.7/mkmf.log
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/unf_ext-0.0.7.7/ext/unf_ext
+make "DESTDIR=" clean
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/unf_ext-0.0.7.7/ext/unf_ext
+make "DESTDIR="
+compiling unf.cc
+linking shared-object unf_ext.so
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/unf_ext-0.0.7.7/ext/unf_ext
+make "DESTDIR=" install
+/usr/bin/install -c -m 0755 unf_ext.so ./.gem.20201206-18003-t8cykh

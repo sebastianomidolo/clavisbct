@@ -1,0 +1,4 @@
+../../LICENSE LICENSE
+../../.templates/github/ .github/
+../../.templates/ruby/.travis.yml .travis.yml
+../examples.txt examples.txt

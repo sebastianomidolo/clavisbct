@@ -1,0 +1,55 @@
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/ruby-filemagic-0.7.2/ext/filemagic
+/usr/bin/ruby2.3 -r ./siteconf20201206-18003-16spd6d.rb extconf.rb
+checking for main() in -lgnurx... no
+checking for magic_open() in -lmagic... yes
+checking for magic.h... yes
+checking for magic_version()... yes
+checking for file/patchlevel.h... no
+creating Makefile
+
+To see why this extension failed to compile, please check the mkmf.log which can be found here:
+
+  /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/extensions/x86_64-linux/2.3.0/ruby-filemagic-0.7.2/mkmf.log
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/ruby-filemagic-0.7.2/ext/filemagic
+make "DESTDIR=" clean
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/ruby-filemagic-0.7.2/ext/filemagic
+make "DESTDIR="
+compiling filemagic.c
+In file included from filemagic.c:1:0:
+filemagic.c: In function ‘rb_magic_version’:
+filemagic.h:71:53: warning: ‘%d’ directive writing between 1 and 9 bytes into a region of size 8 [-Wformat-overflow=]
+ #define RB_MAGIC_SET_VERSION(m, p) sprintf(version, "%d.%02d", m, p);
+                                                     ^
+filemagic.c:8:3: note: in expansion of macro ‘RB_MAGIC_SET_VERSION’
+   RB_MAGIC_SET_VERSION(magic_version() / 100, magic_version() % 100)
+   ^~~~~~~~~~~~~~~~~~~~
+filemagic.h:71:53: note: directive argument in the range [-21474836, 21474836]
+ #define RB_MAGIC_SET_VERSION(m, p) sprintf(version, "%d.%02d", m, p);
+                                                     ^
+filemagic.c:8:3: note: in expansion of macro ‘RB_MAGIC_SET_VERSION’
+   RB_MAGIC_SET_VERSION(magic_version() / 100, magic_version() % 100)
+   ^~~~~~~~~~~~~~~~~~~~
+filemagic.h:71:53: note: directive argument in the range [-99, 99]
+ #define RB_MAGIC_SET_VERSION(m, p) sprintf(version, "%d.%02d", m, p);
+                                                     ^
+filemagic.c:8:3: note: in expansion of macro ‘RB_MAGIC_SET_VERSION’
+   RB_MAGIC_SET_VERSION(magic_version() / 100, magic_version() % 100)
+   ^~~~~~~~~~~~~~~~~~~~
+In file included from /usr/include/stdio.h:862:0,
+                 from /usr/include/ruby-2.3.0/ruby/defines.h:26,
+                 from /usr/include/ruby-2.3.0/ruby/ruby.h:36,
+                 from /usr/include/ruby-2.3.0/ruby.h:33,
+                 from filemagic.h:4,
+                 from filemagic.c:1:
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:33:10: note: ‘__builtin___sprintf_chk’ output between 5 and 14 bytes into a destination of size 8
+   return __builtin___sprintf_chk (__s, __USE_FORTIFY_LEVEL - 1,
+          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       __bos (__s), __fmt, __va_arg_pack ());
+       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+linking shared-object filemagic/ruby_filemagic.so
+
+current directory: /home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/ruby-filemagic-0.7.2/ext/filemagic
+make "DESTDIR=" install
+/usr/bin/install -c -m 0755 ruby_filemagic.so ./.gem.20201206-18003-aqgh4v/filemagic

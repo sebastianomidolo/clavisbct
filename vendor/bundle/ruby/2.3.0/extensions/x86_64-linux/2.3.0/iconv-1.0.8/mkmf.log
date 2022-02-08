@@ -1,0 +1,228 @@
+have_func: checking for rb_enc_get() in ruby/encoding.h... -------------------- yes
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: int main(int argc, char **argv)
+4: {
+5:   return 0;
+6: }
+/* end */
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby/encoding.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_enc_get; return !p; }
+/* end */
+
+--------------------
+
+have_func: checking for rb_sys_fail_str() in ruby.h... -------------------- yes
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <ruby.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))rb_sys_fail_str; return !p; }
+/* end */
+
+--------------------
+
+have_func: checking for iconv() in iconv.h... -------------------- yes
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <iconv.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))iconv; return !p; }
+/* end */
+
+--------------------
+
+check_signedness: checking signedness of size_t... -------------------- unsigned
+
+"/usr/bin/gcc -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC   -c conftest.c"
+conftest.c:6:5: error: size of array ‘conftest_const’ is negative
+ int conftest_const[((rbcv_typedef_)-1 < 0) ? 1 : -1];
+     ^~~~~~~~~~~~~~
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: typedef size_t rbcv_typedef_;
+4: 
+5: /*top*/
+6: int conftest_const[((rbcv_typedef_)-1 < 0) ? 1 : -1];
+/* end */
+
+"/usr/bin/gcc -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC   -c conftest.c"
+checked program was:
+/* begin */
+1: #include "ruby.h"
+2: 
+3: typedef size_t rbcv_typedef_;
+4: 
+5: /*top*/
+6: int conftest_const[((rbcv_typedef_)-1 > 0) ? 1 : -1];
+/* end */
+
+--------------------
+
+checking for const of iconv() 2nd argument... -------------------- no
+
+/usr/bin/gcc -E -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC  conftest.c  |
+iconv (iconv_t __cd, char **__restrict __inbuf,
+       size_t *__restrict __inbytesleft,
+       char **__restrict __outbuf,
+       size_t *__restrict __outbytesleft);
+--------------------
+
+have_func: checking for iconvlist() in iconv.h... -------------------- no
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:15:57: error: ‘iconvlist’ undeclared (first use in this function); did you mean ‘iconv_t’?
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))iconvlist; return !p; }
+                                                         ^~~~~~~~~
+                                                         iconv_t
+conftest.c:15:57: note: each undeclared identifier is reported only once for each function it appears in
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <iconv.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))iconvlist; return !p; }
+/* end */
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+/tmp/cc9HJQSi.o: In function `t':
+/home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv/conftest.c:16: undefined reference to `iconvlist'
+collect2: error: ld returned 1 exit status
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <iconv.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: extern void iconvlist();
+16: int t(void) { iconvlist(); return 0; }
+/* end */
+
+--------------------
+
+have_func: checking for __iconv_free_list() in iconv.h... -------------------- no
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+conftest.c: In function ‘t’:
+conftest.c:15:57: error: ‘__iconv_free_list’ undeclared (first use in this function)
+ int t(void) { void ((*volatile p)()); p = (void ((*)()))__iconv_free_list; return !p; }
+                                                         ^~~~~~~~~~~~~~~~~
+conftest.c:15:57: note: each undeclared identifier is reported only once for each function it appears in
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <iconv.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: int t(void) { void ((*volatile p)()); p = (void ((*)()))__iconv_free_list; return !p; }
+/* end */
+
+"/usr/bin/gcc -o conftest -I/usr/include/x86_64-linux-gnu/ruby-2.3.0 -I/usr/include/ruby-2.3.0/ruby/backward -I/usr/include/ruby-2.3.0 -I. -Wdate-time -D_FORTIFY_SOURCE=2   -g -O2 -fdebug-prefix-map=/build/ruby2.3-qhROUF/ruby2.3-2.3.8=. -fstack-protector-strong -Wformat -Werror=format-security -fPIC conftest.c  -L. -L/usr/lib/x86_64-linux-gnu -L. -Wl,-Bsymbolic-functions -Wl,-z,relro -L/build/ruby2.3-qhROUF/ruby2.3-2.3.8/debian/lib -fstack-protector -rdynamic -Wl,-export-dynamic     -lruby-2.3  -lpthread -lgmp -ldl -lcrypt -lm   -lc"
+/tmp/ccsXAFws.o: In function `t':
+/home/ror/clavisbct/vendor/bundle/ruby/2.3.0/gems/iconv-1.0.8/ext/iconv/conftest.c:16: undefined reference to `__iconv_free_list'
+collect2: error: ld returned 1 exit status
+checked program was:
+/* begin */
+ 1: #include "ruby.h"
+ 2: 
+ 3: #include <iconv.h>
+ 4: 
+ 5: /*top*/
+ 6: extern int t(void);
+ 7: int main(int argc, char **argv)
+ 8: {
+ 9:   if (argc > 1000000) {
+10:     printf("%p", &t);
+11:   }
+12: 
+13:   return 0;
+14: }
+15: extern void __iconv_free_list();
+16: int t(void) { __iconv_free_list(); return 0; }
+/* end */
+
+--------------------
+

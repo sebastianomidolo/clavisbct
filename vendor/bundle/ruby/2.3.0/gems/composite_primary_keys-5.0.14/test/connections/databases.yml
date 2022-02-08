@@ -1,0 +1,9 @@
+# To run tests:
+#  1. Copy this file to test/connections/databases.yml.
+#  2. Update to match the databases you want to test against.
+#  3. Build the database using rake <databasename>:build_database
+postgresql:
+  adapter: postgresql
+  database: composite_primary_keys_unittest
+  username: postgres
+  host: localhost
