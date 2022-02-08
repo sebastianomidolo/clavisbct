@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS include test page</title>
+    <link href="/assets/clonebct.css" media="all" rel="stylesheet" type="text/css" />
+    <script src="/assets/application.js" type="text/javascript"></script>
+  </head>
+
+  <body>
+
+    <div class='container'>
+
+      <h1>Inclusione via JavaScript degli ultimi arrivi di periodici per due biblioteche (Musicale e Centrale)</h1>
+      <h2>Civica Centrale</h2>
+      <div id="bct_lastin_centrale">wait...</div>
+      <script
+	src="https://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=2&limit=8&targetdiv=bct_lastin_centrale">
+      </script>
+
+      <h2>Musicale Andrea Della Corte</h2>
+      <div id="bct_lastin_permus">wait...</div>
+      <script
+	src="https://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=3&limit=8&targetdiv=bct_lastin_permus">
+      </script>
+
+      <h2>Centro Interculturale</h2>
+      <div id="bct_lastin_28">wait...</div>
+      <script
+	src="https://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=28&limit=8&targetdiv=bct_lastin_28">
+      </script>
+
+
+    
+      <p>
+	<a href="https://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=3&limit=20&targetdiv=bct_lastin_permus">Test link</a>
+      </p>
+
+    </div>
+  </body>
+</html>
