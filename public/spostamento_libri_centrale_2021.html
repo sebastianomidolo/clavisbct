@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Spostamento libri Centrale 2021</title>
+  <style type="text/css">
+    body { background-color: #fff; color: #666; padding: 2cm; font-family: arial, sans-serif; }
+  </style>
+</head>
+
+<body>
+  <h3>Ricerche su ClavisBct pre-configurate</h3>
+  <ol>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_1.sql">Primo piano</a></li>
+    <li>Secondo piano (nessuno volume)</li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_3.sql">Terzo piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_4.sql">Quarto piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_5.sql">Quinto piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_6.sql">Sesto piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_7.sql">Settimo piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_8.sql">Ottavo piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_9.sql">Nono piano</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_-1.sql">Primo seminterrato</a></li>
+    <li><a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica_-2.sql">Secondo seminterrato</a></li>
+  </ol>
+
+  <a href="https://clavisbct.comperio.it/clavis_items?with_manifestations=S&clavis_item[home_library_id]=2&sql_and=-f+spostamento_libri_civica.sql">Tutti i piani</a>
+
+
+
+  <br/>
+Criteri comuni:
+  <pre>
+    item.home_library_id=2
+AND item.item_media='F'
+AND item.section='BCT'
+AND NOT cl.secondo_elemento in ('LB','LC','LD','LF','LG','LM')
+AND NOT cl.primo_elemento between '67' and '69'
+AND NOT cl.primo_elemento between '400' and '405'
+AND NOT cl.primo_elemento between '407' and '408'
+AND NOT cl.primo_elemento between '410' and '413'
+AND cm.edition_date between 1600 and 1969
+AND NOT item.collocation ~* 'mano'
+
+  </pre>
+</body>
