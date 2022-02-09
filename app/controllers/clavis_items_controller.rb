@@ -6,7 +6,18 @@ class ClavisItemsController < ApplicationController
   load_and_authorize_resource only: [:index,:ricollocazioni]
 
   def index
+    if !params[:home_library_id].blank?
+      render template: '/clavis_items/group_by' and return 
+    end
+    @pagetitle='Ricerca esemplari ClavisBCT'
     @clavis_item = ClavisItem.new(params[:clavis_item])
+
+    
+    if params[:shelf_id].blank?
+      join_shelfs=''
+    else
+      join_shelfs=" join clavis.shelf_item si on(si.object_class='item' and si.shelf_id=#{params[:shelf_id].to_i} and si.object_id=clavis.item.item_id)"
+    end
 
     if can? :search, ClavisItem
       if @clavis_item.home_library_id.nil?
@@ -43,7 +54,9 @@ class ClavisItemsController < ApplicationController
       when 'manifestation_id'
         cond << "manifestation_id=0" if value.blank?
       when 'home_library_id'
-        cond << "item.home_library_id=#{value}" if value!=0
+        if params[:item_ids].blank?
+          cond << "item.home_library_id=#{value}" if value!=0
+        end
       when 'collocation'
         if (@clavis_item.collocation =~ /\.$/).nil?
           if @clavis_item.collocation.count(' ')>0
@@ -72,7 +85,8 @@ class ClavisItemsController < ApplicationController
 
     join_clavis_loans=''
     if !params[:sql_and].blank?
-      cond << params[:sql_and]
+      sql_and = read_sql_and(params[:sql_and])
+      cond << sql_and
       join_clavis_loans=' join clavis.loan using(item_id)' if params[:sql_and] =~ /loan\./i
     end
     if !params[:manifestation_ids].blank? and !params[:library_id].blank?
@@ -97,7 +111,11 @@ class ClavisItemsController < ApplicationController
         cond << "date_updated between now() - interval '#{params[:days]} days' and now()"
       end
 
+      select_item_requests=join_item_requests=''
       if !params[:item_ids].blank?
+        if !params[:request_date].blank?
+          user_session[:item_ids]=nil
+        end
         item_ids=params[:item_ids].split
         item_ids=item_ids.collect {|x| x.to_i if !x.blank?}
         if user_session[:item_ids].blank?
@@ -105,7 +123,25 @@ class ClavisItemsController < ApplicationController
         else
           user_session[:item_ids] = user_session[:item_ids] | item_ids
         end
-        cond << "item_id IN(#{user_session[:item_ids].join(',')})"
+        cond << "clavis.item.item_id IN(#{user_session[:item_ids].join(',')})"
+        if !params[:request_date].blank?
+          req_date = ClavisItem.connection.quote(params[:request_date])
+          join_item_requests=%Q{ LEFT JOIN LATERAL (select to_char(request_date,'FMDD/FMMM/YYYY HH24:MI') as request_date,
+                     cp.name as patron_name,cp.lastname as patron_lastname,cp.barcode as patron_barcode,
+                     cp.patron_id as patron_patron_id
+                  FROM clavis.item_request JOIN clavis.patron cp using(patron_id)
+                WHERE request_date::char(10)=#{req_date} AND item_id=clavis.item.item_id ORDER BY request_date limit 1) cir on true}
+          select_item_requests="cir.*,"
+        end
+      end
+
+      if !params[:include_item_requests].blank?
+        join_item_requests=%Q{ JOIN LATERAL (select to_char(request_date,'FMDD/FMMM/YYYY HH24:MI') as request_date,
+                     cp.name as patron_name,cp.lastname as patron_lastname,cp.barcode as patron_barcode,
+                     cp.patron_id as patron_patron_id
+                  FROM clavis.item_request JOIN clavis.patron cp using(patron_id)
+                WHERE request_date::char(10)='2020-06-22' and item_id=clavis.item.item_id ORDER BY request_id desc limit 1) cir on true}
+        select_item_requests="cir.*,"
       end
 
       if params[:senzapiano]=='y'
@@ -119,9 +155,37 @@ class ClavisItemsController < ApplicationController
         cond << %Q{piano=#{ClavisItem.connection.quote(params[:piano])}}
       end
 
+      if params[:cover_images].blank?
+        join_cover_images=select_cover_images=''
+      else
+        cond << "item.manifestation_id>0"
+        if params[:cover_images]=='f'
+          # cond << %Q{covers is null and (cm."EAN" is null or cm."EAN"='')}
+          cond << "covers is null"
+        else
+          cond << "covers is not null"
+        end
+        jointype = params[:cover_images]=='t' ? 'JOIN' : 'LEFT JOIN'
+        jointype = 'left join'
+        join_cover_images = %Q{#{jointype} LATERAL (SELECT * FROM clavis.attachment WHERE object_id=item.manifestation_id
+             AND object_type='Manifestation' and attachment_type='E' limit 1) as covers on true }
+        select_cover_images='covers.attachment_id as cover_id,'
+      end
+
+      join_with_manifestations=select_with_manifestations=''
+      if !params[:with_manifestations].blank? or !params[:ean_presence].blank?
+        cond << "item.manifestation_id>0"
+        if params[:ean_presence]=='t'
+          cond << %Q{ ((cm."EAN" != '') OR (cm."ISBNISSN" != '')) }
+        else
+          cond << %Q{ (cm."EAN" is null or cm."EAN"='') AND (cm."ISBNISSN" is null or cm."ISBNISSN"='') }
+        end
+        join_with_manifestations = %Q{LEFT JOIN clavis.manifestation cm using(manifestation_id)}
+        select_with_manifestations=%Q{cm."EAN" as ean,cm."ISBNISSN" as isbnissn,cm.publisher,cm.edition_date,(xpath('//d210/sa/text()',cm.unimarc::xml))[1] as luogo_di_pubblicazione,}
+      end
+
       cond = cond.join(" AND ")
-      @sql_conditions=cond
-      #if current_user.email=='seba'
+      @sql_conditions=cond if current_user.email=='seba'
       if @clavis_item.item_media=='S'
         order_by = 'clavis.item.manifestation_id, clavis.item.issue_year,clavis.item.issue_number'
       else
@@ -157,12 +221,13 @@ class ClavisItemsController < ApplicationController
         page:params[:page],
         per_page:params[:per_page].blank? ? 135 : params[:per_page],
       }
-      qparm[:select]="#{select_prenotazioni}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label"
-      qparm[:joins]="#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)#{join_unique_items}#{join_clavis_loans}"
+      qparm[:select]="#{select_with_manifestations}#{select_cover_images}#{select_prenotazioni}#{select_item_requests}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label,ec.note_interne"
+      qparm[:joins]="#{join_with_manifestations}#{join_cover_images}#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)#{join_unique_items}#{join_clavis_loans}#{join_shelfs}#{join_item_requests}"
       qparm[:order]=order_by      
 
       @clavis_items = ClavisItem.paginate(qparm)
 
+      @sql_conditions = qparm.inspect if current_user.email=='seba'
     else
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
     end
@@ -194,6 +259,9 @@ class ClavisItemsController < ApplicationController
           lp=LatexPrint::PDF.new('labels', @clavis_items)
         else
           pdf_template=params[:pdf_template]
+          if pdf_template=='topografico'
+            # Eventualmente intervenire qui per rimuovere il primo elemento dell'Array
+          end
           filename="#{@clavis_items.size}_#{pdf_template}.pdf"
           lp=LatexPrint::PDF.new(pdf_template, @clavis_items, false)
         end
@@ -364,32 +432,74 @@ class ClavisItemsController < ApplicationController
 
   def closed_stack_item_request
     # headers['Access-Control-Allow-Origin'] = "*"
-    headers['Access-Control-Allow-Origin'] = "http://bct.comperio.it"
+    headers['Access-Control-Allow-Origin'] = "https://bct.comperio.it"
+
+    # Vero if da usare: if params[:dng_user].blank?
+    # Per debug uso utente sebastiano:
+    if params[:dng_user].blank?
+      logger.warn("#{Time.now} CSIRTEST: errore, utente_blank ")
+      fd=File.open("/home/seb/clavisbct_temp_debug.txt", 'a')
+      fd.write("#{Time.now} CSIRTEST: ERRORE: chiamata a closed_stack_item_request con params[:dng_user] BLANK\n")
+      fd.close
+      render json:{status:'error', requests:ClosedStackItemRequest.count, msg:'Richiesta non registrata<br/>(dng_user mancante)', collocazione:params[:collocazione]}
+      return
+    end
+    # respond_to do |format|
+    #   format.json {
+    #     logger.warn("#{Time.now} CSIRTEST: format #{format.inspect}")
+    #     render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta recepita'}
+    #   }
+    # end
+    # return
+    logger.warn("#{Time.now} CSIRTEST: entrato #{params[:dng_user]}")
     cm=ClavisManifestation.find(params[:manifestation_id])
-    patron=ClavisPatron.find_by_opac_username(params[:dng_user])
+    logger.warn("#{Time.now} CSIRTEST: manifestation_id => #{cm.id}")
+    patron=ClavisPatron.find_by_opac_username(params[:dng_user].downcase)
+    logger.warn("#{Time.now} CSIRTEST: patron_id => #{patron.id}")
     dng_session=DngSession.find_by_params_and_request(params,request)
+    if dng_session.nil?
+      fd=File.open("/home/seb/utenti_senza_dng_session.log", 'a')
+      fd.write("#{Time.now} patron_id => #{patron.id}\n")
+      fd.close
+      render json:{status:'error', requests:ClosedStackItemRequest.count, msg:'Non siamo riusciti a registrare la richiesta a causa di un problema tecnico alla cui soluzione stiamo lavorando, ci scusiamo per il disagio', collocazione:params[:collocazione]}
+      return
+    end
+    logger.warn("#{Time.now} CSIRTEST: dng_session_id => #{dng_session.inspect}")
     library_id=params[:library_id]
+    logger.warn("#{Time.now} CSIRTEST: inventario => #{params[:inventario]}")
     s,i=params[:inventario].split('-')
     if i.blank?
       collocazione=params[:collocazione].gsub(' ', '.')
-      logger.warn("richiesta_a_magazzino senza inventario, collocazione: #{collocazione}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino senza inventario, collocazione: #{collocazione}")
       sql=%Q{SELECT ci.* FROM clavis.collocazioni cc JOIN clavis.item ci USING(item_id)
-         WHERE cc.collocazione=#{ClavisItem.connection.quote(collocazione)}}
-      item=ClavisItem.find_by_sql(sql).first
+                       WHERE cc.collocazione=#{ClavisItem.connection.quote(collocazione)}}
+      begin
+        item=ClavisItem.find_by_sql(sql).first
+      rescue
+        logger.warn("#{Time.now} CSIRTEST: errore:")
+      end
     else
       item=ClavisItem.find_by_home_library_id_and_inventory_serie_id_and_inventory_number(library_id,s,i)
     end
+    logger.warn("#{Time.now} CSIRTEST: step1 => patron con id #{patron.id} richiede item #{item.id}")
     if patron.closed_stack_item_requests.collect {|r| r.item_id}.include?(item.id)
-      render json:{status:'presente', msg:"Esemplare precedentemente già richiesto"}
+      logger.warn("#{Time.now} CSIRTEST: step2 - richiesta già presente")
+      render json:{status:'ok', msg:"Richiesta già presente", collocazione:params[:collocazione]}
     else
-      logger.warn("richiesta_a_magazzino #{cm.title}")
-      logger.warn("richiesta_a_magazzino #{patron.lastname}")
-      logger.warn("richiesta_a_magazzino #{patron.opac_username}")
-      logger.warn("richiesta_a_magazzino #{dng_session.inspect}")
-      logger.warn("richiesta_a_magazzino #{item.id}")
-      logger.warn("richiesta_a_magazzino #{item.title}")
-      ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
-      render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta recepita'}
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{cm.title}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{patron.lastname}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{patron.opac_username}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{dng_session.inspect}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{item.id}")
+      logger.warn("#{Time.now} CSIRTEST: richiesta_a_magazzino #{item.title}")
+      begin
+        logger.warn("#{Time.now} CSIRTEST: item.id: #{item.id} - patron_id: #{patron.id}, dng_session.id: #{dng_session.class}")
+        ClosedStackItemRequest.create(item_id:item.id,patron_id:patron.id,dng_session_id:dng_session.id,request_time:Time.now)
+      rescue
+        logger.warn("#{Time.now} CSIRTEST: Errore #{$!}")
+      end
+      logger.warn("#{Time.now} CSIRTEST: create ok")
+      render json:{status:'ok', requests:ClosedStackItemRequest.count, msg:'Richiesta registrata', collocazione:params[:collocazione]}
     end
   end
 
@@ -420,5 +530,17 @@ class ClavisItemsController < ApplicationController
     @records=ClavisItem.connection.execute(@sql).to_a
   end
 
-end
+  def cerca_fuoricatalogo
+    render text:'ok', layout: 'bctsite'
+  end
 
+  private
+  def read_sql_and(sql_source)
+    if /^-f (.*)/ =~ sql_source
+      sourcefile = File.join(Rails.root, 'extras/sql/search', $1)
+      File.read(sourcefile)
+    else
+      sql_source
+    end
+  end
+end
