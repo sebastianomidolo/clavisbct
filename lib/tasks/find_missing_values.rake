@@ -1,3 +1,5 @@
+# Accesso web da https://bctwww.comperio.it/mn/
+
 
 desc 'Trova valori mancanti in una sequenza di numeri in tabella'
 task :find_missing_values => :environment do
@@ -112,7 +114,7 @@ task :find_missing_values => :environment do
       return "#{section}.#{collocation} (#{k.min}-#{k.max})#{msg}\n"
     end
 
-    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCT20','BCTA'].each do |s|
+    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCT20','BCT21','BCT22','BCTA'].each do |s|
       outfile="/usr/local/www/html/mn/00_#{s}_missing_numbers.txt"
       puts outfile
       File.delete(outfile) if File.exists?(outfile)
@@ -145,9 +147,13 @@ task :find_missing_values => :environment do
   
   # trova_numeri.call('01',2,280000)
   # exit
-
+  
   missing_numbers
 
+  cmd="(cd /usr/local/www/html/mn/ ; rm %_collocazioni_errate.txt; grep errata * > %_collocazioni_errate.txt)"
+  Kernel.system(cmd)
+
+  
   # trova_numeri.call('V',2,280000)
   # exit
 
@@ -177,7 +183,7 @@ task :find_missing_values => :environment do
   # Aumento il range dei numeri da verificare: parto da 50001
   trova_numeri.call('M',3,50001)
 
-  trova_numeri.call('MA',3,1)
+  trova_numeri.call('MA',3,30000)
   trova_numeri.call('MP',3,1732)
   trova_numeri.call('PRA',3,1)
   trova_numeri.call('PRE',3,1)
@@ -249,7 +255,10 @@ task :find_missing_values => :environment do
   trova_numeri.call('RGC',31,1)
   trova_numeri.call('XIV',31,1)
 
-  trova_numeri.call('UJ',32,1)
+  # Centro documentazione storica - saltato
+  # trova_numeri.call('UJ',32,1)
+
+  
 
   trova_numeri.call('V',33,1)
   trova_numeri.call('U8',33,1)
@@ -263,8 +272,8 @@ task :find_missing_values => :environment do
   trova_numeri.call('BPE',803,1)
   trova_numeri.call('STO',803,2288)
 
-  trova_numeri.call('0 - Generale',1125,27000)
-  trova_numeri.call('0',1125,1)
+  # Unicredit
+  trova_numeri.call('UC',1125,1)
 
 
   # Trova bid duplicati (18 ottobre 2016: spostato in ClavisManifestationsController#bid_duplicati)

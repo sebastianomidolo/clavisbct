@@ -6,7 +6,6 @@
   end
 %>
 
-
 <script>
     function edit_serial_subscription(selectObject) {
         v=selectObject;
@@ -38,7 +37,7 @@
       content_tag(:td, content_tag(:b, "Tipo fornitura"), class:'col-md-2') +
       content_tag(:td, "", class:'col-md-1') +
       content_tag(:td, "", class:'col-md-5'))
-  %>
+      %>
   <% @serial_title.clavis_libraries(true,current_user).each do |l| %>
   <%= next if (l.okgest.nil? and l.serial_title_id.nil?) or (@serial_list.locked? and l.serial_title_id.nil?)
       span_id="#{@serial_title.id}_#{l.ok_library_id}"

@@ -69,4 +69,21 @@ task :import_from_clavis => :environment do
   puts "chiamo ora SchemaCollocazioniCentrale.update_all_centrale_locations #{Time.now}"
   SchemaCollocazioniCentrale.update_all_centrale_locations
   puts "tornato da SchemaCollocazioniCentrale.update_all_centrale_locations #{Time.now}"
+
+  puts "chiamo ora ClavisManifestation.update_url_sbn #{Time.now}"
+  ClavisManifestation.update_url_sbn
+  puts "tornato da ClavisManifestation.update_url_sbn #{Time.now}"
+
+  puts "chiamo ora ClavisManifestation.update_all_isbd_cache #{Time.now}"
+  cnt=ClavisManifestation.update_all_isbd_cache
+  puts "tornato da ClavisManifestation.update_all_isbd_cache #{Time.now} - aggiornati #{cnt} records di public.isbd"
+
+  puts "chiamo ora DailyCounter.reset #{Time.now}"
+  DailyCounter.reset
+  puts "tornato da DailyCounter.reset #{Time.now}"
+
+  cmd="/usr/bin/truncate -s0 /home/seb/autoprintweb.log"
+  Kernel.system(cmd)
+
+  puts "FINE esecuzione task import_from_clavis.rake #{Time.now}"
 end

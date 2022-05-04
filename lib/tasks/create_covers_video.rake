@@ -1,6 +1,6 @@
 # -*- mode: ruby;-*-
 
-desc 'Crea un video con le copertine dei libri prestati il giorno prima'
+desc 'Crea un set di immagini con le copertine dei libri prestati di recente'
 
 workdir='/home/storage/nowww/comperio_covers_cache'
 
@@ -49,6 +49,40 @@ def etichetta_copertine(workdir,ids_and_collocazione,summary_fd)
     Kernel.system(cmd)
   end
 end
+
+def create_html_titles_summary(workdir,ids_and_collocazione)
+  puts "creo sommario"
+  ids=ids_and_collocazione.collect{|r| r['manifestation_id']}
+  puts "ids: #{ids.inspect}"
+
+  sql=%Q{SELECT manifestation_id, trim(title) as title
+  FROM clavis.manifestation
+    WHERE manifestation_id in (#{ids.join(',')})
+    ORDER by sort_text}
+
+  puts sql
+  puts ClavisManifestation.connection.execute(sql).to_a
+
+
+
+  
+  return
+  cnt=0
+  ids_and_collocazione.each do |r|
+    summary_fd.write("<tr><td>#{r['collocazione']}</td><td><a href=https://bct.comperio.it/opac/detail/view/sbct:catalog:#{r['manifestation_id']}>#{r['title'].strip}</a></td></tr>\n\n")
+    fname="#{workdir}/cover_#{r['manifestation_id']}"
+    # puts %Q{#{fname}: #{File.size(fname)} - collocazione: #{r['collocazione']}}
+    next if File.size(fname)==185
+    # puts "tratto #{fname}"
+    cnt+=1
+    cmd=%Q{/usr/bin/convert -label '#{r['collocazione']}' #{fname} #{File.join(workdir,'video')}/#{format '%03d',cnt}.png}
+    puts cmd
+    Kernel.system(cmd)
+  end
+end
+
+
+
 
 def raggruppa_copertine(workdir)
   fcolors = [
@@ -123,10 +157,11 @@ end
 
 task :create_covers_video => :environment do
   ean_and_ids=get_manifestations
+  create_html_titles_summary(workdir,ean_and_ids)
   recupera_copertine(workdir,ean_and_ids)
-  summary_fd=File.open(File.join(workdir, "video", "summary.html"), 'w')
-  summary_fd.write(%Q{<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Elenco libri del salvaschermo</title></head>
-<body><h2>Libri del salvaschermo di oggi</h2>
+  summary_fd=File.open("/home/storage/preesistente/static/postazioni_opac_screensaver_booklist.html", 'w')
+  summary_fd.write(%Q{<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Libri appena restituiti in Civica Centrale</title></head>
+<body><h2>Libri appena restituiti in Civica Centrale</h2>
 <table>
 })
   etichetta_copertine(workdir,ean_and_ids,summary_fd)
@@ -134,6 +169,6 @@ task :create_covers_video => :environment do
   summary_fd.close
   raggruppa_copertine(workdir)
   create_covers_zipfile(workdir)
-  # produci_video(workdir)
+  produci_video(workdir)
   # sovrapponi_con_video_di_sfondo(workdir)
 end

@@ -3,9 +3,13 @@
 desc 'Cancella immagini doppie tenendo la più recente'
 
 task :bio_ico_fix_doppie => :environment do
-  sql="select lettera,numero,array_agg(id order by id) as object_ids from bio_iconografico_cards where namespace = 'catarte' group by lettera,numero having count(*)>1;"
+  sql=%Q{select lettera,numero,array_agg(id order by id) as object_ids
+    from bio_iconografico_cards where namespace = 'catarte' group by lettera,numero having count(*)>1;}
 
+  puts sql
+  cnt = 0
   ActiveRecord::Base.connection.execute(sql).to_a.each do |r|
+    cnt += 1
     ids=r['object_ids']
     ids.gsub!(/{|}/,'')
     old_id,new_id=ids.split(',')
@@ -16,15 +20,13 @@ task :bio_ico_fix_doppie => :environment do
       puts "  anomalia #{old.id} #{User.find(old.xmltag('user')).email} #{old.filename} DA CANCELLARE? (#{old.f_ctime})"
       puts "  anomalia #{new.id} #{User.find(new.xmltag('user')).email} #{new.filename} DA RINOMINARE? (#{new.f_ctime})"
     else
-      puts "Lettera #{r['lettera']} - numero #{r['numero']}"
+      puts "#{cnt} Lettera #{r['lettera']} - numero #{r['numero']}"
       puts "  CANCELLO #{old.id} #{User.find(old.xmltag('user')).email} #{old.filename} (#{old.f_ctime})"
-      old.destroy
+      # old.destroy
       puts "  RINOMINO #{new.id} #{User.find(new.xmltag('user')).email} #{new.filename} (#{new.f_ctime})"
-      new.intestazione=old.intestazione.gsub("&apos;", "'")
+      new.intestazione=old.intestazione.gsub("&apos;", "'") if !old.intestazione.blank?
       new.save
     end
   end
 
 end
-
-
