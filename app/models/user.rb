@@ -10,6 +10,8 @@ class User < ActiveRecord::Base
 
   has_and_belongs_to_many :roles
 
+  has_and_belongs_to_many :sp_bibliographies, :join_table=>'sp.sp_users', association_foreign_key:'bibliography_id', order:'title'
+
   def role?(role)
     return !!self.roles.find_by_name(role.to_s.camelize)
   end
@@ -24,4 +26,10 @@ class User < ActiveRecord::Base
     passwd=config[Rails.env]["google_drive_passwd"]
     GoogleDrive.login(username, passwd)
   end
+
+  def User.sp_user_select
+    sql=%Q{select u.id as key,cl.lastname || ' ' || cl.name as label from public.users u join clavis.librarian cl on(cl.username=u.email) left join public.roles_users ru on (ru.user_id=u.id and ru.role_id=43) where ru is null order by cl.lastname}
+    self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
+  end
+
 end
