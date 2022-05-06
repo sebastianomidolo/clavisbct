@@ -9,7 +9,7 @@ class ClavisItem < ActiveRecord::Base
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
-  :current_container, :in_container, :dewey_collocation, :barcode, :loan_status,
+  :current_container, :in_container, :dewey_collocation, :barcode, :loan_status, :loan_class,
   :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
   :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by
 
@@ -74,6 +74,12 @@ class ClavisItem < ActiveRecord::Base
 
   def collocazione
     r=[self.section,self.collocation,self.specification,self.sequence1,self.sequence2]
+    r.delete_if {|a| a.blank?}
+    r.join('.')
+  end
+
+  def collocazione_senza_sezione
+    r=[self.collocation,self.specification,self.sequence1,self.sequence2]
     r.delete_if {|a| a.blank?}
     r.join('.')
   end
@@ -151,6 +157,14 @@ class ClavisItem < ActiveRecord::Base
     end
   end
 
+  # Eventuali oggetti digitali associati a questo esemplare per il tramite della collocazione
+  # NB: al momento ancora sperimentale (giugno 2020)
+  def d_objects_folders
+    coll = self.connection.quote_string(self.collocation)
+    sql=%Q{select * from d_objects_folders where name like '%#{coll}%'}
+    DObjectsFolder.find_by_sql(sql)
+  end
+
   def check_record
     if self.clavis_manifestation.nil?
       cm=ClavisManifestation.new({manifestation_id:self.manifestation_id,title:self.title})
@@ -164,7 +178,7 @@ class ClavisItem < ActiveRecord::Base
 
   # Da rivedere bene
   def sanifica_collocazione
-    if self.section!='BCT'
+    if !['BCT','LP'].include?(self.section)
       self.sequence2='' if self.sequence2 =~ /prenot/
       self.sequence2='' if self.sequence2 =~ /Sala/
       self.collocation=self.collocation.split.first if !self.collocation.nil?
@@ -194,6 +208,22 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).ntuples == 0 ? false : true
   end
 
+  # Estrae il numero intero subito dopo "per." da collocazioni tipo questa:
+  # "Per.458.1" => 458
+  def collocazione_per
+    elem=self.collocation.split('.')
+    return nil if elem[0].upcase!='PER'
+    elem[1].to_i
+  end
+
+  def casse_periodico
+    return [] if self.collocazione_per.nil?
+    sql=%Q{select cn.consistency_note_id,consistenza,annata,cassa
+            from clavis.periodici_in_casse join clavis.consistency_note cn using(collocazione_per)
+             where collocazione_per=#{self.collocazione_per} order by column_number}
+    self.connection.execute(sql).to_a
+  end
+
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)
   end
@@ -203,7 +233,7 @@ class ClavisItem < ActiveRecord::Base
     host=config[Rails.env]['clavis_host']
     if item_id.class==Array
       ids = item_id.collect{|x| "id[]=#{x}"}.join('&')
-       return "#{host}/index.php?page=Catalog.ItemListPage&#{ids}"
+      return "#{host}/index.php?page=Catalog.ItemListPage&#{ids}"
     end
     r=''
     if mode==:show
@@ -234,6 +264,12 @@ class ClavisItem < ActiveRecord::Base
   def self.loan_status
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
   where value_language = 'it_IT' and value_class='LOANSTATUS' order by value_key}
+    self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+  end
+
+  def self.loan_class
+    sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
+  where value_language = 'it_IT' and value_class='LOANCLASS' order by value_key}
     self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
   end
 
@@ -376,11 +412,11 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     ClavisItem.find_by_sql(sql)
   end
 
-  def ClavisItem.missing_numbers(scaffale, palchetto)
+  def ClavisItem.missing_numbers(scaffale, palchetto, library_id=2)
     return [] if scaffale.class!=Fixnum
     filtro = "^#{scaffale}\\.#{palchetto}\\."
     sql=%Q{SELECT collocazione FROM clavis.collocazioni c JOIN clavis.item i USING(item_id)
-        WHERE i.home_library_id=2 AND collocazione ~ #{ClavisItem.connection.quote(filtro)}
+        WHERE i.home_library_id=#{library_id} AND collocazione ~ #{ClavisItem.connection.quote(filtro)}
         ORDER BY espandi_collocazione(collocazione);}
     res=ClavisItem.connection.execute(sql).to_a
 
@@ -467,6 +503,40 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     res.compact
   end
 
+  def ClavisItem.conta_elementi_in_lista_numeri_catena(lista)
+    cnt=0
+    lista.split(', ').each do |e|
+      from,to = e.split('-')
+      cnt += 1
+      if !to.nil?
+        cnt += to.to_i - from.to_i
+        # puts "elemento #{e.class} (from: #{from} - to: #{to} (cnt = #{cnt})"
+      end
+    end
+    cnt
+  end
+
+  def ClavisItem.genera_lista_non_catalogati(range_scaffali,range_palchetti, outfile, library_id)
+    fd = File.open(outfile, 'w')
+    cnt=0
+    range_scaffali.each do |scaffale|
+      puts scaffale
+      range_palchetti.each do |palchetto|
+        r = ClavisItem.missing_numbers(scaffale,palchetto,library_id)
+        next if r.size==0
+        n = ClavisItem.conta_elementi_in_lista_numeri_catena(r.join(', '))
+        cnt += n
+        info = n>1000 ? 'CHECK: ' : ''
+        fd.write("#{info}#{scaffale}.#{palchetto} [#{n}] => #{r.join(', ')}\n")
+        puts ("#{scaffale}.#{palchetto} => #{r.join(', ')} ==> n: #{n}")
+        fd.flush
+      end
+    end
+    fd.write("\nTOTALE non catalogati: #{cnt}\n")
+    puts "cnt: #{cnt}"
+    fd.close
+  end
+
   def ClavisItem.piano(collocazione)
     puts "collocazione: #{collocazione}"
   end
@@ -535,8 +605,25 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     ClavisItem.connection.execute(sql).to_a
   end
 
+  def ClavisItem.group_by(home_library_id,field_attr,value_class)
+    sql=%Q{select "#{field_attr}",ci.home_library_id,lv.value_key, lv.value_label,count(*)
+        from clavis.item ci join clavis.lookup_value lv
+         on(lv.value_class=#{self.connection.quote(value_class)} and lv.value_key=#{field_attr} and lv.value_language='it_IT')
+        where ci.home_library_id=#{home_library_id}
+     group by #{field_attr},ci.home_library_id,lv.value_key,lv.value_label order by lv.value_label;}
+    self.connection.execute(sql).to_a
+  end
+  
   def ClavisItem.trova_item_ricollocato(item)
     return nil if item.custom_field1.to_i == 0
     return self.find(item.custom_field1)
+  end
+
+  def ClavisItem.dup_barcodes(home_library_id=nil)
+    sql=%Q{select array_agg(item_id) as ids,barcode from clavis.item where barcode in
+                  (select barcode from clavis.item where barcode ~* '^b' and item_status!='E'
+                   group by barcode having count(*)>1) group by item.barcode order by item.barcode}
+    puts sql
+    self.connection.execute(sql).to_a
   end
 end
