@@ -110,16 +110,29 @@ module ClosedStackItemRequestsHelper
 
   def closed_stack_item_requests_stats(params)
     cond = ''
-    if !params[:days].blank?
-      cond = "and print_time between now() - interval '#{params[:days]} days' and now()"
+    days = params[:days].to_i
+    if params[:confirmed].blank? or params[:confirmed]=='true'
+      confirm_condition = 'notnull'
+      heading = "confermate"
+      ttime = 'confirm_time'
+    else
+      confirm_condition = 'is null'
+      heading = "non confermate"
+      ttime = 'request_time'
     end
-    print_time=params[:current_date].blank? ? 'notnull' : '> CURRENT_DATE'
+    if days > 0
+      cond = "and #{ttime} between now() - interval '#{days} days' and now()"
+      quando = (days==1 ? " (oggi)" : " (ultimi #{days} giorni)")
+      heading << quando
+    end
+
     sql=%Q{select piano,count(*) from closed_stack_item_requests ir join clavis.centrale_locations cl using(item_id)
-         where print_time #{print_time} #{cond} group by piano order by count(*) desc}
+         where confirm_time #{confirm_condition} #{cond} group by piano order by count(*) desc}
     q=ActiveRecord::Base.connection.execute(sql).to_a
     res=[]
+
     res << content_tag(:tr, content_tag(:th, 'Piano', class:'col-md-3') +
-                            content_tag(:th, 'Numero richieste stampate'))
+                            content_tag(:th, "Numero richieste #{heading}"))
     totale=0
     q.each do |r|
       totale = totale + r['count'].to_i
@@ -129,9 +142,10 @@ module ClosedStackItemRequestsHelper
     res << content_tag(:tr, content_tag(:th, 'Totale') +
                             content_tag(:th, totale))
     links = []
-    links << link_to('Oggi', stats_closed_stack_item_requests_path(current_date:true))
+    links << link_to('Oggi', stats_closed_stack_item_requests_path(days:1))
     links << link_to('Ultimi 30 giorni', stats_closed_stack_item_requests_path(days:30))
     links << link_to('Tutte', stats_closed_stack_item_requests_path)
+    links << link_to("Non confemate#{quando}", stats_closed_stack_item_requests_path(confirmed:false,days:params[:days]))
 
     content_tag(:div, "Richieste a magazzino Civica Centrale: #{links.join(' | ')}".html_safe) +
       content_tag(:table, res.join("\n\n").html_safe, class:'table text-success') +
