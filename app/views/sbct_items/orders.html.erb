@@ -1,0 +1,14 @@
+<%= content_tag(:div, sbct_item_orders_index(@orders)) %>
+
+<%=
+  if @orders.size==1
+   if params[:group_by]=='title'
+    content_tag(:div, sbct_items_list_group_by_title(@sbct_items))
+   else
+    content_tag(:div, sbct_items_list(@sbct_items)) 
+   end
+  end
+%>
+
+
+<%= content_tag(:pre, @sql) %>

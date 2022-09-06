@@ -1,0 +1,55 @@
+<%= content_tag(:h4, "Acquisti SBCT - Lista d'acquisto \"#{@sbct_list.to_label}\"") %>
+
+
+<%
+  # Usato in passato, non serve più: lo lascio se servono spunti per codice analogo
+  if can? :manage, SbctBudget
+      select_tag(:budget_id,
+            options_for_select(SbctBudget.label_select,
+  params[:budget_id]), :onchange=>"associa_lista_a_budget(this, #{@sbct_list.id})", include_blank:true)
+  else
+   "Operazioni di gestione non accessibili a #{current_user.email}"
+  end
+%>
+ <pre id='ajax_call_response'></pre>
+
+<%= link_to('Modifica lista', edit_sbct_list_path(@sbct_list), class:'btn btn-warning') if can? :edit, SbctList %>
+
+ 
+<%= link_to('Carica titoli da file Excel', upload_sbct_lists_path(id_lista:@sbct_list.id), class:'btn btn-warning') if can? :create, SbctTitle %>
+
+<%=
+  link_to("Vedi titoli di questa lista", sbct_titles_path(:id_lista=>@sbct_list), class:'btn btn-warning')
+%>
+
+<%=
+  @sbct_titles = @sbct_list.sbct_titles
+  link_to("Seleziona tra #{@sbct_titles.count} titoli", sbct_titles_path(:id_lista=>@sbct_list, selection_mode:'S'), class:'btn btn-warning')  if @sbct_titles.count > 0 and !@sbct_list.budget_label.blank?
+%>
+
+
+<%=
+  if can? :manage, SbctList and  !@sbct_list.budget_label.blank?
+    link_to("<b>Prepara l'ordine</b>".html_safe, do_order_sbct_list_path, class:'btn btn-warning')
+  end
+%>
+
+
+
+<br/>
+
+<%= link_to("Meta-Budget collegato: #{@sbct_list.budget_label}", sbct_budgets_path(budget_label:@sbct_list.budget_label),target:'_blank') if !@sbct_list.budget_label.blank? %> 
+
+<%= content_tag(:div, sbct_list_index(@imported_titles_index,
+    content_tag(:h4, "Indice dei caricamenti"))) %>
+
+<%= content_tag(:div, sbct_list_toc(@sbct_list, @imported_titles_toc,
+    content_tag(:h4, "Riepilogo argomenti (definire terminologia idonea)"))) %>
+
+
+
+<%= content_tag(:div, sbct_short_titles_list(@sbct_list.sbct_titles_con_ean_non_univoco,
+    content_tag(:h4, "EAN doppi presenti nei files caricati"))) %>
+
+<%= content_tag(:div, sbct_short_titles_list(@sbct_list.sbct_titles_senza_ean,
+    content_tag(:h4, "Titoli privi di EAN"))) %>

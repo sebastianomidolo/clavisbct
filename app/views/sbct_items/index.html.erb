@@ -1,0 +1,12 @@
+<% if @sbct_item.id_titolo.nil? %>
+ <%= render :partial => 'searchform' %>
+ <%= content_tag(:p, @sbct_items.total_entries) %>
+ <%= will_paginate @sbct_items, renderer: BootstrapPagination::Rails %>
+<% else %>
+<%= content_tag(:h5, "Copie relative al titolo con id #{@sbct_item.sbct_title.id}") %>
+<%= link_to('<b>Aggiungi una copia</b>'.html_safe, new_sbct_item_path(id_titolo:@sbct_item.id_titolo), class:'btn btn-warning') if can? :new, SbctItem %>
+
+<% end %>
+
+<%= content_tag(:div, sbct_items_list(@sbct_items)) %>
+<%= content_tag(:pre, @sql) %>

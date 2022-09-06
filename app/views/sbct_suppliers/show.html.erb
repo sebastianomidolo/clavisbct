@@ -1,0 +1,16 @@
+<%= content_tag(:h4, "Informazioni sul fornitore \"#{@sbct_supplier.to_label}\"") %>
+
+<%= content_tag(:p, link_to("(vedi questo fornitore in Clavis)", ClavisSupplier.clavis_url(@sbct_supplier.supplier_id))) %>
+
+Budgets associati a questo fornitore:
+<ol>
+<% @sbct_supplier.sbct_budgets.order('label').each do |r| %>
+<%= content_tag(:li, link_to(r.to_label, sbct_budget_path(r))) %>
+<% end %>
+</ol>
+
+<%= content_tag(:p, link_to("Esemplari (copie) associate a questo fornitore", sbct_items_path("sbct_item[supplier_id]":@sbct_supplier))) %>
+
+
+<%= content_tag(:h4, "Distribuzione del fornitore per biblioteche") %>
+<%= content_tag(:div, sbct_libraries_per_supplier(@sbct_supplier)) %>

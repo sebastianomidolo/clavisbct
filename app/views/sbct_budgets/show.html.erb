@@ -1,0 +1,39 @@
+<%= content_tag(:h4, "Informazioni sul budget \"#{@sbct_budget.label}\"") %>
+
+<%= content_tag(:p, link_to("(vedi questo budget in Clavis)", ClavisBudget.clavis_url(@sbct_budget.clavis_budget_id))) %>
+
+<%= content_tag(:div, sbct_budget_report(@sbct_budget)) %>
+
+<%=
+  if @sbct_budget.sbct_supplier.nil?
+    content_tag(:p, "Questo budget non ha un fornitore associato predefinito")
+  else
+    content_tag(:p, "Fornitore associato: #{link_to(@sbct_budget.supplier_info,sbct_supplier_path(@sbct_budget.sbct_supplier))}".html_safe)
+  end
+%>
+
+<%= link_to('Modifica budget', edit_sbct_budget_path(@sbct_budget)) if can? :edit, SbctBudget %>
+
+<%
+  link_to('<b>Assegna fornitori (non è vero, non li assegna: ma potrebbe)</b>'.html_safe, sbct_budgets_path, class:'btn btn-warning') if (@sbct_budget.sbct_supplier.nil?) && (can? :manage, SbctBudget)
+%>
+
+
+
+
+
+<pre>
+<%
+  cb = @sbct_budget.clavis_budget
+  cb.nil? ? @sbct_budget.inspect : cb.inspect
+%>
+</pre>
+
+<%= content_tag(:div, sbct_budget_show(@sbct_budget)) %>
+
+<%= content_tag(:h4, "Distribuzione del budget per fornitore") %>
+<%= content_tag(:div, sbct_suppliers_per_budget(@sbct_budget)) %>
+
+
+<%= content_tag(:h4, "Liste associate a questo budget") %>
+<%= content_tag(:div, sbct_liste_per_budget(@sbct_budget)) %>

@@ -1,0 +1,40 @@
+<%=
+  res = []
+  @sbct_title.sbct_lists.each do |l|
+    # res << content_tag(:span, "#{link_to(l.to_label, sbct_titles_path(id_lista:l.id, budget_id:params[:budget_id], selection_mode:params[:selection_mode]))}".html_safe)
+    res << content_tag(:span, "#{link_to(l.to_label, sbct_list_path(l.id))}".html_safe)
+  end
+  content_tag(:h5, "Titolo #{@sbct_title.id} - presente in: #{res.join(', ').html_safe}".html_safe)
+ %>
+
+<%= content_tag(:div, sbct_titles_show_title(@sbct_title)) %>
+
+<hr/>
+<%= content_tag(:p, clavis_manifestation_opac_preview(@sbct_title.manifestation_id)) %>
+
+<% if !@cr_title.nil? %>
+<%= content_tag(:h5, "Record originale da <i>FRapCPal</i>:".html_safe, title:'Sistema Centro Rete Francesco Rapillo - Cosimo Palumbo') %>
+<%= content_tag(:div, sbct_titles_db_originale(@cr_title)) %>
+<% end %>
+
+<%=
+
+  if @sbct_title.ean.blank?
+    query = @sbct_title.titolo
+  else
+    query = @sbct_title.ean
+  end
+  link_to(content_tag(:b, "Ricerca automatica per: #{query}"), "https://clavisbct.comperio.it/sbct_titles?sbct_title%5Btitolo%5D=#{query}", target:'_blank')
+%>
+
+<%=
+  content_tag(:iframe, '', src: %Q{https://clavisbct.comperio.it/sbct_titles?dataonly=true&sbct_title%5Btitolo%5D=#{query}},
+  width: 1200, height: 1200, frameborder: 1)
+%>
+
+
+<hr/>
+<%=
+  dt=sbct_title_clavis_patrons(@sbct_title)
+  "Lettori che hanno richiesto questo titolo (#{@sbct_title.titolo}):#{content_tag(:div, dt)}".html_safe if !dt.blank?
+%>

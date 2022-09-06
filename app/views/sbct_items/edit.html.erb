@@ -1,0 +1,6 @@
+<%= content_tag(:h4, "edit #{@sbct_item.to_label}") %>
+
+<%= render 'form' %>
+
+<%= content_tag(:div, sbct_suppliers_per_budget(@sbct_item.sbct_budget)) %>
+

@@ -1,0 +1,2 @@
+     <%= f.association :sbct_list, collection: SbctList.label_select, hint: nil,
+	 as:'select', include_blank: true, label: false %>

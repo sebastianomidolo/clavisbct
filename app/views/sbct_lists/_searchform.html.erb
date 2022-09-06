@@ -1,0 +1,12 @@
+<%= simple_form_for(@sbct_list, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+   Tipologia della lista: <%= select_tag(:id_tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
+			params[:id_tipo_titolo]), :onchange=>'submit();', include_blank:true) %>
+  </div>
+
+  <div class="form-actions">
+    <% f.button :submit, value: 'Cerca' , class:'btn btn-info' %>
+  </div>
+<% end %>

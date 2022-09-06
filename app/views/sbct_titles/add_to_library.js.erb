@@ -1,0 +1,12 @@
+jQuery('#<%= "toc_#{@sbct_title.id}"-%>').html("<b><%= @sbct_title.siglebct -%></b>");
+jQuery('#<%= "toc_#{@sbct_title.id}"-%>').append("<br/><b><%= @error -%></b>");
+
+<%
+if @sbct_list.nil?
+  txt="nessuna lista selezionata, agisco su budget #{@sbct_budget.label}"
+else
+txt = number_to_currency@sbct_list.totale_ordine(@sbct_budget.id)
+txt << " #{@sbct_budget.label}"
+end
+%>
+jQuery('#<%= "totale_lista"-%>').html("<%= txt -%>");

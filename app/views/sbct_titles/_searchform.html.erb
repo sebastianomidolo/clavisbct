@@ -1,0 +1,72 @@
+
+<%= simple_form_for(@sbct_title, :method=>'get', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= hidden_field_tag('selection_mode', params[:selection_mode]) %>
+    <%= hidden_field_tag('budget_id', params[:budget_id]) %>
+    <%= hidden_field_tag('id_lista', params[:id_lista]) %>
+
+    <%= f.input :titolo, as: 'string', label: 'cerca per autore, titolo, collana, editore, isbn, ean', input_html: {size: 20} %>
+
+    <!--
+    <%= f.input :wrk, label: 'campo def (abilita/disabilita lavorazione)' %>
+    <%= f.input :def, label: 'campo def (termina/riapre lavorazione)' %>
+    -->
+
+      <% if params[:selection_mode].blank? %>
+
+         Tipologia: <%= select_tag(:tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
+			params[:tipo_titolo]), :onchange=>'inviaform();', include_blank:true) %>
+
+     <%= f.association :clavis_libraries, collection: SbctTitle.libraries_select, hint: nil,
+	 as:'select', include_blank:true, label: 'Biblioteca', :input_html => {:onchange => "inviaform()"}   %>
+
+     <!--
+     <%= check_box_tag('con_richieste_lettori', 'S', params[:con_richieste_lettori], onchange:'inviaform()') %>
+     <%= label_tag(:con_richieste_lettori, 'Con richieste lettori') %>
+<br/>
+     <%= check_box_tag('pproposal', 'S', params[:pproposal], onchange:'inviaform()') %>
+     <%= label_tag(:pproposal, 'con proposte utenti') %>
+     <br/>
+     -->
+     <%= render partial:'commons', locals: {f: f} %>
+     <%= render partial:'order' %>
+     
+     <% else %>
+
+     <% raise "Lista d'acquisto non specificata, questo è un errore" if @sbct_list.nil? %>
+
+    
+
+     
+     
+     <!--
+     Impegnato (verrà spostato altrove): <%= content_tag(:span, number_to_currency(@sbct_list.totale_ordine(params[:budget_id])), id:'totale_lista') if !@sbct_list.nil? %>
+     -->
+     
+     <br/>
+     <%= render partial:'commons', locals: {f: f} %>
+     <%= render partial:'order' %>
+
+     
+     <% end %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Cerca' , class:'btn btn-success'%>
+    <%= content_tag(:span, "Pulisci" , class:'btn btn-error', onclick:"$('#sbct_title_titolo').val('')") %>
+    <%= link_current_params('[scarica CSV]', sbct_titles_path(format:'csv'), params)%>
+  </div>
+<% end %>
+
+
+
+<!--
+        include_blank = params[:selection_mode].blank? ? true : false
+        f.association :sbct_list, collection: SbctList.label_select, hint: nil,
+           as:'select', include_blank:include_blank, label: false
+  -->
+
+<%= javascript_tag("jQuery('#sbct_title_titolo').select().focus()") %>

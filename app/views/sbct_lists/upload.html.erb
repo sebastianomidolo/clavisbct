@@ -1,0 +1,10 @@
+<%= content_tag(:h4, "Caricamento file Excel per la lista #{@sbct_list.to_label}") %>
+
+
+<%= form_tag({action: :upload}, multipart: true) do %>
+ <%= hidden_field_tag :id_lista, @sbct_list.id %>
+ <br/><%= file_field_tag 'filename' %>
+  <%= submit_tag 'Carica' %>
+<% end %>
+
+

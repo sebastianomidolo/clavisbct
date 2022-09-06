@@ -1,0 +1,20 @@
+<%= content_tag(:h4, "Preparazione ordine per #{@sbct_list.to_label}") %>
+
+<%= content_tag(:h4, "Totale copie da ordinare: #{@sbct_items.total_entries}") %>
+
+
+<%= will_paginate @sbct_items, renderer: BootstrapPagination::Rails %>
+
+<%= form_tag create_order_sbct_items_path, method: :post do %>
+
+  <%= hidden_field_tag(:id_lista, @sbct_list.id) %>
+  <%= submit_tag("Conferma ordine per le copie visualizzate e selezionate", data: { confirm: "Confermi ordine?" }, class:'btn btn-success') if @sbct_items.total_entries > 0 %>
+  <%= content_tag(:div, sbct_items_order_list(@sbct_items)) %>
+
+<% end %>
+
+
+
+<%= content_tag(:pre, @sbct_list.sql_for_prepara_ordine) %>
+
+

@@ -1,0 +1,31 @@
+<% if params[:dataonly]=='true' %>
+
+ <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
+
+ <%= content_tag(:div, sbct_titles_list(@sbct_titles,@sbct_budgets)) if !@sbct_budgets.nil? %>
+
+
+<% else %>
+
+ <%= render :partial => 'searchform' %>
+
+
+ <% content_tag(:pre, @sql) %>
+ <% content_tag(:pre, @msg) %>
+
+
+ <% if !@sbct_titles.nil? and @sbct_titles.total_entries>0 %>
+ <%=
+   infotext = " (budget #{@sbct_budget.label})" if !@sbct_budget.nil?
+   content_tag(:h4, "#{@sbct_titles.total_entries} titoli#{infotext}")
+  %>
+  <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
+  <%= content_tag(:div, sbct_titles_list(@sbct_titles,current_user.clavis_libraries_sigle)) if !@sbct_budgets.nil? %>
+ <% else %>
+ <% end %>
+
+<% end %>
+
+
+
+

@@ -1,0 +1,10 @@
+<% if @sbct_budget.nil? %>
+
+"Budget non specificato"
+<% else %>
+ <%= content_tag(:h5, "Associo lista #{@sbct_list.to_label} a budget #{@sbct_budget.label}") %>
+ <%= content_tag(:pre, @msg) %>
+<% end %>
+ 
+
+

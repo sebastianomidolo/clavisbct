@@ -1,0 +1,34 @@
+<%=
+  slc = SbctTitle.reparto_select(params)
+  (f.input :reparto, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
+%>
+<%=
+  slc = SbctTitle.sottoreparto_select(params)
+  (f.input :sottoreparto, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
+%>
+<%=
+  slc = SbctTitle.target_lettura_select(params)
+  (f.input :target_lettura, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
+%>
+
+<%= select_tag(:order_status, options_for_select(SbctOrderStatus.options_for_select,
+			params[:order_status]), :onchange=>'inviaform();', include_blank:true) %>
+
+<%= check_box_tag('con_copie', 'S', params[:con_copie], onchange:'inviaform()') %>
+ <%= label_tag(:con_copie, 'Con copie') %>
+
+ <%= check_box_tag('nocovers', 'S', params[:nocovers], onchange:'inviaform()') %>
+ <%= label_tag(:nocovers, 'Senza copertine') %>
+
+ <%= check_box_tag('in_clavis', 'S', params[:in_clavis], onchange:'inviaform()') %>
+ <%= label_tag(:in_clavis, 'In Clavis') %>
+
+ <%= check_box_tag('non_in_clavis', 'S', params[:non_in_clavis], onchange:'inviaform()') %>
+ <%= label_tag(:non_in_clavis, 'Non in Clavis') %>
+
+ <!--
+ <%= check_box_tag('con_reparto', 'S', params[:con_reparto], onchange:'inviaform()') %>
+ <%= label_tag(:con_reparto, 'Con categoria da Leggere') %>
+ -->
+ 
+

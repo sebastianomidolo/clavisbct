@@ -1,0 +1,29 @@
+
+<%= content_tag(:div, "Utente: #{current_user.email}") %>
+<%= content_tag(:div, "Biblioteche su cui può operare: #{current_user.clavis_libraries.collect{|b| b.shortlabel}}") %>
+<%= content_tag(:div, "Biblioteca richiesta: #{@clavis_library.shortlabel}") %>
+<%= content_tag(:div, "Budgets su cui può operare: #{current_user.sbct_budgets.collect{|b| b.to_label}}") %>
+<%= content_tag(:div, "Budget richiesto: #{@sbct_budget.to_label} - budget_id: #{@sbct_budget.id}") %>
+
+<h4>Responso</h4>
+<%=
+  if current_user.clavis_libraries.include?(@clavis_library)
+    if current_user.sbct_budgets.include?(@sbct_budget)
+      "ok"
+    else
+      "Il budget richiesto non è tra quelli su cui puoi operare"
+    end
+  else
+    "La biblioteca richiesta non è tra quelle su cui puoi operare"
+  end
+%>
+
+<%= content_tag(:b, @error) %>
+
+<%= content_tag(:h4, "Controllo corrispondenza tra biblioteca #{@clavis_library} e budget #{@sbct_budget}") %>
+<%=
+  sql=%Q{
+  select true from sbct_acquisti.l_budgets_libraries where budget_id=#{@sbct_budget.id}
+  and clavis_library_id=#{@clavis_library.id}
+  }
+%>

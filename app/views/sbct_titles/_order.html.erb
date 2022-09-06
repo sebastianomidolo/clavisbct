@@ -1,0 +1,11 @@
+     <%= select_tag(:order, options_for_select(
+	 [
+	 ['Autore/Titolo',1],
+	 ['Editore',2],
+	 ['Data inserimento discendente',3],
+	 ['Prezzo',4],
+	 ['Per numero copie',5],
+	 ['Anno di pubblicazione',6],
+	 ['Data (gg/mm/anno) di pubblicazione',7],
+	 ['Casuale',8],
+	 ], params[:order]), prompt: 'Ordinamento...', onchange: 'inviaform()') %>

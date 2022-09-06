@@ -1,0 +1,8 @@
+<%= content_tag(:h4, "#{@sbct_item.to_label}") %>
+
+<%= content_tag(:h5, link_to("Vedi titolo", sbct_title_path(@sbct_item.sbct_title))) %>
+
+<hr/>
+
+<%= content_tag(:div, sbct_titles_show_title(@sbct_title)) %>
+
