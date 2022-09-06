@@ -39,6 +39,7 @@ module ClavisManifestationsHelper
 
   def clavis_manifestation_opac_preview(record)
     mid = record.class==ClavisManifestation ? record.id : record
+    return "Non presente in opac" if mid.nil?
     %Q{<iframe src="https://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
@@ -193,7 +194,7 @@ module ClavisManifestationsHelper
         else
           uname = dng_session.nil? ? 'Gentile utente' : dng_session.patron.appellativo
           content="#{uname}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
-          content+=content_tag(:span, link_to('"Condizioni di iscrizione e prestito"', 'http://www.comune.torino.it/cultura/biblioteche/lettura_accessibile/libriparlati.shtml'))
+          content+=content_tag(:span, link_to('"Condizioni di iscrizione e prestito"', 'https://bct.comperio.it/libroparlato/'))
           content+=content_tag(:br)
           content += talking_book_opac_presentation(record,false)
         end
@@ -209,7 +210,8 @@ module ClavisManifestationsHelper
     end
     # Disabilitato 31 ottobre 2018 - verificare il funzionamento
     if dng_session and dng_session.patron.opac_username=='sebastiano'
-      return ['Versione elettronica', 'link al pdf qui']
+      # return ['Versione elettronica', 'link al pdf qui']
+      return (content.blank? ? [nil,nil] : ['Versione elettronica', content])
     else
       return [nil,nil]
     end
@@ -220,14 +222,20 @@ module ClavisManifestationsHelper
   def clavis_manifestation_attachments_render(clavis_manifestation, show_category=true)
     res=[]
     clavis_manifestation.attachments_with_folders.each do |r|
+      next if r['attachment_category_id'] == 'F'
       if r['cover_image_id'].blank?
-        cover_id=clavis_manifestation.attachments.first.d_object.id
+        cover_id=r['d_objects_ids'].sub(/{|}/, '').split(',').first
       else
         cover_id=r['cover_image_id']
       end
-      res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')) + content_tag(:td, r['folder_name']))
+      res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')) +
+                              content_tag(:td, r['folder_name']) +
+                              content_tag(:td, r['d_objects_ids']))
+                         
+      
       # res << content_tag(:tr, content_tag(:td, d_objects_render(cover_id,:size=>'350x')))
     end
+    return '' if res==[]
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
   end
@@ -319,9 +327,9 @@ module ClavisManifestationsHelper
   end
 
   def clavis_manifestation_cover(cm)
-    return '' if cm.cover_id.nil?
+    return '' if cm.clavis_cover_id.nil?
     imgtemplate=%Q{<div class="cover-wrapper">
-<a class="cover" property="url" href="opac/detail/view/sbct:catalog:__MANIFESTATION__" title="__TITLE__">
+<a class="cover" property="url" href="https://bct.comperio.it/opac/detail/view/sbct:catalog:__MANIFESTATION__" title="__TITLE__">
     <div class="cover-overlay adjust-size"> </div>
     <div class="cover-border left"> </div>
     <img title="__TITLE__"
@@ -329,7 +337,7 @@ module ClavisManifestationsHelper
         alt="__TITLE__"
         property="image"
     /></a></div>}
-    img=imgtemplate.sub("__NUMFILE__", cm.cover_id.to_s)
+    img=imgtemplate.sub("__NUMFILE__", cm.clavis_cover_id.to_s)
     img=img.sub("__MANIFESTATION__", cm.manifestation_id.to_s)
     img=img.gsub("__TITLE__", cm.title)
     content_tag(:span, img.html_safe)

@@ -90,7 +90,7 @@ module ClosedStackItemRequestsHelper
     if !archived_request
       if confirm_request
         lnk = "https://#{request.host_with_port}#{confirm_request_closed_stack_item_requests_path(patron_id:patron.id, format:'js')}"
-        cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste (solo in presenza dell\'utente che le ha inserite)]</b>'.html_safe, lnk,remote:true,title:'Conferma le richieste', method: :get)}</span>}.html_safe
+        cmd = %Q{<span id="conferma_richieste">#{link_to('<b>[Conferma le richieste (solo in presenza dell\'utente che le ha inserite)]</b>'.html_safe, lnk,remote:true,title:'Conferma le richieste', method: :get)}</span>}
       else
         if print_request.blank?
           cmd = link_to("<b>[Stampa richieste a magazzino]</b>".html_safe, print_closed_stack_item_requests_path(patron_id:patron), title:"Stampa richieste per singolo utente")
@@ -166,16 +166,16 @@ module ClosedStackItemRequestsHelper
 
   def closed_stack_item_requests_patrons_index
     res = []
-    res << content_tag(:h3, "Richieste di oggi (prossimo numero di ticket: <b>#{DailyCounter.last.id}</b>)".html_safe)
+    res << content_tag(:h4, "Richieste di oggi (prossimo numero di ticket: <b>#{DailyCounter.last.id}</b>)".html_safe)
 
     t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
-    (res << content_tag(:h3, "Da Confermare [solo in presenza di chi ha fatto le richieste]"); res << t) if !t.blank?
+    (res << content_tag(:h4, "Da Confermare [solo in presenza di chi ha fatto le richieste]"); res << t) if !t.blank?
 
     t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
-    (res << content_tag(:h3, "Confermate, da stampare"); res << t;  res << content_tag(:h3, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))) if !t.blank?
+    (res << content_tag(:h4, "Confermate, da stampare"); res << t;  res << content_tag(:h4, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))) if !t.blank?
 
     t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true))
-    (res << content_tag(:h3, "Richieste stampate"); res << t) if !t.blank?
+    (res << content_tag(:h4, "Richieste stampate"); res << t) if !t.blank?
     res.join.html_safe
   end
 
@@ -221,13 +221,16 @@ module ClosedStackItemRequestsHelper
     cnt=0
     ClosedStackItemRequest.oggi.each do |r|
       cnt+=1
+      # ClavisItem.find(r.item_id).item_loan_status_update
       lnk1 = link_to("#{r.name} <b>#{r.lastname}</b>".html_safe, clavis_patron_path(r.patron_id), target:'_blank')
       itemlnk = link_to(r.title, ClavisItem.clavis_url(r.item_id))
       res << content_tag(:tr, content_tag(:td, cnt, class:'col-md-1') +
                               content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%H:%M'), class:'col-md-1') +
-                              content_tag(:td, r.collocazione, class:'col-md-2') +
-                              content_tag(:td, lnk1, class:'col-md-2') +
-                              content_tag(:td, itemlnk, class:'col-md-6'))
+                              content_tag(:td, "<b>#{r.piano}</b>".html_safe, class:'col-md-2') +
+                              content_tag(:td, "<b>#{r.collocazione}</b>".html_safe, class:'col-md-1') +
+                              content_tag(:td, itemlnk, class:'col-md-4') +
+                              content_tag(:td, lnk1, class:'col-md-1') +
+                              content_tag(:td, r.loan_status, class:'col-md-2'))
     end
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
@@ -265,4 +268,29 @@ module ClosedStackItemRequestsHelper
     end
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
+
+  def csir_breadcrumbs
+    # return params.inspect
+    links=[]
+    links << link_to('Richieste a magazzino (simulazione attiva, non sono richieste reali)', closed_stack_item_requests_path) if params[:action]!='duplicates'
+    if params[:controller]=='talking_books' and ['index','show','edit','check'].include?(params[:action])
+      links << link_to('Catalogo dei libri parlati', talking_books_path)
+    end
+    if params[:controller]=='talking_books' and ['check_duplicates','digitalizzati_non_presenti','opac_edit_intro','stats'].include?(params[:action])
+      links << link_to('Catalogo dei libri parlati', talking_books_path)
+      links << link_to('Admin', check_talking_books_path)
+    end
+
+
+    if params[:controller]=='talking_book_readers' and ['check','index','edit','new','show'].include?(params[:action])
+      links << link_to('Catalogo dei libri parlati', talking_books_path)
+      links << link_to('Admin', check_talking_books_path)
+      if !params[:id].blank?
+        links << link_to('Volontari', talking_book_readers_path)
+      end
+    end
+ 
+    %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
+  end
+
 end

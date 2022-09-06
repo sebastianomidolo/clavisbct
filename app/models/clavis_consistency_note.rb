@@ -8,14 +8,14 @@ class ClavisConsistencyNote < ActiveRecord::Base
 
   has_many :clavis_items, :foreign_key=>:manifestation_id, :primary_key=>:manifestation_id
 
-
   def casse
     if self.collocazione_per.nil?
       sql="SELECT * FROM clavis.periodici_in_casse WHERE consistency_note_id=#{self.consistency_note_id} ORDER BY column_number"
     else
       sql="SELECT * FROM clavis.periodici_in_casse WHERE collocazione_per=#{self.collocazione_per} and (consistency_note_id is null or consistency_note_id=#{self.id}) ORDER BY column_number"
     end
-    ClavisConsistencyNote.find_by_sql(sql)
+    # ClavisConsistencyNote.find_by_sql(sql)
+    self.connection.execute(sql).to_a
   end
 
   def ClavisConsistencyNote.create_periodici_in_casse
@@ -34,14 +34,21 @@ class ClavisConsistencyNote < ActiveRecord::Base
 
     doc_key="1q69AxbCy4i_mchKvAm_-3iiVUUrvY0Ks0VzQIgqEmjo"
     url="https://docs.google.com/spreadsheets/d/#{doc_key}/export?format=csv"
-
     uri = URI.parse(url)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
     request = Net::HTTP::Get.new(uri.request_uri)
     response = http.request(request)
+    if response.class==Net::HTTPTemporaryRedirect
+      request = Net::HTTP::Get.new(response['location'])
+      response = http.request(request)
+    end
+    if response.class!=Net::HTTPOK
+      puts "Errore da create_periodici_in_casse : #{response.code} - #{response.message}"
+      return
+    end
     doc1=response.body
-
+    
     fd.write("COPY clavis.periodici_in_casse(column_number,collocazione_per,consistenza,cassa,annata,note,consistency_note_id) FROM STDIN;\n")
     cnt=0
     CSV.parse(doc1.toutf8) do |row|
@@ -69,7 +76,7 @@ class ClavisConsistencyNote < ActiveRecord::Base
     if !self.attribute_names.include?('collocazione_per')
       self.connection.execute("alter table #{self.table_name} add column collocazione_per integer")
     end
-      
+
     sqlfile="/tmp/temp_consistenze.sql"
     fd=File.open(sqlfile, "w")
     fd.write("UPDATE clavis.consistency_note SET collocazione_per = NULL;\n")

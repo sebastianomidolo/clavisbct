@@ -17,8 +17,17 @@ class ClavisLoansController < ApplicationController
   def view_goethe_loans
     ActiveRecord::Base.connection.execute("SET DateStyle TO ISO, DMY;")
     @clavis_loans=ClavisLoan.loans_by_supplier(269, params)
+    # Associazione Gruppo Abele onlus
+    # @clavis_loans=ClavisLoan.loans_by_supplier(460, params)
+    # Museo diffuso della Resistenza
+    # @clavis_loans=ClavisLoan.loans_by_supplier(443, params)
   end
 
+  def loans_by_supplier
+    @supplier = ClavisSupplier.find(params[:supplier_id])
+    @clavis_loans=ClavisLoan.loans_by_supplier(@supplier.id, params)
+  end
+  
   def receipts
     ActiveRecord::Base.connection.execute("SET DateStyle TO ISO, DMY; SET timezone TO 'GMT-1';")
     ldb=params[:loan_date_begin]

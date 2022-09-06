@@ -1,5 +1,22 @@
-<% html=container_items_list(@container_items).html_safe %>
-jQuery('.panel-title a',jQuery('#issues').parent()).text('Fascicoli (click per maggiori informazioni)');
+<% html=''
+   html << container_items_list(@container_items)
+   html << clavis_consistency_notes_periodici_in_casse(@cm.periodici_in_casse)
+   html << content_tag(:h3, @form_richiesta.html_safe) if !@form_richiesta.blank?
+   html=html.html_safe if !html.blank?
+%>
+
 <% if !html.blank? %>
-jQuery('#items').after('<p>Materiale in deposito esterno (verificare la prenotabilità nella colonna "Prenotabile")<%= html -%></p>');
+ if (jQuery('#issues').length) {
+  jQuery('.panel-title a',jQuery('#issues').parent()).text('Fascicoli (click per maggiori informazioni)');
+  jQuery('#issues').after('<div><%= html -%></div>');
+ } else {
+  jQuery('#items').after('<div><%= html -%></div>');
+ }
+<% end %>
+
+// alert('VEA0092905');
+// IccuOpacLink('VEA0092905');
+
+<% if !@cm.iccu_opac_url.nil? %>
+jQuery('#items').after('<b><a href="<%= @cm.iccu_opac_url -%>" title="Vedi sul Catalogo in linea del Sistema Bibliotecario Nazionale" target="_new">Vedi altre biblioteche italiane che potrebbero avere questo libro, sul Catalogo SBN nazionale</a></b>');
 <% end %>

@@ -2,7 +2,7 @@
 class BioIconograficoCard < DObject
   attr_accessible :namespace, :intestazione, :lettera, :numero, :note, :var1, :var2, :var3, :var4, :var5,
   :qualificazioni, :seqnum, :data_nascita, :data_morte, :luogo_nascita, :luogo_morte, :altri_link,
-  :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno
+  :luoghi_visitati, :esistenza_in_vita, :luoghi_di_soggiorno, :bid, :parent
   before_save :check_record, :bio_iconografico_topic
 
   def bio_iconografico_topic_show
@@ -47,6 +47,34 @@ class BioIconograficoCard < DObject
     t
   end
 
+  def parent_card
+    return nil if self.parent.blank?
+    BioIconograficoCard.find(self.parent)
+  end
+
+  def browse_object(cmd)
+    # Troppo lenta, questa procedura non deve girare:
+    return nil
+    ns=self.connection.quote(self.namespace)
+    lettera=self.connection.quote(self.lettera)
+    case cmd
+    when 'prev'
+      cond = "where namespace=#{ns} and lettera=#{lettera} and numero<#{self.numero} order by numero"
+    when 'next'
+      cond = "where namespace=#{ns} and lettera=#{lettera} and numero>#{self.numero} order by numero"
+    when 'first'
+      cond = "where namespace=#{ns} and lettera=#{lettera} and numero=(select min(numero) from bio_iconografico_cards where namespace=#{ns} and lettera=#{lettera})"
+    when 'last'
+      cond = "where namespace=#{ns} and lettera=#{lettera} and numero=(select max(numero) from bio_iconografico_cards where namespace=#{ns} and lettera=#{lettera})"
+    else
+      raise "browse_object('prev'|'next'|'first'|'last')"
+    end
+    sql=%Q{select * from bio_iconografico_cards #{cond} limit 1}
+    BioIconograficoCard.find_by_sql(sql).first
+  end
+
+
+  
   def check_record
     self.access_right_id=0
     mp=self.digital_objects_mount_point
@@ -81,6 +109,21 @@ class BioIconograficoCard < DObject
 
   def absolute_filepath
     BioIconograficoCard.absolute_filepath
+  end
+
+  def fix_html_entities
+    puts self.intestazione
+    t = String.new(self.intestazione)
+    t.gsub!('&amp;lt;', '<')
+    t.gsub!('&amp;gt;', '>')
+    if self.intestazione === t
+      puts "nessuna modifica"
+    else
+      puts "modifica ok: #{t}"
+      self.intestazione=t
+      self.save
+    end
+    self
   end
 
   def save_new_record(params,creator)
@@ -137,6 +180,8 @@ class BioIconograficoCard < DObject
   def var3=(t) self.edit_tags(var3:t) end
   def var4=(t) self.edit_tags(var4:t) end
   def var5=(t) self.edit_tags(var5:t) end
+  def bid=(t) self.edit_tags(bid:t) end
+  def parent=(t) self.edit_tags(parent:t) end
 
 
   def intestazione()
@@ -165,6 +210,9 @@ class BioIconograficoCard < DObject
   def var3() self.xmltag('var3') end
   def var4() self.xmltag('var4') end
   def var5() self.xmltag('var5') end
+  def bid() self.xmltag('bid') end
+
+  def parent() self.xmltag('parent') end
 
   def numero_scheda
     "#{self.xmltag('l')}_#{self.xmltag('n')}"
@@ -198,9 +246,19 @@ class BioIconograficoCard < DObject
 
   def self.search(params)
     cond = []
+    qs = params[:qs]
+    # qs = params[:qs].unaccent
     namespace = params[:namespace]
     cond << "c.lettera=#{self.connection.quote(params[:lettera])}" if !params[:lettera].blank?
-    cond << "t.intestazione ~* #{self.connection.quote(params[:qs])}" if !params[:qs].blank?
+    if !qs.blank?
+      subcond=[]
+      ts=self.connection.quote_string(qs.split.join(' & '))
+      subcond << "to_tsvector('simple', t.intestazione) @@ to_tsquery('simple', '#{ts}')"
+      subcond << "t.intestazione ~* #{self.connection.quote(qs)}"
+      # cond << "\n(#{subcond[0]} OR \n#{subcond[1]} )"
+      cond << "\n(#{subcond.join(' OR ')})\n"
+    end
+    
     cond << "t.id = #{self.connection.quote(params[:topic_id].to_i)}" if !params[:topic_id].blank?
     return [] if cond.size==0
     cond << "c.namespace=#{self.connection.quote(namespace)}" if !namespace.blank?
@@ -216,9 +274,8 @@ class BioIconograficoCard < DObject
        join bio_iconografico_cards c on(c.id=a.d_object_id)
        join d_objects o on(o.id=a.d_object_id) #{cond} order by lettera, numero}
     end
-    fd=File.open("/home/seb/log.txt", 'w')
-    fd.write(sql)
-    fd.close
+    fd=File.open('/home/seb/bioicon_search.sql', 'w')
+    fd.write("#{sql};\n");fd.close
     pp=params[:per_page].blank? ? 50 : params[:per_page]
     self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
   end

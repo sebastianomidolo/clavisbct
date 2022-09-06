@@ -9,10 +9,10 @@ module SenzaParola
     File.basename(sourcedir)
   end
 
-  def sp_items_updated_after(bibliography_id,timestamp)
+  def sp_items_updated_after(timestamp)
     return [] if timestamp.nil?
-    sourcedir = File.join(sp_sourcedir, bibliography_id, 'Deposito')
-    # puts "cerco files per #{bibliography_id} - #{sourcedir}"
+    sourcedir = File.join(self.sourcedir, 'Deposito')
+    puts "cerco files per #{self.id} - #{sourcedir}"
     res=[]
     Dir[(File.join(sourcedir,'*'))].collect do |f|
       if (File.stat(f).mtime > timestamp)
@@ -30,16 +30,17 @@ module SenzaParola
     max.nil? ? d.reverse : d.reverse[0..max-1]
   end
 
-  def sp_new_bibliography(bibliography_id)
-    if SpBibliography.exists?(bibliography_id)
-      return SpBibliography.find(bibliography_id) 
+  def sp_new_bibliography(dirname_id)
+    puts "In sp_new_bibliography: cerco o creo bib con dirname_id = #{dirname_id}"
+    b = SpBibliography.find_by_orig_id(dirname_id)
+    if b.nil?
+      puts "creo nuova bibliografia con orig_id = #{dirname_id}"
+      b = SpBibliography.new(orig_id:dirname_id)
+      data=b.sp_read_bibliography_info
+      b=SpBibliography.new(data)
+      b.orig_id = dirname_id
+      b.save
     end
-    sourcedir = File.join(sp_sourcedir, bibliography_id)
-    data=sp_read_bibliography_info(sourcedir)
-    return nil if data[:id].nil?
-    b=SpBibliography.new(data)
-    b.id=bibliography_id
-    b.save
     b
   end
   
@@ -51,8 +52,8 @@ module SenzaParola
     Tcl::Interp.load_from_file(utfname)
   end
 
-
-  def sp_read_bibliography_info(sourcedir)
+  def sp_read_bibliography_info
+    sourcedir=self.sourcedir
     fh={
       'comm'  => :comment,
       'ctime' => :created_at,
@@ -62,13 +63,10 @@ module SenzaParola
       'descr' => :description,
       'p_status' => :status
     }
-
     res={}
-    i=tcl_load_file(File.join(sourcedir, 'info.tcl'))
+    i=tcl_load_file(File.join(self.sourcedir, 'info.tcl'))
     return res if i.nil?
-    res[:id]=File.basename(sourcedir)
 
-    # puts File.join(sourcedir, 'info.tcl')
     i.eval("array name ProInfo").split.each do |vn|
       v=i.var("ProInfo(#{vn})").value
       next if v.blank? or ['nsked','nascondi'].include?(vn)
@@ -83,19 +81,15 @@ module SenzaParola
     res
   end
 
-  def sp_read_section_info(sourcedir)
-    bibliography_id=sp_primary_key(sourcedir)
-    sourcedir = File.join(sp_sourcedir, bibliography_id) if sourcedir==bibliography_id
-    # puts "sourcedir: #{sourcedir}"
+  def sp_read_section_info
     fh={
       'key' => :sortkey,
       'tit' => :title,
       'did' => :description,
     }
     res={}
-    fname=File.join(sourcedir, 'sect.tcl')
+    fname=File.join(self.sourcedir, 'sect.tcl')
     return nil if !File.exists?(fname)
-    res[:bibliography_id]=File.basename(sourcedir)
     i=tcl_load_file(fname)
     # Ogni sezione ha questi campi:
     fields="parent key tit did status exp"
@@ -116,13 +110,13 @@ module SenzaParola
     res
   end
 
-  def sp_sked_fname(sourcedir, bibliography_id, item_id)
-    File.join(sp_sourcedir, bibliography_id, "Deposito", item_id)
+  def sp_sked_fname(item_id)
+    File.join(self.sourcedir, "Deposito", item_id)
   end
 
-  def sp_read_item_info(bibliography_id, item_id)
-    fname = sp_sked_fname(sp_sourcedir, bibliography_id, item_id)
-    # puts "fname: #{fname}"
+  def sp_read_item_info(item_id)
+    # puts "determino fname per item_id #{item_id} di bibl #{self.id}"
+    fname = self.sp_sked_fname(item_id)
     return nil if !File.exists?(fname)
     fh={
       'descr' => :bibdescr,
@@ -132,7 +126,9 @@ module SenzaParola
       'urlref_2' => :sbn_bid,
       'key'   => :sortkey,
     }
-    res={:bibliography_id=>bibliography_id, :item_id=>item_id}
+    res={}
+    res[:item_id]=item_id
+    # puts "RES QUI: #{res.inspect}"
     i=tcl_load_file(fname)
     fields = i.eval("array name SkInfo")
     fields.split.each do |f|

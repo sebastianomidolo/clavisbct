@@ -5,14 +5,24 @@
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
   <%= f.input :inventory_serie_id, hint: 'Serie inventariale', label: false, placeholder: 'serie inventariale' %>
   <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
+  <%= f.input :acquisition_year, hint: 'Anno di acquisizione (solo per serieinv V)', label: false, placeholder: 'anno',
+            input_html: { min: '1897', max: '1988' } %>
   <%= f.association :home_library, collection: ClavisItem.home_library, hint: 'Biblioteca di gestione', include_blank: false, label: false %>
-
   <div class='control-group'>
-   Con prenotazioni pendenti e in grado di essere soddisfatte da almeno una biblioteca <%= check_box_tag 'con_prenotazioni', 'S', params[:con_prenotazioni] %>
+   Con prenotazioni pendenti in grado di essere soddisfatte da almeno una biblioteca <%= check_box_tag 'con_prenotazioni', 'S', params[:con_prenotazioni] %>
   </div>
 
+
+  <div class='control-group'>
+    Copertine caricate come allegati  <%= select_tag('cover_images', options_for_select([['Con copertina','t'],['Senza copertina','f']], params[:cover_images]), onchange:'', include_blank:true) %>
+
+    EAN/ISBN/ISSN <%= select_tag('ean_presence', options_for_select([['Con EAN o ISBN o ISSN','t'],['Senza EAN o ISBN o ISSN','f']], params[:ean_presence]), onchange:'', include_blank:true) %>
+  </div>
+  
    <div class='control-group'>
-   Copie uniche <%= check_box_tag 'unique_items', 'S', params[:unique_items] %>
+     Includi dati di pubblicazione <%= check_box_tag 'with_manifestations', 'S', params[:with_manifestations] %>
+     Visualizza copertine <%= check_box_tag 'view_covers', 'S', params[:view_covers] %>
+     <br/>Copie uniche sul sistema <%= check_box_tag 'unique_items', 'S', params[:unique_items] %>
   </div>
 
   <% if can? :manage, Container %>
@@ -28,26 +38,32 @@
   <%= f.input :item_status, collection: ClavisItem.item_status, hint: 'Item status', include_blank: true, label: false %>
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :loan_status, collection: ClavisItem.loan_status, hint: 'Loan status', include_blank: true, label:false %>
+  <%= f.input :loan_class, collection: ClavisItem.loan_class, hint: 'Loan class', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],
       label: false, hint: 'Visibilità in opac' %>
-
 
   <% if params[:mode]=='lastmod' or !params[:days].blank? %>
   Modificato negli ultimi <%= number_field_tag 'days', params[:days], min: 1 %> giorni
   <% end %>
 
-  <% if current_user.email=='seba' or current_user.email=='mgzunnui' %>
+  <% if current_user.email=='seba' %>
     <p>Filtro addizionale, esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31' oppure inventory_date < '2018-01-01'</p>
     <%= text_field_tag 'sql_and', params[:sql_and], size:80 %>
   <% else %>
    <%= hidden_field_tag('sql_and', params[:sql_and]) %>
   <% end %>
-    
+
+  <% if current_user.email=='seba' %>
+    Shelf_id: <%= text_field_tag 'shelf_id', params[:shelf_id], size:10 %>
+  <% else %>
+     <%= hidden_field_tag('shelf_id', params[:shelf_id]) %>
+  <% end %>
+
   
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
 
-  <%= link_to('Inserisci esemplare', new_extra_card_path) if can? :manage, ExtraCard %>
-
+  <%= link_to('Inserisci esemplare', new_extra_card_path(home_library_id:@clavis_item.home_library_id)) if can? :manage, ExtraCard %>
+  <%= link_to('Riepilogo esemplari', clavis_items_path(home_library_id:0)) %>
   <%= button_to_function("mostra tutti i campi di ricerca", "$('#mostra_tutti_i_campi').hide();$('.control-group','#new_clavis_item').show();", id: "mostra_tutti_i_campi", class: "btn btn-success") if @attrib.size>0 %>
 
 
@@ -64,6 +80,13 @@
     <%= link_to('scarica barcodes', params.merge(format:'csv',per_page:999999)) + ' | ' %>
     <%= link_to('segnaposto', params.merge(format:'pdf')) + ' | '  %>
     <%= link_to('elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999)) + ' | ' %>
+    <%=
+      if ['seba','patraiz'].include?(current_user.email)
+        titolo = @clavis_items[0].title.sub(' [note: ]', '')
+      link_to('Topografico', params.merge(format:'pdf',heading:titolo,pdf_template:'topografico',per_page:999999)) + ' | '
+      end
+      %>
+
  <% end %>
 
  <% if @clavis_item.item_media!='S' %>
@@ -80,14 +103,14 @@
 
 <%=
 if @attrib.size>0
- js="$('.control-group','#new_clavis_item').hide();"
-  if @attrib.size==1
+js="$('.control-group','#new_clavis_item').hide();"
+ if @attrib.size==1
    @attrib << ['title','']
    @attrib << ['collocation','']
    @attrib << ['inventory_number','']
    if !params[:item_media].blank?
-    @attrib << ['item_media','']
-    js << %Q{$('#clavis_item_item_media').val('#{params[:item_media]}');}
+     @attrib << ['item_media','']
+     js << %Q{$('#clavis_item_item_media').val('#{params[:item_media]}');}
    end
   end
   @attrib.each {|a| js << %Q{$("#clavis_item_#{a.first}").parent().parent().show();} }
@@ -96,4 +119,4 @@ end
 %>
 <% content_tag(:p, @attrib.inspect) %>
 
-<% content_tag(:div, "sql: #{@sql_conditions}") %>
+<% content_tag(:pre, "sql: #{@sql_conditions}") if current_user.email=='seba' %>

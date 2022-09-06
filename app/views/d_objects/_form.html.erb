@@ -1,8 +1,10 @@
 <%= simple_form_for(@d_object) do |f| %>
   <%= f.error_notification %>
-
+ <%= f.button :submit, value: 'Salva', class:'btn btn-success' %>
   <div class="form-inputs">
+    <%= f.association :access_right, label:'Accesso' %>
     <%= f.input :x_mid, label:'x_mid', as: 'integer' %>
+    <%= f.input :x_item_id, label:'x_item_id', as: 'integer' %>
     <%= f.input :x_ti, label:'x_ti', as: 'string', input_html: {size: 80} %>
     <%= f.input :x_au, label:'x_au', as: 'string', input_html: {size: 80} %>
     <%= f.input :x_an, label:'x_an', as: 'string', input_html: {size: 20} %>
@@ -13,12 +15,13 @@
   </div>
 
   <div class="form-actions">
-    <%= f.button :submit, value: 'Salva modifiche' %>
+    <%= f.button :submit, value: 'Salva', class:'btn btn-success' %>
   </div>
 <% end %>
 
 <pre>
   x_mid : manifestation id su Clavis
+  x_item : item id su Clavis (esempio: quando si tratta della scansione di un esemplare)
   x_ti  : titolo
   x_au  : autore
   x_an  : anno pubblicazione

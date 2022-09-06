@@ -13,6 +13,16 @@ class ClavisLibrarian < ActiveRecord::Base
     "#{self.name} #{self.lastname} - cat_level #{self.cat_level} - #{status}"
   end
 
+  def to_shortlabel
+    status = self.activation_status=='1' ? 'attivo' : 'disattivato'
+    "#{self.name} #{self.lastname}"
+  end
+
+  def clavis_libraries
+    sql = %Q{SELECT l.* FROM clavis.l_library_librarian ll join clavis.library l using(library_id) where librarian_id=#{self.id}}
+    ClavisLibrary.find_by_sql(sql)
+  end
+
   def clavis_sessions
     sql = "SELECT s.start_date,s.end_date,s.last_action_date,l.shortlabel,l.label,l.library_id
              FROM clavis.librarian_session s join clavis.library l on s.current_library_id = l.library_id

@@ -2,5 +2,9 @@
 
 <%= content_tag(:p, "Intestazione: <b>#{@bio_iconografico_card.intestazione}</b>".html_safe) %>
 
+<!--
+content_tag(:div, bctcard_browse(@bio_iconografico_card,params))
+  -->
+
 <%= link_to(image_tag(bctcard_path(@bio_iconografico_card, :format=>'jpg', :size=>'400x600')), bctcard_path(@bio_iconografico_card, format:'jpg')) %>
 

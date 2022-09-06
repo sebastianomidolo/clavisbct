@@ -1,16 +1,23 @@
 # coding: utf-8
 class SerialTitle < ActiveRecord::Base
-  attr_accessible :title, :manifestation_id, :sortkey, :estero, :sospeso, :updated_by, :prezzo_stimato, :note
+  attr_accessible :title, :manifestation_id, :sortkey, :estero, :sospeso, :updated_by, :prezzo_stimato, :note, :note_fornitore, :serial_list_id
 
   belongs_to :serial_list
+  belongs_to :serial_invoice
 
-  validates :title, presence: true
+  has_many :serial_subscriptions
+
+  # validates :title, presence: true
   validates_uniqueness_of :title, scope: :serial_list_id
 
   before_save :set_date_updated
 
   def prezzo_stimato_per_numero_copie
     self.prezzo_stimato
+  end
+
+  def clavis_manifestation
+    self.manifestation_id.nil? ? nil : ClavisManifestation.find(self.manifestation_id)
   end
 
   def get_manifestation_id
@@ -25,6 +32,14 @@ class SerialTitle < ActiveRecord::Base
   end
 
   def set_date_updated
+    if self.title.blank?
+      if (cm = self.clavis_manifestation)
+        self.title = self.clavis_manifestation.title
+        self.sortkey = self.clavis_manifestation.sort_text
+      else
+        self.title = 'Nuovo titolo'
+      end
+    end
     self.date_updated=Time.now
     self.sortkey = self.title.downcase if self.sortkey.blank?
   end
@@ -109,28 +124,88 @@ class SerialTitle < ActiveRecord::Base
     self.connection.execute(sql.join)
   end
 
-  def self.trova(params={},user=nil)
-    cond = with_cond = []
+  def SerialTitle.trova(params={},invoice_filter_enabled=false)
+    cond = Array.new
+    with_cond = Array.new
     cond << "sospeso=#{self.connection.quote(params[:sospeso])}" if !params[:sospeso].blank?
     cond << "estero=#{self.connection.quote(params[:estero])}" if !params[:estero].blank?
 
     if params[:library_id].to_i==-1
       cond = cond==[] ? '' : " AND #{cond.join(' AND ')}"
-      sql=%Q{select st.title,st.id,st.prezzo_stimato,st.prezzo_stimato as prezzo_totale_stimato,st.note,
-        '[vai a acquisizioni]' as library_names,0 as tot_copie, 0 as numero_copie
+      sql=%Q{select st.title,st.id,st.prezzo_stimato,st.prezzo_stimato as prezzo_totale_stimato,st.note,st.note_fornitore,
+        '[vai a acquisizioni]' as library_names,0 as tot_copie, 0 as numero_copie, '' as issue_arrival_date,
+             '' as frequency_label, null as manifestation_id, '' as publisher, '' as invoice_ids
            from #{SerialTitle.table_name} st left join #{SerialSubscription.table_name} ss
-       on(st.id=ss.serial_title_id) where st.serial_list_id=#{params[:serial_list_id]}
+                  on(st.id=ss.serial_title_id) where st.serial_list_id=#{params[:serial_list_id]}
            and ss is null #{cond} order by st.sortkey, lower(st.title);}
     else
-      with_cond << "library_id=#{params[:library_id].to_i}" if !params[:library_id].blank?
+      if !params[:library_id].blank?
+        library_id=params[:library_id].to_i
+        with_cond << "library_id=#{library_id}"
+      end
+      if params[:items_details]=='t'
+        array_order='issue_year desc, issue_number desc'
+        issues_join = %Q{left join lateral
+ (
+
+select i.manifestation_id,i.item_id,i.issue_year,i.issue_number,
+   to_char(issue_arrival_date, 'dd-mm-yyyy') as issue_arrival_date,
+   to_char(issue_arrival_date_expected, 'dd-mm-yyyy') as issue_arrival_date_expected,
+   i.issue_description,
+   i.issue_status as issue_status_label
+     from clavis.item i
+   where i.manifestation_id=st.manifestation_id AND home_library_id=#{library_id}
+    and i.issue_year is not null
+     order by i.issue_year desc, i.issue_number desc
+    limit 6
+
+) as i on i.manifestation_id=cm.manifestation_id}
+        issues_select = %Q{,\n
+             array_agg(i.item_id order by #{array_order}) as item_ids,
+             array_agg(i.issue_arrival_date order by #{array_order}) as issue_arrival_dates,
+             array_agg(i.issue_arrival_date_expected order by #{array_order}) as issue_arrival_dates_expected,
+	     array_agg(i.issue_description order by #{array_order}) as issue_descriptions,
+	     array_agg(issue_status_label order by #{array_order}) as issue_status}
+      else
+        issues_join = ''
+        issues_select = ''
+      end
       with_cond << "tipo_fornitura=#{self.connection.quote(params[:tipo_fornitura])}" if !params[:tipo_fornitura].blank?
+      # with_cond << "s.serial_invoice_id is null" if !params[:invoice_id].blank?
+      cond << "serial_frequency_of_issue(cm.unimarc::xml) =   #{self.connection.quote(params[:frequency])}" if !params[:frequency].blank?
+
+      invoice_select = invoice_join = invoice_group = ''
+      if !params[:invoice_id].blank?
+        invoice_select = invoice_group = 'abb.prezzo_in_fattura,abb.invoice_ids,'
+        if invoice_filter_enabled
+          if params[:invoice_id].to_i == 0
+            invoice_join = "left join serial_invoices si on(si.clavis_invoice_id::text=abb.invoice_ids)"
+            cond << "si.clavis_invoice_id is null"
+          else
+            invoice_join = "join serial_invoices si on(si.clavis_invoice_id::text=abb.invoice_ids)"
+            cond << "si.clavis_invoice_id = #{params[:invoice_id].to_i}"
+          end
+        else
+          invoice_join = ''
+          with_cond << "s.serial_invoice_id is null"
+        end
+      else
+        invoice_select = invoice_group = 'abb.prezzo_in_fattura,abb.invoice_ids,'
+        invoice_join = "left join serial_invoices si on(si.clavis_invoice_id::text=abb.invoice_ids)"
+      end
+
+      cond << "st.title ~* #{self.connection.quote(params[:serial_title][:title])}" if !params[:serial_title].nil? and !params[:serial_title][:title].nil?
+      
       cond = cond==[] ? '' : " AND #{cond.join(' AND ')}"
       with_cond = with_cond==[] ? '' : " AND #{with_cond.join(' AND ')}"
 
-      sql=%Q{with abb as (
+      sql=%Q{--      cond: #{cond}\n-- with_cond: #{with_cond}
+        with abb as (
         select t.id as title_id,
                           array_to_string(array_agg(l.clavis_library_id order by nickname), ',') as libraries,
                           array_to_string(array_agg(s.numero_copie order by nickname), ',') as numero_copie,
+                          array_to_string(array_agg(s.prezzo order by nickname), ',') as prezzo_in_fattura,
+                          array_to_string(array_agg(s.serial_invoice_id order by nickname), ',') as invoice_ids,
   			  sum(s.numero_copie) as tot_copie,
           array_to_string(array_agg(l.nickname order by nickname), ', ') as library_names
        from serial_titles         t
@@ -138,16 +213,24 @@ class SerialTitle < ActiveRecord::Base
             join serial_libraries l on (l.clavis_library_id=s.library_id and l.serial_list_id=t.serial_list_id)
        where t.serial_list_id=#{params[:serial_list_id]} #{with_cond} group by t.id
      )
-    select st.title,st.id,st.prezzo_stimato*abb.tot_copie as prezzo_totale_stimato,st.prezzo_stimato,
-             st.note,abb.libraries,abb.library_names,abb.tot_copie,abb.numero_copie
-          from serial_libraries sl join serial_subscriptions ss
-              on (ss.library_id=sl.clavis_library_id)
-            join serial_titles st on(st.id=ss.serial_title_id)
+    select st.serial_list_id,st.id,cm.manifestation_id,st.title,cm.publisher,
+            st.prezzo_stimato*abb.tot_copie as prezzo_totale_stimato,st.prezzo_stimato,
+             st.note,st.note_fornitore,abb.libraries,abb.library_names,abb.tot_copie,abb.numero_copie,
+	     #{invoice_select}
+             serial_frequency_of_issue(cm.unimarc::xml) as frequency_code, freq.label as frequency_label
+             #{issues_select}
+            from serial_titles st
 	    join abb on(abb.title_id=st.id)
-         where sl.serial_list_id=#{params[:serial_list_id]}
-          and st.serial_list_id=sl.serial_list_id
+            #{invoice_join}
+            left join clavis.manifestation cm on(cm.manifestation_id=st.manifestation_id)
+            #{issues_join}
+	    left join clavis.unimarc_codes freq
+        on(freq.code_value::char=serial_frequency_of_issue(cm.unimarc::xml)
+             and freq.language='it_IT' and freq.field_number = 110 and freq.pos=1)
+         where st.serial_list_id=#{params[:serial_list_id]}
           #{cond}
-          group by st.title,st.id,st.prezzo_stimato,st.note,abb.libraries,abb.library_names, abb.tot_copie, abb.numero_copie
+	group by st.id,cm.manifestation_id,abb.tot_copie,abb.libraries,abb.library_names,abb.numero_copie,
+	       #{invoice_group}freq.label
             order by st.sortkey, lower(st.title);\n}
     end
 

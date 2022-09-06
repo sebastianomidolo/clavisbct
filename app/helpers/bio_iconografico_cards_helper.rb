@@ -66,6 +66,11 @@ module BioIconograficoCardsHelper
     image_tag(bio_iconografico_card_path(record, :format=>'jpg', :size=>'300x300'))
   end
 
+  def bio_iconografico_card_link_to_parent(record)
+    return '' if record.parent.blank?
+    link_to("Sezione: <b>#{record.parent_card.intestazione}</b>".html_safe, bio_iconografico_card_path(record.parent))
+  end
+
   def bio_iconografico_cards_namespaces(user=nil)
     res = []
     BioIconograficoCard.namespaces(user).each do |n|

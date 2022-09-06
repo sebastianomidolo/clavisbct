@@ -2,7 +2,7 @@
 
 ### /usr/bin/rsync -avz /home/seb/BCT/wca22014/linux64/LP2mog/upload_libroparlato/ /home/storage/preesistente/libroparlato
 
-(cd /home/ror/bctaudio; RAILS_ENV=development /usr/local/bin/rake mdb_export)
+(cd /home/ror/bctaudio; RAILS_ENV=development bundle exec /usr/local/bin/rake mdb_export)
 
 # Non allineo libroparlato da aprile 2020 perché la gestione adesso è su ClavisBCT e non più su access
 # psql -c "DROP SCHEMA libroparlato CASCADE" clavisbct_development informhop
@@ -44,5 +44,6 @@ pg_dump -n bm_periodici_old -U informhop bctaudio_development | psql clavisbct_d
 
 # Questo aggiorna i file audio del libro parlato, ma lo sospendo a maggio 2020
 # in attesa di allestire nuove procedure di caricamento dell'audio, in modalità smartworking
-# Riattivato sperimentalmente il 23 maggio 2020
+# Riattivato sperimentalmente il 23 maggio 2020 e nuovamente disabilitato fine dicembre 2020
+# Riattivato 5 gennaio 2021
 (cd /home/ror/clavisbct; RAILS_ENV=development rake aggiorna_libroparlato)

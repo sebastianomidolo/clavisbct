@@ -3,7 +3,9 @@
   <% f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
   <% f.input :collocation, hint: 'collocazione', label: false, placeholder: 'collocazione' %>
   <%= f.input :text_note, hint: 'nota di consistenza', as:'string', label: false, placeholder: 'nota di consistenza' %>
-  <%= f.input :collocazione_per, hint: 'collocazione (numero)', label: false, placeholder: 'collocazione numerica' %>
+  <%= f.input :collocazione_per, label: false, placeholder: 'collocazione numerica' %>
+  Per. da numero a numero (es. 1-10): <%= text_field_tag 'per_from_to', params[:per_from_to], size:10 %>
+
   <%= f.submit 'cerca', :class=>'btn btn-info' %>
 <% end %>
 

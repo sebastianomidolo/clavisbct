@@ -3,9 +3,11 @@ module IssArticlesHelper
   def iss_journals_index(records)
     res=[]
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))))
+      opac_link = r.id == 23 ? '' : link_to("Scheda su Opac BCT", "https://bctwww.comperio.it/sbn?#{r.bid}", target:'_blank')
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))) +
+                              content_tag(:td, opac_link))
     end
-    content_tag(:table, res.join.html_safe)
+    content_tag(:table, res.join.html_safe, class:'table')
   end
 
   def iss_articles_index(records)
@@ -67,8 +69,10 @@ module IssArticlesHelper
   def iss_issue_toc(record)
     res=[]
     record.articles.each do |r|
-      res << content_tag(:tr, content_tag(:td, r.id) +
-                         content_tag(:td, link_to(r.title, iss_article_path(r.id), remote:true)))
+      fsize=''
+      fsize=number_to_human_size(File.size(r.pdf_cached_fname), precision:3)
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_article_path(r.id), remote:true)) +
+                              content_tag(:td, fsize))
     end
     content_tag(:table, res.join.html_safe, class:'table')
   end
@@ -103,8 +107,7 @@ module IssArticlesHelper
     # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
     links=[]
 
-    # links << link_to('Liste periodici', serial_lists_path) if params[:controller]!='lperiodici'
-    links << link_to('Introduzione', infopage_iss_journals_path)
+    links << link_to('Riviste digitalizzate da microfilm', infopage_iss_journals_path)
     
     if params[:controller] == 'iss_journals' and params[:action]=='show' 
       links << link_to('Elenco riviste', iss_journals_path)

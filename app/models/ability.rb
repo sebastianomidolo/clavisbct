@@ -1,3 +1,4 @@
+# coding: utf-8
 class Ability
   include CanCan::Ability
 
@@ -46,7 +47,7 @@ class Ability
     end
 
     if user.role?('d_object_manager')
-      can :manage, DObject
+      can [:manage,:search], DObject
       can :manage, DObjectsFolder
       can :upload, OmekaFile
     end
@@ -82,15 +83,59 @@ class Ability
       can :show, SchemaCollocazioniCentrale
     end
 
+    if user.role?('clavis_patron_manager')
+      can [:manage], ClavisPatron
+    end
+
     if user.role?('clavis_patron_wrong_contacts')
       can [:wrong_contacts], ClavisPatron
+    end
+
+    if user.role?('clavis_patron_mancato_ritiro')
+      can [:mancato_ritiro], ClavisPatron
     end
 
     if user.role?('clavis_loan_goethe')
       can :view_goethe_loans, ClavisLoan
     end
 
+    if user.role?('sp_bibliography_user')
+      #can [:index, :show, :edit, :destroy, :new, :create, :update], [SpItem,SpSection] do |i|
+      #  fd=File.open('/home/seb/tempdebug.txt', 'a')
+      #  fd.write("#{i.class} bibliography_id: #{i.bibliography_id}\n")
+      #  fd.close
+      #  r=user.sp_bibliographies.collect{|i| i.id}.include?(i.bibliography_id)
+      #  r
+      #end
+      can [:index,:create], SpBibliography
+      can [:create,:edit,:update,:destroy], [SpBibliography,SpSection,SpItem] do |i|
+        id = i.class == SpBibliography ? i.id : i.bibliography_id
+        r = false
+        if SpUser.exists?([id,user.id])
+          fd=File.open('/home/seb/tempdebug.txt', 'a')
+          spu = SpUser.find(id,user.id)
+          r = spu.auth.split(',').include?(i.class.to_s) if !spu.auth.nil?
+          fd.write("user #{user.email} auth='#{spu.auth}' - classe da autorizzare: #{i.class} - bibliography_id: #{id} - esito: #{r}\n")
+          fd.close
+        end
+        r
+      end
+    end
+    
+    if user.role?('sp_section_manager')
+      can :manage, SpSection
+    end
+
+    if user.role?('sp_bibliography_manager')
+      can :manage, SpBibliography
+      can :manage, SpItem
+    end
+
     if user.role?('closed_stack_item_requests_manager')
+      can [:index,:print,:confirm_request,:csir_delete,:csir_archive], ClosedStackItemRequest
+    end
+
+    if user.role?('closed_stack_item_requests_search')
       can :manage, ClosedStackItemRequest
     end
 
@@ -110,6 +155,18 @@ class Ability
       can :manage, TalkingBook
     end
 
+    if user.role?('talking_book_reader_manager')
+      can :manage, TalkingBookReader
+    end
+
+    if user.role?('identity_card_manager')
+      can :manage, IdentityCard
+    end
+
+    if user.role?('adabas_inventory_manager')
+      can :manage, AdabasInventory
+    end
+
     if user.role?('schema_collocazioni_centrale')
       can :manage, SchemaCollocazioniCentrale
     end
@@ -117,5 +174,37 @@ class Ability
     if user.role?('clavis_librarian_search')
       can  [:index,:show], ClavisLibrarian
     end
+
+    if user.role?('manoscritto_manager')
+      can :manage, Manoscritto
+    end
+
+    if user.role?('serial_manager')
+      can :manage, [SerialList,SerialTitle,SerialSubscription,SerialLibrary,SerialInvoice]
+    end
+    if user.role?('serial_user')
+      can [:index, :show, :edit, :destroy, :new, :create, :update, :print], [SerialList,SerialTitle,SerialSubscription,SerialLibrary,SerialInvoice]
+    end
+
+    if user.role?('clavis_item_request_manager')
+      can :manage, ClavisItemRequest
+    end
+
+    if user.role?('acquisition_manager')
+      can :manage, [SbctTitle,SbctList,SbctItem,SbctBudget,SbctInvoice,SbctSupplier]
+    end
+
+    if user.role?('acquisition_librarian')
+      can [:homepage,:index,:show,:add_to_library], [SbctTitle,SbctList,SbctItem]
+      can [:index,:show], [SbctBudget]
+      can [:create,:edit,:update], [SbctTitle]
+    end
+
+    if user.role?('acquisition_user')
+      can [:homepage,:index,:show], [SbctTitle,SbctList,SbctItem]
+      can [:index,:show], [SbctBudget]
+    end
+
+
   end
 end

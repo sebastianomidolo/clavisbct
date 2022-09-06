@@ -116,6 +116,23 @@ class ExtraCardsController < ApplicationController
     end
   end
 
+  def upload_xls
+    if request.method=="POST"
+      uploaded_io = params[:filename]
+      if uploaded_io.nil?
+        @message = "File non specificato!"
+      else
+        fname=File.join(Rails.root.to_s, 'tmp', 'extra_cards_import', uploaded_io.original_filename)
+        File.open(fname, 'wb') do |file|
+          file.write(uploaded_io.read)
+        end
+        @basecoll = uploaded_io.original_filename.split('.').first.sub(' ','.')
+        @message = "File size #{fname}: #{File.size(fname)} - Original filename: #{uploaded_io.original_filename} - basecoll:#{@basecoll}"
+        @data = ExtraCard.load_from_excel(fname,@basecoll,current_user)
+      end
+    end
+  end
+
   private
     def set_extra_card
       if !params[:colloc].blank?

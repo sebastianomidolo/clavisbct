@@ -1,6 +1,9 @@
 <%= render :partial=>'show' %>
+
+
+
 <% if can? :create, BioIconograficoCard %>
- <%= content_tag(:div, link_to('Modifica...', edit_bio_iconografico_card_path)) %>
+ <%= content_tag(:div, link_to("Modifica #{@bio_iconografico_card.intestazione}".html_safe, edit_bio_iconografico_card_path)) %>
 <% end %>
 
 <%= content_tag(:div, @bio_iconografico_card.tags) %>

@@ -15,7 +15,7 @@ module ClavisItemRequestsHelper
                                 content_tag(:td, r.count))
       end
     else
-      res << content_tag(:tr, content_tag(:th, "Biblioteca", class:'col-md-2') + content_tag(:th, "Numero prenotazioni"))
+      res << content_tag(:tr, content_tag(:th, "Biblioteca di destinazione", class:'col-md-2') + content_tag(:th, "Numero prenotazioni"))
       records.each do |r|
         res << content_tag(:tr, content_tag(:td, link_to(r.label,
                                                          clavis_item_requests_link_to_item_search(request_date,r.library_id))) +

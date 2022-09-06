@@ -1,10 +1,13 @@
 # coding: utf-8
 
 class SerialList < ActiveRecord::Base
-  attr_accessible :title, :year, :note, :locked
+  attr_accessible :title, :year, :note, :locked, :is_public, :onelib, :invoice_management
 
   has_many :serial_titles
   has_many :serial_users
+  has_many :serial_libraries
+  has_many :serial_invoices
+  has_many :clavis_invoices, :through=>:serial_invoices
   validates :title, presence: true
   validates_uniqueness_of :title
 
@@ -14,6 +17,47 @@ class SerialList < ActiveRecord::Base
 
   def owned_by?(user)
     self.serial_users.where(user_id:user.id).size == 0 ? false : true
+  end
+
+  def library
+    return nil if !self.onelib
+    self.serial_libraries.first
+  end
+
+  def clavis_library_id
+    return nil if !self.onelib
+    self.library.clavis_library_id
+  end
+
+  def serial_invoices_report
+    sql=%Q{
+with tab as
+(
+select si.serial_list_id,si.clavis_invoice_id,ci.invoice_date,ci.invoice_number,cs.supplier_name,si.total_amount::money,
+      sum(st.prezzo_stimato) as prezzo_stimato, sum(ss.prezzo) as prezzo
+      from serial_invoices si join clavis.invoice ci on(ci.invoice_id=si.clavis_invoice_id)
+          join clavis.supplier cs using(supplier_id)
+          left join serial_subscriptions ss on (ss.serial_invoice_id=si.clavis_invoice_id)
+          left join serial_titles st on(st.id=ss.serial_title_id) where si.serial_list_id=#{self.id}
+      group by (si.clavis_invoice_id,si.total_amount,ci.invoice_date,ci.invoice_number,cs.supplier_name)
+)
+select * from tab
+  union
+select NULL,NULL,NULL,NULL,NULL,sum(total_amount)::money,sum(prezzo_stimato),sum(prezzo) from tab
+order by invoice_date;
+    }
+    puts sql
+    SerialInvoice.find_by_sql(sql)
+  end
+
+  def invoice_select
+    res = []
+    self.clavis_invoices.each do |i|
+      res << ["#{i.to_label} (#{i.clavis_supplier.supplier_name})", i.id]
+    end
+    res << ["Titoli non fatturati", 0]
+    return nil if res==[]
+    res
   end
 
   def subscribed_serial_titles_count
@@ -90,13 +134,18 @@ class SerialList < ActiveRecord::Base
     self.update_attributes_from_textdata
   end
 
-  def library_select
+  def library_select(includi_titoli_non_acquisiti=true)
     options=SerialLibrary.clavis_libraries(self.id, 'label').collect {|i| [i.label,i.clavis_library_id]}
-    options.unshift ['Titoli non acquisiti',-1]
+    options.unshift ['Titoli non acquisiti',-1] if includi_titoli_non_acquisiti
+    options
   end
 
-  def subscription_select
-    [['Da decidere', 'i'],['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Supplemento (s)','s'],['CR (?)', 'C']]
+  def subscription_select(current_user=nil)
+    if current_user.nil?
+      [['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
+    else
+      [['Da decidere', 'i'],['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
+    end
   end
 
   def clone_from_list(sourcelist_id)
@@ -140,14 +189,18 @@ class SerialList < ActiveRecord::Base
 
   def formula_titolo(params={}, sep=' - ')
     return self.title if params=={}
-    res=[]
-    res << self.title
-    res << (ClavisLibrary.find(params[:library_id]).shortlabel) if params[:library_id].to_i > 0
-    res << (params[:estero]=='t' ? "Titoli stranieri" : "Titoli italiani") if !params[:estero].blank?
-    if !params[:tipo_fornitura].blank?
-      res << SerialList.subscription_types[params[:tipo_fornitura].to_sym]
+    if params[:header].blank?
+      res=[]
+      res << self.title
+      res << (ClavisLibrary.find(params[:library_id]).shortlabel) if params[:library_id].to_i > 0
+      res << (params[:estero]=='t' ? "Titoli stranieri" : "Titoli italiani") if !params[:estero].blank?
+      if !params[:tipo_fornitura].blank?
+        res << SerialList.subscription_types[params[:tipo_fornitura].to_sym]
+      end
+      res.join(sep)
+    else
+      params[:header]
     end
-    res.join(sep)
   end
 
   def update_attributes_from_textdata
@@ -171,16 +224,22 @@ class SerialList < ActiveRecord::Base
     end
   end
 
-  def self.lista(params={},user=nil)
+  def SerialList.lista(params={},user=nil)
     innerjoin = user.nil? ? '' : "join #{SerialUser.table_name} su on(su.user_id=#{user.id} and su.serial_list_id=sl.id)"
-    sql=%Q{select sl.id,sl.title,sl.year,sl.note,sl.locked,count(st.id)
+    sql=%Q{select sl.id,sl.title,sl.year,sl.note,sl.locked,sl.onelib,count(st.id)
             FROM #{self.table_name} sl left join #{SerialTitle.table_name} st on(st.serial_list_id=sl.id)
             #{innerjoin}
-            group by sl.id,sl.title,sl.year,sl.note,sl.locked order by sl.year,sl.title}
+            group by sl.id,sl.title,sl.year,sl.note,sl.locked order by sl.id desc}
     puts sql
     self.find_by_sql(sql)
   end
 
+  def SerialList.lista_public
+    sql="select id,title,onelib,note FROM serial_lists where is_public order by title;"
+    self.find_by_sql(sql)
+  end
+
+  
   def self.subscription_types
     {
       a:'Abbonamento',

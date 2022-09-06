@@ -1,3 +1,4 @@
+
 <%= content_tag(:div, clavis_manifestation_view(@clavis_manifestation)) %>
 
 <%= content_tag(:div, clavis_manifestation_opac_preview(@clavis_manifestation)) %>
@@ -10,10 +11,14 @@
 
 <%= content_tag(:div, talking_book_opac_presentation(@clavis_manifestation,false)) if !@clavis_manifestation.talking_book.nil? %>
 
+<!-- NON USARE
 <% @clavis_manifestation.audio_visuals.each do |av| %>
  <%= content_tag(:div, audio_visual_show(av,false)) %>
 <% end %>
+-->
 
+
+<%= content_tag(:pre, @clavis_manifestation.unimarc) %>
 
 
 

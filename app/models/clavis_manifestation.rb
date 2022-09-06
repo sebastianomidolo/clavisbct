@@ -3,6 +3,7 @@
 
 include DigitalObjects
 include REXML
+include SoapClient
 
 class ClavisManifestation < ActiveRecord::Base
   attr_accessible :bib_level, :bid, :bid_source, :manifestation_id, :title, :prestito_inizio_periodo, :prestito_fine_periodo, :prestito_max_titoli
@@ -86,7 +87,8 @@ class ClavisManifestation < ActiveRecord::Base
 
   def iccu_opac_url
     return nil if !['SBN','SBNBCT'].include?(self.bid_source)
-    return "http://opac.sbn.it/bid/#{self.bid}"
+    # return "http://opac.sbn.it/bid/#{self.bid}"
+    return "https://opac.sbn.it/risultati-ricerca-avanzata/-/opac-adv/detail/ITICCU#{self.bid}"
     template="http://www.sbn.it/opacsbn/opaclib?db=solr_iccu&rpnquery=%2540attrset%2Bbib-1%2B%2540attr%2B1%253D1032%2B%2540attr%2B4%253D2%2B%2522IT%255C%255CICCU%255C%255C__POLO__%255C%255C__NUMERO__%2522&select_db=solr_iccu&nentries=1&rpnlabel=Preferiti&resultForward=opac%2Ficcu%2Ffull.jsp&searchForm=opac%2Ficcu%2Ferror.jsp&do_cmd=search_show_cmd&brief=brief&saveparams=false&&fname=none&from=1"
     template.sub!('__POLO__',bid[0..2])
     template.sub('__NUMERO__',numero=bid[3..9])
@@ -944,6 +946,24 @@ GROUP BY
     fd.close
     Ordine.paginate_by_sql(sql,:per_page=>per_page, :page=>page_number)
     # self.connection.execute(sql).to_a
+  end
+
+  def ClavisManifestation.soap_get_manifestation_list_info(manifestation_ids_array)
+    client = SoapClient::get_wsdl('catalog')
+    r = client.call(:get_manifestation_list_info, message: {mids:manifestation_ids_array})
+    # r = client.call(:get_shelves_for_library, message: {library_id:3})
+    return r.body
+    return nil if r.body[:get_manifestation_list_info_response][:return].nil?
+    # r.body[:get_manifestation_list_info_response][:return][:item]
+    r.body[:get_manifestation_list_info_response][:return]
+  end
+
+  def ClavisManifestation.piurichiesti
+    sql=%Q{select cm.*,pr.*,t.id_titolo as acquisti_id_titolo from clavis.piurichiesti pr join clavis.manifestation cm using(manifestation_id)
+            left join sbct_acquisti.titoli t using(manifestation_id)
+        where pr.reqnum > pr.available_items order by pr.percentuale_di_soddisfazione;
+    }
+    self.find_by_sql(sql)
   end
 
   private

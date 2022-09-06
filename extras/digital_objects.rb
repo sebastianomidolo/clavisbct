@@ -103,7 +103,7 @@ module DigitalObjects
     res={}
     elem.children.each do |e|
       return e.to_s if e.class==REXML::Text
-      puts "e: #{e.inspect} (e.class: #{e.class})"
+      # puts "e: #{e.inspect} (e.class: #{e.class})"
       res[e.name] = e.text
     end
     res
@@ -261,4 +261,9 @@ module DigitalObjects
     end
   end
 
+  def html_decode(field)
+    x=self.send(field)
+    return nil if x.nil?
+    x.gsub('&apos;', "'").gsub('&gt;', ">").gsub('&lt;', "<")
+  end
 end

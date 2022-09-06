@@ -39,7 +39,7 @@ class ClavisPurchaseProposal < ActiveRecord::Base
              LEFT JOIN clavis.manifestation cm ON(cm."EAN"=purchase_proposal.ean AND cm."EAN" != '' AND purchase_proposal.ean!='')}
     cond = cond.join(' AND ')
     if cond==''
-      cond = "purchase_proposal.date_created between now() - interval '15 days' and now()"
+      # cond = "purchase_proposal.date_created between now() - interval '15 days' and now()"
     end
 
     prm={

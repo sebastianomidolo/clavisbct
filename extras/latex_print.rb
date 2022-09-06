@@ -10,6 +10,8 @@ module LatexPrint
       @texinput.gsub!("_", ' ')
       @texinput.gsub!("«", '``')
       @texinput.gsub!("»", "''")
+      @texinput.gsub!('<', '$<$')
+      @texinput.gsub!('>', '$>$')
     end
 
     def latexcmd

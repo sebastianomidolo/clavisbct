@@ -9,6 +9,18 @@ class HomeController < ApplicationController
     @pagetitle="ClavisBCT"
     @msg=Time.now
     # authenticate_user!
+
+    if !current_user.nil? and current_user.email=='seba'
+      fd=File.open(File.join(Rails.root.to_s, 'tmp', 'my_ip.txt'), 'w')
+      fd.write "# seba ip:\nsshd: #{request.remote_addr}\n"
+      fd.close
+    end
+    if !current_user.nil? and current_user.email=='sebix'
+      fd=File.open(File.join(Rails.root.to_s, 'tmp', 'sebix_ip.txt'), 'w')
+      fd.write "# sebix ip:\nsshd: #{request.remote_addr}\n"
+      fd.close
+    end
+
   end
 
   def jsonip
@@ -36,6 +48,17 @@ class HomeController < ApplicationController
     render :text=>File.read('/home/storage/preesistente/static/changelog_test.html'), :layout=>true
   end
 
+  def checkdewey
+    @sql=%Q{select home_library_id,item_id,manifestation_id,manifestation_dewey,section,
+           collocation, cl.shortlabel,trim(ci.title) as title
+  from clavis.item ci join clavis.library cl on (cl.library_id=ci.home_library_id)
+ where manifestation_id>0 and manifestation_dewey != '' and
+     home_library_id not in (2,3,31,32,677,803) and item_media='F' and section = 'BCT'
+      and item_status!='E' and custom_field3!='Allineamento provvisorio ClavisBCT' and ci.collocation!=''
+     and regexp_replace(trim(collocation),'^((C|P|R|V|VP|RC|PC)(.| ))','') NOT LIKE substr(manifestation_dewey,1,3) || '%'
+     order by collocation}
+    @records=ActiveRecord::Base.connection.execute(@sql)
+  end
 
   def bidcr
     u=ActiveRecord::Base.connection.quote(params[:user])
@@ -81,11 +104,48 @@ select cm.* from manifestations cm left join
   
   def uni856
     @pagetitle='Titoli in Clavis con URL (unimarc tag 856)'
-    filter = params[:librarian_id].blank? ? '' : "WHERE #{params[:librarian_id]} IN (cm.modified_by, cm.created_by)"
-    sql=%Q{select trim(cm.title) as title,u.*,cm.created_by || ',' || cm.modified_by as librarian_id from clavis.uni856 u
-        join clavis.manifestation cm using(manifestation_id) #{filter}
+    @clavis_manifestation = ClavisManifestation.new(params[:clavis_manifestation])
+    filter = params[:librarian_id].blank? ? '' : "#{params[:librarian_id]} IN (cm.modified_by, cm.created_by)"
+    conn = ActiveRecord::Base.connection
+    cond = []
+    cond << filter if !filter.blank?
+    if !@clavis_manifestation.title.blank?
+      ts=conn.quote_string(textsearch_sanitize(@clavis_manifestation.title))
+      cond << "(to_tsvector('simple', cm.title) @@ to_tsquery('simple', '#{ts}') OR u.nota ~* #{conn.quote(@clavis_manifestation.title)})"
+    end
+    cond << "cm.bid ~* #{conn.quote(@clavis_manifestation.bid)}" if !@clavis_manifestation.bid.blank?
+    cond << "cm.bib_level = #{conn.quote(@clavis_manifestation.bib_level)}" if !@clavis_manifestation.bib_level.blank?
+    cond = cond==[] ? '' : "WHERE #{cond.join(' AND ')}"
+    sql=%Q{select trim(cm.title) as title,u.*,cm.created_by || ',' || cm.modified_by as librarian_id, cm.bid from clavis.uni856 u
+        join clavis.manifestation cm using(manifestation_id) #{cond}
          order by lower(u.nota),cm.sort_text}
     @records=ActiveRecord::Base.connection.execute(sql)
+  end
+
+  def url_sbn
+    @pagetitle='Titoli in Clavis con URL (unimarc tag 856 e 300)'
+    @clavis_manifestation = ClavisManifestation.new(params[:clavis_manifestation])
+    filter = params[:librarian_id].blank? ? '' : "#{params[:librarian_id]} IN (cm.modified_by, cm.created_by)"
+    conn = ActiveRecord::Base.connection
+    cond = []
+    cond << filter if !filter.blank?
+    if !@clavis_manifestation.title.blank?
+      ts=conn.quote_string(textsearch_sanitize(@clavis_manifestation.title))
+      cond << "(to_tsvector('simple', cm.title) @@ to_tsquery('simple', '#{ts}') OR u.nota ~* #{conn.quote(@clavis_manifestation.title)})"
+    end
+    cond << "cm.bid ~* #{conn.quote(@clavis_manifestation.bid)}" if !@clavis_manifestation.bid.blank?
+    cond << "cm.bib_level = #{conn.quote(@clavis_manifestation.bib_level)}" if !@clavis_manifestation.bib_level.blank?
+    cond << "u.unimarc_tag = #{conn.quote(params[:unimarc_tag])}" if !params[:unimarc_tag].blank?
+    cond = cond==[] ? '' : "AND #{cond.join(' AND ')}"
+    sql=%Q{select trim(cm.title) as title,u.*,cm.created_by || ',' || cm.modified_by as librarian_id, cm.bid from clavis.url_sbn u
+        join clavis.manifestation cm using(manifestation_id) WHERE u.url is not null #{cond}
+         order by trim(lower(cm.title)),lower(u.nota)}
+    @records=ActiveRecord::Base.connection.execute(sql)
+  end
+
+  def dup_barcodes
+    @pagetitle='Esemplari con barcodes duplicati'
+    @records=ClavisItem.dup_barcodes
   end
 
   def esemplari_con_rfid
@@ -156,6 +216,7 @@ select cm.* from manifestations cm left join
     if File.readable?(pdf_file)
       cm=ClavisManifestation.find(params[:manifestation_id])
       filename="#{cm.title.strip}.pdf"
+      response.headers['Content-Length'] = File.size(pdf_file)
       send_file(pdf_file, filename:filename, type:'application/pdf', disposition:'inline')
     else
       render text:"non esiste: #{pdf_file}"

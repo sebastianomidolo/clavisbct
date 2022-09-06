@@ -90,12 +90,17 @@ class DObjectsController < ApplicationController
   def view
     @d_object = DObject.find(params[:id])
     @d_objects_folder = @d_object.d_objects_folder
+    render text:'non accessibile' and return if !@d_objects_folder.readable_by?(current_user)
+
     respond_to do |format|
       format.html {}
       format.jpeg {
         if @d_object.mime_type.split(';').first=='application/pdf'
           page = params[:page].blank? ? 1 : params[:page].to_i
           page = @d_object.pdf_count_pages if page > @d_object.pdf_count_pages
+          if ! File.exists?(@d_object.pdf_filename_for_jpeg(page))
+            @d_object.pdf_to_jpeg
+          end
           img=Magick::Image.read(@d_object.pdf_filename_for_jpeg(page)).first
         else
           img=Magick::Image.read(@d_object.filename_with_path).first
@@ -276,7 +281,7 @@ class DObjectsController < ApplicationController
       else
         cm=ClavisManifestation.find(params[:manifestation_id])
         @d_object = cm.clavis_cover_cached
-        # params[:id]=@d_object.id
+        @d_object = cm.clavisbct_cover if @d_object.nil?
       end
     end
     @d_object = DObject.find(1034649) if @d_object.nil?
@@ -295,15 +300,20 @@ class DObjectsController < ApplicationController
         send_file(@d_object.filename_with_path, :type=>@d_object.mime_type)
       }
       format.jpeg {
-        if !@d_object.get_pdfimage.nil?
-          img=Magick::Image.read(@d_object.get_pdfimage).first
+        page=params[:page]
+        if !@d_object.get_pdfimage(page).nil?
+          img=Magick::Image.read(@d_object.get_pdfimage(page)).first
         else
           img=Magick::Image.read(@d_object.filename_with_path).first
           img.format='jpeg'
         end
         if !params[:size].blank? and @d_object.name!='nocover.jpg'
-          s=params[:size].split('x')
-          img.resize_to_fit!(s[0].to_i)
+          width,height=params[:size].split('x').map {|e| e.to_i}
+          if params[:crop].blank?
+            img.resize_to_fit!(width, height)
+          else
+            img.resize_to_fill!(width, height, Magick::NorthGravity)
+          end
         else
           # img.resize_to_fit!(800, 800)
         end
@@ -323,6 +333,33 @@ class DObjectsController < ApplicationController
     end
   end
 
+  def dnl_pdf
+    @d_object = DObject.find(params[:id])
+    if @d_object.access_right_id==0
+      @pagetitle="#{@d_object.id} - #{@d_object.filename}"
+    else
+      @pagetitle="#{@d_object.id} accesso non autorizzato"
+      render text:"non autorizzato d_object_id #{@d_object.id}", layout:'d_objects'
+      return
+    end
+    page=params[:page]
+    respond_to do |format|
+      format.html { render layout:'d_objects' }
+      format.jpeg {
+        img=Magick::Image.read(@d_object.get_pdfimage(page)).first
+        if !params[:size].blank?
+          width,height=params[:size].split('x').map {|e| e.to_i}
+          if params[:crop].blank?
+            img.resize_to_fit!(width, height)
+          else
+            img.resize_to_fill!(width, height, Magick::NorthGravity)
+          end
+        end
+        send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
+      }
+    end
+  end
+  
   def random_mp3
     headers['Access-Control-Allow-Origin'] = "*"
     @pagetitle='Traccia audio casuale'

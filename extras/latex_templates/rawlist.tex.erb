@@ -54,7 +54,7 @@
 %\tablehead{\hline}
 %\tabletail{\hline}
 
-\begin{supertabular}{r|l|l|c}
+\begin{supertabular}{r|l|l|l}
 <%
  res=[]	
  cnt=1
@@ -68,6 +68,9 @@
    end
    prec_piano=e.piano
    res << "#{e.piano} & {\\Large #{e.collocazione[0..16]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} \\\\"
+   if e.respond_to?('patron_patron_id') and !e['patron_patron_id'].blank?
+     res << " &  & \\em{#{e['patron_name']} #{e['patron_lastname']} #{e['request_date']}} & #{e['patron_barcode']} \\\\"
+   end
    cnt+=1
  end
 %>

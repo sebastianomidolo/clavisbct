@@ -10,13 +10,42 @@ module DObjectsHelper
                   html_attrs:{size:80})
   end
 
+  def d_object_browse(record)
+    p = record.browse_object('prev')
+    n = record.browse_object('next')
+    lnks = []
+    if !p.nil?
+      lnks << link_to('first', view_d_object_path(record.browse_object('first')))
+      lnks << link_to('prev', view_d_object_path(p))
+    else
+      lnks << 'first'
+      lnks << 'prev'
+    end
+    if !n.nil?
+      lnks << link_to('next', view_d_object_path(n))
+      lnks << link_to('last', view_d_object_path(record.browse_object('last')))
+    else
+      lnks << 'next'
+      lnks << 'last'
+    end
+    " [#{lnks.join('|')}]".html_safe
+  end
+
   def d_object_show(record)
     res=[]
     if !record.access_right_id.nil?
-      res << content_tag(:tr, content_tag(:td, 'Accesso') + content_tag(:td, record.access_right.label))
+      l = record.access_right.label
+      text_link=dnl_d_object_path(record,format:record.mime_format,name:record.name)
+      text_link=d_object_url(record,request.host_with_port)
+      lnk = record.access_right_id==0 ? link_to(l, text_link, class:'btn btn-success') : l
+    else
+      lnk = "Da definire"
+      text_link=''
     end
+    res << content_tag(:tr, content_tag(:td, 'Accesso') + content_tag(:td, lnk.html_safe + " <b>#{text_link}</b>".html_safe))
+    
     keys=record.attributes.keys
-    keys.delete('access_right_id')
+    # keys.delete('access_right_id')
     keys.delete('filename_old_style')
     keys.delete('filename') if !can? :search, DObject
     keys.sort.each do |k|
@@ -53,6 +82,7 @@ module DObjectsHelper
     end
     res=content_tag(:table, res.join.html_safe)
   end
+
   def d_objects_summary
     sql="select mime_type,count(*),sum(bfilesize) as bfilesize from d_objects group by mime_type order by lower(mime_type)"
     sql="select mime_type,count(*),sum(bfilesize) as bfilesize from d_objects group by mime_type order by count(*) desc"
@@ -102,8 +132,8 @@ module DObjectsHelper
         end
       when 'image/jpeg', 'image/tiff', 'image/png'
         # res << content_tag(:li, d_object_md5_link(o,:jpeg))
-        res << content_tag(:div, link_to(image_tag(d_object_md5_link(o,:jpeg, extra_params)),
-                                         d_object_md5_link(o))) if !anonimo
+        # res << content_tag(:div, link_to(image_tag(d_object_md5_link(o,:jpeg, extra_params)), d_object_md5_link(o))) if !anonimo
+        res << content_tag(:div, link_to(image_tag(d_object_md5_link(o,:jpeg, extra_params)), view_d_object_path(o))) if !anonimo
       when 'audio/mpeg'
         text = o.xmltag(:title).blank? ? File.basename(o.filename) : o.xmltag(:title)
         if o.access_right_id==0 or (o.access_right_for(dng_session) and !anonimo)
@@ -140,7 +170,7 @@ module DObjectsHelper
       extrap << "#{k}=#{v}"
     end
     extrap=extrap.join('&')
-    "http://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}#{ac}&#{extrap}"
+    "https://#{request.host_with_port}/obj/#{record.id}/#{p}.#{extension}?dng_user=#{params[:dng_user]}#{ac}&#{extrap}"
   end
 
   def rmagick_image_info(record)
@@ -193,9 +223,17 @@ module DObjectsHelper
       cnt+=1
       case o.mime_type.split(';').first
       when 'image/jpeg', 'image/tiff', 'image/png','application/pdf'
-        res << content_tag(:span, link_to(image_tag(view_d_object_path(o, :format=>'jpeg', :size=>'150x')),
-                                          view_d_object_path(o)))
+        if current_user.nil?
+          next if o.access_right_id!=0
+          imgpath = dnl_d_object_path(o, :format=>'jpeg', :size=>'200x')
+          res << content_tag(:span, link_to(image_tag(imgpath), dnl_d_object_path(o, :format=>'jpeg')))
+          # Usare questa per linkare a una pagina con tasti di navigazione avanti e indietro (da realizzare):
+          # res << content_tag(:span, link_to(image_tag(imgpath), dnl_d_object_path(o)))
+        else
+          res << content_tag(:span, link_to(image_tag(view_d_object_path(o, :format=>'jpeg', :size=>'x150')), view_d_object_path(o)))
+        end
       else
+        next if o.access_right_id!=0 and current_user.nil?
         res2 << content_tag(:li, link_to(o.name,view_d_object_path(o)))
       end
     end
@@ -208,13 +246,22 @@ module DObjectsHelper
   end
 
   def d_object_view_pdf(record)
+    if current_user.nil? and record.access_right_id!=0
+      return 'no access'
+    end
+    record.get_pdfimage
     res=[]
     (1..record.pdf_count_pages).each do |page|
-      res << content_tag(:span, link_to(image_tag(
-                                          view_d_object_path(record, page:page, format:'jpeg', size:'250x'),
-                                          style:'padding:1ex',class:'col-md-3 col-sm-4 col-lg'),
-                                        view_d_object_path(record, page:page, format:'jpeg')))
-
+      if current_user.nil?
+        imgpath = dnl_pdf_d_object_path(record, page:page, :format=>'jpeg', :size=>'200x')
+        res << content_tag(:span, link_to(image_tag(imgpath,style:'padding:1ex',class:'col-md-3 col-sm-4 col-lg'),
+                                          dnl_pdf_d_object_path(record, page:page, :format=>'jpeg')))
+      else
+        res << content_tag(:span, link_to(image_tag(
+                                            view_d_object_path(record, page:page, format:'jpeg', size:'250x'),
+                                            style:'padding:1ex',class:'col-md-3 col-sm-4 col-lg'),
+                                          view_d_object_path(record, page:page, format:'jpeg')))
+      end
     end
     content_tag(:div, res.join.html_safe)
   end
@@ -226,9 +273,14 @@ module DObjectsHelper
     records.each do |o|
       cnt+=1
       res << content_tag(:tr, content_tag(:td, link_to('[vedi]',view_d_object_path(o))) +
+                              content_tag(:td, o.x_mid.blank? ? 'mancante' : "x_mid: #{o.x_mid}") +
                               content_tag(:td, d_object_editable_filename(o)))
     end
     content_tag(:table, res.join.html_safe, class:'table')
   end
 
+  def d_object_url(record, host)
+    "https://" + host + dnl_d_object_path(record,format:record.mime_format,name:record.name)
+  end
+  
 end

@@ -5,5 +5,7 @@
 <%= content_tag(:p, "Titolo selezionati per la stampa: #{@serial_titles.count}") %>
 
 <%= link_current_params('[PDF]', print_serial_titles_path(format:'pdf'), params) if @serial_titles.count>0%>
+<%= link_current_params('[CSV]', print_serial_titles_path(format:'csv'), params) if @serial_titles.count>0%>
+
 
 <%= serial_titles_list_readonly(@serial_titles) %>

@@ -20,6 +20,7 @@ module SerialTitlesHelper
 
   def serial_titles_list(records)
     res=[]; cnt=0
+
     records.each do |r|
       lnk = r.tot_copie=='0' ? link_to('Elimina', r, method: :delete, data: { confirm: 'Confermi cancellazione titolo?' }) : ''
       note = r.note.blank? ? '' : "<br/>Nota interna: <em>#{r.note}</em>"
@@ -41,11 +42,17 @@ module SerialTitlesHelper
       if !params[:library_id].blank? and !r.manifestation_id.nil? and params[:items_details]=='t'
         title << serial_titles_issues_report(r)
       end
+      # invoice_link = r.invoice_ids.blank? ? '' : "<br/>#{edit_serial_invoice_path(r.invoice_ids,serial_list_id:r.serial_list_id,library_id:@library_id,invoice_filter_enabled:true)}"
+
+      invoice_link = r.invoice_ids.blank? ? '' : %Q{<br/>#{link_to("<b>fattura</b>".html_safe, edit_serial_invoice_path(r.invoice_ids.to_i,serial_list_id:r.serial_list_id,library_id:r.libraries.to_i,invoice_filter_enabled:true))}}
+      sspath = "/serial_subscriptions/#{r.id},#{r.libraries.to_i}"
+      subscription_link = r.invoice_ids.blank? ? '' : %Q{ | #{link_to("<b>altro</b>".html_safe, sspath)}}
+
       res << content_tag(:tr, content_tag(:td, cnt+=1) +
                               content_tag(:td, title) +
                               content_tag(:td, r.prezzo_stimato) +
                               content_tag(:td, totale) +
-                              content_tag(:td, lnklib) +
+                              content_tag(:td, lnklib + invoice_link.html_safe + subscription_link.html_safe) +
                               content_tag(:td, lnk))
     end
     content_tag(:table, res.join.html_safe, {class: 'table table-bordered table-condensed table-striped'})
@@ -76,8 +83,21 @@ module SerialTitlesHelper
     content_tag(:table, res.join("\n").html_safe, {class: 'table table-bordered table-condensed table-striped'})
   end
 
+  def serial_titles_invoice_list(serial_invoice)
+    res=[]; cnt=0
+    prst=pr=0
+    records = serial_invoice.subscriptions
+    records.each do |r|
+      lnk_library_name = serial_subscription_path(r.serial_title_id,{ok_library_id:r.library_id})
 
-  
+      res << content_tag(:tr, content_tag(:td, r.title) +
+                              content_tag(:td, link_to(r.library_name,lnk_library_name)) +
+                              content_tag(:td, r.prezzo_in_fattura) +
+                              content_tag(:td, r.prezzo_stimato))
+    end
+    content_tag(:table, res.join("\n").html_safe, {class: 'table table-bordered table-condensed table-striped'})
+  end
+
   def serial_libraries_list(records)
     res=[]; cnt=0
     records.each do |r|
@@ -114,17 +134,18 @@ module SerialTitlesHelper
   end
 
   def periodici_breadcrumbs
-    # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
+    # return params.inspect
     links=[]
 
     # links << link_to('Liste periodici', serial_lists_path) if params[:controller]!='lperiodici'
     links << link_to('Liste periodici', serial_lists_path)
 
-    if ['serial_titles','serial_invoices'].include?(params[:controller]) and ['new','create','edit','update','show','print'].include?(params[:action])
+    if ['serial_titles','serial_invoices','serial_subscriptions'].include?(params[:controller]) and ['new','create','edit','update','show','print'].include?(params[:action])
+      params[:serial_list_id]=@serial_list.id if params[:serial_list_id].blank?
       links << link_current_params(@serial_list.to_label, serial_titles_path,params)
     end
 
-    if params[:controller]=='serial_titles' and params[:action] = 'show' and !params[:id].blank?
+    if ['serial_titles','serial_subscriptions'].include?(params[:controller]) and params[:action] = 'show' and !params[:id].blank?
       links << link_current_params(content_tag(:b, @serial_title.title), serial_title_path,params)
     end
 
@@ -132,8 +153,12 @@ module SerialTitlesHelper
       links << link_current_params(@serial_list.to_label, serial_titles_path,params)
     end
 
-    return '' if links.size==0
+    if params[:controller]=='serial_invoices' and params[:action]=='show'
+      links << link_current_params("Fatture", serial_invoices_path, params)
+    end
 
+
+    return '' if links.size==0
  
     %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
   end
@@ -178,32 +203,57 @@ module SerialTitlesHelper
                   html_attrs:{size:10})
   end
 
-  def serial_invoices_list(serial_list)
-    return 'Nessuna fattura inserita per la lista corrente' if serial_list.serial_invoices_report.size == 1
+  def serial_invoices_shortlist(records)
     res = []
-    rr=nil
-    res << content_tag(:tr, content_tag(:td, 'Riferimento fattura') +
-                            content_tag(:td, 'Totale fattura') +
-                            content_tag(:td, 'Prezzo effettivo') +
-                            content_tag(:td, 'Prezzo stimato') +
-                            content_tag(:td, 'Differenza'))
-
-    serial_list.serial_invoices_report.each do |r|
-      rr = r and break if r.clavis_invoice_id.nil?
-      prezzo = r.total_amount.to_f == r.prezzo.to_f ? number_to_currency(r.prezzo) : "<b>#{number_to_currency(r.prezzo)}</b>"
-      diff = r.prezzo_stimato.to_f - r.prezzo.to_f
-      res << content_tag(:tr, content_tag(:td, link_to(r.to_label,serial_invoice_path(r))) +
-                              content_tag(:td, number_to_currency(r.total_amount)) +
-                              content_tag(:td, prezzo.html_safe) +
-                              content_tag(:td, number_to_currency(r.prezzo_stimato)) +
-                              content_tag(:td, number_to_currency(diff)))
+    records.each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r.to_label, serial_invoice_path(r))) +
+                              content_tag(:td, r.total_amount)
+                        )
     end
-    prezzo = rr.total_amount.to_f == rr.prezzo.to_f ? number_to_currency(rr.prezzo) : "<b>#{number_to_currency(rr.prezzo)}</b>"
-    res << content_tag(:tr, content_tag(:td, 'Totali') +
-                            content_tag(:td, number_to_currency(rr.total_amount)) +
-                            content_tag(:td, prezzo.html_safe) +
-                            content_tag(:td, number_to_currency(rr.prezzo_stimato)) +
-                            content_tag(:td, number_to_currency(rr.prezzo_stimato.to_f - rr.prezzo.to_f)))
-    content_tag(:table, res.join.html_safe, {:style=>'width: 90%;', class: 'table table-bordered table-condensed table-striped'})
+    content_tag(:table, res.join.html_safe, class:'table table-striped')
+   end
+  
+  def serial_invoices_list(serial_list)
+    return "serial_list #{serial_list.id} non gestisce le fatture" if serial_list.invoice_management==false
+    res = []
+    if serial_list.serial_invoices_report.size == 1
+      serial_list.serial_invoices.each do |r|
+        res << content_tag(:tr, content_tag(:td, r.clavis_invoice.to_label))
+      end
+    else
+      rr=nil
+      res << content_tag(:tr, content_tag(:td, '') +
+                              content_tag(:td, 'ID Clavis') +
+                              content_tag(:td, 'Numero fattura') +
+                              content_tag(:td, 'Data fattura') +
+                              content_tag(:td, 'Totale fattura') +
+                              content_tag(:td, 'Importo fatturato') +
+                              content_tag(:td, 'Prezzo stimato') +
+                              content_tag(:td, 'Differenza'))
+
+      cnt=0
+      serial_list.serial_invoices_report.each do |r|
+        cnt+=1
+        rr = r and break if r.clavis_invoice_id.nil?
+        prezzo = r.total_amount.to_f == r.prezzo.to_f ? number_to_currency(r.prezzo) : "<b>#{number_to_currency(r.prezzo)}</b>"
+        diff = r.prezzo_stimato.to_f - r.prezzo.to_f
+        res << content_tag(:tr, content_tag(:td, cnt) +
+                                content_tag(:td, link_to(r.id,r.clavis_url,target:'_blank',title:'Vedi questa fattura in Clavis')) +
+                                content_tag(:td, link_to(r.invoice_number,serial_invoice_path(r,serial_list_id:r.serial_list_id,library_id:@library_id,invoice_filter_enabled:true))) +
+                                content_tag(:td, r.invoice_date.to_date) +
+                                content_tag(:td, number_to_currency(r.total_amount)) +
+                                content_tag(:td, prezzo.html_safe) +
+                                content_tag(:td, number_to_currency(r.prezzo_stimato)) +
+                                content_tag(:td, number_to_currency(diff)))
+      end
+      prezzo = rr.total_amount.to_f == rr.prezzo.to_f ? number_to_currency(rr.prezzo) : "<b>#{number_to_currency(rr.prezzo)}</b>"
+      res << content_tag(:tr, content_tag(:td, '', {colspan:4}) +
+                              content_tag(:td, number_to_currency(rr.total_amount)) +
+                              content_tag(:td, prezzo.html_safe) +
+                              content_tag(:td, number_to_currency(rr.prezzo_stimato)) +
+                              content_tag(:td, number_to_currency(rr.prezzo_stimato.to_f - rr.prezzo.to_f)))
+    end
+
+    content_tag(:table, res.join("\n").html_safe, {:style=>'width: 90%;', class: 'table table-bordered table-condensed table-striped'})
   end
 end

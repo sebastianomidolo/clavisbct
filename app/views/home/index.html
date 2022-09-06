@@ -16,6 +16,10 @@
 
 -->
 
+<!--
+<h1>Sistema in fase di allineamento dati dalle 9:15 di oggi 7 gennaio 2021</h1>
+<h2>Il ripristino di tutte le funzioni è previsto entro le ore 12 di oggi</h2>
+-->
 
 <ul>
 
@@ -23,8 +27,13 @@
       clavis_consistency_notes_path)) %>
   <%= content_tag(:li, link_to('Schema collocazioni Centrale (in elaborazione)', list_schema_collocazioni_centrales_path)) %>
   <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) if can? :search, ClavisItem %>
+  <%= content_tag(:li, button_to('Prenotazioni su esemplare pendenti', clavis_item_requests_path, method:'get')) if can? :manage, ClavisItemRequest %>
+  <%= content_tag(:li, button_to('Gestione liste e ordini periodici', serial_lists_path, method:'get')) if can? :index, SerialList and current_user.email!='tutti' %>
+
+  <%= content_tag(:li, button_to('Periodici correnti', serial_lists_path, method:'get')) if current_user.nil? %>
   <%= content_tag(:li, link_to('Cerca esemplari (con filtro per data di ultima modifica)', clavis_items_path(mode:'lastmod'))) if can? :search, ClavisItem %>
 
+  <%= content_tag(:li, link_to('Cerca esemplari Adabas 2011 ', '/adabas_inventories')) if can? :manage, AdabasInventory %>
   <%= content_tag(:li, link_to('Cerca periodici', clavis_items_path(item_media:'S'))) if can? :search, ClavisItem %>
   
   <%= content_tag(:li, link_to('Lista contatti errati', '/cp_wc')) if can? :wrong_contacts, ClavisPatron %>
@@ -39,7 +48,7 @@
   <%= content_tag(:li, link_to('Scaffale aperto', '/sa')) %>
 <% end %>
 <% if can? :ricolloca_scaffale_aperto, OpenShelfItem %>
-  <%= content_tag(:li, link_to('Ricollocazioni', 'http://clavisbct.comperio.it/open_shelf_items/estrazione_da_magazzino')) %>
+  <%= content_tag(:li, link_to('Ricollocazioni', 'https://clavisbct.comperio.it/open_shelf_items/estrazione_da_magazzino')) %>
 <% end %>
 
   <%= content_tag(:li, link_to('Ricerca proposte acquisto utenti opac', clavis_purchase_proposals_path)) if can? :manage, ClavisPurchaseProposal %>
@@ -47,7 +56,8 @@
   <%= content_tag(:li, link_to('Interrogazione prestiti', clavis_loans_path)) if can? :manage, ClavisLoan %>
   <%= content_tag(:li, link_to('Interrogazione prestiti Goethe Institut', view_goethe_loans_clavis_loans_path)) if can? :view_goethe_loans, ClavisLoan %>
 
-  <%= content_tag(:li, link_to('Richieste a magazzino Civica Centrale', closed_stack_item_requests_path)) if can? :manage, ClosedStackItemRequest %>
+
+  <%= content_tag(:li, button_to('Richieste a magazzino Civica Centrale', closed_stack_item_requests_path, method:'get')) if can? :index, ClosedStackItemRequest %>
 
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 
@@ -65,6 +75,16 @@
 
   <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path(namespace:BioIconograficoCard.default_namespace(current_user)))) if !current_user.nil? and !BioIconograficoCard.default_namespace(current_user).nil? %>
 
-  <%= content_tag(:li, link_to('Monografie senza soggetto e senza altri legami', '/senzasoggetto')) if can? :manage, ClavisItem %>
+  <%= content_tag(:li, link_to('Bibliografie', sp_bibliographies_path)) if can? :index, SpBibliography %>
+  <%= content_tag(:li, button_to('Acquisti (nuova procedura CR in fase di sviluppo)', '/cr', method:'get', class:'btn btn-success')) if can? :homepage, SbctTitle %>
+
   
 </ul>
+<hr/>
+
+<!--
+<a href="https://bct.comperio.it/opac/detail/view/sbct:catalog:29009">
+  <img src="https://clavisbct.comperio.it/opac_con_link_sbn.jpg"
+       width="274" height="192"
+       ></a>
+-->

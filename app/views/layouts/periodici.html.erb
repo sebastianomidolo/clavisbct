@@ -21,21 +21,16 @@
 
 
     <div class="container">
+
       <div class="jumbotron">
-      <a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
-
-      <div class="briciole">
-	<a href="https://clavisbct.comperio.it"><img src="/bct-homepage.png" alt="Biblioteche Civiche Torinesi" width="20" height="20" style="margin-bottom: 5px"></a><%= periodici_breadcrumbs -%>
+	<a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
+	<div class="briciole">
+          <a href="https://clavisbct.comperio.it"><img src="/bct-homepage-green.png" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+	  <%= periodici_breadcrumbs -%>
+	</div>
+        <%= yield %>
       </div>
-
-      
-          
-      <div style=" width="275" height="45"font-size: 110%">
-	<%= yield %>
-      </div>
-      
     </div> <!-- /container -->
-    
   </body>
 </html>
 <!-- preso da: "http://getbootstrap.com/examples/navbar/" -->

@@ -2,13 +2,15 @@
 
 <%= content_tag(:div, d_object_editable_filename(@d_object)) %>
 
-<%= render partial:'cover_image_check_box' if @d_object.writable_by?(current_user) %>
+<%= render partial:'cover_image_check_box' if (@d_object.writable_by?(current_user) and @d_object.d_objects_folder.pdf_disabled!='true') %>
+
+<%= content_tag(:span, d_object_browse(@d_object)) %>
 
 <% if @d_object.mime_type.split(';').first=='application/pdf' %>
- <%= content_tag(:div, "File PDF contenente #{@d_object.pdf_count_pages} pagine") %>
- <%= content_tag(:div, d_object_view_pdf(@d_object)) %>
+  <%= content_tag(:div, "File PDF contenente #{@d_object.pdf_count_pages} pagine") %>
+  <%= content_tag(:div, d_object_view_pdf(@d_object)) %>
 <% else %>
- <%= content_tag(:div, link_to(image_tag(view_d_object_path(@d_object, format:'jpeg', size:'650x')),
+ <%= content_tag(:div, link_to(image_tag(view_d_object_path(@d_object, format:'jpeg', size:'300x')),
                                view_d_object_path(@d_object, format:'jpeg'))) if ['image/jpeg', 'image/tiff', 'image/png'].include?(@d_object.mime_type.split(';').first)
  %>
 <% end %>
@@ -18,15 +20,13 @@
 <% else %>
 Unico file contenuto nella cartella
 <% end %>
-<%= content_tag(:div, link_to("[Scarica il file: #{@d_object.mime_type}]", download_d_object_path(@d_object))) %>
-<%= content_tag(:span, link_to("[Modifica]", edit_d_object_path(@d_object))) if can? :edit, DObject and @d_object.writable_by?(current_user) %>
-<%= content_tag(:span, link_to("Elimina", @d_object, method: :delete, data: {confirm: 'Confermi cancellazione?'})) if can? :destroy, DObject and @d_object.writable_by?(current_user) %>
+<%= content_tag(:span, link_to("[Scarica il file]", download_d_object_path(@d_object))) %>
+<%= content_tag(:span, link_to("[Modifica metadati]", edit_d_object_path(@d_object))) if can? :edit, DObject and @d_object.writable_by?(current_user) %>
+<%= content_tag(:span, link_to("Elimina", @d_object, method: :delete, data: {confirm: 'Confermi cancellazione?'})) if can? :destroy, DObject and @d_object.deletable_by?(current_user) %>
 
-
-
-<pre>Dettagli</pre>
+<pre>
 <%= content_tag(:div, d_object_show(@d_object)) %>
-
+</pre>
 
 <% if can? :manage, DObject %>
 <% link_to('Carica su Omeka', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>

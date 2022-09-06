@@ -1,2 +1,38 @@
-<%= content_tag(:div, sp_section_show(@sp_section)) %>
+<br/>
+<%= content_tag(:p, "Sezione: \"#{@sp_section.title}\" (#{@sp_section.status_label})") if can?(:edit,@sp_section) %>
 
+<%=
+  if can?(:edit,@sp_section) and !@sp_section.homepage.blank?
+   linktext,url = @sp_section.homepage.split(' | ')
+   content_tag(:p, "Home page specifica di questa sezione: #{link_to(linktext,url)}".html_safe)
+  end
+ %>
+
+<%= content_tag(:div, sp_section_show(@sp_section)) %>
+<%=
+  items=@sp_section.sp_items(params[:order])
+  if items.size>1
+   if params[:order].blank?
+     link_to 'Ordina per Collocazione', sp_section_path(@sp_section,order:'collocation')
+   else
+     link_to 'Ordina per Autore/Titolo', sp_section_path(@sp_section)
+   end
+  end
+%>
+
+<br/>
+<%= (link_to 'Modifica sezione', edit_sp_section_path, :class => "btn btn-default") if can?(:edit,@sp_section) %>
+<%= (link_to 'Crea una sotto-sezione', new_sp_section_path(bibliography_id:@sp_bibliography.id,parent:@sp_section.number),
+       :class => "btn btn-default") if can?(:create,@sp_section) %>
+<%=
+  @sp_item=SpItem.new(bibliography_id:@sp_bibliography.id)
+  (link_to "Aggiungi scheda nella sezione \"#{@sp_section.title}\"", new_sp_item_path(section_id:@sp_section),
+       :class => "btn btn-default") if can?(:create,@sp_item)
+%>
+
+<%= (link_to 'Elimina sezione', @sp_section, method: :delete, :class => "btn btn-default",
+       data: { confirm: 'Confermi eliminazione delle sezione?' }) if can?(:destroy,@sp_section) %>
+
+<%= link_to 'Stampa in PDF', sp_section_path(@sp_section,format:'pdf') if user_signed_in? %>
+
+<%= content_tag(:div, sp_items_list_items(items)) if items.size>0 %>

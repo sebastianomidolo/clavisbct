@@ -5,4 +5,4 @@
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%= clavis_items_shortlist(@clavis_items) %>
 
-<%= content_tag(:pre, params[:sql]) if !params[:sql].blank? %>
+<%= content_tag(:pre, @sql_conditions) %>

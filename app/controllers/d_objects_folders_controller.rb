@@ -74,11 +74,14 @@ class DObjectsFoldersController < ApplicationController
 
   def show
     @d_objects_folder=DObjectsFolder.find(params[:id])
+    @pagetitle="#{@d_objects_folder.name}"
     render text:'non accessibile' and return if !@d_objects_folder.readable_by?(current_user)
     @d_objects=@d_objects_folder.d_objects
     page = params[:page].blank? ? 1 : params[:page].to_i
     per_page = params[:per_page].blank? ? 50 : params[:per_page].to_i
     @d_objects=@d_objects.paginate(page:page,per_page:per_page)
+    # render text:"#{@pagetitle} debug on per user #{current_user.email}" and return if current_user.email=='seba'
+    # render template:'d_objects_folders/show_orig' if current_user.email=='seba'
   end
 
   def makedir
@@ -165,6 +168,11 @@ class DObjectsFoldersController < ApplicationController
     end
   end
 
+  def download
+    @d_objects_folder=DObjectsFolder.find(params[:id])
+    render text:'azione non permessa' and return if current_user.email!='seba'
+  end
+
   def filenames
     @d_objects_folder=DObjectsFolder.find(params[:id])
     render text:'azione non permessa' and return if !@d_objects_folder.writable_by?(current_user)
@@ -175,7 +183,11 @@ class DObjectsFoldersController < ApplicationController
   def derived
     @d_objects_folder=DObjectsFolder.find(params[:id])
     if @d_objects_folder.x_mid.blank?
-      filename="temp_#{@d_objects_folder.id}.pdf"
+      if @d_objects_folder.x_ti.blank?
+        filename="temp_#{@d_objects_folder.id}.pdf"
+      else
+        filename="#{@d_objects_folder.x_ti}.pdf"
+      end
     else
       cm=ClavisManifestation.find(@d_objects_folder.x_mid)
       filename=cm.title.strip

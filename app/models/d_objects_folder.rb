@@ -2,8 +2,8 @@
 include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
-  attr_accessible :readme, :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename, :name
-  after_save :set_clavis_manifestation_attachments, :derived_symlinks
+  attr_accessible :readme, :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename, :name, :access_right_id
+  after_save :set_clavis_manifestation_attachments, :derived_symlinks, :set_d_objects_access_right_id
   # after_save :derived_symlinks
   before_save :check_filesystem
   before_destroy :reset_sequence
@@ -368,6 +368,7 @@ class DObjectsFolder < ActiveRecord::Base
       sql << "INSERT INTO manifestations_d_objects_folders (d_objects_folder_id, manifestation_id)
                    VALUES (#{self.id}, #{f_mid}) on conflict(d_objects_folder_id) DO NOTHING;"
     end
+    # puts sql.join("\n")
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
   end
@@ -414,9 +415,31 @@ class DObjectsFolder < ActiveRecord::Base
       puts "#{self.derived_pdf_filename} => #{self.restricted_pdf_filename}"
       FileUtils.ln_s(self.derived_pdf_filename,self.restricted_pdf_filename,force:true)
     end
-
   end
 
+  def set_d_objects_access_right_id(rights_id=nil)
+    if rights_id.nil?
+      val = self.access_right_id.nil? ? 'NULL' : self.access_right_id
+    else
+      val = rights_id
+    end
+    msg = "Imposto diritti a #{val} su folder #{self.id} (#{self.name})"
+    sql = []
+    if !rights_id.nil?
+      self.connection.execute("-- #{msg}\nUPDATE d_objects_folders SET access_right_id = #{val} WHERE id=#{self.id};")
+    end
+    sql << %Q{-- #{msg}\nUPDATE d_objects SET access_right_id = #{val} WHERE d_objects_folder_id=#{self.id};}
+    self.dir.each do |f|
+      sql << f.set_d_objects_access_right_id(val)
+    end
+    if rights_id.nil?
+      puts "Eseguo sql (size: #{sql.size}) - folder #{self.id} (#{self.name})"
+      self.connection.execute(sql.flatten.join("\n"))
+    else
+    end
+    sql
+  end
+  
   def references(include_d_objects=false)
     if include_d_objects
       select="a.*,o.*"
@@ -469,8 +492,13 @@ class DObjectsFolder < ActiveRecord::Base
     fdsql.write("-- File: #{tarfile};\n");
     fdsql.write("delete from attachment where file_path like '#{filepath_prefix}/%';\n");
     cnt=0
+    nocnt=0
     self.references(true).each do |r|
-      next if r.access_right_id!='0'
+      if r.access_right_id!='0'
+        puts "controllare access_right_id per d_object #{r.d_object_id} su manifestation #{r.attachable_id}"
+        nocnt += 1
+        next
+      end
       cnt += 1
       filename_in_archive = "file_#{format('%08d',r.attachable_id)}.jpg"
       filepath = ActiveRecord::Base.connection.quote("#{filepath_prefix}/#{filename_in_archive}")
@@ -484,6 +512,11 @@ class DObjectsFolder < ActiveRecord::Base
         UPDATE turbomarc_cache SET dirty=1 WHERE manifestation_id=#{r.attachable_id};\n})
       fd.write("--transform 's|.*|#{filename_in_archive}|;s,^,#{filepath_prefix}/,'\n#{r.name}\n");
       # puts DObject.find(r.object_id).name
+    end
+    if nocnt==0
+      fdsql.write("-- Caricate tutte le immagini presenti nella cartella (#{cnt})\n");
+    else
+      fdsql.write("-- #{nocnt} immagini non caricate, diritti d'accesso non specificati;\n");
     end
     fdsql.close
     fd.close

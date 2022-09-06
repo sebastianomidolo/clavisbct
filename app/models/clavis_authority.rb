@@ -38,6 +38,13 @@ class ClavisAuthority < ActiveRecord::Base
     r
   end
 
+  def ClavisAuthority.dupl(authority_type)
+    sql=%Q{select full_text as heading,array_agg(authority_id order by authority_id) as ids,count(*) from clavis.authority where 
+ authority_type='#{authority_type}' and full_text!='' group by full_text having count(*)>1 order by count(*) desc, full_text}
+    # self.connection.execute(sql).to_a
+    self.find_by_sql sql
+  end
+
   def ClavisAuthority.list(include_all=:false)
     sql=%Q{SELECT lv.value_key AS authority_type,lv.value_label as label
              FROM clavis.lookup_value lv WHERE value_language='it_IT' AND value_class = 'AUTHTYPE'

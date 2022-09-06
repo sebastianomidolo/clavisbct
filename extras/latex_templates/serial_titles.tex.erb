@@ -51,6 +51,8 @@ end
     title << " (#{SerialSubscription.associa_copie_multiple(e.library_names,e.numero_copie)})" if !params[:includi_bib].blank?
     title << copie
     title << " --- #{e.prezzo_stimato} euro" if !params[:includi_prezzi].blank? and !e.prezzo_stimato.blank?
+    note_fornitore = e.note_fornitore.blank? ? '' : "\\\\{\\em{#{e.note_fornitore}}}"
+    title = "#{title}#{note_fornitore}" if !params[:includi_note_fornitore].blank?
     if params[:library_id].to_i>0
        n=SerialSubscription.copie_per_bib(params[:library_id].to_i, e.libraries, e.numero_copie)
        title << " (#{n} copie)" if n>1

@@ -18,7 +18,7 @@ class BctLetter < ActiveRecord::Base
   end
 
   def pdflink
-    "http://bctwww.comperio.it/lettereautografe/#{self.id}.pdf"
+    "https://bctwww.comperio.it/lettereautografe/#{self.id}.pdf"
   end
 
   def pdf_filename

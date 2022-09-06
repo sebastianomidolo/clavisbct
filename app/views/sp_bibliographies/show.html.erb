@@ -1,13 +1,37 @@
-<% content_tag(:div, sp_bibliography_show(@sp_bibliography)) %>
 
 <%= content_tag(:div, sp_bibliography_cover_image(@sp_bibliography)) %>
 
-<% content_tag(:h4, "La bibliografia") %>
+<%= content_tag(:h4, @sp_bibliography.to_label) %>
+
+<%= content_tag(:p, "Status: #{@sp_bibliography.status_label} (#{@sp_bibliography.sp_items.count} schede))") if can?(:edit,@sp_bibliography)  %>
+<%=
+  if can?(:edit,@sp_bibliography) and !@sp_bibliography.homepage.blank?
+   linktext,url = @sp_bibliography.homepage.split(' | ')
+   content_tag(:p, "Home page: #{link_to(linktext,url)}".html_safe)
+  end
+ %>
+<%= content_tag(:p, "Originale su SenzaParola: #{sp_bibliographies_orig_link(@sp_bibliography)}".html_safe) if can?(:edit,@sp_bibliography) and !@sp_bibliography.orig_id.blank?  %>
+<%= content_tag(:p, "Biblioteca: #{@sp_bibliography.library_id_label}") if can?(:edit,@sp_bibliography)  %>
+<%= link_to 'Stampa bibliografia in PDF', sp_bibliography_path(@sp_bibliography,format:'pdf') %>
 
 
-<%= content_tag(:div, @sp_bibliography.html_description.html_safe, style:'padding-top: 2em;padding-bottom: 1em') %>
+<%= content_tag(:pre, @sp_bibliography.html_description.html_safe, style:'padding-top: 2em;padding-bottom: 1em') if !@sp_bibliography.html_description.blank? %>
 
+<%= content_tag(:div, sp_items_list_items(@sp_bibliography.sp_items_toplevel)) %>
 
-<%= content_tag(:div, sp_section_list_sections(@sp_bibliography.toplevel_sections)) %>
+<%= content_tag(:ul, sp_section_list_sections(@sp_bibliography.sp_sections(!current_user.nil?))) %>
 
-<%= content_tag(:div, sp_items_list_items(@sp_bibliography.sp_items)) if @sp_bibliography.toplevel_sections==[] %>
+<%= (link_to 'Modifica bibliografia', edit_sp_bibliography_path, :class => "btn btn-default") if can?(:edit,@sp_bibliography) %>
+<%=
+  @sp_section=SpSection.new(bibliography_id:@sp_bibliography.id)
+  (link_to 'Crea una sezione', new_sp_section_path(bibliography_id:@sp_bibliography.id), :class => "btn btn-default") if can?(:edit,@sp_section)
+%>
+
+<br/>
+<%=
+  @sp_item=SpItem.new(bibliography_id:@sp_bibliography.id)
+  (link_to 'Aggiungi scheda fuori sezione', new_sp_item_path(bibliography_id:@sp_bibliography.id), :class => "btn btn-default") if can?(:create,@sp_item)
+%>
+
+<%= (link_to 'Elimina bibliografia', @sp_bibliography, method: :delete, :class => "btn btn-default",
+       data: { confirm: 'Confermi eliminazione DEFINITVA della bibliografia?' }) if can?(:destroy,@sp_bibliography) %>

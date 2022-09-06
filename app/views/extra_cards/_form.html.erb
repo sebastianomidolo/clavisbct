@@ -4,7 +4,8 @@
   <div class="form-inputs">
    <%= f.input :collocazione, as: 'string', input_html: {size: 20} %>
    <%= f.input :titolo, input_html: {cols: 80, rows: 3} %>
-   <%= f.input :inventory_serie_id, collection: ['V','01'], label: 'Serie inventariale' %>
+   <%= f.input :inventory_serie_id, collection: ClavisLibrary.find(@extra_card.home_library_id).inventory_serie_select, label: 'Serie inventariale' %>
+   
    <%= f.input :inventory_number, label: 'Numero di inventario' %>
    <%= f.input :note_interne, as: 'string', input_html: {size: 60} %>
    <%= f.input :mancante %>

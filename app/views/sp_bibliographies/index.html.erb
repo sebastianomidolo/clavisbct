@@ -1,8 +1,30 @@
 <% content_tag(:div, link_to("Ultima scheda inserita...", build_link('sp_items/last'))) %>
 <% content_tag(:div, link_to("Una scheda a caso...", build_link('sp_items/random'))) %>
 
-<%= will_paginate_wrapper @sp_bibliographies %>
+<%=
+  u = User.last
+  u.id
+%>
 
+<%=
+  tit = params[:library_id].blank? ? 'Bibliografie BCT' : "Bibliografie #{ClavisLibrary.find(params[:library_id]).to_label}"
+  content_tag(:h4, tit)
+  %>
+<%= (link_to '[admin]', admin_sp_bibliographies_path) if can?(:manage,SpBibliography) %>
+
+<%= render partial:'searchform' if can?(:manage,SpBibliography) or !user_signed_in? %>
+
+<%= will_paginate_wrapper @sp_bibliographies %>
 <%= content_tag(:div, sp_bibliographies_list(@sp_bibliographies), style:'margin-top: 2em; margin-left: 0 em') %>
 
+<% content_tag(:b, "Elenco per biblioteca") + content_tag(:div, sp_bibliographies_index) if !current_user.nil? %>
 
+
+
+<br/>
+
+
+
+
+
+<%= content_tag(:p, button_to('Crea una bibliografia', new_sp_bibliography_path, method:'get')) if can?(:create,SpBibliography) %>

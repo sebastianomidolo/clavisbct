@@ -22,13 +22,21 @@ class ClosedStackItemRequest < ActiveRecord::Base
   end
 
   def ClosedStackItemRequest.oggi
-    sql=%Q{select ir.id, regexp_replace(cl.piano,'^0. ','') as piano,cc.collocazione,cp.lastname,cp.name,cp.patron_id,ir.daily_counter,
-       ir.request_time, substr(ci.title,1,40) as title, ci.inventory_serie_id || '-' || ci. inventory_number as serieinv, ci.item_id
-          from closed_stack_item_requests ir
-          join clavis.patron cp using(patron_id)
-          join clavis.item ci using(item_id)
-          left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id)
-          where request_time > CURRENT_DATE order by ir.id desc;}
+    sql=%Q{
+select ir.id, regexp_replace(cl.piano,'^0. ','') as
+       piano,cc.collocazione,cp.lastname,cp.name,cp.patron_id,ir.daily_counter,
+       ir.request_time, substr(ci.title,1,40) as title,
+       ci.inventory_serie_id || '-' || ci. inventory_number as
+       serieinv, ci.item_id, lc.value_label as loan_status
+       from closed_stack_item_requests ir
+         join clavis.patron cp using(patron_id)
+	 join clavis.item ci using(item_id)
+	 join clavis.lookup_value lc on(lc.value_key=ci.loan_status AND
+          value_language = 'it_IT' AND value_class = 'LOANSTATUS')
+	 left join clavis.collocazioni cc using(item_id)
+         left join clavis.centrale_locations cl using(item_id)
+       where request_time > CURRENT_DATE order by ir.id desc;}
+    puts sql
     ClosedStackItemRequest.find_by_sql(sql)
   end
 

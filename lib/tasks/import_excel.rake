@@ -1,3 +1,4 @@
+# coding: utf-8
 # -*- mode: ruby;-*-
 
 desc 'Import generico da fogli excel'
@@ -56,20 +57,24 @@ def mainloop(basedir,fdout)
   post_sql_files=[]
   entries=Dir.entries(basedir).delete_if {|z| ['.','..'].include?(z)}.sort
   entries.each do |entry|
-    next if entry=='celdes'
     file_or_dir=File.join(basedir,entry)
     if File.directory?(file_or_dir)
       # puts "questa e' una directory: #{file_or_dir}"
       mainloop(file_or_dir,fdout)
     else
-      next if File.extname(entry)!=".xls"
+      extension = File.extname(entry)
+      next if !['.xlsx','.xls'].include?(extension)
       fname=File.join(basedir,entry)
       next if (excel_file=imposta_excel_file(fname)).nil?
-      # next if fname!="/home/seb/xls/celdes/celdes_musicale_admin_report_ordini.xls"
-      # next if fname!="/home/seb/xls/celdes/ordini_periodici_musicale.xls"
-      # next if fname!='/home/seb/xls/varie/CatalogoLibroParlato.xls'
       begin
-        excel=Roo::Excel.new(fname)
+        if extension=='.xls'
+          excel=Roo::Excel.new(fname)
+        else
+          # excel=Roo::Spreadsheet.open(fname)
+          next
+        end
+        puts fname
+        # excel=Roo::Excelx.new(fname)
         analizza_excel(excel, excel_file)
         sqlfile=fname.sub(/.xls$/,'.sql')
         if File.exists?(sqlfile)

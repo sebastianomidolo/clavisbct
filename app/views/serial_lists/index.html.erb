@@ -9,8 +9,9 @@
 <% @serial_lists.each do |l|
    note = l.note.blank? ? '' : "<br/>Note: <em>#{l.note}</em>".html_safe
    %>
-  <tr>
-    <%= content_tag(:td, link_to(l.title, l) + note) %>
+   <tr>
+     
+     <%= content_tag(:td, link_to(l.title, l) + note) %>
 
     <%= if l.count.to_i==0
 	content_tag(:td, link_to('Importa titoli', import_serial_list_path(l)))

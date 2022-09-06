@@ -1,15 +1,21 @@
+
 <%= simple_form_for(@serial_title, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
 
   <%= hidden_field_tag('serial_list_id', params[:serial_list_id]) %>
 
-  <%= select_tag(:library_id, options_for_select(@serial_list.library_select,
-      params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();') %>
+  <%= if @serial_list.onelib
+       hidden_field_tag('library_id', @serial_list.serial_libraries.first.clavis_library_id)
+      else
+       select_tag(:library_id, options_for_select(@serial_list.library_select,
+         params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();')
+      end
+  %>
 
-  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select,
+  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select(current_user),
 		params[:tipo_fornitura]), :onchange=>'submit();', include_blank:true) %>
 
   
-  <br/>Pubblicazione <%= select_tag(:sospeso,
+  Pubblicazione <%= select_tag(:sospeso,
       options_for_select([['Corrente','f'],['Sospesa o cessata','t']],
 		params[:sospeso]), :onchange=>'submit();', include_blank:true) %>
 
@@ -17,8 +23,35 @@
       options_for_select([['Italiani','f'],['Stranieri','t']],
 		params[:estero]), :onchange=>'submit();', include_blank:true) %>
 
-  <%= link_current_params 'Inserimento nuovo titolo...', new_serial_title_path, params %>
+  Periodicità <%= select_tag(:frequency,
+      options_for_select(ClavisManifestation.unimarc_serial_frequencies_select,
+		params[:frequency]), :onchange=>'submit();', include_blank:true) %>
+
  
+  
+  <% if params[:library_id].to_i > 0 %>
+   <%= check_box_tag('items_details', 't', (params[:items_details]=='t' ? true : false), :onchange=>'submit()') %>
+   <%= label_tag(:items_details, 'Ultimi esemplari') %>
 
-
+    <% if @serial_list.serial_invoices.size > 0 %>
+    <br/>
+    <%= lnkinv = params[:invoice_id].to_i > 0 ? link_current_params('Vedi fattura',edit_serial_invoice_path(params[:invoice_id]),params) : 'Fattura'
+	lnkinv
+    %>
+    <%= select_tag(:invoice_id,
+        options_for_select(@serial_list.invoice_select,
+ 		params[:invoice_id]), :onchange=>'submit();', include_blank:true) %>
+     <% end %>
+   <% end %>
+   <% f.input :title, hint: nil, as: 'string', label: false, placeholder: 'parte del titolo' %>
+  <br/><%= link_current_params 'Inserimento nuovo titolo...', new_serial_title_path, params %>
+  <%=
+    if params[:library_id]=='-1'
+      library_id = @serial_list.onelib? ? @serial_list.clavis_library_id : ''
+      link_to '[Titoli acquisiti]', serial_titles_path(serial_list_id:@serial_list,library_id:library_id)
+    else
+      link_to '[Titoli non acquisiti]', serial_titles_path(serial_list_id:@serial_list,library_id:-1)
+    end
+   %>
+ 
 <% end %>

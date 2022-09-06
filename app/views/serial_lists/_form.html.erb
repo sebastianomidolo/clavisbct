@@ -3,7 +3,10 @@
   <div class="form-inputs">
     <%= f.input :title, hint: "Titolo", label:false %>
     <%= f.input :year, hint: "Anno", label:false  %>
-    <%= f.input :locked, label:false, hint:'Chiusa' %> 
+    <%= f.input :locked, label:false, hint:'Chiusa' %>
+    <%= f.input :is_public, label:false, hint:'Lista pubblica' %>
+    <%= f.input :onelib, label:false, hint:'Gestione singola biblioteca' %>
+    <%= f.input :invoice_management, label:false, hint:'Gestione fatture' %> 
     <%= f.input :note, as: :text, hint: "Note", label:false, input_html: {cols: 80, rows: 3}  %>
   </div>
   <div class="form-actions">

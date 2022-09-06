@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20190228144254) do
+ActiveRecord::Schema.define(:version => 20210518164047) do
 
   create_table "access_rights", :id => false, :force => true do |t|
     t.integer "code",        :limit => 2,  :null => false
@@ -21,11 +21,11 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
 
   add_index "access_rights", ["label"], :name => "access_rights_label_idx", :unique => true
 
-  create_table "adabas_2011_registro_inventari", :id => false, :force => true do |t|
+  create_table "adabas_2011_registro_inventari", :force => true do |t|
     t.string  "bid",                  :limit => 10
     t.string  "biblio",               :limit => 6
     t.string  "serie",                :limit => 3
-    t.string  "inv",                  :limit => 10
+    t.integer "inv"
     t.string  "collocazione",         :limit => 160
     t.text    "isbd"
     t.text    "note"
@@ -51,8 +51,7 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
 
   add_index "adabas_2011_registro_inventari", ["biblio"], :name => "registro_inventari_biblio_idx"
   add_index "adabas_2011_registro_inventari", ["bid"], :name => "registro_inventari_bid_idx"
-  add_index "adabas_2011_registro_inventari", ["codforn"], :name => "registro_inventari_codforn_idx"
-  add_index "adabas_2011_registro_inventari", ["data_ord"], :name => "registro_inventari_data_ord_idx"
+  add_index "adabas_2011_registro_inventari", ["inv"], :name => "adabas_2011_registro_inventari_inv_ndx"
   add_index "adabas_2011_registro_inventari", ["serie"], :name => "registro_inventari_serie_idx"
 
   create_table "archivio_periodici", :id => false, :force => true do |t|
@@ -78,6 +77,12 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.string  "folder",                 :limit => 512
   end
 
+  create_table "attesa_a_banco_prestiti", :id => false, :force => true do |t|
+    t.integer "id"
+    t.integer "loan_id"
+    t.integer "wait_minutes"
+  end
+
   create_table "av_manifestations", :id => false, :force => true do |t|
     t.integer "idvolume"
     t.integer "manifestation_id"
@@ -91,6 +96,12 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.integer "primary_id"
     t.integer "manifestation_id"
     t.integer "bm_id"
+  end
+
+  create_table "barcodes_doppi", :id => false, :force => true do |t|
+    t.string  "barcode",     :limit => 64
+    t.string  "item_status", :limit => 1
+    t.integer "count",       :limit => 8
   end
 
   create_table "bib_sections", :force => true do |t|
@@ -182,6 +193,7 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.boolean  "archived",       :default => false, :null => false
     t.datetime "confirm_time"
     t.datetime "print_time"
+    t.integer  "confirmed_by"
   end
 
   create_table "collocazioni_musicale", :id => false, :force => true do |t|
@@ -224,6 +236,7 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
   end
 
   add_index "container_items", ["item_id"], :name => "container_items_item_id_ndx"
+  add_index "container_items", ["label"], :name => "container_items_idx"
 
   create_table "containers", :force => true do |t|
     t.string  "label",       :limit => 16,                    :null => false
@@ -308,6 +321,8 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.integer  "patron_id",                 :null => false
   end
 
+  add_index "dng_sessions", ["patron_id"], :name => "dng_sessions_patron_idx"
+
   create_table "email_verificate", :id => false, :force => true do |t|
     t.string "email", :limit => 128
     t.string "stato", :limit => 24
@@ -333,6 +348,18 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
   create_table "excolloc", :id => false, :force => true do |t|
     t.integer "item_id"
     t.text    "excollocazione"
+  end
+
+  create_table "identity_cards", :force => true do |t|
+    t.string  "name"
+    t.string  "lastname"
+    t.string  "national_id",  :limit => 64
+    t.date    "birth_date"
+    t.string  "birth_city"
+    t.string  "unique_id",    :limit => 32
+    t.boolean "doc_uploaded",                :default => false
+    t.string  "client_ip",    :limit => 128
+    t.string  "email"
   end
 
   create_table "import_bctaudio_metatags", :id => false, :force => true do |t|
@@ -424,6 +451,19 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.integer "excel_cell_id"
   end
 
+  create_table "patrons_stats", :id => false, :force => true do |t|
+    t.string  "gender",                    :limit => 1
+    t.string  "citizenship",               :limit => 64
+    t.string  "Anni utilizzo MyDiscovery", :limit => nil
+    t.float   "Anno di nascita"
+    t.integer "Numero di accessi"
+    t.integer "opac_prenotazioni"
+    t.integer "opac_rinnovi"
+    t.integer "num_prestiti_totali"
+    t.integer "num_prestiti_annullati"
+    t.integer "num_richieste_a_magazzino"
+  end
+
   create_table "procultura_import", :id => false, :force => true do |t|
     t.integer "theid"
     t.string  "theimagepath", :limit => nil, :null => false
@@ -468,6 +508,15 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
 
   add_index "roles_users", ["role_id", "user_id"], :name => "roles_users_idx", :unique => true
 
+  create_table "salsano_clavis", :id => false, :force => true do |t|
+    t.string  "ISBNISSN",         :limit => 32
+    t.string  "EAN",              :limit => 32
+    t.text    "NumeroISBN"
+    t.text    "AltroISBN"
+    t.integer "salsano_id"
+    t.integer "manifestation_id"
+  end
+
   create_table "schema_collocazioni_centrale", :force => true do |t|
     t.string  "piano",          :limit => 24
     t.string  "scaffale",       :limit => 24
@@ -480,6 +529,70 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
 
   create_table "sequenza_numeri", :id => false, :force => true do |t|
     t.integer "id"
+  end
+
+  create_table "serial_invoices", :id => false, :force => true do |t|
+    t.integer "clavis_invoice_id",                                :null => false
+    t.decimal "total_amount",      :precision => 19, :scale => 2
+    t.integer "serial_list_id",                                   :null => false
+  end
+
+  create_table "serial_libraries", :id => false, :force => true do |t|
+    t.integer  "serial_list_id",                  :null => false
+    t.integer  "clavis_library_id",               :null => false
+    t.string   "sigla",             :limit => 1
+    t.integer  "updated_by"
+    t.datetime "date_updated"
+    t.string   "nickname",          :limit => 64
+  end
+
+  add_index "serial_libraries", ["serial_list_id", "clavis_library_id"], :name => "serial_libraries_ndx", :unique => true
+
+  create_table "serial_lists", :force => true do |t|
+    t.string  "title",          :limit => 128,                    :null => false
+    t.string  "year",           :limit => 4
+    t.string  "note"
+    t.boolean "locked",                        :default => false
+    t.string  "import_file",    :limit => 128
+    t.string  "libraries_file", :limit => 128
+    t.boolean "is_public",                     :default => false
+    t.boolean "onelib",                        :default => false
+  end
+
+  add_index "serial_lists", ["title"], :name => "serial_lists_ndx", :unique => true
+
+  create_table "serial_subscriptions", :id => false, :force => true do |t|
+    t.integer  "serial_title_id",                                                              :null => false
+    t.integer  "library_id",                                                                   :null => false
+    t.string   "note"
+    t.integer  "numero_copie",                                                  :default => 1, :null => false
+    t.integer  "updated_by"
+    t.datetime "date_updated"
+    t.string   "tipo_fornitura",    :limit => 1,                                               :null => false
+    t.decimal  "prezzo",                         :precision => 19, :scale => 2
+    t.integer  "serial_invoice_id"
+  end
+
+  create_table "serial_titles", :force => true do |t|
+    t.integer  "serial_list_id",                                                     :null => false
+    t.integer  "manifestation_id"
+    t.string   "title"
+    t.string   "sortkey"
+    t.decimal  "prezzo_stimato",   :precision => 19, :scale => 2
+    t.boolean  "sospeso",                                         :default => false
+    t.boolean  "estero"
+    t.text     "note"
+    t.integer  "updated_by"
+    t.datetime "date_updated"
+    t.text     "textdata"
+    t.text     "note_fornitore"
+  end
+
+  add_index "serial_titles", ["title", "serial_list_id"], :name => "serial_titles_ndx", :unique => true
+
+  create_table "serial_users", :id => false, :force => true do |t|
+    t.integer "serial_list_id"
+    t.integer "user_id"
   end
 
   create_table "serials_admin_table", :force => true do |t|
@@ -518,6 +631,17 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
   add_index "sessions", ["session_id"], :name => "index_sessions_on_session_id"
   add_index "sessions", ["updated_at"], :name => "index_sessions_on_updated_at"
 
+  create_table "shelf_sonia", :id => false, :force => true do |t|
+    t.integer  "shelf_id"
+    t.integer  "object_id"
+    t.string   "object_class", :limit => 32
+    t.string   "item_status",  :limit => 1
+    t.datetime "date_created"
+    t.datetime "date_updated"
+    t.integer  "created_by"
+    t.integer  "modified_by"
+  end
+
   create_table "subject_subject", :id => false, :force => true do |t|
     t.integer "s1_id",                  :null => false
     t.integer "s2_id",                  :null => false
@@ -539,6 +663,11 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
   add_index "subjects", ["clavis_authority_id"], :name => "index_subjects_on_clavis_authority_id"
   add_index "subjects", ["clavis_subject_class"], :name => "index_subjects_on_clavis_subject_class"
   add_index "subjects", ["heading"], :name => "index_subjects_on_heading"
+
+  create_table "target_lettura", :id => false, :force => true do |t|
+    t.integer "manifestation_id"
+    t.text    "target"
+  end
 
   create_table "temp_analisi_collocazioni", :id => false, :force => true do |t|
     t.text    "primo_elemento_collocazione"
@@ -666,6 +795,18 @@ ActiveRecord::Schema.define(:version => 20190228144254) do
     t.text    "s2"
     t.string  "linktype", :limit => 20
     t.integer "seq"
+  end
+
+  create_table "test", :id => false, :force => true do |t|
+    t.datetime "created_by"
+    t.text     "nota"
+  end
+
+  create_table "topics_cloud", :id => false, :force => true do |t|
+    t.text    "namespace"
+    t.text    "intestazione"
+    t.integer "id"
+    t.integer "count",        :limit => 8
   end
 
   create_table "topografico_non_in_clavis", :force => true do |t|

@@ -33,6 +33,8 @@ UNION
 
 -- Recupero items con custom_field3 contente ex-collocazione,
 -- esempio: "ex 60.C.36"
+-- custom_field3 può contenere anche collocazioni che iniziano per "BCT." o per "BCT ": entrambi i prefissi verranno comunque eliminati
+-- (fino a agosto 2022 veniva accettato solo il prefisso "BCT.")
 BEGIN;
 DROP TABLE excolloc;
 COMMIT;
@@ -40,6 +42,7 @@ DELETE FROM clavis.item WHERE owner_library_id=-3;
 CREATE TABLE excolloc AS
   SELECT item_id, trim(substr(custom_field1,3)) AS excollocazione FROM clavis.item WHERE custom_field1 ~* '^ex';
 UPDATE excolloc SET excollocazione=replace(excollocazione,'BCT.','') WHERE excollocazione ~* '^BCT\\.';
+UPDATE excolloc SET excollocazione=replace(excollocazione,'BCT ','') WHERE excollocazione ~ '^BCT ';
 UPDATE excolloc SET excollocazione=replace(excollocazione,' ','.') WHERE excollocazione ~ ' ';
 
 
@@ -51,7 +54,7 @@ INSERT INTO clavis.item(
    )
    (select
      0,home_library_id,-1,inventory_serie_id,inventory_number,collocazione,
-     CASE WHEN note_interne NOTNULL THEN
+     CASE WHEN note_interne != '' THEN
         titolo || ' [note: ' || note_interne || ']'
      ELSE
 	titolo

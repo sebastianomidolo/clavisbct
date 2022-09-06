@@ -33,7 +33,11 @@ class ClavisAuthoritiesController < ApplicationController
     headers['Access-Control-Allow-Origin'] = "*"
     sql=%Q{SELECT r.value_label as rectype,t.value_label as authtype, a.bid_source,
   full_text as heading,authority_id,subject_class,bid as term_resource,
-   (xpath('//d300/sa/text()',unimarc::xml))[1] as note
+   (xpath('//d300/sa/text()',unimarc::xml))[1] as note,
+    array_to_string((xpath('//d300/*',unimarc::xml)), ' ') as note300,
+    array_to_string((xpath('//d320/*',unimarc::xml)), ' ') as note320,
+    array_to_string((xpath('//d330/*',unimarc::xml)), ' ') as note330
+
   FROM clavis.authority a
   JOIN clavis.lookup_value t
   ON(t.value_key=a.authority_type and t.value_language='it_IT'

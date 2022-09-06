@@ -32,6 +32,7 @@ class Container < ActiveRecord::Base
     ActiveRecord::Base.connection.execute(sql).to_a
   end
 
+  # Non mi pare che questa procedura venga usata in realtà
   def Container.barcodes
     sql="select distinct barcode from container_items cni join clavis.item ci using(item_id) where barcode notnull and opac_visible='1'"
     ActiveRecord::Base.connection.execute(sql).to_a

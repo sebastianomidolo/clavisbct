@@ -30,6 +30,10 @@ class ContainersController < ApplicationController
       format.html # show.html.erb
       format.json { render json: @container }
       format.xml { render xml: @container }
+      format.csv {
+        csv_data=@container.elements.collect {|x| ClavisItem.find(x['item_id']).barcode if !x['item_id'].nil?}
+        send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=container_#{@container.label}.csv"
+      }
     end
   end
 

@@ -124,7 +124,8 @@ module ClavisItemsHelper
         if can? :manage, ExtraCard
           edit_in_place=true
           extra_card=ExtraCard.find(r.custom_field3)
-          mlnk = link_to('TOPOGRAFICO', edit_extra_card_path(r.custom_field3))
+          link_text = "TOPOGRAFICO"
+          mlnk = link_to(link_text, edit_extra_card_path(r.custom_field3))
           mlnk << link_to('<br/>[elimina]'.html_safe, extra_card_path(r.custom_field3), remote:true,
                           method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
           mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(r.custom_field3), remote:true,
@@ -137,6 +138,9 @@ module ClavisItemsHelper
           lnk=link_to(r.title, ClavisItem.clavis_url(r.custom_field1,:show), :target=>'_blank')
         else
           lnk=link_to(r.title, r.clavis_url(:show), :target=>'_blank')
+          if !params[:with_manifestations].blank?
+            lnk = "#{lnk}. - #{r.luogo_di_pubblicazione} : #{r.publisher}, #{r.edition_date}"
+          end
         end
         media = r.item_media_type.nil? ? 'Media type ignoto' : r.item_media_type
         media << "</br>fuori catalogo" if r.manifestation_id==0
@@ -146,9 +150,21 @@ module ClavisItemsHelper
         lnk << "</br><em>rfid: #{r.rfid_code}</em>".html_safe if !r.rfid_code.blank?
         if !r.date_created.nil?
           lnk << "</br>Creato il #{r.date_created.to_date} (#{r.created_by}) - Ultima modifica: #{r.date_updated.to_date} (#{r.modified_by})".html_safe if !r.date_updated.nil?
+          if r.respond_to?('patron_patron_id') and !r.patron_patron_id.blank?
+            patron_link=link_to("<b>#{r.patron_name} #{r.patron_lastname} - #{r.patron_barcode} #{r.patron_id}</b>".html_safe, ClavisPatron.clavis_url(r.patron_patron_id), target:'_blank')
+            lnk << "</br>Esemplare prenotato per #{patron_link} - #{r.request_date}".html_safe
+          end
         end
         lnk << "</br>#{link_to('[vedi notizia]', ClavisManifestation.clavis_url(r.manifestation_id,:show),:target=>'_blank')}".html_safe if r.manifestation_id!=0
-        
+        lnk << " #{link_to(r.manifestation_id, clavis_manifestation_path(r.manifestation_id))}".html_safe if r.manifestation_id!=0
+
+        if !params[:with_manifestations].blank? or !params[:ean_presence].blank?
+          covers = []
+          covers << " Possibile copertina corrispondente a EAN " + link_to("<b>#{r.ean}</b>".html_safe , "https://covers.comperio.it/calderone/viewmongofile.php?ean=#{r.ean}") if !r.ean.blank?
+          covers << " Possibile copertina corrispondente a ISBN " + link_to("<b>#{r.isbnissn}</b>".html_safe , "https://covers.comperio.it/calderone/viewmongofile.php?ean=#{r.isbnissn}") if !r.isbnissn.blank? and r.isbnissn!=r.ean
+          lnk << covers.join('<br/>').html_safe if covers.size>0
+        end
+
         mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
@@ -199,10 +215,14 @@ module ClavisItemsHelper
       coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
       coll << "</br><em>#{r.requests_count} #{r.requests_count=='1' ? 'prenotazione' : 'prenotazioni' }</em>".html_safe if r.respond_to?('requests_count')
 
-      res << content_tag(:tr, content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
+      # cover_column = params[:cover_images]=='t' ? content_tag(:td, image_tag("https://sbct.comperio.it/index.php?file=#{r.cover_id}", :size=>'100x125')) : ''
+      # cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag("https://covers.comperio.it/calderone/viewmongofile.php?ean=", :size=>'100x125')) : ''
+      cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag(dnl_d_object_path(1, format:'jpeg', manifestation_id:r.manifestation_id,size:'200x'))) : ''
+      serieinvcolumn = r.acquisition_year.nil? ? r.inventario : "#{r.inventario}<br/>acquis.#{r.acquisition_year}".html_safe
+      res << content_tag(:tr, cover_column.html_safe + content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
                               content_tag(:td, mlnk) +
                               content_tag(:td, stringa_titolo) +
-                              content_tag(:td, r.inventario) +
+                              content_tag(:td, serieinvcolumn) +
                               content_tag(:td, container_link),
                          {:data_view=>r.view,:class=>classe})
     end
@@ -368,6 +388,40 @@ module ClavisItemsHelper
   end
 
   def clavis_item_info(record)
+    record.reload
+
+    # Qualcosa di specifico per la musicale, lasciato poi in sospeso (commento il codice)
+    if record.home_library_id == 3
+      res = []
+      record.d_objects_folders.each do |r|
+        # res << link_to(r.name, "https://clavisbct.comperio.it/d_objects_folders/#{r.id}")
+        # res << " manifestation_id: <b>#{record.manifestation_id}</b>"
+      end
+      # res << "Esemplare delle Biblioteca Musicale"
+      return clavis_item_formatta_info(res.join.html_safe)
+    end
+
+    if !record.collocazione_per.nil?
+      cp=record.casse_periodico
+      if cp.size>0
+        res=[]
+        config = Rails.configuration.database_configuration
+        host=config[Rails.env]['clavis_host']
+        res << "<b>In deposito esterno - su prenotazione</b>
+                 #{link_to('[dettagli]', 'https://clavisbct.comperio.it/clavis_consistency_notes/' + cp[0]['consistency_note_id'])}<br/>"
+        tbl=[]
+        tbl << content_tag(:tr, content_tag(:th, 'Numeri') +
+                                content_tag(:th, 'Anni') +
+                                content_tag(:th, 'Cassa'))
+        cp.each do |r|
+          tbl << content_tag(:tr, content_tag(:td, r['consistenza']) +
+                                  content_tag(:td, r['annata']) +
+                                  content_tag(:td, r['cassa']))
+        end
+        res << content_tag(:table, tbl.join.html_safe, {class: 'table table-striped'})
+        return clavis_item_formatta_info(res.join.html_safe)
+      end
+    end
     # return clavis_item_formatta_info('test')
     info=record.item_info
     # return "info: #{record.inspect}"
@@ -375,7 +429,14 @@ module ClavisItemsHelper
     res=[]
     res << "Scaffale aperto - sezione #{info['os_section']}" if !info['os_section'].blank?
     res << "In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}" if !info['label'].blank?
-    res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}") if !info['piano'].blank? and record.home_library_id==2
+    if !info['piano'].blank? and record.home_library_id==2
+      res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}")
+      if record.item_media=='S' and record.manifestation_id > 0
+        ClavisConsistencyNote.where(manifestation_id:record.manifestation_id,library_id:record.home_library_id).each do |x|
+          res << content_tag(:b, " --- Consistenza periodico: #{x.text_note}")
+        end
+      end
+    end
     res << " <em>(sulla notizia è presente almeno una prenotazione)</em>" if record.controlla_prenotazioni
     if !info['daily_counter'].blank?
       res << %Q{<h2>Richiesta a magazzino numero <b>#{info['daily_counter']}</b>
@@ -466,6 +527,21 @@ module ClavisItemsHelper
                               content_tag(:td, link_to(r['title'], ClavisManifestation.clavis_url(r['manifestation_id'],:edit))) +
                               content_tag(:td, link_to('[opac]', ClavisManifestation.clavis_url(r['manifestation_id'],:opac))) +
                               content_tag(:td, r[:title]))
+    end
+    res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+    content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
+  def clavis_items_group_by(records)
+    res=[]
+    records.each do |r|
+      clavis_item=ClavisItem.new
+      url="clavis_items?clavis_item%5Bhome_library_id%5D=#{r['home_library_id']}&clavis_item%5B#{r.first.first}%5D=#{r.first.last}"
+      lnk=link_to(r['value_label'], url)
+      
+      res << content_tag(:tr, content_tag(:td, r['value_key'], class:'col-md-1') +
+                              content_tag(:td, lnk, class:'col-md-3') +
+                              content_tag(:td, r['count']))
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')

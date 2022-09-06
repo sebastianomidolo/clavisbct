@@ -13,7 +13,12 @@
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
-    <![endif]-->
+      <![endif]-->
+
+    <!--
+    <script charset="UTF-8" src="https://webapi.affluences.com/js/timetable_api_latest.min.js"></script>
+    <script charset="UTF-8" src="https://webapi.affluences.com/js/webapi_latest.min.js"></script>
+    -->
   </head>
 
   <body>
@@ -45,7 +50,7 @@ end
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li><a href="/talking_books">Libro parlato</a></li>
-            <li><a href="/audio_visuals">Audiovisivi</a></li>
+            <!-- <li><a href="/audio_visuals">Audiovisivi</a></li> -->
 	    <% if can? :search, DObject %>
                <li><a href="/d_objects_folders">Oggetti digitali</a></li>
             <% end %>
@@ -64,11 +69,12 @@ end
 -->
 		<!--<li><a href="/clavis_manifestations/shortlist?digit=true">Titoli con digitalizzazioni</a></li> -->
                 <!-- <li><a href="/d_objects?show_attachments=true">Show attachments...</a></li> -->
-                <li><a href="/iss_journals/">Microfilm digitalizzati</a></li>
+                <li><a href="/iss_journals/">Riviste digitalizzate</a></li>
                 <li><a href="/bct_letters/">Lettere autografe</a></li>
 		<li><a href="/clavis_items/fifty_years?owner_library_id=2">Fifty years (Centrale)</a></li>
 		<li><a href="/clavis_items/fifty_years?owner_library_id=3">Fifty years (Musicale)</a></li>
-        	<li><a href="/clavis_authorities?authority_type=L&in_subjects=true">Intestazioni L usate impropriamente nei soggetti</a></li>
+        	<!-- <li><a href="/clavis_authorities?authority_type=L&in_subjects=true">Intestazioni L usate impropriamente nei soggetti</a></li>-->
+                <li><a href="/clavis_authorities?authority_type=L&in_keywords=true">Intestazioni L usate impropriamente nel legame 619 con notizie</a></li>
               </ul>
             </li>
           </ul>
@@ -101,6 +107,12 @@ end
 
     </div> <!-- /container -->
 
+    <!--
+    	<div class="affluences-timetable" data-token="pFxsuoe9ipRIK4" lang="it"></div>
+	<div class="affluences-counter" data-token="ylDGEFD5Pxag5e" lang="it"></div>
+    -->
+
+	
   </body>
 </html>
 

@@ -70,7 +70,7 @@ module ContainersHelper
     else
       msg="Contiene #{@container.elements.size} volumi"
     end
-    content_tag(:div, msg.html_safe, id: "container_info_#{record.id}")
+    content_tag(:p, msg.html_safe, id: "container_info_#{record.id}")
   end
 
   def container_items_list(records)

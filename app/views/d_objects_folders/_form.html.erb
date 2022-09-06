@@ -1,9 +1,16 @@
 <%= simple_form_for(@d_objects_folder) do |f| %>
   <%= f.error_notification %>
 
+  Inserire qui solo i dati che si applicano all'intero contenuto della cartella
   <div class="form-inputs">
+    <%= f.association :access_right, label:'Accesso' %>
+
     <%= f.input :x_mid, label:'x_mid', as: 'integer' %> (manifestation_id di Clavis)
-    <%= f.input :x_ti, label:'x_ti', as: 'string', input_html: {size: 80} %>
+    <%= f.input :x_item_id, label:'x_item_id', as: 'integer' %> (item_id di Clavis)
+
+
+
+    <%= f.input :x_ti, label:'x_ti', as: 'string', input_html: {size: 80, value:@d_objects_folder.html_decode(:x_ti)} %>
     <%= f.input :x_au, label:'x_au', as: 'string', input_html: {size: 80} %>
     <%= f.input :x_an, label:'x_an', as: 'string', input_html: {size: 20} %>
     <%= f.input :x_pp, label:'x_pp', as: 'string', input_html: {size: 20} %>
@@ -12,6 +19,8 @@
     <%= f.input :x_dc, label:'x_dc', as: 'string', input_html: {size: 20} %>
   </div>
 
+  <%= f.input :readme, label:'readme', as: :text, input_html: {rows: 3, cols: 80, value:@d_objects_folder.html_decode(:readme)} %>
+
   <div class="form-actions">
     <%= f.button :submit, value: 'Salva modifiche' %>
   </div>
@@ -19,6 +28,7 @@
 
 <pre>
   x_mid : manifestation id su Clavis
+  x_item : item id su Clavis (esempio: quando si tratta della scansione di un esemplare)
   x_ti  : titolo
   x_au  : autore
   x_an  : anno pubblicazione

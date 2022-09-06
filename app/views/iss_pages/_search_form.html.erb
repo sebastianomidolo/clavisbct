@@ -1,8 +1,8 @@
 <%=
   if @iss_journal.blank?
-   content_tag(:h2, "Ricerca full text")
+   content_tag(:h4, "Ricerca full text")
   else
-   content_tag(:h2, "Ricerca full text in <em>#{@iss_journal.title}</em>".html_safe)
+   content_tag(:h4, "Ricerca full text in <em>#{@iss_journal.title}</em>".html_safe)
   end
  %>
 

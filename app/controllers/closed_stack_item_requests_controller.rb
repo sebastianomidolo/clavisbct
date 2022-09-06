@@ -1,6 +1,8 @@
 # coding: utf-8
 class ClosedStackItemRequestsController < ApplicationController
-  layout 'navbar'
+  # layout 'navbar'
+  layout 'csir'
+
   before_filter :set_dng_session, only: [:index, :check, :item_delete]
 
   load_and_authorize_resource only: [:index,:print,:confirm_request,:csir_delete, :csir_archive, :search]

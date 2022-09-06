@@ -15,6 +15,7 @@ class DngSession < ActiveRecord::Base
     end
     case service_name
     when 'talking_book'
+      ClavisPatron.insert_new_patron(ClavisPatron.mydiscovery_user(self.patron.id))
       return self.patron.autorizzato_al_servizio_lp
     when 'download_pdf'
       # In this case, authorizable_object is the instance of ClavisManifestion we are going to check
@@ -32,6 +33,12 @@ class DngSession < ActiveRecord::Base
 
   def expired?
     (Time.now-self.login_time).to_i > 3600 ? true : false
+  end
+
+  def DngSession.logfile(params,patron=nil)
+    patron_id = patron.class==ClavisPatron ? patron.id : patron
+    where=patron_id.blank? ? '' : "where patron_id=#{patron_id}"
+    
   end
 
   def DngSession.find_by_params_and_request(params,request)

@@ -1,3 +1,4 @@
+# coding: utf-8
 # lastmod 21 febbraio 2013
 
 class ClavisLoan < ActiveRecord::Base
@@ -103,12 +104,19 @@ class ClavisLoan < ActiveRecord::Base
     self.connection.execute("DROP TABLE if exists #{tn}; CREATE TABLE #{tn} as #{sql_patrons}")
 
     sql_items = %Q{
-       SELECT item_id, manifestation_id, item_media, home_library_id,
+       SELECT item_id, manifestation_id, item_media as item_media_id, home_library_id,
               inventory_date
        FROM clavis.item where item_id in (select item_id from reports.loans);
     }
     tn="reports.items"
     self.connection.execute("DROP TABLE if exists #{tn}; CREATE TABLE #{tn} as #{sql_items}")
+
+    sql = %Q{
+       select value_key::char(1) as item_media_id,value_label as item_media from clavis.lookup_value
+       where value_language = 'it_IT' and value_class = 'ITEMMEDIATYPE';
+    }
+    tn="reports.item_media_types"
+    self.connection.execute("DROP TABLE if exists #{tn}; CREATE TABLE #{tn} as #{sql}")
 
     sql_manifestations = %Q{
        SELECT manifestation_id,
@@ -121,6 +129,14 @@ class ClavisLoan < ActiveRecord::Base
     self.connection.execute("DROP TABLE if exists #{tn}; CREATE TABLE #{tn} as #{sql_manifestations}")
 
     self.connection.execute(%Q{
+           -- Questi sono i fuori catalogo, che hanno in clavis manifestation_id 0 (trasformo in NULL)
+           update reports.items set manifestation_id=NULL where manifestation_id=0;
+           -- Ci sono pochi casi (meno di dieci) con item_media "I" che non esiste più, li cancello
+           delete from reports.loans where item_id in (select item_id from reports.items where item_media_id = 'I');
+           delete from reports.items where item_media_id = 'I';
+           -- Cancello i pochi prestiti che fanno riferimento a items i quali fanno riferimento  manifestation non esistenti
+           delete from reports.loans where item_id in (select item_id from reports.items i left join reports.manifestations m using(manifestation_id) where i.manifestation_id>0 and m.manifestation_id is null);
+           delete from reports.items where item_id in (select item_id from reports.items i left join reports.manifestations m using(manifestation_id) where i.manifestation_id>0 and m.manifestation_id is null);
            alter table reports.loans drop column patron_id;
            alter table reports.patrons drop column patron_id;
            create unique index reports_patrons_patron_id_md5 on reports.patrons(patron_id_md5);
@@ -128,11 +144,20 @@ class ClavisLoan < ActiveRecord::Base
              REFERENCES reports.patrons(patron_id_md5);
            create unique index reports_items_item_id on reports.items(item_id);
            alter table reports.loans add constraint item_id_fkey FOREIGN KEY(item_id) REFERENCES reports.items(item_id);
-           -- Questi sono i fuori catalogo, che ci danno un bel problema:
-           update reports.items set manifestation_id=NULL where manifestation_id=0;
+           create unique index reports_item_media_types on reports.item_media_types(item_media_id);
+           alter table reports.items add constraint item_media_id FOREIGN KEY(item_media_id) REFERENCES reports.item_media_types(item_media_id);
            create unique index reports_manifestations_manifestation_id on reports.manifestations(manifestation_id);
-           alter table reports.items add constraint manifestation_id_fkey FOREIGN KEY(manifestation_id)
-               REFERENCES reports.manifestations(manifestation_id)})
+           alter table reports.items add constraint manifestation_id_fkey FOREIGN KEY(manifestation_id) REFERENCES reports.manifestations(manifestation_id)})
+    
+    puts %Q{
+\\copy reports.patrons to /home/storage/preesistente/static/reports/patrons.csv CSV HEADER
+\\copy reports.loans to /home/storage/preesistente/static/reports/loans.csv CSV HEADER
+\\copy reports.items to /home/storage/preesistente/static/reports/items.csv CSV HEADER
+\\copy reports.item_media_types to /home/storage/preesistente/static/reports/item_media_types.csv CSV HEADER
+\\copy reports.manifestations to /home/storage/preesistente/static/reports/manifestations.csv CSV HEADER
+\\copy (select library_id,substr(label,6) as library_name from clavis.library where library_internal = '1') to /home/storage/preesistente/static/reports/libraries.csv CSV HEADER
+https://bctwww.comperio.it/static/reports
+}
   end
 
   def ClavisLoan.loans_by_supplier(supplier_id, params)
@@ -154,6 +179,7 @@ class ClavisLoan < ActiveRecord::Base
              JOIN clavis.loan l using(loan_id) JOIN clavis.item ci on (ci.item_id=l.item_id)
              LEFT JOIN clavis.patron p on(p.patron_id=l.patron_id)
          WHERE supplier_id=#{supplier_id.to_i} AND vp.loan_date_begin NOTNULL #{date_filter} #{order}}
+    puts sql
     if !params[:view].blank?
       page=1
       per_page=999999

@@ -1,5 +1,5 @@
 # coding: utf-8
-require 'RMagick'
+require 'rmagick'
 
 include DigitalObjects
 require 'rexml/document'
@@ -8,7 +8,7 @@ require 'will_paginate/array'
 
 class DObject < ActiveRecord::Base
   attr_accessible :name, :d_objects_folder_id, :filename, :access_right_id, :mime_type, :tags,
-                  :x_mid, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc
+                  :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :fulltext
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
   belongs_to :d_objects_folder
@@ -21,6 +21,53 @@ class DObject < ActiveRecord::Base
 
   def folder
     self.d_objects_folder
+  end
+
+  # cmd => 'prev'|'next'|'first'|'last'
+  def browse_object(cmd,page=nil)
+    if !page.nil?
+      max = self.pdf_count_pages
+      min = 1
+      case cmd
+      when 'prev'
+        page -= 1
+      when 'next'
+        page += 1
+      when 'first'
+        page = min
+      when 'last'
+        page = max
+      else
+        raise "browse_object('prev'|'next'|'first'|'last', [page])"
+      end
+      page = nil if page>max or page<min
+      return page
+    else
+      fname=self.connection.quote_string(self.name)
+      case cmd
+      when 'prev'
+        cond = "and name < '#{fname}' order by lower(name) desc"
+      when 'next'
+        cond = "and name > '#{fname}' order by lower(name)"
+      when 'first'
+        cond = "order by lower(name)"
+      when 'last'
+        cond = "order by lower(name) desc"
+      else
+        raise "browse_object('prev'|'next'|'first'|'last', [page])"
+      end
+      x=File.extname(self.name).downcase
+      sql=%Q{select id,name from d_objects where d_objects_folder_id=#{self.d_objects_folder_id} and name ~* '#{x}$' #{cond} limit 1;}
+      res=self.connection.execute(sql).to_a.first
+      return nil if res.nil?
+      DObject.find(res['id'])
+    end
+  end
+
+  def mime_format
+    ext=File.extname(self.name).reverse.chop.reverse
+    return ext if !ext.blank?
+    self.mime_type.split(';').first.split('/').last
   end
 
   def check_filesystem
@@ -46,6 +93,13 @@ class DObject < ActiveRecord::Base
     puts self.mime_type
     puts "filesize: #{bfilesize}"
     self.save if self.changed?
+  end
+
+  def file_command
+    # cmd="/usr/bin/file -b #{self.filename_with_path}"
+    # res=Kernel.system(cmd)
+    img=Magick::Image.read(self.filename_with_path)
+    img
   end
 
   def reassign_id(from,to)
@@ -126,13 +180,21 @@ class DObject < ActiveRecord::Base
   end
 
   def set_clavis_manifestation_attachment
+    puts "#{self.id} in DObject#set_clavis_manifestation_attachment"
     sql=[]
     o=self
-    sql << "DELETE FROM public.attachments WHERE attachable_type='ClavisManifestation' AND d_object_id=#{o.id};"
-    if !o.x_mid.blank?
+    if o.x_mid.blank?
+      sql << %Q{DELETE FROM public.attachments WHERE d_object_id=#{o.id} AND attachable_type='ClavisManifestation';}
+    else
       manifestation_id=o.x_mid
       position=1
-      sql << "INSERT INTO public.attachments (attachable_type, attachable_id, d_object_id, position) VALUES('ClavisManifestation', #{manifestation_id}, #{o.id}, #{position});"
+      ac = self.d_objects_folder.attachment_category
+      attachment_category_id = ac.blank? ? 'NULL' : self.connection.quote(ac)
+      # puts "attachment_category: #{attachment_category_id}"
+      sql << %Q{INSERT INTO public.attachments (attachable_type, attachable_id, d_object_id, position, attachment_category_id)
+               VALUES('ClavisManifestation', #{manifestation_id}, #{o.id}, #{position}, #{attachment_category_id})
+               ON CONFLICT (attachable_type, attachable_id, d_object_id) DO 
+                 UPDATE set attachment_category_id = #{attachment_category_id};}
     end
     DObject.connection.execute(sql.join("\n"))
     nil
@@ -186,6 +248,9 @@ class DObject < ActiveRecord::Base
   def x_mid=(t) self.edit_tags(mid:t) end
   def x_mid() self.xmltag('mid') end
 
+  def x_item_id=(t) self.edit_tags(item_id:t) end
+  def x_item_id() self.xmltag('item_id') end
+
   def x_ti=(t) self.edit_tags(ti:t) end
   def x_ti() self.xmltag('ti') end
   
@@ -212,7 +277,9 @@ class DObject < ActiveRecord::Base
 
   def get_pdfimage(n=1)
     return nil if (/^application\/pdf/ =~ self.mime_type).nil?
-    self.pdf_to_jpeg if self.pdf_count_pages==0
+    if ! File.exists?(self.pdf_filename_for_jpeg(n))
+      self.pdf_to_jpeg
+    end
     f=self.pdf_filename_for_jpeg(n)
     File.exists?(f) ? f : nil
   end
@@ -232,10 +299,17 @@ class DObject < ActiveRecord::Base
   end
 
   def pdf_count_pages
-    return 0 if self.mime_type!='application/pdf; charset=binary'
-    s=Dir.glob("#{self.pdf_filename_for_jpeg}*").size
-    self.pdf_to_jpeg if s==0
-    Dir.glob("#{self.pdf_filename_for_jpeg}*").size
+    # return 0 if self.mime_type!='application/pdf; charset=binary'
+    return 0 if (self.mime_type =~ /application\/pdf;/).nil?
+    cmd = %Q{/usr/bin/pdfinfo "#{self.filename_with_path}"}
+    p=0
+    `#{cmd}`.each_line do |l|
+      (p = l.split.last.to_i and break) if l =~ /^Pages/
+    end
+    return p
+    # s=Dir.glob("#{self.pdf_filename_for_jpeg}*").size
+    # self.pdf_to_jpeg if s==0
+    # Dir.glob("#{self.pdf_filename_for_jpeg}*").size
   end
 
   def rename_jpeg_from_pdf(old_object)
@@ -252,22 +326,34 @@ class DObject < ActiveRecord::Base
 
   def pdf_filename_for_jpeg(page_number=nil)
     if page_number.nil?
-      "#{self.pdf_rootname}-"
+      "#{self.pdf_rootname}"
     else
-      "#{self.pdf_rootname}-#{format('%03d',page_number)}.jpeg"
+      fmt = "%0#{self.pdf_count_pages.to_s.size}d"
+      "#{self.pdf_rootname}-#{format(fmt,page_number)}.jpg"
     end
   end
 
   def pdf_to_jpeg
-    return [] if self.mime_type!='application/pdf; charset=binary'
+    # return [] if self.mime_type!='application/pdf; charset=binary'
+    return [] if (self.mime_type =~ /^application\/pdf;/).nil?
     if !File.exists?(self.pdf_rootdir)
       FileUtils.mkdir_p(self.pdf_rootdir)
     end
+    puts "File pdf da convertire in jpg: #{self.filename_with_path}"
+    cmd = %Q{/usr/bin/pdfimages -f 1 -l 4 "#{self.filename_with_path}" "#{self.pdf_filename_for_jpeg}"}
+    cmd = %Q{/usr/bin/pdftoppm -jpeg "#{self.filename_with_path}" "#{self.pdf_filename_for_jpeg}"}
+    puts cmd
+    Kernel.system(cmd)
+    # puts "uso pdfimages -j #{self.filename_with_path} #{self.pdf_filename_for_jpeg}"
+    # puts "argomento root da passare a pdfimages: #{self.pdf_filename_for_jpeg}"
+    puts "finito passaggio 1"
+    return
     filelist=[]
     img=Magick::Image.read(self.filename_with_path)
     cnt=1
     img.each do |i|
       jpegfile=self.pdf_filename_for_jpeg(cnt)
+      puts jpegfile
       cnt+=1
       i.write(jpegfile)
       filelist << jpegfile
@@ -362,6 +448,10 @@ class DObject < ActiveRecord::Base
     self.d_objects_folder.writable_by?(user)
   end
 
+  def deletable_by?(user)
+    self.d_objects_folder.deletable_by?(user)
+  end
+
   def d_objects_folder_sostituita_da_belongs_to
     sql=%Q{SELECT * from d_objects_folders f JOIN d_objects_d_objects_folders d
              ON d.d_objects_folder_id=f.id AND d.d_object_id=#{self.id}}
@@ -371,9 +461,10 @@ class DObject < ActiveRecord::Base
   # Usata da ClavisManifestation#attachments_generate_pdf (e utilizzabile anche da altri)
   # https://rmagick.github.io/
   def DObject.to_pdf(ids,pdf_filename,params={})
+    puts "in DObject.to_pdf #{params.inspect}"
     return pdf_filename if File.exists?(pdf_filename) and params[:force]!=true
-    if params[:nologo].blank?
-      logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.gif").first
+    if params[:nologo].blank? or !params[:include_logo].blank?
+      logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.png").first
     end
 
     resize_ratio=params[:resize_ratio].to_f
@@ -395,10 +486,17 @@ class DObject < ActiveRecord::Base
       img = img.channel(Magick::GrayChannel) if !params[:gray_scale].blank?
 
       # img.density='72x72'
-      if params[:nologo].blank?
+      if params[:nologo].blank? or !params[:include_logo].blank?
         # img.resize_to_fit!(2000)
-        img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
-        img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
+        # img=img.watermark(logo,0.1,0.5,Magick::NorthGravity,0,0)
+        # Prima del 18 giugno 2020
+        # img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
+        # Dopo:
+        lgo=logo.resize_to_fit(img.columns - img.columns/2)
+
+        img=img.dissolve(lgo,0.4,0.5,Magick::SouthGravity,0,0)
+
+        
       end
       iList << img
       GC.start
@@ -406,6 +504,17 @@ class DObject < ActiveRecord::Base
     iList.write(pdf_filename)
     iList.each {|i| i.destroy!}
     pdf_filename
+  end
+
+  def DObject.trova_o_crea(folder_id,fname,user)
+    puts "ok qui"
+    o=DObject.find_or_create_by_name_and_d_objects_folder_id(fname, folder_id)
+    o.digital_object_read_metadata
+    # Determino xmltags iniziali
+    o.tags={created_by:user.id.to_s}.to_xml(root:'r',:skip_instruct => true, :indent => 0) if o.tags.nil?
+    o.write_tags_from_filename
+    o.save if o.changed?
+    o
   end
 
   def DObject.to_pdftest(ids)

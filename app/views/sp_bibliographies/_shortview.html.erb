@@ -2,7 +2,7 @@
 <% # content_tag(:h2, link_to(bibliography.title, build_link(sp_bibliography_path(bibliography))) + ' ' + link_to(bibliography.id, "http://biblio.comune.torino.it:8080/ProgettiCivica/SenzaParola/typo.cgi?id=#{bibliography.id}")) %>
 <%= content_tag(:h2, link_to(bibliography.title, build_link(sp_bibliography_path(bibliography)))) %>
 <%= content_tag(:p, bibliography.subtitle) %>
-<%= content_tag(:p, "Creazione: #{bibliography.created_at.to_date}") %>
-<%= content_tag(:p, "Modifica: #{bibliography.updated_at.to_date}") %>
+<%= content_tag(:p, "Creazione: #{bibliography.created_at.to_date}") if !bibliography.created_at.nil? %>
+<%= content_tag(:p, "Modifica: #{bibliography.updated_at.to_date}") if !bibliography.updated_at.nil? %>
 
 <% content_tag(:div, sp_bibliography_short_description(bibliography), :style=>'margin-bottom: 18px; margin-top: 12px; padding-left: 16px;') %>

@@ -1,11 +1,11 @@
 <%= render partial:'iss_pages/search_form' %>
-<%= content_tag(:pre, @sql) if !current_user.nil? and current_user.id==9 %>
+<% content_tag(:pre, @sql) if !current_user.nil? and current_user.id==9 %>
 
 <%=
   if @cond!='false'
   content_tag(:h2, "Trovate #{@iss_pages.total_entries} pagine")
   else
-  content_tag(:h3, "Avviso: l'affidabilità della ricerca è condizionata dalla qualità della procedura OCR utilizzata, <br/>che in molti casi non garantisce il riconoscimento di tutte le parole presenti nel testo".html_safe)
+  content_tag(:h4, "Avviso: l'affidabilità della ricerca è condizionata dalla qualità della procedura OCR utilizzata, <br/>che in molti casi non garantisce il riconoscimento di tutte le parole presenti nel testo".html_safe)
   end
 %>
 <%= will_paginate @iss_pages %>

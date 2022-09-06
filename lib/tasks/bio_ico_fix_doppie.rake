@@ -22,7 +22,7 @@ task :bio_ico_fix_doppie => :environment do
     else
       puts "#{cnt} Lettera #{r['lettera']} - numero #{r['numero']}"
       puts "  CANCELLO #{old.id} #{User.find(old.xmltag('user')).email} #{old.filename} (#{old.f_ctime})"
-      # old.destroy
+      old.destroy
       puts "  RINOMINO #{new.id} #{User.find(new.xmltag('user')).email} #{new.filename} (#{new.f_ctime})"
       new.intestazione=old.intestazione.gsub("&apos;", "'") if !old.intestazione.blank?
       new.save

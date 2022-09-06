@@ -16,4 +16,8 @@
 
 ActiveSupport::Inflector.inflections do |inflect|
   inflect.irregular 'Ordine', 'Ordini'
+  inflect.irregular 'Manoscritto', 'Manoscritti'
+  inflect.irregular 'Periodico', 'Periodici'
 end
+
+#  inflect.irregular 'PeriodicoLista', 'PeriodiciListe'

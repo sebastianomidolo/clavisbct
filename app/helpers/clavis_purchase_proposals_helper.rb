@@ -39,7 +39,7 @@ module ClavisPurchaseProposalsHelper
                          content_tag(:td, link_to(r['title'], lnk) + "<br/>#{notes}".html_safe) +
                          content_tag(:td, r.status_label) +
                          tv.join.html_safe +
-                         content_tag(:td, link_to(patron_label, patronpath, target:'_blank')))
+                         content_tag(:td, link_to(patron_label, patronpath, target:'_blank') + "<br/>#{r.patron.barcode}".html_safe))
     end
     content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
@@ -56,11 +56,9 @@ module ClavisPurchaseProposalsHelper
         r="proposto da"
       when 'created_by'
         dt=nil
-      when 'ean'
-        dt=nil if record[r]=='0'
       else
         dt=record[r]
-        dt=nil if dt==0
+        # dt=nil if dt==0
       end
       next if dt.blank?
       res << content_tag(:tr, content_tag(:td, r) +

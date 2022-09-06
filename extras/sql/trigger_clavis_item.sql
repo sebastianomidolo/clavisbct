@@ -169,9 +169,9 @@ CREATE OR REPLACE FUNCTION aggiorna_clavisitem_talking_book_id() RETURNS trigger
 switch $TG_op {
     "UPDATE" {
 	set NEW(talking_book_id) $NEW(custom_field1);
-	elog NOTICE "custom field 1: $NEW(custom_field1) ; talking_book_id old: $OLD(talking_book_id) => $NEW(talking_book_id)";
-        elog NOTICE "aggiornamento da [array get OLD]";
-	elog NOTICE "diventa [array get NEW]";
+	elog NOTICE "custom field 1: $NEW(custom_field1) ; talking_book_id => $NEW(talking_book_id)";
+        # elog NOTICE "aggiornamento da [array get OLD]";
+	# elog NOTICE "diventa [array get NEW]";
 	return [array get NEW];
     }
 }

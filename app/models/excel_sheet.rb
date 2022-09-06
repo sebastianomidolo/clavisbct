@@ -62,7 +62,7 @@ class ExcelSheet < ActiveRecord::Base
     where=conditions.size==0 ? '' : "WHERE #{conditions.join(' AND ')}"
     order = "ORDER BY #{cols[1..3].join(',')}"
     sql=%Q{SELECT #{cols.join(',')} FROM #{self.sql_tablename} #{where} #{order}}
-    # fd=File.open("/tmp/logfile.txt","w")
+    # fd=File.open("/home/seb/testsqlfile.txt","w")
     # fd.write(sql)
     # fd.close
     ExcelSheet.paginate_by_sql(sql,options)

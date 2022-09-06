@@ -6,6 +6,7 @@ class IssPagesController < ApplicationController
   before_filter :authenticate_user!, only: [:edit, :update]
 
   def index
+    @pagetitle='Riviste digitalizzate BCT'
     qs=params[:qs]
     @cond=[]
     if !qs.blank?
@@ -41,9 +42,9 @@ class IssPagesController < ApplicationController
                     WHERE #{@cond}
                     group by a.title,a.id,j.title,j.id,i.id,issue_info
        )
-        select * from res #{filter} order by article_title}
+        select * from res #{filter} order by journal_title, article_title}
 
-    @iss_pages = IssPage.paginate_by_sql(@sql,:page=>params[:page], :per_page=>40)
+    @iss_pages = IssPage.paginate_by_sql(@sql,:page=>params[:page], :per_page=>120)
 
   end
 

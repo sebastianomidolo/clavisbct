@@ -1,3 +1,4 @@
+# coding: utf-8
 module HomeHelper
 
   def misc_periodici_musicale_in_ritardo
@@ -46,10 +47,11 @@ ci.issue_arrival_date_expected as previsto
     prec=''
     cnt=0
     res << content_tag(:tr, content_tag(:td, '') +
-                            content_tag(:td, 'nota') +
-                            content_tag(:td, 'creato da, modificato da') +
-                            content_tag(:td, ''))
-    
+                            content_tag(:td, 'Nota') +
+                            content_tag(:td, 'Creato da, modificato da') +
+                            content_tag(:td, 'BID') +
+                            content_tag(:td, 'Titolo'))
+
     records.each do |r|
       title=r['title'].blank? ? '[?]' : r['title']
       if r['nota']!=prec
@@ -57,18 +59,58 @@ ci.issue_arrival_date_expected as previsto
         prec=r['nota']
       end
       cnt+=1
+
+      if current_user.nil?
+        lnkclavis = title
+      else
+        lnkclavis = link_to(title, ClavisManifestation.clavis_url(r['manifestation_id'],:edit))
+      end
+      url_link = link_to(r['url'], r['url'].gsub('&amp;','&'))
       res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}.")) +
                               content_tag(:td, r['nota']) +
                               content_tag(:td, r['librarian_id']) +
-                         content_tag(:td,
-                                     link_to(title,
-                                             ClavisManifestation.clavis_url(r['manifestation_id'],:edit)) +
-                                     "<br/>#{r['url']}".html_safe))
+                              content_tag(:td, r['bid']) +
+                         content_tag(:td, "#{lnkclavis}<br/>#{url_link}".html_safe))
     end
     content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
                 :class=>'table-responsive')
   end
 
+  def misc_url_sbn(records)
+    res=[]
+    prec=''
+    cnt=0
+    res << content_tag(:tr, content_tag(:td, '', class:'col-md-1') +
+                            content_tag(:td, 'Titolo', class:'col-md-7') +
+                            content_tag(:td, 'BID', class:'col-md-1') +
+                            content_tag(:td, 'TagUnimarc', class:'col-md-1') +
+                            content_tag(:td, 'Creato da, modificato da', class:'col-md-2'))
+
+    records.each do |r|
+      title=r['title'].blank? ? '[?]' : r['title']
+      if r['nota']!=prec
+        # cnt=0
+        prec=r['nota']
+      end
+      cnt+=1
+
+      if current_user.nil?
+        lnkclavis = title
+      else
+        lnkclavis = link_to(title, ClavisManifestation.clavis_url(r['manifestation_id'],:edit))
+      end
+      nota = r['nota'].blank? ? '[accesso online]' : content_tag(:b, r['nota'])
+      url_link = link_to(nota.html_safe, r['url'].gsub('&amp;','&'))
+      res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}.")) +
+                              content_tag(:td, "#{lnkclavis}<br/>#{url_link}".html_safe) +
+                              content_tag(:td, r['bid']) +
+                              content_tag(:td, content_tag(:b, r['unimarc_tag'])) +
+                              content_tag(:td, r['librarian_id']))
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+  end
+  
   def bidcr(records)
     res=[]
     cnt=0
@@ -174,4 +216,36 @@ ci.issue_arrival_date_expected as previsto
     res.join("\n")
   end
 
+  def misc_dup_barcodes(records)
+    baseurl='https://sbct.comperio.it/index.php?page=Catalog.ItemListPage&'
+    itemurl='https://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&id='
+    res=[]
+
+    res << content_tag(:tr, content_tag(:th, 'Barcode', class:'col-md-1') +
+                            content_tag(:th, 'Esemplare da modificare', class:'col-md-4') +
+                            content_tag(:th, 'Biblioteca', class:'col-md-7'))
+
+    records.each do |r|
+      id1,id2=r['ids'].gsub(/\{|\}/, '').split(',')
+
+      if r['barcode'].match(id1)
+        msg = " <b>#{r['barcode']}</b> da modificare in <b>B#{id2}</b>".html_safe
+        lnk = link_to(msg, "#{itemurl}#{id2}", :target=>'_new')
+        item_id=id2
+      else
+        msg = " <b>#{r['barcode']}</b> da modificare in <b>B#{id1}</b>".html_safe
+        lnk = link_to(msg, "#{itemurl}#{id1}", :target=>'_new')
+        item_id=id1
+      end
+      # ClavisItem.find(item_id)
+      library=ClavisItem.find(item_id).home_library
+      # lnk << library.short_label
+      res << content_tag(:tr, content_tag(:td, link_to(r['barcode'], "#{baseurl}id[]=#{id1}&id[]=#{id2}",:target=>'_new')) +
+                              content_tag(:td, lnk) +
+                              content_tag(:td, library.label))
+    end
+    content_tag(:div, content_tag(:table, res.join.html_safe, :class=>'table table-striped'),
+                :class=>'table-responsive')
+  end
+  
 end

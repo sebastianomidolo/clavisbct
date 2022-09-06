@@ -1,21 +1,33 @@
 # coding: utf-8
+
 class SerialTitlesController < ApplicationController
   layout 'periodici'
   before_filter :set_serial_title, only: [:index, :show, :edit, :update, :destroy, :print]
   before_filter :check_list_owner, only: [:new, :create]
-  load_and_authorize_resource
+  load_and_authorize_resource except: [:index]
   respond_to :html
 
   # Nota: impostare da qualche parte set lc_monetary to "it_IT.utf8";
   
   def index
-    @serial_titles=SerialTitle.trova(params)
+    invoice_filter_enabled=params[:invoice_id].blank? ? false : true
+    @serial_titles=SerialTitle.trova(params,invoice_filter_enabled)
+    @pagetitle=SerialList.find(params[:serial_list_id]).title
+    if current_user.nil?
+      render template:'serial_titles/index_public'
+    else
+    end
   end
 
   def new
     @serial_title = SerialTitle.new
     @serial_title.serial_list_id=@serial_list.id
+    @pagetitle="#{SerialList.find(params[:serial_list_id]).title} - inserimento titolo"
     respond_with(@serial_title)
+  end
+
+  def edit
+    @pagetitle="modifica #{@serial_title.title}"
   end
 
   def create
@@ -42,7 +54,9 @@ class SerialTitlesController < ApplicationController
   
   def show
     respond_to do |format|
-      format.html
+      format.html {
+        @pagetitle="#{@serial_title.title}"
+      }
       format.js {
         @library_id=params[:library_id].to_i
         if !params[:tipo_fornitura].blank?
@@ -64,8 +78,11 @@ class SerialTitlesController < ApplicationController
 
   def check_list_owner
     @serial_list = SerialList.find(params[:serial_list_id])
-    if !can? :manage, SerialList
-      render text:'operazione non autorizzata',layout:true if !@serial_list.owned_by?(current_user)
+    if current_user.nil?
+    else
+      if !can? :manage, SerialList
+        render text:'operazione non autorizzata',layout:true if !@serial_list.owned_by?(current_user)
+      end
     end
   end
   
@@ -82,6 +99,27 @@ class SerialTitlesController < ApplicationController
         send_data(lp.makepdf,
                   :filename=>'elenco.pdf',:disposition=>'inline',
                   :type=>'application/pdf')
+      }
+      format.csv {
+        require 'csv'
+        titolo_lista = SerialList.find(params[:serial_list_id]).formula_titolo(params,' - ').squeeze(' ')
+        csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
+          if !params[:includi_note_fornitore].blank?
+            csv << [titolo_lista,'Note per il fornitore']
+          else
+            csv << [titolo_lista]
+          end
+          @serial_titles.each do |r|
+            # csv << [r.title.gsub("'","’")]
+            if !params[:includi_note_fornitore].blank?
+              csv << [r.title,r.note_fornitore]
+            else
+              csv << [r.title]
+            end
+          end
+        end
+
+        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=#{titolo_lista}.csv"
       }
     end
   end

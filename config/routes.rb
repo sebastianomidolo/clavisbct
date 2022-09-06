@@ -1,4 +1,28 @@
+# coding: utf-8
 Clavisbct::Application.routes.draw do
+
+  resources :manoscritti
+  resources :serial_titles do
+    collection do
+      get 'print'
+    end
+  end
+  resources :serial_subscriptions
+  resources :serial_libraries
+  resources :serial_invoices
+
+  resources :serial_lists do
+    member do
+      get 'import'
+      put 'import'
+      get 'clone'
+      put 'clone'
+      get 'add_library'
+      delete 'delete_library'
+      delete 'delete_titles'
+    end
+  end
+
 
   resources :work_stations do
     member do
@@ -20,9 +44,16 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  resources :clavis_item_requests, only:[:index] do
+  end
+
+  
   resources :dng_shelves, only:[:index,:show] do
   end
-  
+
+  resources :dng_sessions, only:[:index,:show] do
+  end
+
   resources :omeka_items, only:[:index,:show] do
   end
 
@@ -38,10 +69,16 @@ Clavisbct::Application.routes.draw do
   resources :bct_people
   resources :bct_places
 
+  resources :adabas_inventories
+
   resources :extra_cards do
     member do
       post 'record_duplicate'
       post 'remove_from_container'
+    end
+    collection do
+      get 'upload_xls'
+      post 'upload_xls'
     end
   end
 
@@ -92,16 +129,24 @@ Clavisbct::Application.routes.draw do
       get 'download'
       get 'list_folder_content'
       get 'view'
+      get 'dnl'
+      get 'dnl_pdf'
       get 'set_as_cover_image'
     end
   end
 
-  resources :clavis_patrons, only: [:show] do
+  # resources :clavis_patrons, only: [:show] do
+  resources :clavis_patrons do
     collection do
       get 'purchase_proposals_count'
+      get 'mancato_ritiro'
+      get 'stat'
+      get 'duplicates'
     end
     member do
       post 'csir_insert'
+      get 'autocert'
+      get 'loans_analysis'
     end
   end
 
@@ -114,6 +159,7 @@ Clavisbct::Application.routes.draw do
       get 'filenames'
       get 'set_pdf_params'
       get 'derived'
+      get 'download'
       delete 'delete_contents'
     end
   end
@@ -149,13 +195,29 @@ Clavisbct::Application.routes.draw do
       get 'download_mp3'
     end
     collection do
+      get 'opac_edit_intro'
+      post 'opac_edit_intro'
+      get 'search'
       get 'check'
       get 'check_duplicates'
       get 'build_pdf'
       get 'digitalizzati'
       get 'digitalizzati_non_presenti'
+      get 'stats'
     end
   end
+
+  resources :talking_book_readers do
+  end
+
+  resources :identity_cards do
+    member do
+      get 'newuser_show'
+      get 'newuser_docview'
+      get 'docview'
+    end
+  end
+
   resources :iss_journals do
     collection do
       get 'infopage'
@@ -177,6 +239,13 @@ Clavisbct::Application.routes.draw do
     member do
       get 'cover_image'
       get 'check_items'
+      get 'clavisbct_include'
+    end
+    collection do
+      get 'admin'
+      get 'users'
+      put 'add_user'
+      post 'add_user'
     end
   end
 
@@ -190,10 +259,18 @@ Clavisbct::Application.routes.draw do
     end
   end
 
+  match '/checkdewey' => 'home#checkdewey'  
   match '/uni856' => 'home#uni856'
+  match '/er' => 'home#url_sbn'
+  match '/bcd' => 'home#dup_barcodes'
   match '/verifica_consistenze' => 'clavis_consistency_notes#index'
 
+  match '/or', to: 'identity_cards#new'
+  match '/or_create', to: 'identity_cards#create', via: [:post]
+  match '/ors/:unique_id', to: 'identity_cards#newuser_show'
+  
   match '/procultura' => 'procultura_folders#index'
+
   resources :procultura_cards
   resources :procultura_folders
 
@@ -218,6 +295,7 @@ Clavisbct::Application.routes.draw do
       get 'attachments_list'
       get 'libriparlati_con_audio'
       get 'bid_duplicati'
+      get 'piuprestati'
     end
   end
 
@@ -225,6 +303,7 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'receipts'
       get 'view_goethe_loans'
+      get 'loans_by_supplier'
     end
   end
 
@@ -265,6 +344,7 @@ Clavisbct::Application.routes.draw do
   resources :clavis_authorities do
     collection do
       get 'info'
+      get 'dupl'
     end
   end
 
@@ -286,11 +366,53 @@ Clavisbct::Application.routes.draw do
       get 'random_insert'
       get 'print'
       get 'autoprint'
+      get 'autoprint_requests'
       get 'confirm_request'
+      get 'search'
+      get 'stats'
     end
   end
 
   resources :clavis_librarians, only: [:index,:show] do
+  end
+
+  resources :sbct_titles do
+    member do
+      get 'add_to_library'
+    end
+    collection do
+      get 'piurichiesti'
+      get 'users'
+    end
+  end
+
+  resources :sbct_items do
+    collection do
+      post 'create_order'
+      get 'orders'
+    end
+  end
+
+  resources :sbct_lists do
+    collection do
+      get 'upload'
+      post 'upload'
+    end
+    member do
+      get 'report'
+      get 'do_order'
+      get 'associa_a_budget'
+    end
+  end
+  resources :sbct_budgets
+
+  resources :sbct_suppliers
+
+  resources :sbct_invoices, only: [:index,:show] do
+    collection do
+      get 'upload'
+      post 'upload'
+    end
   end
 
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
@@ -311,6 +433,8 @@ Clavisbct::Application.routes.draw do
 
   match '/sa' => 'clavis_items#ricollocazioni'
 
+  match '/cr' => 'sbct_titles#homepage'
+
   match '/pmr' => 'home#periodici_musicale_in_ritardo'
 
   match '/cipes' => 'cipes_cedo_records#index'
@@ -322,6 +446,10 @@ Clavisbct::Application.routes.draw do
   get 'getpdf/:manifestation_id', to: 'home#getpdf'
 
   get 'cces/', to: 'home#confronto_consistenze_esemplari'
+
+  get 'cercafc', to: 'clavis_items#cerca_fuoricatalogo'
+
+  get 'spl/:manifestation_id', to: 'sp_items#redir'
 
   root :to => 'home#index'
 end

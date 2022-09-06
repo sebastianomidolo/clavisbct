@@ -11,7 +11,7 @@ class ClavisItem < ActiveRecord::Base
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
   :current_container, :in_container, :dewey_collocation, :barcode, :loan_status, :loan_class,
   :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
-  :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by
+  :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by, :acquisition_year
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
   belongs_to :home_library, class_name: 'ClavisLibrary', foreign_key: 'home_library_id'
@@ -226,6 +226,42 @@ class ClavisItem < ActiveRecord::Base
 
   def clavis_url(mode=:show)
     ClavisItem.clavis_url(self.id,mode)
+  end
+
+  def rest_get_item_status
+    config = Rails.configuration.database_configuration
+    require 'net/http'
+    uri = URI("https://sbct.comperio.it/api/v1/item/status/#{self.barcode}")
+    req = Net::HTTP::Get.new(uri)
+    # req['X-Clavis-Signature'] = 'ClavisSecretKey!?'
+    req['X-Clavis-Username'] = config[Rails.env]['clavis_username']
+    req['X-Clavis-Password'] = config[Rails.env]['clavis_passwd']
+    req['X-Clavis-Library'] = '1'
+    req['Content-Type'] = 'application/x-www-form-urlencoded'
+    req['accept'] = 'application/json'
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http|
+      http.request(req)
+    }
+    # res = Net::HTTP.get_response(uri)
+    # puts res.body if res.is_a?(Net::HTTPSuccess)
+    h=JSON.parse res.body.gsub('=>', ':')
+    h['REPLY']['RESULT'].nil? ? h['REPLY'] : h['REPLY']['RESULT']
+  end
+
+  def item_loan_status_update
+    h = self.rest_get_item_status
+    self.loan_status = h['LoanStatus']
+    self.save if self.changed?
+    self
+  end
+
+  def anno_inventariazione_bibcentrale
+    return nil if self.inventory_serie_id!='V'
+    sql = "select year from estremi_registri_inventariali where abs(#{self.inventory_number}) between range_from and range_to;"
+    puts sql
+    res = self.connection.execute(sql).to_a
+    return res
+    res.size == [] ? nil : res['year']
   end
 
   def self.clavis_url(item_id,mode=:show,newcolloc=:nil)

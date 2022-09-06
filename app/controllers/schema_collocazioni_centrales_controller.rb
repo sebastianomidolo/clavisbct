@@ -6,7 +6,7 @@ class SchemaCollocazioniCentralesController < ApplicationController
   
   def index
     if current_user.email=='seba'
-      fname=
+      # fname=
 
       fd=File.open(File.join(Rails.root.to_s, 'tmp', 'my_ip.txt'), 'w')
       fd.write "sshd: #{request.remote_addr}\n"

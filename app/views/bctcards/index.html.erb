@@ -19,14 +19,19 @@
   if params[:namespace].blank?
    "Trovate #{@bio_iconografico_cards.total_entries} schede".html_safe
   else
-   "Trovate #{@bio_iconografico_cards.total_entries} schede in <b>#{BioIconograficoCard.namespaces[params[:namespace].to_sym]}</b>".html_safe
+   extra=''
+  if !params[:topic_id].blank?
+    bt=BioIconograficoTopic.find(params[:topic_id])
+    extra="<br/>Intestazione scheda: <b>#{bt.to_label}</b>"
+   end
+   "Trovate #{@bio_iconografico_cards.total_entries} schede in <b>#{BioIconograficoCard.namespaces[params[:namespace].to_sym]}</b>#{extra}".html_safe
   end
 %>
 <%= will_paginate @bio_iconografico_cards, renderer: BootstrapPagination::Rails %>
 <% else %>
-Poiché non tutte le intestazioni sono già state normalizzate ed è comunque possibile
+<p>Poiché non tutte le intestazioni sono già state normalizzate ed è comunque possibile
 l’interrogazione tramite parole tronche, si consiglia, per quanto possibile, l’utilizzo di termini
-puntuali.<br/>
+puntuali.<p/>
 <% end %>
 
 <%= bctcards_list(@bio_iconografico_cards) %>

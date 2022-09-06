@@ -35,8 +35,10 @@
   <%= content_tag(:tr,
       content_tag(:td, content_tag(:b, "Biblioteca"), class:'col-md-4') +
       content_tag(:td, content_tag(:b, "Tipo fornitura"), class:'col-md-2') +
+      content_tag(:td, "Codice", class:'col-md-1') +
       content_tag(:td, "", class:'col-md-1') +
-      content_tag(:td, "", class:'col-md-5'))
+      content_tag(:td, "Note", class:'col-md-2') +
+      content_tag(:td, "Prezzo", class:'col-md-2'))
       %>
   <% @serial_title.clavis_libraries(true,current_user).each do |l| %>
   <%= next if (l.okgest.nil? and l.serial_title_id.nil?) or (@serial_list.locked? and l.serial_title_id.nil?)
@@ -50,22 +52,23 @@
       end
       # perlib=PeriodicoBiblioteca.new(per_id:@periodico_id,library_id:l.ok_library_id,prezzo:l.prezzo)
       if !l.numero_copie.nil?
-        numcopie = "#{l.numero_copie} copie" if l.numero_copie.to_i>1
+        if l.numero_copie.to_i>1 
+          numcopie = "#{l.numero_copie} copie"
+        end
       else
         numcopie = ''
       end
+      sspath = edit_serial_subscription_path(@serial_title,{ok_library_id:l.ok_library_id})
       content_tag(:tr,
-          content_tag(:td, l.label) +
+          content_tag(:td, link_current_params(l.label, sspath, params), {title:"Note e numero copie di questo titolo per #{l.label} (library_id #{l.ok_library_id})"}) +
           content_tag(:td, col) +
-          content_tag(:td, numcopie) +
           content_tag(:td, l.tipo_fornitura, :id=>span_id) +
+          content_tag(:td, numcopie) +
+          content_tag(:td, l.note) +
           content_tag(:td, number_to_currency(l.prezzo)))
       %>
 <% end %>
 </table>
-
-
-
 
 <%= content_tag(:pre, @serial_title.textdata) %>
 

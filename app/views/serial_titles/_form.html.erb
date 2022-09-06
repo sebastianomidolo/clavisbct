@@ -9,7 +9,8 @@
     <%= f.input :sospeso, label:false, hint:'cessato' %>
     <%= f.input :manifestation_id, hint: "Manifestation_id in Clavis", label:false %>
     <%= f.input :sortkey, hint: "Chiave di ordinamento", label:false %>
-    <pre><%= f.input :note, hint: "Note", label:false %></pre>
+    <pre><%= f.input :note, hint: "Note interne", label:false, input_html: {cols: 80, rows: 3} %></pre>
+    <pre><%= f.input :note_fornitore, hint: "Note per il fornitore", label:false, input_html: {cols: 80, rows: 3} %></pre>
 
   </div>
   <div class="form-actions">

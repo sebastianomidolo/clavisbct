@@ -14,5 +14,6 @@
 <%= content_tag(:div, "Volumi prenotabili: #{bip4}".html_safe) %>
 
 <%= content_tag(:div, container_info(@container)) %>
+<%= link_to('Scarica barcodes per inserimento in scaffali Clavis', container_path(@container,format:'csv')) %>
 <%= content_tag(:div, container_show(@container)) %>
 

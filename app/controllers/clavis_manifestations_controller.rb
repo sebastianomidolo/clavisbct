@@ -12,6 +12,22 @@ class ClavisManifestationsController < ApplicationController
     @records=ActiveRecord::Base.connection.execute(sql)
   end
 
+  def piuprestati
+    @clavis_manifestation=ClavisManifestation.new
+    @clavis_manifestation.prestito_max_titoli=100
+    return if params[:clavis_manifestation].blank?
+    @clavis_manifestation.prestito_max_titoli=params[:clavis_manifestation]['prestito_max_titoli']
+
+    ip=[]
+    fp=[]
+    [1,2,3].each do |n|
+      ip[n-1] = params[:clavis_manifestation]["prestito_inizio_periodo(#{n}i)"].to_i
+      fp[n-1] = params[:clavis_manifestation]["prestito_fine_periodo(#{n}i)"].to_i
+    end
+    @clavis_manifestation.prestito_inizio_periodo=ip.join('-')
+    @clavis_manifestation.prestito_fine_periodo=fp.join('-')
+  end
+
   def attachments_list
     headers['Access-Control-Allow-Origin'] = "*"
     ids=params[:m]
@@ -198,6 +214,11 @@ class ClavisManifestationsController < ApplicationController
   def containers
     @cm=ClavisManifestation.find(params[:id])
     @container_items=@cm.containers_info
+    if @cm.bib_level=='s'
+      # Per i periodici, verifico se questo titoli ha i requisiti per essere
+      # richiesto a magazzino in civica centrale (o in deposito decentrato)
+      @form_richiesta = @cm.form_richiesta_a_magazzino(params['opac_username'],2)
+    end
     respond_to do |format|
       format.html
       format.js

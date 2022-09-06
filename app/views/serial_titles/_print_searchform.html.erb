@@ -17,6 +17,11 @@
       options_for_select([['Italiani','f'],['Stranieri','t']],
 		params[:estero]), :onchange=>'submit();', include_blank:true) %>
 
+  Periodicità <%= select_tag(:frequency,
+      options_for_select(ClavisManifestation.unimarc_serial_frequencies_select,
+		params[:frequency]), :onchange=>'submit();', include_blank:true) %>
+
+  
 <p>
   <%= check_box_tag('numera_titoli', 'yes', (params[:numera_titoli]=='yes' ? true : false), :onchange=>'submit()') %>
   <%= label_tag(:numera_titoli, 'numera titoli') %>
@@ -25,6 +30,8 @@
   <%= check_box_tag('includi_prezzi', 'yes', (params[:includi_prezzi]=='yes' ? true : false), :onchange=>'submit()') %>
   <%= label_tag(:includi_prezzi, 'includi prezzi') %>
 </p>
+
+<% if params[:library_id].blank? %>
 <p>
   <%= check_box_tag('includi_bib', 'yes', (params[:includi_bib]=='yes' ? true : false), :onchange=>'submit()') %>
   <%= label_tag(:includi_bib, 'includi nomi delle biblioteche') %>
@@ -32,6 +39,12 @@
 <p>
   <%= check_box_tag('includi_numcopie', 'yes', (params[:includi_numcopie]=='yes' ? true : false), :onchange=>'submit()') %>
   <%= label_tag(:includi_numcopie, 'includi numero di copie ordinate') %>
+</p>
+<% end %>
+
+<p>
+  <%= check_box_tag('includi_note_fornitore', 'yes', (params[:includi_note_fornitore]=='yes' ? true : false), :onchange=>'submit()') %>
+  <%= label_tag(:includi_note_fornitore, 'includi note per il fornitore') %>
 </p>
 
 

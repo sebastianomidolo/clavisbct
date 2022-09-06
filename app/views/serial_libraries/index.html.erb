@@ -11,11 +11,13 @@
     }
 </script>
 
+Pagina in progettazione - non utilizzabile
+
 <%= hidden_field_tag('serial_list_id', @serial_list.id) %>
 
 <%= content_tag(:div, 'x', {id:'xyz'}) %>
 
-<%=
+<%
   select_tag(:library_id, options_for_select(ClavisLibrary.library_select('lk')),
     prompt:'Aggiungi una biblioteca',
     :onchange=>'add_library(this);', include_blank:false)

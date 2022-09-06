@@ -3,12 +3,16 @@
 <%= content_tag(:pre, @serial_list.note) %>
 
 <%= content_tag(:h4, "Stato: #{@serial_list.locked? ? 'Lista a sola lettura, non può essere modificata' : 'Lista attiva, dati modificabili'}") %>
-
+<%= content_tag(:h4, @serial_list.onelib? ? "Gestione singola biblioteca" : "Gestione pluribiblioteca") %>
 <%= content_tag(:p, "Dati importati da #{@serial_list.import_file}") if !@serial_list.import_file.blank? %>
 
 
 <%= content_tag(:div, "Numero totale dei titoli in lista: #{@serial_list.serial_titles.count}") %>
-<%= content_tag(:div, link_to("#{@serial_list.subscribed_serial_titles_count} titoli acquisiti", serial_titles_path(serial_list_id:@serial_list))) %>
+<%=
+  library_id = @serial_list.onelib? ? @serial_list.clavis_library_id : ''
+  content_tag(:div, link_to("#{@serial_list.subscribed_serial_titles_count} titoli acquisiti",
+    serial_titles_path(serial_list_id:@serial_list,library_id:library_id)))
+%>
 <%= cnt=@serial_list.unsubscribed_serial_titles_count
     lnk = cnt==0 ? '' : link_to(' [Cancella titoli non acquisiti]', delete_titles_serial_list_path, method: :delete, data: { confirm: "Confermi cancellazione dei titoli non acquisiti?" }) if !@serial_list.locked? and current_user.email=='seba'
     if cnt==0
@@ -19,12 +23,9 @@
     end
 %>
 
-
-<br/>
-<%= link_to("Accedi alla lista <b>#{@serial_list.title}</b>".html_safe, serial_titles_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) %>
-
-<br/>
 <%= link_to("Importa titoli da archivio testuale (emacs)", import_serial_list_path) if @serial_list.serial_titles.count == 0 %>
+
+<%= link_to("Fatture", serial_invoices_path(serial_list_id:@serial_list,library_id:library_id)) if @serial_list.invoice_management? %>
 
 <br/>
 <%= link_to("Fornitura per la biblioteca corrente", serial_subscriptions_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) if !@serial_list.locked? %>

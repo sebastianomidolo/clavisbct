@@ -1,3 +1,5 @@
+CREATE INDEX clavis_acquisition_year_idx on clavis.item(acquisition_year);
+
 CREATE INDEX clavis_item_collocation_idx on clavis.item(collocation);
 CREATE INDEX clavis_item_serieinv_idx on clavis.item(inventory_serie_id);
 UPDATE clavis.manifestation SET bid_source='SBN_bad_bid' WHERE length(bid)!=10 and bid_source='SBN';
@@ -153,6 +155,11 @@ alter table clavis.item add column digitalized boolean;
 update clavis.item set digitalized = true where manifestation_id in (select attachable_id from attachments
    where attachable_type = 'ClavisManifestation');
 
+ALTER TABLE clavis.item ADD COLUMN acquisition_year integer;
+UPDATE clavis.item SET acquisition_year = ay.year
+ FROM public.estremi_registri_inventariali ay WHERE inventory_serie_id='V'
+  AND acquisition_year IS NULL AND ABS(inventory_number) BETWEEN range_from AND range_to;
+
 
 -- 17 aprile 2020
 drop table if exists clavis.buchi_dvd;
@@ -172,3 +179,34 @@ delete from clavis.buchi_dvd where specification is null;
 create index item_media_type_ndx on clavis.item(item_media);
 create index item_status_ndx on clavis.item(item_status);
 create index loan_patron_id_ndx on clavis.loan(patron_id);
+
+
+-- Creazione temporanea biblioteca Ferrante Aporti per inserimento in ordine periodici 2022-23
+-- (biblioteca non ancora presente in Clavis, valutare se inserirla)
+insert into clavis.library(library_id,library_class,consortia_id,description,label,
+   shortlabel,library_type,library_internal,library_status,ill_code)
+    (select 999999,library_class,consortia_id,'999999 - Biblioteca presso Istituto Ferrante Aporti',
+      '999999 - Ferrante Aporti','FerranteAp',library_type,library_internal,library_status,'nocode'
+       from clavis.library where library_id=21);
+insert into clavis.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,13,0,0);
+insert into clavis.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,3,0,0);
+
+
+
+create temp table r1 as (select manifestation_id,count(*) as reqnum from clavis.item_request
+     where manifestation_id!=0 and item_id is null and request_status='A'
+      group by manifestation_id);
+create temp table i1 as (select manifestation_id,array_length(array_agg(distinct item_id),1) as available_items
+     from clavis.item where manifestation_id in (select manifestation_id from r1)
+       and loan_class IN ('B')
+       and item_status IN ('B','F','G','K','S','V')
+        group by manifestation_id);
+    
+create table clavis.piurichiesti as
+select  *, round((available_items::numeric / reqnum::numeric)*100,2) as percentuale_di_soddisfazione
+  from r1 join i1 using(manifestation_id) where reqnum>available_items order by percentuale_di_soddisfazione;
+
+
+-- Provvisorio, fino a quando non verranno inseriti in Clavis i fornitorei MiC22
+SELECT setval('clavis.supplier_supplier_id_seq', (SELECT MAX(supplier_id) FROM clavis.supplier)+1);
+insert into clavis.supplier (supplier_name,email,address,city,vat_code,notes,phone_number,phone_number2) (select * from temp_supplier_mic22);

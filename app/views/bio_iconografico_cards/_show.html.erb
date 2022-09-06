@@ -12,6 +12,7 @@
   content_tag(:div, "Intestazione: <b>#{lnk}</b>".html_safe)
  end
 %>
+<%= content_tag(:p, bio_iconografico_card_link_to_parent(@bio_iconografico_card)) %>
 
 <%= image_tag(bio_iconografico_card_path(@bio_iconografico_card, :format=>'jpg', :size=>'375x516')) %>
 
