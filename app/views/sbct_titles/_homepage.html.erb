@@ -1,0 +1,63 @@
+<%
+  mypath=sbct_titles_path(:selection_mode=>'S')
+  link_to('<b>Selezione titoli</b>'.html_safe, mypath, class:'btn btn-warning') if can? :create, SbctItem
+%>
+
+<%
+  h = [
+  ["Eventi","params[:controller]=='sbct_events'", "can? :index, SbctEvent and user_session[:events_mode]=='on'","sbct_events_path"],
+  ["Tipologie eventi","params[:controller]=='sbct_event_types'", "can? :manage, SbctEventType and user_session[:events_mode]=='on'","sbct_event_types_path"],
+  ["Titoli duplicati","params[:controller]=='sbct_titles' and params[:action] == 'ean_duplicati'", "can? :index, SbctTitle and current_user.email == 'dandap'", "ean_duplicati_sbct_titles_path"],
+  ["Liste d'acquisto","params[:controller]=='sbct_lists'", "can? :index, SbctList", "sbct_lists_path"],
+  ["Copie","params[:controller]=='sbct_items'", "can? :index, SbctItem", "sbct_items_path"],
+  ["Budgets","params[:controller]=='sbct_budgets'", "can? :index, SbctBudget", "sbct_budgets_path"],
+  ["Fornitori","params[:controller]=='sbct_suppliers'", "can? :index, SbctSupplier", "sbct_suppliers_path"],
+  ["Ordini","params[:controller]=='sbct_orders'", "can? :index, SbctOrder", "sbct_orders_path"],
+  ["Fatture", "params[:controller]=='sbct_invoices'", "can? :index, SbctInvoice", "sbct_invoices_path"],
+  ["Più richiesti", "params[:controller]=='sbct_titles' and params[:action]=='piurichiesti'", "can? :manage, SbctTitle", "piurichiesti_sbct_titles_path"],
+  ["Inserimento titolo", "params[:controller]=='sbct_titles' and params[:action]=='new'", "can? :manage, SbctTitle", "new_sbct_title_path"],
+  ["PacUsers", "params[:controller]=='sbct_titles' and params[:action]=='view_users'", "current_user.acquisition_manager?", "view_users_sbct_titles_path"],
+ ]
+%>
+<%=
+  res = []
+  h.each do |e|
+   txt,cond,auth,path = e
+   next if !(eval auth)
+   if (eval cond)
+    res << content_tag(:span, "<b>#{txt}</b>".html_safe, class:'label label-primary')
+  else
+    res << link_to("<b>#{txt}</b>".html_safe, (eval path), class:'btn btn-warning')
+   end
+  end
+  content_tag(:div, res.join(' ').html_safe)
+%>
+
+<!--
+<%= content_tag(:h5, link_to("Vedi i titoli non associati a una <i>data libri</i> (fuori lista)".html_safe, sbct_titles_path(nolist:true))) %>
+-->
+
+
+<% content_tag(:h5, "Riepilogo dati in archivio - ultimo aggiornamento da programma CR: #{File.mtime('/home/seb/Dropbox/cr_acquisti')}") %>
+<!--
+<ul>
+<%= content_tag(:li, link_to("#{SbctList.count} liste", sbct_lists_path)) %>
+<%= content_tag(:li, "#{SbctTitle.count} titoli") %>
+<%= content_tag(:li, link_to("#{SbctItem.count} copie", sbct_items_path)) %>
+</ul>
+
+<pre style="font-size:12px; background-color:white">
+Pro-memoria importazione dati:
+time (cd /home/ror/clavisbct && /usr/local/bin/rails runner -e development "SbctTitle.import_mdb('/home/seb/Dropbox/cr_acquisti')")
+time (cd /home/ror/clavisbct && rake cr_acquisti_import)
+time (cd /home/ror/clavisbct && rake cr_invoices_import)
+-->
+<!-- time (cd /home/ror/clavisbct && rake cr_assegna_mic) -->
+<!--
+all:
+time (cd /home/ror/clavisbct && sh extras/acquisti_import_all.sh)
+</pre>
+-->
+
+<% content_tag(:h6, "PAC - Sistema acquisti Centro Rete, in funzione dal 9 settembre 2022") %>
+
