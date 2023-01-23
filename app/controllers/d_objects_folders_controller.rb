@@ -200,4 +200,12 @@ class DObjectsFoldersController < ApplicationController
       }
     end
   end
+
+  def access_by_name
+    foldername = params[:foldername].gsub(':','/')
+    dobf=DObjectsFolder.find_by_name(foldername)
+    render text:'---' if dobf.nil?
+    redirect_to dobf
+  end
+
 end

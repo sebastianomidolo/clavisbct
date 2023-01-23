@@ -210,6 +210,8 @@ Clavisbct::Application.routes.draw do
   resources :talking_book_readers do
   end
 
+  resources :talking_book_downloads
+
   resources :identity_cards do
     member do
       get 'newuser_show'
@@ -379,17 +381,31 @@ Clavisbct::Application.routes.draw do
   resources :sbct_titles do
     member do
       get 'add_to_library'
+      get 'clavis_sql_items_insert'
+      get 'insert_item'
+      get 'add_items_to_order'
+      delete 'move_items_to_other_title'
     end
     collection do
       get 'piurichiesti'
-      get 'users'
+      get 'view_users'
+      get 'add_user'
+      post 'add_user'
+      get 'edit_user'
+      get 'stampa_assegnazioni_copie'
+      get 'ean_duplicati'
     end
   end
 
   resources :sbct_items do
-    collection do
-      post 'create_order'
-      get 'orders'
+    #collection do
+    #  post 'create_order'
+    #  get 'orders'
+    #end
+    member do
+      get 'assign_to_other_supplier'
+      get 'change_item_order_status'
+      delete 'togli_da_ordine'
     end
   end
 
@@ -401,19 +417,44 @@ Clavisbct::Application.routes.draw do
     member do
       get 'report'
       get 'do_order'
-      get 'associa_a_budget'
+      get 'budget_assign'
     end
   end
-  resources :sbct_budgets
 
-  resources :sbct_suppliers
+  resources :sbct_budgets do
+    collection do
+      get 'suppliers_assign'
+    end
+  end
 
-  resources :sbct_invoices, only: [:index,:show] do
+  #   resources :sbct_suppliers
+
+  resources :sbct_suppliers do
+    member do
+      get 'invoices'
+      get 'orders_report'
+    end
+  end
+  
+  resources :sbct_orders do
+    member do
+      post 'add_items_to_order'
+      get 'prepare'
+    end
+  end
+
+  resources :sbct_invoices do
     collection do
       get 'upload'
       post 'upload'
     end
   end
+
+  resources :sbct_events
+
+  resources :sbct_event_types
+
+  resources :sbct_l_event_titles
 
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
@@ -444,6 +485,8 @@ Clavisbct::Application.routes.draw do
   get 'controllo_provincia/:city/:province', to: 'home#controllo_provincia'
 
   get 'getpdf/:manifestation_id', to: 'home#getpdf'
+
+  get 'dob/:foldername', to: 'd_objects_folders#access_by_name'
 
   get 'cces/', to: 'home#confronto_consistenze_esemplari'
 
