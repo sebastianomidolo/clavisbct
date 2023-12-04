@@ -112,9 +112,32 @@ UPDATE clavis.collocazioni SET collocazione=replace(collocazione, '..', '.') WHE
 DELETE FROM clavis.collocazioni WHERE collocazione='';
 UPDATE clavis.collocazioni SET sort_text = espandi_collocazione(collocazione);
 
+alter table clavis.collocazioni add column location_id integer;
+alter table clavis.collocazioni add constraint location_id_fkey
+    foreign key(location_id) references public.locations(id) on update cascade on delete set null;
+
+alter table clavis.collocazioni add column primo character varying(128);
+alter table clavis.collocazioni add column secondo character varying(128);
+alter table clavis.collocazioni add column terzo character varying(128);
+alter table clavis.collocazioni add column primo_i integer;
+alter table clavis.collocazioni add column secondo_i integer;
+alter table clavis.collocazioni add column terzo_i integer;
+
+with t1 as
+(select item_id,collocazione,string_to_array(collocazione, '.') as a
+   from clavis.collocazioni cc join clavis.item ci using(item_id)
+    where ci.item_status != 'E')
+update clavis.collocazioni c set primo = t1.a[1],secondo = t1.a[2],terzo = t1.a[3]
+    from t1 where c.item_id=t1.item_id;
+update clavis.collocazioni set primo_i = primo::integer where primo_i is null and primo ~ '^\\d+$';
+update clavis.collocazioni set secondo_i = secondo::integer where secondo_i is null and secondo ~ '^\\d+$';
+update clavis.collocazioni set terzo_i = terzo::integer where terzo_i is null and terzo ~ '^\\d+$';
+
+
 ALTER TABLE clavis.collocazioni add primary key(item_id);
 CREATE INDEX collocazioni_idx ON clavis.collocazioni(collocazione);
 CREATE INDEX collocazioni_sort_text_idx ON clavis.collocazioni(sort_text);
+CREATE INDEX collocazioni_location_id_ndx ON clavis.collocazioni(location_id);
 
 \i extras/sql/trigger_clavis_item.sql
 
