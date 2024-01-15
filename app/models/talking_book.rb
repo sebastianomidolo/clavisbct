@@ -12,6 +12,7 @@ class TalkingBook < ActiveRecord::Base
   before_save :controlla_collocazione
   
   has_many :attachments, :as => :attachable
+  has_many :downloads, class_name:'TalkingBookDownload', foreign_key:'title_id'
   belongs_to :d_objects_folder
   belongs_to :talking_book_reader
 
@@ -400,6 +401,37 @@ class TalkingBook < ActiveRecord::Base
     puts "ok scritto sql in #{outfile}"
   end
 
+
+
+  # Vedi https://regex101.com/
+  def TalkingBook.read_apache_log(fname=nil)
+    puts "entro in TalkingBook con fname=#{fname}"
+    if fname.nil?
+      Dir.glob("/var/log/apache2/tbda-access.log*").each do |fn|
+        next if fn =~ /gz$/
+        TalkingBook.read_apache_log(fn)
+      end
+      return
+    end
+    # 109.116.9.71 - username [13/Oct/2022:20:56:45 +0200] "GET /tbda/tb_mp755.zip? HTTP/1.1" 200 594140903
+    format = /([^ ]+) - ([^ ]+) \[([^ ]+) ([^ ]+)\] \"(GET|POST) ([^ ]+) ([^ ]+)\" (\d+) (\d+)/
+    sql = []
+    File.readlines(fname).each do |line|
+      if !line.match(format)
+        puts "formato irregolare: #{line}"
+        sql << "insert into libroparlato.downloads (logline) values (#{self.connection.quote(line)}) on conflict(logline) do nothing;"
+      else
+        c = line.match(format).captures
+        ip,username,date,timezone,method,http_path,protocol,http_status,filesize = c
+        sql << "insert into libroparlato.downloads (ip,username,date,timezone,method,http_path,protocol,http_status,filesize,logline) values ('#{ip}','#{username}','#{date}','#{timezone}','#{method}','#{http_path}','#{protocol}','#{http_status}','#{filesize}',#{self.connection.quote(line)}) on conflict(date, username, http_path) do nothing;"
+      end
+    end
+    # sql << "update libroparlato.downloads set http_path = trim(http_path, '?') where http_path is not null;";
+    sql << "update libroparlato.downloads d set title_id = t.id from libroparlato.catalogo t where substring(d.http_path, '_(.*).zip')=lower(replace(n,' ',''));"
+    self.connection.execute(sql.join("\n"))
+    nil
+  end
+  
   def self.loadhelper
     include ActionView::Helpers::TextHelper
   end
