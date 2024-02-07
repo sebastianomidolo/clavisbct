@@ -1,0 +1,24 @@
+Spostamento di copie già selezionate su altro budget (<b><i>non funzionante</i></b> per ora)
+
+<% @sbct_item = SbctItem.new %>
+
+<%= simple_form_for(@sbct_item, url:budget_assign_sbct_items_path, :method=>'post', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+
+<div class="form-inputs">
+  <%=
+   label = 'Budget a cui assegnare le copie per i titoli elencati sotto'
+   f.association :sbct_budget, label:label, include_blank:false, collection:SbctBudget.label_select({mybudgets:true},current_user)
+  %>
+</div>
+
+<div class="form-actions">
+  <%= f.button :submit, value: 'Assegna (non funziona)' , class:'btn btn-warning' %>
+</div>
+
+<%=
+ sql = SbctItem.sql_for_budget_assign(user_session[:current_sql],@sbct_item,user_session[:current_params])
+ titles=SbctTitle.find_by_sql(sql)
+ content_tag(:div, sbct_titles_list(titles))
+%>
+ 
+<% end %>

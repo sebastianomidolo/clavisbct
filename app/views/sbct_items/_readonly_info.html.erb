@@ -1,0 +1,42 @@
+<script type="text/javascript">
+  function assegna_a_biblioteca(widget)
+  {
+  var item_id = jQuery(widget).attr('item_id');
+  var dest_library_id = jQuery(widget).val();
+  var url='/sbct_items/' + item_id + '/assign_to_library.js?library_id=' + dest_library_id;
+  url=encodeURI(url);
+  jQuery.ajax({
+  url: url,
+  dataType: "script"
+  });
+  }
+</script>
+
+<pre>
+  <b>
+  Biblioteca: <%= @sbct_item.clavis_library.siglabct %> / <%= @sbct_item.clavis_library.shortlabel %>
+  Biblioteca destinataria: <span id='destination_library_id'><%= @sbct_item.home_library_id if !@sbct_item.home_library_id.nil?%></span>
+    Cambia:  <%= select_tag('sbct_item[home_library_id]', options_for_select(SbctTitle.libraries_select, @sbct_item.home_library_id), item_id:@sbct_item.id, :onchange=>"assegna_a_biblioteca(this)", include_blank:true) %>
+  Numero di copie: <%= @sbct_item.numcopie %>
+  Altre copie ordinate relative a questo titolo: <%= @sbct_item.sbct_title.sbct_items.collect{|r| r if r.id_copia != @sbct_item.id and r.order_id != nil and r.order_status=='O'}.compact.size %>
+  Altre copie selezionate relative a questo titolo: <%= @sbct_item.sbct_title.sbct_items.collect{|r| r if r.id_copia != @sbct_item.id and r.order_status=='S'}.compact.size %>
+  Prezzo per copia: <%= @sbct_item.prezzo %>
+  Fornitore: <%= @sbct_item.sbct_supplier.to_label if !@sbct_item.sbct_supplier.nil? %>
+  Budget: <%= @sbct_item.sbct_budget.to_label %> <%= "(importo residuo: #{number_to_currency(@sbct_item.sbct_budget.importo_residuo)})" %>
+  Stato della copia: <%= @sbct_item.sbct_order_status.to_label if !@sbct_item.sbct_order_status.nil? %>
+  Ordine: <%= @sbct_item.sbct_order.to_label if !@sbct_item.sbct_order.nil? %>
+  <%= "Note per il fornitore: #{@sbct_item.note_fornitore}" if not @sbct_item.note_fornitore.blank? %></b>
+  <%=
+      link_to("<b>Sgancia questa copia dal fornitore #{@sbct_item.sbct_supplier.to_label}</b>".html_safe,
+    supplier_unassign_sbct_item_path, method: :delete, data: { confirm: "Vuoi sganciare questa copia dal fornitore attuale?"},
+      class:'btn btn-warning') if !@sbct_item.sbct_supplier.nil?
+    %>
+</pre>
+
+
+
+<% if !@sbct_item.prezzo.nil? and @sbct_item.sbct_supplier.nil? and !@sbct_item.sbct_budget.nil? and !@sbct_item.sbct_budget.importo_residuo.nil? and @sbct_item.sbct_budget.importo_residuo < @sbct_item.prezzo %>
+
+<%= content_tag(:h4, "Attenzione: qualora tu procedessi a assegnare la copia a un fornitore, il residuo di #{number_to_currency(@sbct_item.sbct_budget.importo_residuo)} non sarebbe sufficiente a coprire il costo di acquisto del volume, che è pari a #{number_to_currency(@sbct_item.prezzo)}") %>
+
+<% end %>

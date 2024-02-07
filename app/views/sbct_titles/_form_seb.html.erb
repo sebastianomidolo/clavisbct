@@ -1,0 +1,42 @@
+
+<%= simple_form_for(@sbct_title) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= f.input :autore, as: 'string', input_html: {size: 80} %>
+    <%= f.input :titolo, as: 'string', input_html: {size: 80} %>
+
+
+    Reparto: <%= select_tag('sbct_title[reparto]', options_for_select(SbctTitle.options_for_select(:reparto),
+			@sbct_title.reparto), include_blank:true) %>
+
+    
+    <%= f.input :manifestation_id %>
+    <%= f.input :ean, as: 'string', input_html: {size: 13} %>
+    <%= f.input :isbn, as: 'string', input_html: {size: 13} %>
+    <%= f.input :editore, as: 'string', input_html: {size: 40} %>
+    <%= f.input :anno %>
+    <%= f.input :collana, as: 'string', input_html: {size: 40} %>
+    <%= f.input :prezzo %> (per i decimali usare la virgola, esempio: 12,46)
+    <%= f.input :note, as: 'string', input_html: {size: 80} %>
+
+
+    Target lettura: <%= select_tag('sbct_title[target_lettura]', options_for_select(SbctTitle.options_for_select(:target_lettura),
+			@sbct_title.target_lettura), include_blank:true) %>
+    
+    <!--
+    <br/>Tipologia: <%= select_tag(:tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
+			params[:tipo_titolo]), include_blank:false) %>
+
+     <% f.association :clavis_libraries, collection: SbctTitle.libraries_select, hint: nil,
+	 as:'select', include_blank:true, label: 'Biblioteca'   %>
+   -->
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+

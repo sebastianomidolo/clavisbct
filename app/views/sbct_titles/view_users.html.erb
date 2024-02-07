@@ -1,0 +1,14 @@
+<%= render :partial => 'sbct_titles/homepage' %>
+
+<%= content_tag(:h4, "Utenti PAC") %>
+
+<%= link_to('<b>Aggiungi utente</b>'.html_safe, add_user_sbct_titles_path, class:'btn btn-warning') %>
+
+<%= content_tag(:div, sbct_titles_users(@users)) %>
+
+<%= content_tag(:pre, user_session[:current_sql]) %>
+
+<%=
+  title_ids=user_session[:sbct_titles_ids]
+  content_tag(:pre, title_ids)
+%> 

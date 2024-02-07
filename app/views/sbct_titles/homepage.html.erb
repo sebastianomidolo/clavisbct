@@ -1,3 +1,20 @@
 <%= render :partial => 'homepage' %>
 
 <%= render :partial => 'searchform' %>
+
+<hr/>
+<%= content_tag(:h5, link_to("[Leggere]", "https://h3ol.leggere.it/")) %>
+
+
+
+<!--
+<div id="clavisbct_include"></div>
+script
+  src="https://clavisbct.comperio.it/clavis_issues/lastin.js?library_id=3&limit=20&targetdiv=clavisbct_include"
+
+
+</script>
+-->
+
+<%= content_tag(:pre, "#{SbctTitle.count} titoli - #{SbctItem.count} copie") %>
+

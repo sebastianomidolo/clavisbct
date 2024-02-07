@@ -1,14 +1,15 @@
-<%= content_tag(:h5, %Q{Fornitori (presenti in Clavis) - per procedere con gli ordini MiC bisogna inserire in Clavis le librerie che partecipano al bando, assegnando loro un nome che inizia con #{link_to("<b>MiC22</b>".html_safe, sbct_suppliers_path(pattern:'^MiC22'))}}.html_safe) %>
+<%= render :partial => 'sbct_titles/homepage' %>
 
+<%= render :partial => 'searchform' %>
 
 <%=
-  if params[:pattern]=='^MiC22'
-   quota_fornitore = SbctSupplier.quota_fornitore('MiC22', 'MiC 2022')
-   content_tag(:h4, "Importo massimo per ciascun fornitore MiC22: #{number_to_currency(quota_fornitore)}")
-  else
-  quota_fornitore = nil
-  end
-%>
+  content_tag(:div, sbct_suppliers_list(SbctSupplier.tutti(params)))
+  %>
+ 
 
-<%= content_tag(:div, sbct_suppliers_list(@sbct_suppliers,quota_fornitore)) %>
+
+
+
+  
+
 

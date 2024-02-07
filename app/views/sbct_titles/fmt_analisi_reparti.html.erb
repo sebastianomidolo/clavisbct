@@ -1,0 +1,12 @@
+Analisi reparti Leggere
+
+<%=
+  sql = %Q{with t1 as (#{user_session[:current_sql]})\n
+    select t.reparto,t.sottoreparto,count(t1) as numtitoli from t1 join sbct_acquisti.titoli t using(id_titolo)
+    group by t.reparto,t.sottoreparto order by t.reparto,t.sottoreparto,numtitoli}
+  content_tag(:div, sbct_titles_analisi_reparti(SbctTitle.connection.execute(sql).to_a))
+%>
+
+<% content_tag(:pre, sql) %>
+
+

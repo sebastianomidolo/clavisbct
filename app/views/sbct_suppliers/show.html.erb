@@ -1,16 +1,73 @@
-<%= content_tag(:h4, "Informazioni sul fornitore \"#{@sbct_supplier.to_label}\"") %>
+<%= content_tag(:h4, "Importo impegnato: #{@sbct_supplier.importo_impegnato} su #{@sbct_supplier.quota_fornitore} - Residuo: #{@sbct_supplier.importo_residuo}") if @sbct_supplier.quota_fornitore > 0%>
+
+<%= link_to("Ordini", sbct_orders_path(supplier_id:@sbct_supplier.id,all:true), class:'btn btn-warning') %>
+<%= link_to("Modifica fornitore", edit_sbct_supplier_path(@sbct_supplier), class:'btn btn-warning') if can? :edit, SbctSupplier %>
+<%= link_to("Fatture", sbct_invoices_path(supplier_id:@sbct_supplier), class:'btn btn-warning') if can? :index, SbctInvoice %>
+<%= link_to("Ordinati e/o arrivati", orders_report_sbct_supplier_path(@sbct_supplier,
+         group_by:'title',arrivati_o_ordinati:true), class:'btn btn-warning') if can? :edit, SbctSupplier %>
+
+<%= link_to("Non ancora arrivati in csv", orders_report_sbct_supplier_path(@sbct_supplier,
+         group_by:'title',order_status:'O',format:'csv'), class:'btn btn-warning') if can? :edit, SbctSupplier %>
 
 <%= content_tag(:p, link_to("(vedi questo fornitore in Clavis)", ClavisSupplier.clavis_url(@sbct_supplier.supplier_id))) %>
 
-Budgets associati a questo fornitore:
+<%= content_tag(:p, "Specializzato in: <b>#{@sbct_supplier.tipologie}</b>".html_safe) if !@sbct_supplier.tipologie.blank? %>
+
+<% if can? :manage, SbctSupplier %>
+<% u=User.find_by_email(@sbct_supplier.clavisbct_username)
+  if u.nil? or u.roles==[]
+%>
+ <%= button_to("Attiva accesso su PAC per il fornitore", clavisbct_access_sbct_supplier_path, class:'btn btn-success') %>
+<% else %>
+<%= link_to("Disattiva accesso su PAC", clavisbct_access_sbct_supplier_path(@sbct_supplier), remote:false, method:'delete', class:'btn btn-warning') %>
+<%= "Nome utente: <b>#{@sbct_supplier.clavisbct_username}</b> / password: <b>#{flash[:notice]}</b>".html_safe if !flash[:notice].blank? %>
+<% end %>
+<% end %>
+
+<%
+  bdg = @sbct_supplier.sbct_budgets.order('label')
+  if bdg.size > 0
+%>
+<!-- Budgets associati a questo fornitore: -->
 <ol>
-<% @sbct_supplier.sbct_budgets.order('label').each do |r| %>
-<%= content_tag(:li, link_to(r.to_label, sbct_budget_path(r))) %>
+<% bdg.each do |r| %>
+<% content_tag(:li, link_to(r.to_label, sbct_budget_path(r))) %>
 <% end %>
 </ol>
+<% end %>
 
-<%= content_tag(:p, link_to("Esemplari (copie) associate a questo fornitore", sbct_items_path("sbct_item[supplier_id]":@sbct_supplier))) %>
+<%= content_tag(:span, link_to('Vedi Copie', sbct_items_path("sbct_item[supplier_id]":@sbct_supplier), class:'btn btn-warning')) %>
+<%= content_tag(:span, link_to('Vedi Titoli', sbct_titles_path(supplier_id:@sbct_supplier.id), class:'btn btn-warning')) %>
+
+<%= content_tag(:span, link_to('Vedi prestiti', loans_by_supplier_clavis_loans_path(supplier_id:@sbct_supplier), class:'btn btn-warning')) %>
+
+
+<%= content_tag(:div, sbct_supplier_report(@sbct_supplier)) %>
+
 
 
 <%= content_tag(:h4, "Distribuzione del fornitore per biblioteche") %>
 <%= content_tag(:div, sbct_libraries_per_supplier(@sbct_supplier)) %>
+
+
+
+
+<!--
+<percento questi = sbct_items_per_libraries({supplier_id:@sbct_supplier.id,order_status:'O'}) %>
+<percento if questi != '' %>
+<percento= content_tag(:p, "Non risultano ancora pervenuti:") %>
+<percento= content_tag(:div, questi) %>
+<percento end %>
+
+<percento= content_tag(:p, "Ordinati o arrivati per il fornitore #{@sbct_supplier.to_label}") %>
+<percento= content_tag(:div, sbct_items_per_libraries({supplier_id:@sbct_supplier.id,arrivati_o_ordinati:true})) %>
+
+<percento content = sbct_items_per_libraries({supplier_id:@sbct_supplier.id,arrivati_o_ordinati:true,numcopie:'m'}) %>
+<percento if content != '' %>
+ <percento= content_tag(:p, "Ordinati o arrivati per il fornitore #{@sbct_supplier.to_label} con più di una copia assegnata alla stessa biblioteca") %>
+ <percento= content_tag(:div, content) %>
+<percento end %>
+-->
+
+
+

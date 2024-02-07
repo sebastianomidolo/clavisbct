@@ -1,5 +1,36 @@
-<%= content_tag(:h4, "Acquisti SBCT - Lista d'acquisto \"#{@sbct_list.to_label}\"") %>
+<%= content_tag(:h4, "Titolo della lista: \"#{@sbct_list.to_label}\"") %>
 
+<%= content_tag(:h4, "Biblioteca associata: #{@sbct_list.clavis_library.to_label}") if !@sbct_list.clavis_library.nil? %>
+
+
+<% content_tag(:h5, "Proprietario della lista: #{@sbct_list.owner_to_label} (solo il proprietario della lista può aggiungere/togliere titoli)") if !@sbct_list.sbct_user.nil? %>
+
+<%= content_tag(:h5, "Referente: #{@sbct_list.owner_to_label}") if !@sbct_list.sbct_user.nil? %>
+
+
+<!--
+<pre>
+  Le liste sono raggruppamenti di titoli finalizzati a eventuali futuri acquisti
+</pre>
+-->
+
+<%=
+  (
+   ct = @sbct_list.conta_titoli
+   vt = @sbct_list.valore_titoli
+   pm = ct > 0 ? vt / ct : '-'
+   content_tag(:p, "Contiene #{ct} titoli pari a #{number_to_currency(vt)} (prezzo medio: #{number_to_currency(pm)})")
+  )
+%>
+
+<%=
+  link_to("Vedi i titoli di questa lista", sbct_titles_path(:id_lista=>@sbct_list), class:'btn btn-warning')
+%>
+<%=
+  link_to("Vedi i titoli (solo quelli con copie selezionate)", sbct_titles_path(:id_lista=>@sbct_list,order_status:'S'), class:'btn btn-warning')
+%>
+
+<%= content_tag(:div, sbct_list_descendants_index(@sbct_list)) %>
 
 <%
   # Usato in passato, non serve più: lo lascio se servono spunti per codice analogo
@@ -11,45 +42,69 @@
    "Operazioni di gestione non accessibili a #{current_user.email}"
   end
 %>
- <pre id='ajax_call_response'></pre>
+<!--  <pre id='ajax_call_response'></pre> -->
 
-<%= link_to('Modifica lista', edit_sbct_list_path(@sbct_list), class:'btn btn-warning') if can? :edit, SbctList %>
+<%= link_to("<b>Modifica lista</b>".html_safe, edit_sbct_list_path(@sbct_list), class:'btn btn-warning') if @sbct_list.owner_id==current_user.id or can? :edit, SbctList %>
 
  
-<%= link_to('Carica titoli da file Excel', upload_sbct_lists_path(id_lista:@sbct_list.id), class:'btn btn-warning') if can? :create, SbctTitle %>
-
 <%=
-  link_to("Vedi titoli di questa lista", sbct_titles_path(:id_lista=>@sbct_list), class:'btn btn-warning')
+  if can? :new, @sbct_list, current_user
+    link_to("<b>Nuova lista in #{@sbct_list.to_label} </b>".html_safe, new_sbct_list_path(parent_id:@sbct_list.id), class:'btn btn-warning')
+  end
+%>
+
+ 
+<%  link_to("Vedi titoli di questa lista", sbct_titles_path(:id_lista=>@sbct_list), class:'btn btn-warning') %>
+<br/>
+<%=
+  link_to("Manutenzione lista", man_sbct_list_path, class:'btn btn-warning') if can? :manage, SbctList or (current_user.role?('AcquisitionStaffMember') and @sbct_list.owned_by(current_user))
 %>
 
 <%=
-  @sbct_titles = @sbct_list.sbct_titles
-  link_to("Seleziona tra #{@sbct_titles.count} titoli", sbct_titles_path(:id_lista=>@sbct_list, selection_mode:'S'), class:'btn btn-warning')  if @sbct_titles.count > 0 and !@sbct_list.budget_label.blank?
-%>
-
-
-<%=
-  if can? :manage, SbctList and  !@sbct_list.budget_label.blank?
-    link_to("<b>Prepara l'ordine</b>".html_safe, do_order_sbct_list_path, class:'btn btn-warning')
+  if can? :new, @sbct_list, current_user and @sbct_list.descendants_index(user=nil).size==0 and @sbct_list.sbct_titles.count==0
+   link_to("Elimina la lista \"#{@sbct_list.label}\" (che è vuota)", @sbct_list, method: :delete, data: { confirm: "Confermi eliminazione della lista?" }, class:'btn btn-warning')
   end
 %>
 
 
+<% if can?(:upload, SbctList) and !@sbct_list.locked? and @sbct_list.allow_uploads %>
+<%= link_to('Carica titoli da file Excel', upload_sbct_lists_path(id_lista:@sbct_list.id,current_title_id:params[:current_title_id]), class:'btn btn-warning') %>
+<% end %>
+
+<% if can?(:import_from_clavis_shelf, SbctList) and !@sbct_list.locked? and @sbct_list.allow_uploads %>
+<%= link_to('Importa titoli da scaffale Clavis', upload_from_clavis_shelf_sbct_lists_path(id_lista:@sbct_list.id,current_title_id:params[:current_title_id]), class:'btn btn-warning') %>
+<% end %>
+
+
+<% if can?(:delete_old_uploads, SbctList) and !@sbct_list.locked? and @sbct_list.allow_uploads %>
+<%= link_to('Cancella indice dei caricamenti', delete_old_uploads_sbct_list_path(@sbct_list), method: :delete, data: { confirm: "Confermi eliminazione indice dei caricamenti?" }, class:'btn btn-warning') %>
+<% end %>
+
+
+<%
+#  if can? :manage, SbctList and  !@sbct_list.budget(1).nil?
+#    link_to("<b>Prepara l'ordine</b>".html_safe, do_order_sbct_list_path, class:'btn btn-warning')
+#  end
+%>
 
 <br/>
+<%= link_to("Budget collegato: #{@sbct_list.budget_label}", sbct_budgets_path(budget_label:@sbct_list.budget_label),target:'_blank') if !@sbct_list.budget_label.blank? %> 
 
-<%= link_to("Meta-Budget collegato: #{@sbct_list.budget_label}", sbct_budgets_path(budget_label:@sbct_list.budget_label),target:'_blank') if !@sbct_list.budget_label.blank? %> 
-
-<%= content_tag(:div, sbct_list_index(@imported_titles_index,
+<%= content_tag(:div, sbct_list_index(@sbct_list,@imported_titles_index,
     content_tag(:h4, "Indice dei caricamenti"))) %>
 
-<%= content_tag(:div, sbct_list_toc(@sbct_list, @imported_titles_toc,
-    content_tag(:h4, "Riepilogo argomenti (definire terminologia idonea)"))) %>
-
-
+<% content_tag(:div, sbct_list_toc(@sbct_list, @imported_titles_toc,
+    content_tag(:h4, "Riepilogo suddiviso per reparto/sottoreparto"))) %>
 
 <%= content_tag(:div, sbct_short_titles_list(@sbct_list.sbct_titles_con_ean_non_univoco,
     content_tag(:h4, "EAN doppi presenti nei files caricati"))) %>
 
 <%= content_tag(:div, sbct_short_titles_list(@sbct_list.sbct_titles_senza_ean,
     content_tag(:h4, "Titoli privi di EAN"))) %>
+
+<!--
+content_tag(:div, sbct_items_per_libraries({id_lista:@sbct_list.id,order_status:'S',budget_ids:31,dbg:true}, "Selezionati:")) if current_user.email=='seba'
+content_tag(:div, sbct_items_per_libraries({id_lista:@sbct_list.id,arrivati_o_ordinati:true,budget_ids:31,dbg:true}, "Ordinati/Arrivati:")) if current_user.email=='seba'
+-->
+
+

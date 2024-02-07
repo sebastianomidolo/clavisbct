@@ -1,0 +1,22 @@
+<%= content_tag(:h4, "Assegna percentuale a #{@sbct_l_budget_library.clavis_library.label}") %>
+
+
+<%= simple_form_for(@sbct_l_budget_library) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :quota, as: :string %>
+  </div>
+
+  <div class="form-inputs">
+    <%= f.input :subquota, as: :string, label:'Percentuale spendibile direttamente dalla biblioteca' %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+<%= link_to("elimina questa ripartizione (non ancora!)", @sbct_l_budget_library, method: :delete, data: { confirm: 'Are you sure?' }) %>
+
+

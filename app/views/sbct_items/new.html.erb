@@ -1,5 +1,6 @@
-<h4>Inserimento copia su titolo x</h4>
+<%= content_tag(:h5, link_to("Copie per titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
 
-<%= render 'form' %>
+<%= content_tag(:h4, "Inserimento multicopia (già presenti: #{@sbct_item.sbct_title.siglebct})") %>
+<%= render 'multicopia_form' %>
 
 

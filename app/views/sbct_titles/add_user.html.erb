@@ -1,0 +1,10 @@
+Aggiunta utente
+<%= form_tag(add_user_sbct_titles_path, method:'post') do %>
+
+<%= select_tag(:user_id, options_for_select(ClavisLibrarian.label_select,
+      params[:user_id]), prompt:'Utente da aggiungere') %>
+
+<br/>
+<%= submit_tag('Aggiungi utente') %>
+<% end %>
+

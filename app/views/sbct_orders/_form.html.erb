@@ -1,0 +1,23 @@
+
+
+<%= simple_form_for(@sbct_order) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+
+    <%= f.input :label, as: 'string', input_html: {size: 80} %>
+    <%= f.association :sbct_supplier if !@sbct_order.inviato %>
+    <%= f.association :sbct_budget %>
+    <%= f.input :order_date if !@sbct_order.inviato %>
+    <%= f.input :note, as: 'string', input_html: {size: 80} %>
+    <%= f.input :inviato %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

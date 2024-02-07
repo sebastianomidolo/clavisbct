@@ -1,0 +1,24 @@
+
+
+
+
+<%=
+  id = @sbct_user.user.clavis_librarian.default_library_id
+  content_tag(:span, "Attuale biblioteca attiva: #{ClavisLibrary.find(id).to_label}")
+  %>
+<br/>
+Scegliere la biblioteca attiva (tra quelle per le quali si è abilitati in Clavis)
+
+
+<ul>
+<% @sbct_user.user.clavis_libraries.each do |r| %>
+<%= content_tag(:li, link_to(r.label,set_default_library_sbct_user_path(library_id:r.library_id))) %>
+<% end %>
+</ul>
+
+
+<%=
+  id = @sbct_user.user.clavis_librarian.default_library_id
+  content_tag(:p, "Attuale biblioteca attiva: #{ClavisLibrary.find(id).to_label}")
+%>
+

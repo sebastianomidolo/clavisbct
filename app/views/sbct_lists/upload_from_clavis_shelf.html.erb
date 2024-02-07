@@ -1,0 +1,26 @@
+<%= content_tag(:h4, @sbct_list.id) %>
+<%= content_tag(:h4, @sbct_list.library_id) %>
+
+<% if current_user.role?('AcquisitionManager') %>
+
+
+<%= simple_form_for(@sbct_list, url:upload_from_clavis_shelf_sbct_lists_path, method:'POST') do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= hidden_field_tag :id_lista, @sbct_list.id %>
+
+    <%= f.input :from_clavis_shelf_id, collection:ClavisShelf.shelf_select(@sbct_list.library_id) %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Importa titoli da scaffale Clavis' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+
+
+<% end %>
+

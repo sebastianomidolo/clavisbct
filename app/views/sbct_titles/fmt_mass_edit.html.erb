@@ -1,0 +1,26 @@
+<%=
+ titles=SbctTitle.find_by_sql(user_session[:current_sql])
+ content_tag(:h4, "Modifica #{titles.count} titoli")
+%>
+
+<% @sbct_title = SbctTitle.new
+   @sbct_item = SbctItem.new
+%>
+
+<%= simple_form_for(@sbct_title, url:mass_edit_sbct_titles_path, :method=>'post', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+
+<%= f.input :keywords, as: 'string', input_html: {size: 80}, hint:"esempio manga (separare le parole chiave multiple con ;)" %>
+
+<%= f.input :parent_id, label:"Id titolo a cui collegare i #{titles.count} titoli sotto elencati" %>
+
+<div class="form-actions">
+  <%= f.button :submit, value: 'Applica le modifiche' , class:'btn btn-warning' %>
+</div>
+
+
+Titoli a cui verranno applicate le modifiche:
+<%= content_tag(:div, sbct_titles_list(titles)) %>
+ 
+
+<% end %>
+

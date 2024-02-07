@@ -1,0 +1,13 @@
+<%= content_tag(:h4, "Raggruppamento per #{@group_by}") %>
+
+
+
+<%
+  sql = %Q{
+  with t as(#{@sql})
+  SELECT t.#{@group_by},count(*) FROM t group by t.#{@group_by}
+     order by t.#{@group_by};
+  }
+  %>
+  
+<%= content_tag(:pre, sql) %>

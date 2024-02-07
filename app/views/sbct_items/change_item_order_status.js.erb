@@ -1,0 +1,19 @@
+<%
+title = @sbct_item.sbct_title
+
+if params[:contesto]=='ordine'
+ sbct_items = SbctItem.order_items(@sbct_item.sbct_order,{})
+ r = sbct_items.detect {|e| e.id == @sbct_item.id}
+ line_counter = params[:line_counter].to_i
+ st_opt = options_for_select(SbctOrderStatus.options_for_select(['A','N','O']), r.order_status)
+else
+ r = title.sbct_items.detect {|e| e.id == @sbct_item.id}
+ st_opt = options_for_select(SbctOrderStatus.options_for_select(['A','N','O']), r.order_status)
+end
+
+%>
+<% if params[:contesto]=='ordine' %>
+jQuery('#<%= "sbct_item_#{@sbct_item.id}"-%>').replaceWith("<%= j sbct_order_show_row(r,line_counter,st_opt)-%>");
+<% else %>
+jQuery('#<%= "sbct_item_#{@sbct_item.id}"-%>').replaceWith("<%= j sbct_libraries_row(r, st_opt) -%>");
+<% end %>

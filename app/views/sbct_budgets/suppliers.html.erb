@@ -1,0 +1,9 @@
+<%= content_tag(:h4, "Fornitori per il budget \"#{@sbct_budget.label}\"") %>
+
+
+<%= render 'suppliers_form' %>
+
+<hr/>
+<%= content_tag(:p, "Fornitori attualmente selezionati:") %>
+<%= content_tag(:div, sbct_budget_suppliers_list(@sbct_budget)) %>
+

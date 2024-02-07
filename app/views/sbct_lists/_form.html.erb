@@ -5,11 +5,61 @@
   <div class="form-inputs">
 
     <%= f.input :label, label:'Nome della lista' %>
+    <%= f.input :hidden, label:'Lista privata', as:'boolean' %>
 
+     <%= f.input :library_id, collection: SbctTitle.libraries_select, hint: nil,
+	 as:'select', include_blank:true, label: 'Biblioteca'  %>
+
+
+    
+    <%=
+      if @sbct_list.locked?
+      hint="Questa lista è chiusa. Selezionare la casella per aprirla"
+      else
+      hint="Questa lista è aperta. Selezionare la casella per chiuderla"
+      end
+      f.input :locked, label:'Stato della lista (a una lista chiusa non possono essere aggiunti o tolti titoli)', hint:hint, as:'boolean'
+      %>
+    
+    <%=
+      if @sbct_list.allow_uploads == false
+      hint="Questa lista non permette importazioni da files XLS"
+      else
+      hint="Caricamento dati da file XLS abilitato"
+      end
+      f.input :allow_uploads, label:'Caricamento dati da files XLS', hint:hint, as:'boolean'
+      %>
+
+      <%=
+      if @sbct_list.protected?
+      hint="Da questa lista non si potranno eliminare in un colpo solo tutti i titoli"
+      else
+      hint="Questa lista permette la cancellazione di tutti i titoli in essa contenuti in un colpo solo"
+      end
+      f.input :protected, label:'Protezione da cancellazioni', hint:hint, as:'boolean'
+      %>
+
+    
+    <%= f.association :parent, collection:SbctList.list_select(@sbct_list), label:'Sotto sezione della lista:' %>
+    
+<!--
+    Budget:
     <%= select_tag(:budget_label, options_for_select(
 	SbctList.clavis_label_select,
 	@sbct_list.budget_label), prompt: 'Scelta budget...') %>
+-->
 
+    <hr/>
+    <%=
+      if !@sbct_list.owner_id.nil?
+     hint="Se il quadratino ha la spunta, in questa lista verranno automaticamente inseriti i titoli con copie selezionate dal proprietario della lista"
+      f.input :default_list, label:'Lista di default', hint:hint, as:'boolean'
+      end
+      %>
+    <%= f.association :sbct_user, collection:SbctUser.user_select(), label:'Proprietario della lista:' %>
+    
+    <%= f.input :update_rules, as:'text', input_html: {rows: 3, cols: 80} %>
+    
 
   </div>
 

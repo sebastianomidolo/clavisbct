@@ -1,0 +1,55 @@
+# coding: utf-8
+
+<table class='table'>
+  <tr>
+    <%= content_tag(:td, image_tag("https://covers.biblioteche.cloud/covers/#{@sbct_title.isbn}"), class:'col-md-3') %>
+    <%=
+      buttons = []
+      if !@current_budget.nil? and !@current_budget.clavis_libraries.first.nil?
+        target_library = @current_budget.clavis_libraries.first
+        if target_library.id==1
+          if !@current_order.nil?
+            copie=@sbct_title.sbct_items.collect{|i| i if i.order_status=='S' and i.supplier_id==@current_order.supplier_id and i.budget_id==@current_budget.id}.compact
+            buttons << link_to("<b>Aggiungi copie</b>".html_safe, new_sbct_item_path(id_titolo:@sbct_title.id), class:'btn btn-warning') if can? :new, SbctItem
+            if copie.size > 0
+	      buttons << link_to("<b>Aggiungi a #{@current_order.to_label} #{copie.size} copie selezionate</b>".html_safe, add_items_to_order_sbct_title_path(id_titolo:@sbct_title.id), class:'btn btn-warning')
+              if current_user.email=='seba'
+                buttons << sbct_order_importi_disponibili(@current_order,copie)
+              end
+            end
+          end
+        else
+          buttons << link_to("<b>Aggiungi copia per #{target_library.siglabct} (#{target_library.shortlabel.strip})</b> (#{@current_budget.label})".html_safe,
+	        insert_item_sbct_title_path(budget_id:@current_budget.id), class:'btn btn-warning') if can? :new, SbctItem
+	end
+      end
+
+      if can? :manage, SbctEvent and user_session[:events_mode]=='on' and !user_session[:sbct_event].nil?
+         @sbct_event = SbctEvent.find(user_session[:sbct_event])
+         buttons << (render partial:'l_events_form', locals: {title:@sbct_title})
+      else		     
+       if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian') and !user_session[:current_library].nil?
+         l = ClavisLibrary.find(user_session[:current_library])
+         buttons << link_to("<b>Aggiungi copia per #{l.siglabct} (#{l.shortlabel.strip})</b>".html_safe,
+		    insert_item_sbct_title_path, class:'btn btn-warning') if can? :new, SbctItem 
+         buttons << sbct_budget_qb_importo_disponibile(@sbct_title.find_best_budget(l.id), l.library_id)
+       end
+      end
+      @sbct_title.sbct_events.each do |e|
+        buttons << "Copie richieste per #{link_to(e.to_label,sbct_event_path(e))} (#{e.sbct_event_type.to_label})"
+      end
+
+         if @sbct_title.vrfy_dup > 1
+	   lnk = link_to('verificare', sbct_titles_path("sbct_title[ean]":@sbct_title.ean), class:'btn btn-warning')
+	   buttons << content_tag(:span, "Titolo con ean #{@sbct_title.ean} duplicato: #{lnk}".html_safe, class:'alert alert-danger')
+         end
+
+        #  buttons << %Q{Risposta da dare agli utenti se c'è almeno una copia a scaffale:<p style='font-size:10px;padding:20px'>&lt;a href="https://bct.comperio.it/opac/detail/view/sbct:catalog:#{@sbct_title.manifestation_id}"&gt;Presente nel catalogo delle BCT&lt;/a&gt;</p>} if !user_session[:pproposal_mode].nil? and !@sbct_title.manifestation_id.nil?
+		   
+      # buttons << render(partial:'order_details') if current_user.email=='seba'
+      content_tag(:td, buttons.join('<br/>').html_safe, class:'col-md-9')
+    %>
+  </tr>
+
+  
+</table>

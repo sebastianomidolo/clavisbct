@@ -1,0 +1,13 @@
+Analisi liste
+
+<%=
+  sql = %Q{with t1 as (#{user_session[:current_sql]})\n
+  select l.label,l.id_lista,count(*) from t1 join sbct_acquisti.l_titoli_liste tl using(id_titolo)
+  join sbct_acquisti.liste l using(id_lista) where l.hidden is false and l.label != ''
+  group by l.label,l.id_lista order by count(*) desc, l.label}
+  content_tag(:div, sbct_titles_analisi_liste(SbctTitle.connection.execute(sql).to_a))
+%>
+
+<% content_tag(:pre, sql) %>
+
+

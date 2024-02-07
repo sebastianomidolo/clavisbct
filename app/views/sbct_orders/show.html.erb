@@ -1,0 +1,65 @@
+<%= content_tag(:h4, "#{@sbct_order.to_label}, importo: #{number_to_currency(@prezzo_totale)}") %>
+<% content_tag(:h4, "Importo impegnato: #{number_to_currency(@sbct_supplier.importo_impegnato)} su #{number_to_currency(@sbct_supplier.quota_fornitore)} - Residuo: #{number_to_currency(@sbct_supplier.importo_residuo)}") %>
+
+<%= content_tag(:p, "Budget: #{link_to(@sbct_order.sbct_budget.to_label, sbct_budget_path(@sbct_order.sbct_budget.id))}".html_safe) if !@sbct_order.sbct_budget.nil? %>
+<%= content_tag(:p, "Stato dell'ordine: #{@sbct_order.inviato? ? 'Inviato' : 'Da inviare'}") %>
+<%= content_tag(:p, "Note: #{@sbct_order.note}") if !@sbct_order.note.blank? %>
+
+<%=
+  link_to("Modifica dati generali dell'ordine", edit_sbct_order_path(@sbct_order), class:'btn btn-warning') if can? :edit,SbctOrder
+%>
+
+
+<% if @sbct_items.size == 0 and can? :destroy,SbctOrder %>
+<%= link_to("<b>Elimina ordine</b>".html_safe, @sbct_order, method: :delete, data: { confirm: "Confermi eliminazione ordine #{@sbct_order.to_label}?"},class:'btn btn-warning') %>
+Questo ordine non ha ancora titoli associati
+<% else %>
+<%= content_tag(:h5, link_to('Distribuzione per biblioteche', '#distribuzione'), class:'label label-info') if current_user.role? 'AcquisitionManager' %>
+<%= content_tag(:span, link_to('Vedi Copie', sbct_items_path("sbct_item[order_id]":@sbct_order), class:'btn btn-warning')) %>
+<%= content_tag(:span, link_to('Vedi Titoli', sbct_titles_path(order_id:@sbct_order.id), class:'btn btn-warning')) %>
+
+
+
+<br/>
+<%=
+  items_da_verificare = SbctItem.find_by_sql(@sbct_order.discount_check(:list))
+  content_tag(:div, sbct_items_short_list(items_da_verificare)) if items_da_verificare.size > 0
+%>
+<%=
+  link_to("Ricalcola lo sconto su #{items_da_verificare.size} copie", vrfy_sbct_order_path(@sbct_order), class:'btn btn-warning') if items_da_verificare.size > 0 and can? :edit,SbctOrder %>
+
+<%=
+  link_to('Scarica CSV', sbct_order_path(@sbct_order, group_by:'title',format:'csv'), class:'btn btn-warning')
+%>
+<%=
+  link_to('Scarica XLS', sbct_order_path(@sbct_order, group_by:'title',format:'xls'), class:'btn btn-warning')
+%>
+
+
+<%= link_to("Stampa Ordinati", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_id:@sbct_order.id,order_status:'O',group_by:'title',order_by:'bigliettini'), class:'btn btn-warning') %>
+<% link_to("Stampa Arrivati oggi (solo quest'ordine)", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_id:@sbct_order.id,order_status:'A',data_arrivo:Time.now.strftime("%Y-%m-%d"),group_by:'title'), class:'btn btn-warning') %>
+<% link_to("Stampa Arrivati oggi (tutti gli ordini)", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_status:'A',data_arrivo:Time.now.strftime("%Y-%m-%d"),group_by:'title'), class:'btn btn-warning') %>
+<%= link_to("Stampa Arrivati", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_id:@sbct_order.id,order_status:'A',group_by:'title',order_by:'bigliettini'), class:'btn btn-warning') %>
+<%= link_to("Stampa (note fornitore)", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_id:@sbct_order.id,note_fornitore:'notnull',group_by:'title',order_by:'bigliettini'), class:'btn btn-warning') %>
+
+
+<%=
+   if params[:group_by]=='title'
+    content_tag(:div, sbct_order_show_group_by_title(@sbct_order,@sbct_items))
+   else
+    content_tag(:div, sbct_order_show(@sbct_order,@sbct_items))
+   end
+%>
+
+<% content_tag(:pre, @sql) %>
+
+<% if current_user.role? 'AcquisitionManager' %>
+<a name='distribuzione'></a>
+<p class='label label-info'>Distribuzione per biblioteche (ordinati o arrivati):
+  [utilizzabile solo da AcquisitionManager]
+</p>
+<%= content_tag(:div, sbct_items_distribuzione_per_biblioteche({order_id:@sbct_order.id,ordinati_o_arrivati:true,contesto:'ordine'})) %>
+<% end %>
+
+<% end %>
+

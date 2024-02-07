@@ -1,5 +1,8 @@
 <%= content_tag(:div, sbct_item_orders_index(@orders)) %>
 
+<%= quota_fornitore = SbctSupplier.quota_fornitore('MiC22', 'MiC 2022')
+  content_tag(:h4, "Importo totale fattura MiC22: #{number_to_currency(@prezzo_totale)} su #{number_to_currency(quota_fornitore)}") if !@sbct_supplier.nil? and @sbct_supplier.supplier_name =~ /^MiC/
+%>
 <%=
   if @orders.size==1
    if params[:group_by]=='title'

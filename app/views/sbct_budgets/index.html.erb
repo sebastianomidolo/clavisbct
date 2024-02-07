@@ -1,5 +1,25 @@
+<%= render :partial => 'sbct_titles/homepage' %>
+
 <%= content_tag(:h4, "Impegni di spesa (budgets)") %>
+
+<%=
+  link_to("<b>Inserisci budget</b>".html_safe, new_sbct_budget_path, class:'btn btn-warning')  if can? :new, SbctBudget
+%>
+
+<%= link_to("[Chiusi]", sbct_budgets_path(locked:true)) %>
+<%= link_to("[Aperti]", sbct_budgets_path) %>
+<%= link_to("[Chiusi MiC]", sbct_budgets_path(locked:true,supplier:'null')) %>
+<%= link_to("[Aperti MiC]", sbct_budgets_path(supplier:'null')) %>
 
 <%= content_tag(:div, sbct_budgets_list(@sbct_budgets)) %>
 
+<!-- Con copie in stato "Selezionato":
+
+  prm=params.merge({selected:true})
+  @sbct_budgets = SbctBudget.tutti(prm,current_user)
+  content_tag(:div, sbct_budgets_list(@sbct_budgets,prm))
+
+-->
+  
+<% link_to('<b>Assegna fornitori annullando tutte le precedenti assegnazioni (sperimentale)</b>'.html_safe, suppliers_assign_sbct_budgets_path, class:'btn btn-warning') if (can? :manage, SbctBudget) and params[:locked].blank? and params[:supplier]=='null' %>
 

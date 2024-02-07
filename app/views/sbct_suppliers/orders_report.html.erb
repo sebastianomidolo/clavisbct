@@ -1,0 +1,16 @@
+<%= content_tag(:h5, "Riepilogo copie ordinate al fornitore #{@sbct_supplier.to_label} <b>esclusi i non disponibili</b>".html_safe) %>
+
+
+<%=
+  link_to('Scarica CSV', orders_report_sbct_supplier_path(@sbct_supplier, group_by:'title',format:'csv',arrivati_o_ordinati:true), class:'btn btn-warning')
+%>
+
+<%=
+   if params[:group_by]=='title'
+     content_tag(:div, sbct_order_show_group_by_title(@sbct_order,@sbct_items))
+   else
+     content_tag(:div, sbct_order_show(@sbct_order,@sbct_items))
+   end
+%>
+
+

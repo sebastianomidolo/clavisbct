@@ -1,0 +1,13 @@
+<% return 'locked' if @sbct_budget.locked? %>
+
+<%= content_tag(:div, sbct_budget_libraries(@sbct_budget,current_user)) %>
+
+<%= form_tag(add_library_sbct_l_budget_libraries_path, method:'post') do %>
+
+<%= hidden_field_tag :budget_id, @sbct_budget.id %>
+<%= select_tag(:clavis_library_id, options_for_select(SbctLBudgetLibrary.label_select(@sbct_budget.budget_id),
+      params[:clavis_library_id])) %>
+
+<br/>
+<%= submit_tag('Aggiungi biblioteca') %>
+<% end %>

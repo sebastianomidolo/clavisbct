@@ -1,25 +1,45 @@
-<%= content_tag(:h4, "Informazioni sul budget \"#{@sbct_budget.label}\"") %>
-
-<%= content_tag(:p, link_to("(vedi questo budget in Clavis)", ClavisBudget.clavis_url(@sbct_budget.clavis_budget_id))) %>
-
-<%= content_tag(:div, sbct_budget_report(@sbct_budget)) %>
-
 <%=
-  if @sbct_budget.sbct_supplier.nil?
-    content_tag(:p, "Questo budget non ha un fornitore associato predefinito")
-  else
-    content_tag(:p, "Fornitore associato: #{link_to(@sbct_budget.supplier_info,sbct_supplier_path(@sbct_budget.sbct_supplier))}".html_safe)
+  if !user_session[:sbct_budgets_ids].nil?
+    content_tag(:div, sbct_budgets_browse(@sbct_budget,user_session[:sbct_budgets_ids])) if user_session[:sbct_budgets_ids].size>1
   end
 %>
 
-<%= link_to('Modifica budget', edit_sbct_budget_path(@sbct_budget)) if can? :edit, SbctBudget %>
+<%= content_tag(:h4, "Informazioni sul budget \"#{@sbct_budget.label}\" - importo: #{number_to_currency(@sbct_budget.total_amount)}") %>
 
-<%
-  link_to('<b>Assegna fornitori (non è vero, non li assegna: ma potrebbe)</b>'.html_safe, sbct_budgets_path, class:'btn btn-warning') if (@sbct_budget.sbct_supplier.nil?) && (can? :manage, SbctBudget)
-%>
+<%= content_tag(:h4, "Reparto associato: #{@sbct_budget.reparto}") if !@sbct_budget.reparto.blank? %>
+
+<%= content_tag(:p, link_to("(vedi questo budget in Clavis)", ClavisBudget.clavis_url(@sbct_budget.clavis_budget_id))) %>
+
+<%=
+  if @sbct_budget.clavis_budget.library_id!=1
+    content_tag(:p, "#{@sbct_budget.conta_titoli_in_comune_con_altri_budget} titoli in comune con altri budget che iniziano per #{@sbct_budget.clavis_budget.budget_title}")
+  end
+ %>
+
+<%= content_tag(:div, sbct_budget_report(@sbct_budget)) %>
+
+<% if @sbct_budget.sbct_supplier.nil? %>
+ <% content_tag(:div, sbct_budget_suppliers_list(@sbct_budget)) %>
+ <%= link_to('Seleziona i fornitori tra i quali ripartire il budget', suppliers_sbct_budget_path(@sbct_budget), class:'btn btn-warning') %>
+ <%= content_tag(:p, "Nota: questo budget non permette l'assegnazione automatica dei fornitori") if @sbct_budget.auto_assign_suppliers == false %>
+<% else %>
+ <%= content_tag(:p, "Unico fornitore associato: #{link_to(@sbct_budget.supplier_info,sbct_supplier_path(@sbct_budget.sbct_supplier))}".html_safe) %>
+<% end %>
+
+<!-- <h6>(Inserire anche ordini in preparazione)</h6> -->
+
+<br/>
+<%= link_to('Modifica budget', edit_sbct_budget_path(@sbct_budget), class:'btn btn-warning') if can? :edit, SbctBudget %>
 
 
+<% if can? :edit, @sbct_budget and not @sbct_budget.locked? %>
+<%= link_to('Modifica ripartizione budget', sbct_l_budget_libraries_path(budget_id:@sbct_budget.id), class:'btn btn-warning') %>
+<% end %>
 
+<%= content_tag(:span, link_to('Vedi Copie', sbct_items_path("sbct_item[budget_id]":@sbct_budget), class:'btn btn-warning')) %>
+<%= content_tag(:span, link_to('Vedi Titoli', sbct_titles_path(budget_id:@sbct_budget.id), class:'btn btn-warning')) %>
+
+<%= content_tag(:span, link_to('Elimina budget (non ha copie collegate)', @sbct_budget, method: :delete, data: { confirm: "Confermi eliminazione del budget?" }, class:'btn btn-warning')) if @sbct_budget.sbct_items_count==0 and can? :manage, @sbct_budget %>
 
 
 <pre>
@@ -31,9 +51,23 @@
 
 <%= content_tag(:div, sbct_budget_show(@sbct_budget)) %>
 
+
+<% if @sbct_budget.sbct_supplier.nil? %>
 <%= content_tag(:h4, "Distribuzione del budget per fornitore") %>
 <%= content_tag(:div, sbct_suppliers_per_budget(@sbct_budget)) %>
+<% end %>
+
+<% content_tag(:h4, "Liste d'acquisto associate a questo budget") %>
+<% content_tag(:div, sbct_liste_per_budget(@sbct_budget)) %>
+
+<!-- Non usato: content_tag(:div, sbct_items_per_libraries({budget_ids:@sbct_budget.id,arrivati_o_ordinati:true})) -->
 
 
-<%= content_tag(:h4, "Liste associate a questo budget") %>
-<%= content_tag(:div, sbct_liste_per_budget(@sbct_budget)) %>
+<%= content_tag(:div, sbct_budget_items(@sbct_budget)) %>
+
+
+<!--
+Scelti da Sedi (order_status O, A, S)
+content_tag(:div, sbct_items_per_libraries({budget_ids:@sbct_budget.id,qb:true}))
+-->
+

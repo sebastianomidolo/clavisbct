@@ -1,0 +1,5 @@
+<%=
+  link_to('Ricalcola lo sconto', vrfy_sbct_order_path(@sbct_order,recalc:true), class:'btn btn-warning')
+%>
+
+<%= content_tag(:div, sbct_items_short_list(@sbct_items)) %>

@@ -1,0 +1,55 @@
+<%
+  parms=user_session[:current_params]
+%>
+
+Seleziona automatica delle copie
+
+<% @sbct_item = SbctItem.new
+   if !params[:library_id].blank?
+     @library_id = @sbct_item.clavis_library = ClavisLibrary.find(params[:library_id])
+   end
+ %>
+
+<%= simple_form_for(@sbct_item, url:add_sbct_items_path, :method=>'post', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+<%= f.error_notification %>
+
+    <%= hidden_field_tag('id_lista', parms[:id_lista]) %>
+<div class="form-inputs">
+    <%=
+      label = 'Biblioteca a cui attribuire le copie per i titoli elencati sotto'
+      if !parms[:id_lista].blank? and @library_id.nil?
+       @sbct_list = SbctList.find(parms[:id_lista])
+       @library_id = @sbct_list.library_id if !@sbct_list.library_id.nil?
+       @sbct_item.clavis_library = ClavisLibrary.find(@library_id) if !@library_id.nil?
+      end
+      f.association :clavis_library, collection: SbctTitle.libraries_select(current_user), hint: nil,
+      as:'select', :input_html =>
+      {:onchange => "document.location='https://clavisbct.comperio.it/pac?fmt=autoseleziona_copie&library_id=' + sbct_item_library_id.value"}, include_blank:true, label: label
+    %>
+    <% if !@library_id.nil? %>
+    <%= f.association :sbct_budget,
+	label:'Budget', include_blank:false, collection:SbctBudget.label_select({mybudgets:true,library_id:@sbct_item.clavis_library.id},current_user) %>
+    <% end %>
+		    
+
+</div>
+
+<div class="form-actions">
+  <%= f.button :submit, value: 'Inserisci copie selezionate (ATTENZIONE PERCHE ADESSO FUNZIONA)' , class:'btn btn-warning' if !@library_id.nil? %>
+</div>
+
+
+
+<%=
+  if @library_id.nil?
+    r = 'Scegli una biblioteca'
+    content_tag(:pre,r)
+  else
+    sql = SbctItem.auto_insert(user_session[:current_sql],@sbct_item,user_session[:current_params])
+    titles=SbctTitle.find_by_sql(sql)
+    content_tag(:div, sbct_titles_list(titles))
+  end
+%>
+ 
+
+<% end %>

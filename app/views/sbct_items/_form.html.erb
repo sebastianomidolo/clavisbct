@@ -4,13 +4,62 @@
 
   <div class="form-inputs">
 
+    
+
+    
     <%= f.input :id_titolo, as: 'hidden' %>
-    <%= f.association :clavis_library, include_blank: false %>
-	
-    <%= f.input :numcopie, label:'Numero copie' %>
-    <%= f.association :sbct_supplier, label:'Fornitore' %>
-    <%= f.association :sbct_budget, label:'Budget' %>
-    <%= f.association :sbct_order_status, label:"Stato dell'ordine" %>
+
+    <%= f.association :clavis_library, collection: SbctTitle.libraries_select, hint: 'Biblioteca',
+	 as:'select', include_blank:true %>
+
+       Destinato alla biblioteca
+  
+    <%= select_tag('sbct_item[home_library_id]', options_for_select(SbctTitle.libraries_select, @sbct_item.home_library_id), include_blank:true) %>
+ x1    
+    <%= f.input :numcopie, label:'Numero copie', hint:'è preferibile lasciare a 1 il numero di copie, inserendo invece, all\'occorrenza, copie multiple per la stessa biblioteca' %>
+
+
+    <%
+      f.association :sbct_supplier, label:'Fornitore', collection:SbctSupplier.label_select(params,current_user)
+      "Fornitore attuale #{@sbct_item.supplier_id} "
+     %>
+
+
+    
+    <% if !@sbct_item.budget_id.nil? %>
+     <%=
+       if SbctBudget.label_select(params,current_user).collect{|e| e.last.to_i==@sbct_item.budget_id ? true : nil}.compact.size == 0
+        f.input :budget_id, as: 'hidden'
+       else
+        f.association :sbct_budget, label:'Budget', collection:SbctBudget.label_select(params,current_user)
+       end
+     %>
+    <% else %>
+    <%= f.association :sbct_budget, label:'Budget', collection:SbctBudget.label_select(params,current_user) %>
+    <% end %>
+
+    <%=
+      if @sbct_item.id.nil?
+        status = SbctOrderStatus.options_for_select(['S'])
+      else
+        status = SbctOrderStatus.options_for_select(['A','N','S'])
+      end
+
+      f.association :sbct_order_status, label:"Stato", collection:status
+     %>
+    <%= f.input :note_interne, as: 'string', label:'Note interne (non vengono comunicate al fornitore)' %>
+    <%= f.input :note_fornitore, as: 'string',  label:'Note per il fornitore' %>
+
+    <%=
+      (
+       ps=@sbct_item.prezzo_con_sconto_applicato
+       f.input :prezzo, label:"Prezzo ( listino: #{@sbct_item.sbct_title.prezzo.to_s.sub('.',',')} - scontato: #{ps.to_s.sub('.',',')} )"  if SbctTitle.user_roles(current_user).include?('AcquisitionManager')
+
+      )
+     %>
+
+
+    
 
   </div>
 

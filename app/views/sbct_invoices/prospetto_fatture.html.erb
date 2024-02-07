@@ -1,0 +1,15 @@
+
+<%= content_tag(:h4, "Totale da fatturare: #{number_to_currency(@sbct_supplier.quota_fornitore)} - Residuo: #{number_to_currency(@sbct_supplier.importo_residuo)}") %>
+
+<pre>
+  <%= "Id fornitore: #{@sbct_supplier.id}" %>
+</pre>
+
+Ordinati o arrivati:
+<%= content_tag(:div, sbct_items_per_libraries({supplier_id:@sbct_supplier.id,arrivati_o_ordinati:true})) %>
+
+<% content = sbct_items_per_libraries({supplier_id:@sbct_supplier.id,arrivati_o_ordinati:true,numcopie:'m'}) %>
+<% if content != '' %>
+ <%= content_tag(:p, "Ordinati o arrivati per il fornitore #{@sbct_supplier.to_label} con più di una copia assegnata alla stessa biblioteca") %>
+ <%= content_tag(:div, content) %>
+<% end %>

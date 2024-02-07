@@ -1,2 +1,12 @@
-<%= content_tag(:div, sbct_invoices_ddt(@sbct_invoice.documenti_di_trasporto)) %>
-<%= content_tag(:div, sbct_invoice_items_list(@sbct_invoice_items.order('autore,titolo'))) %>
+
+<%= content_tag(:h5, "#{@sbct_invoice.to_label}") %>
+<pre>
+  Numero copie: <%= @sbct_invoice.sbct_items.size %>
+  Arrotondamento: <%= number_to_currency(@sbct_invoice.rounding) %>
+</pre>
+
+<%= link_to('Modifica fattura', edit_sbct_invoice_path(@sbct_invoice), class:'btn btn-warning') if can? :edit, SbctInvoice %>
+
+
+<%= content_tag(:div, sbct_invoice_items_list(@sbct_items)) %>
+

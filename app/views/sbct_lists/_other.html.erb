@@ -1,0 +1,17 @@
+<%=
+  if @sbct_list.allow_uploads == false
+   hint="Questa lista non permette importazioni da files XLS"
+  else
+   hint="Caricamento dati da file XLS abilitato"
+  end
+  f.input :allow_uploads, label:'Caricamento dati da files XLS', hint:hint, as:'boolean'
+%>
+
+<%=
+  if @sbct_list.protected?
+   hint="Da questa lista non si potranno eliminare in un colpo solo tutti i titoli"
+  else
+   hint="Questa lista permette la cancellazione di tutti i titoli in essa contenuti in un colpo solo"
+  end
+  f.input :protected, label:'Protezione da cancellazioni', hint:hint, as:'boolean'
+%>

@@ -1,0 +1,29 @@
+  
+<%= simple_form_for(@supplier, :method=>'get', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+  
+ <%= f.error_notification %>
+   <%= f.input :multibudget, as:'select', label:'Fornitore tipo Mic', collection:SbctSupplier.multibudget_select, input_html:{onchange:'submit()'} %>
+
+   <%= f.input :supplier_name, as: 'string',
+     hint:'pattern fornitore, esempio: MiC22', label: 'Nome', input_html: {size: 24} %>
+
+
+ 
+ <% f.input :deposito_legale %>
+ <%= f.button :submit, value: 'Cerca' , class:'btn btn-success'%>
+
+
+  <% end %>
+
+
+<%= javascript_tag("jQuery('#sbct_supplier_supplier_name').select().focus()") %>
+
+<%= link_to("[Importa fornitori Deposito Legale]", sbct_suppliers_path(update_from_clavis:'y')) %>
+<%=
+  if !@supplier.supplier_name.nil?
+  sname=@supplier.supplier_name
+    if sname.size >= 3
+      link_to("[Importa fornitori con nome che inizia per #{sname}]", sbct_suppliers_path(supplier_insert_from_clavis:sname))
+    end
+  end
+%>

@@ -1,0 +1,58 @@
+<%= content_tag(:h4, "Titoli con ean #{a.isbn}") %>
+
+<%
+  tit_1 = SbctTitle.find(a.id)
+  tit_2 = SbctTitle.find(b.id)
+  l_1 = tit_1.sbct_lists.size
+  l_2 = tit_2.sbct_lists.size
+%>
+
+<table class='table table-condensed'>
+
+
+  <tr>
+    <% if l_1 == 0 %>
+     <%= content_tag(:td, "<b>Titolo #{tit_1.id}".html_safe, class:'col-md-6') %>
+    <% else %>
+     <%= content_tag(:td, "<b>Titolo #{tit_1.id}</b> presente in #{l_1} liste".html_safe, class:'col-md-6') %>
+    <% end %>
+    <% if l_2 == 0 %>
+     <%= content_tag(:td, "<b>Titolo #{tit_2.id}".html_safe, class:'col-md-6') %>
+    <% else %>
+     <%= content_tag(:td, "<b>Titolo #{tit_2.id}</b> presente in #{l_2} liste".html_safe, class:'col-md-6') %>
+    <% end %>
+  </tr>
+  <% if l_1 == 0 and  l_2 == 0 %>
+  <tr>
+    <%= content_tag(:td, link_to("<b>Sposta tutte le copie qui e cancella il titolo a destra</b>".html_safe, move_items_to_other_title_sbct_title_path(a,target_title:b.id),
+	 method: :delete, data: { confirm: 'Confermi spostamento?'}, class:'btn btn-warning'), class:'col-md-6') %>
+    <%= content_tag(:td, link_to("<b>Sposta tutte le copie qui e cancella il titolo a sinistra</b>".html_safe, move_items_to_other_title_sbct_title_path(b,target_title:a.id),
+	method: :delete, data: { confirm: 'Confermi spostamento?'}, class:'btn btn-warning'), class:'col-md-6') %>
+  </tr>
+  <% else %>
+  <tr>
+    <%= content_tag(:td, "---") %>
+  </tr>
+  <tr>
+    <%= content_tag(:td, link_to("<b>Sposta tutte le copie qui e cancella il titolo a destra</b>".html_safe, move_items_to_other_title_sbct_title_path(a,target_title:b.id),
+	 method: :delete, data: { confirm: 'Confermi spostamento?'}, class:'btn btn-warning'), class:'col-md-6') %>
+    <%= content_tag(:td, link_to("<b>Sposta tutte le copie qui e cancella il titolo a sinistra</b>".html_safe, move_items_to_other_title_sbct_title_path(b,target_title:a.id),
+	method: :delete, data: { confirm: 'Confermi spostamento?'}, class:'btn btn-warning'), class:'col-md-6') %>
+  </tr>
+
+  
+  <% end %>
+  <tr>
+    <%= content_tag(:td, sbct_titles_quick_view(a), class:'col-md-6') %>
+    <%= content_tag(:td, sbct_titles_quick_view(b), class:'col-md-6') %>
+  </tr>
+
+
+
+
+  
+</table>
+
+
+
+

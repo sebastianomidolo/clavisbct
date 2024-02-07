@@ -1,40 +1,66 @@
 <%=
+  if !user_session[:sbct_titles_ids].nil?
+    content_tag(:div, sbct_titles_browse(@sbct_title,user_session[:sbct_titles_ids])) if user_session[:sbct_titles_ids].size>1
+  end
+%>
+<!-- lista corrente: <%= content_tag(:div, user_session[:current_list]) %> -->
+
+<%=
   res = []
   @sbct_title.sbct_lists.each do |l|
     # res << content_tag(:span, "#{link_to(l.to_label, sbct_titles_path(id_lista:l.id, budget_id:params[:budget_id], selection_mode:params[:selection_mode]))}".html_safe)
-    res << content_tag(:span, "#{link_to(l.to_label, sbct_list_path(l.id))}".html_safe)
+    res << content_tag(:span, "#{link_to(l.to_label, sbct_list_path(l.id,current_title_id:@sbct_title))}".html_safe) if !l.hidden or(l.owner_id==current_user.id)
   end
-  content_tag(:h5, "Titolo #{@sbct_title.id} - presente in: #{res.join(', ').html_safe}".html_safe)
- %>
+  if res.size==0
+    content_tag(:h5, "IdTitolo #{@sbct_title.id}")
+  else
+    txt = res.size==1 ? 'nella lista' : 'nelle liste:'
+    content_tag(:h5, "Titolo #{@sbct_title.id} presente #{txt} #{res.join(', ').html_safe}".html_safe)
+  end
+%>
 
-<%= content_tag(:div, sbct_titles_show_title(@sbct_title)) %>
+<%= render(partial:'order_details') if user_session[:delivery_notes_mode]==true %>
 
-<hr/>
-<%= content_tag(:p, clavis_manifestation_opac_preview(@sbct_title.manifestation_id)) %>
+<%= content_tag(:tr, content_tag(:td, sbct_libraries(@sbct_title))) if user_session[:delivery_notes_mode]==true %>
 
-<% if !@cr_title.nil? %>
-<%= content_tag(:h5, "Record originale da <i>FRapCPal</i>:".html_safe, title:'Sistema Centro Rete Francesco Rapillo - Cosimo Palumbo') %>
-<%= content_tag(:div, sbct_titles_db_originale(@cr_title)) %>
+<% if @sbct_title.is_parent? %>
+ <%= content_tag(:div, sbct_titles_show_parent_title(@sbct_title)) %>
+<% else %>
+ <%= render partial:'show_panel' %> 
+ <%= content_tag(:div, sbct_titles_show_title(@sbct_title)) %>
 <% end %>
 
-<%=
+<hr/>
+<% content_tag(:p, clavis_manifestation_opac_preview(@sbct_title.manifestation_id)) %>
 
+<% if !@cr_title.nil? and can? :index, SbctTitle %>
+<% content_tag(:h5, "Record originale da <i>PalRap</i>:".html_safe, title:'Sistema Centro Rete Cosimo Palumbo - Francesco Rapillo') %>
+<% content_tag(:div, sbct_titles_db_originale(@cr_title)) if !@sbct_title.utente.blank? %>
+<% end %>
+
+<% if params[:norecurs].blank? %>
+<%
   if @sbct_title.ean.blank?
     query = @sbct_title.titolo
   else
     query = @sbct_title.ean
   end
-  link_to(content_tag(:b, "Ricerca automatica per: #{query}"), "https://clavisbct.comperio.it/sbct_titles?sbct_title%5Btitolo%5D=#{query}", target:'_blank')
+  # link_to(content_tag(:b, "Ricerca automatica per: #{query}"), "https://clavisbct.comperio.it/sbct_titles?sbct_title%5Btitolo%5D=#{query}", target:'_blank')
 %>
 
-<%=
+<%
   content_tag(:iframe, '', src: %Q{https://clavisbct.comperio.it/sbct_titles?dataonly=true&sbct_title%5Btitolo%5D=#{query}},
   width: 1200, height: 1200, frameborder: 1)
 %>
+<% end %>
 
+<%= render(partial:'order_details') if user_session[:delivery_notes_mode].nil? %>
 
-<hr/>
 <%=
-  dt=sbct_title_clavis_patrons(@sbct_title)
-  "Lettori che hanno richiesto questo titolo (#{@sbct_title.titolo}):#{content_tag(:div, dt)}".html_safe if !dt.blank?
+  if !user_session[:sbct_titles_ids].nil?
+    content_tag(:div, sbct_titles_browse(@sbct_title,user_session[:sbct_titles_ids])) if user_session[:sbct_titles_ids].size>1
+  end
 %>
+ <% if current_user.role?('AcquisitionManager') %>
+ <% end %>
+ <%= content_tag(:pre, sbct_titles_info_deleted(@sbct_title)) %>

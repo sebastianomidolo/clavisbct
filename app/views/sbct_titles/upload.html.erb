@@ -1,0 +1,9 @@
+<%= content_tag(:h4, "Caricamento Report Logistico Leggere") %>
+
+<%= content_tag(:pre, "Totale titoli attualmente presenti in PAC: #{SbctTitle.count}") %>
+<%= content_tag(:pre, "Totale copie in PAC: #{SbctItem.count}") %>
+
+<%= form_tag({action: :upload}, multipart: true) do %>
+ <br/><%= file_field_tag 'filename' %>
+  <%= submit_tag 'Carica' %>
+<% end %>

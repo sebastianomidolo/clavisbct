@@ -1,10 +1,25 @@
-<%= content_tag(:h4, "Caricamento file Excel per la lista #{@sbct_list.to_label}") %>
-
+<% if params[:current_title_id].blank? %>
+ <%= content_tag(:h4, "Caricamento file XLS per la lista #{@sbct_list.to_label}") %>
+ <%= content_tag(:pre, "Totale titoli attualmente presenti in PAC: #{SbctTitle.count}") %>
+ <%= content_tag(:p, "Attenzione: verranno inseriti tutti i titoli presenti nel file XLS che state per caricare", class:'label label-warning') %>
+ <%= content_tag(:p, "Eventuali titoli già presenti in PAC non verranno duplicati, ma fusi con i titoli preesistenti") %>
+ <% else %>
+ <%= content_tag(:h4, "Caricamento file XLS per il titolo con ean #{@sbct_title.ean}:<br/> #{@sbct_title.titolo}".html_safe) %>
+ <%= content_tag(:td, image_tag("https://covers.biblioteche.cloud/covers/#{@sbct_title.isbn}"), class:'col-md-3') %>
+ <%= content_tag(:p, "Anche se il file dovesse contenere più di un titolo, verrà caricato solo quello con EAN #{@sbct_title.ean}", class:'label label-info') %>
+<% end %>
 
 <%= form_tag({action: :upload}, multipart: true) do %>
- <%= hidden_field_tag :id_lista, @sbct_list.id %>
+<%= hidden_field_tag :id_lista, @sbct_list.id %>
+<%= hidden_field_tag :current_title_id, params[:current_title_id] %>
  <br/><%= file_field_tag 'filename' %>
   <%= submit_tag 'Carica' %>
 <% end %>
 
 
+<%=
+if !@sbct_title.nil? and @sbct_title.vrfy_dup > 1
+ lnk = link_to('verificare', sbct_titles_path("sbct_title[ean]":@sbct_title.ean))
+ content_tag(:p, "Titolo con ean #{@sbct_title.ean} duplicato: #{lnk}".html_safe, class:'label label-warning')
+end
+%>

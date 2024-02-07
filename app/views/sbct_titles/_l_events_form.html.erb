@@ -1,0 +1,36 @@
+<%= content_tag(:div, "Richiesta copie per #{@sbct_event.to_label} (#{@sbct_event.sbct_event_type.to_label})") %>
+
+<%
+  if SbctLEventTitle.exists?([@sbct_event.id,title.id])
+    @sbct_l_event_title = SbctLEventTitle.find([@sbct_event.id,title.id])
+  else
+    @nuovoevento=true
+    @sbct_l_event_title = SbctLEventTitle.new({"id_titolo"=>title.id})
+    @sbct_l_event_title.sbct_event = @sbct_event
+  end
+%>
+
+<%= simple_form_for(@sbct_l_event_title) do |f| %>
+
+    <%= f.input :id_titolo, as: 'hidden' %>
+    <%= f.association :sbct_event, as: 'hidden' %>
+
+<div class="form-inputs">
+    <%= f.input :numcopie, label:'Numero di copie desiderate' %>
+    <%= f.input :notes, label:'Note' %>
+</div>
+
+  <div class="form-actions">
+    <%=
+      txtbtn = @nuovoevento ? "Inserisci richiesta" : "Conferma modifiche"
+      f.button :submit, value: txtbtn, class:'btn btn-success'
+      %>
+
+    <%=
+      if !@nuovoevento
+        link_to("Elimina richiesta", @sbct_l_event_title, method: :delete, data: { confirm: "Confermi eliminazione della richiesta?" }, class:'btn btn-warning')
+      end
+    %>
+
+  </div>
+<% end %>

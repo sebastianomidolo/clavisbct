@@ -1,0 +1,16 @@
+<%=
+    content_tag(:h4, "Assegnazione di questa copia a un altro titolo")
+ %>
+<%= content_tag(:h5, link_to("Vedi titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
+
+<%=
+  simple_form_for(@sbct_item) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :id_titolo %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Assegna' , class:'btn btn-success'%>
+  </div>
+<% end %>

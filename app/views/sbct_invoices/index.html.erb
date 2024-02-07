@@ -1,7 +1,19 @@
-<%= content_tag(:h4, "Fatture") %>
+<%= render :partial => 'sbct_titles/homepage' %>
+
+<% if @sbct_supplier.nil? %>
+<% link_to("Ricalcola arrotondamenti", sbct_invoices_path(ricalcola_arrotondamenti:true), class:'btn btn-warning') if can? :manage, SbctInvoice %>
+<% else %>
+<%= content_tag(:h4, "Fatture #{@sbct_supplier.to_label}") %>
+
+<%= link_to("Crea pseudo fatture", sbct_invoices_path(invoices_create:true,supplier_id:@sbct_supplier), class:'btn btn-warning') if can? :manage, SbctInvoice %>
+<%= link_to("Scarico in CSV", sbct_invoices_path(supplier_id:@sbct_supplier,library_id:params[:library_id],format:'csv'), class:'btn btn-warning') %>
+
+<% end %>
+
+
+<!--
 <p>
-(dati importati da files Excel presenti sul sito di Leggere, ma sarebbe meglio farsi dare
-la
-<a href="https://www.fatturapa.gov.it/it/index.html">fattura elettronica vera e propria</a>, in XML)
+<a href="https://www.fatturapa.gov.it/it/index.html">Promemoria documentazione su fattura elettronica</a>
 </p>
+-->
 <%= content_tag(:div, sbct_invoices_list(@sbct_invoices)) %>

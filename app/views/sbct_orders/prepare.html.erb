@@ -1,0 +1,27 @@
+
+<%= content_tag(:h4, "#{link_to(@sbct_order.to_label,sbct_order_path(@sbct_order.id))}".html_safe) %>
+
+<%= content_tag(:h4, "Totale copie da ordinare: #{@sbct_items.total_entries} pari a #{number_to_currency(@prezzo_totale)}") %>
+
+
+<%= will_paginate @sbct_items, renderer: BootstrapPagination::Rails %>
+
+<%= form_tag add_items_to_order_sbct_order_path(@sbct_order), method: :post do %>
+
+<%= hidden_field_tag(:order_id, @sbct_order.id) %>
+
+<%= submit_tag("Conferma ordine per le copie visualizzate e selezionate", data: { confirm: "Confermi inserimento nell'ordine #{@sbct_order.to_label}?" }, class:'btn btn-success') if @sbct_items.total_entries > 0 %>
+
+<%=
+  if @sbct_order.budget_id.nil?
+    content_tag(:div, sbct_items_multibudget_order_list(@sbct_order,@sbct_items))
+  else
+    content_tag(:div, sbct_items_order_list(@sbct_order,@sbct_items))
+  end
+  %>
+
+<% end %>
+
+<%= content_tag(:pre, @sql) if current_user.email=='seba' %>
+
+

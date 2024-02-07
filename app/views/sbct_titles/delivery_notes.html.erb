@@ -1,0 +1,23 @@
+<%= content_tag(:h4, "Bolle di consegna") %>
+
+
+<%= form_tag(delivery_notes_sbct_titles_path, method:'get') do %>
+
+Bolla: <%= select_tag(:dnoteid, options_for_select(SbctTitle.delivery_notes_select, params[:dnoteid]), prompt:'Seleziona',
+	   :onchange=>'submit();') %>
+
+<% if !params[:dnoteid].blank? %>
+<%= link_to('[Bolla in formato PDF]', delivery_notes_sbct_titles_path(dnoteid:params[:dnoteid],format:'pdf'), target:'_new') %>
+
+
+<%= link_to('[Bolla solo con utenti da ritagliare]', delivery_notes_sbct_titles_path(dnoteid:params[:dnoteid],format:'pdf',mode:'striscioline'), target:'_new') %>
+
+
+<% end %>
+
+
+
+
+<% end %>
+
+<%= render template:'sbct_titles/index' if !params[:dnoteid].blank? %>

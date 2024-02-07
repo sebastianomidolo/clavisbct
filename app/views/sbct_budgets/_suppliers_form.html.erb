@@ -1,0 +1,27 @@
+
+
+<%= simple_form_for(@sbct_budget) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :clavis_budget_id, as:'hidden' %>
+    <%=
+      if !params[:supplier_filter].blank?
+      collection = SbctSupplier.label_select(params,current_user)
+      f.association :sbct_suppliers, label:'Scegli uno o più fornitori', collection:collection,
+        input_html:{multiple:true, size:collection.size}
+      else
+        f.input :supplier_filter, label:'Filtro fornitori'
+      end
+      %>
+  </div>
+
+  <div class="form-actions">
+    <%=
+      btntext = params[:supplier_filter].blank? ? 'Cerca fornitori' : 'Salva'
+      f.button :submit, value: btntext , class:'btn btn-success'
+     %>
+  </div>
+<% end %>
+
+

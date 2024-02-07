@@ -1,3 +1,9 @@
 <h4>Modifica titolo</h4>
 
-<%= render 'form' %>
+<%=
+  if current_user.email=='seba'
+   render 'form'
+  else
+   render 'form'
+  end
+%>

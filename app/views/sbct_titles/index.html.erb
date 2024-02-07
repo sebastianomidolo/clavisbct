@@ -1,3 +1,6 @@
+<% %>
+
+<% %>
 <% if params[:dataonly]=='true' %>
 
  <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
@@ -7,18 +10,20 @@
 
 <% else %>
 
- <%= render :partial => 'searchform' %>
+<%= render :partial => 'sbct_titles/homepage' %>
+
+ <%= render :partial => 'searchform' if params[:nosearchform].blank? %>
 
 
  <% content_tag(:pre, @sql) %>
- <% content_tag(:pre, @msg) %>
 
 
  <% if !@sbct_titles.nil? and @sbct_titles.total_entries>0 %>
  <%=
    infotext = " (budget #{@sbct_budget.label})" if !@sbct_budget.nil?
    content_tag(:h4, "#{@sbct_titles.total_entries} titoli#{infotext}")
-  %>
+   %>
+  <a name='listatitoli'></a>
   <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
   <%= content_tag(:div, sbct_titles_list(@sbct_titles,current_user.clavis_libraries_sigle)) if !@sbct_budgets.nil? %>
  <% else %>
@@ -27,5 +32,14 @@
 <% end %>
 
 
+<% if @sbct_titles.size > 1 and can? :manage, SbctTitle %>
+<%= a,b=@sbct_titles
+    if a.isbn==b.isbn and !a.isbn.blank?
+      render partial:'duplicated_title', locals:{a:a,b:b}
+    end
+%>
+<% end %>
 
+
+ <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
 

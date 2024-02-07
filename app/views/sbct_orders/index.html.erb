@@ -1,0 +1,59 @@
+<%= render :partial => 'sbct_titles/homepage' %>
+
+<%= content_tag(:h4, "Importo impegnato: #{@sbct_supplier.importo_impegnato} su #{@sbct_supplier.quota_fornitore} - Residuo: #{@sbct_supplier.importo_residuo}") if !@sbct_supplier.nil? %>
+
+<%=
+  supplier_id = @sbct_supplier.nil? ? nil : @sbct_supplier.id
+  if params[:inviato].blank?
+   link_to('<b>Vedi gli ordini inviati</b>'.html_safe, sbct_orders_path(inviato:true,supplier_id:supplier_id), class:'btn btn-warning')
+  else
+   link_to('<b>Vedi gli ordini in preparazione</b>'.html_safe, sbct_orders_path(supplier_id:supplier_id), class:'btn btn-warning')
+  end
+%>
+<%=
+  if @sbct_supplier.nil?
+   link_to('<b>Inserisci un nuovo ordine</b>'.html_safe, new_sbct_order_path, class:'btn btn-warning') if can? :manage, SbctOrder
+  else
+   link_to("<b>Inserisci un nuovo ordine per #{@sbct_supplier.to_label}</b>".html_safe, new_sbct_order_path(supplier_id:@sbct_supplier.id), class:'btn btn-warning') if can? :manage, SbctOrder
+  end
+%>
+
+<%= link_to('<b>Bolle di consegna</b>'.html_safe, delivery_notes_sbct_titles_path, class:'btn btn-warning') if can? :index, SbctTitle %>
+
+<%= content_tag(:div, sbct_orders_index(@sbct_orders)) %>
+
+<%=
+  if !@sbct_supplier.nil?
+    link_to("Stampa Arrivati oggi", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_status:'A',supplier_id:@sbct_supplier.id,data_arrivo:Time.now.strftime("%Y-%m-%d"),group_by:'title',order_by:'bigliettini'), class:'btn btn-warning')
+  end
+%>
+<%=
+  if !@sbct_supplier.nil?
+    link_to("Stampa Arrivati oggi (dividi S da M)", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_status:'A',supplier_id:@sbct_supplier.id,data_arrivo:Time.now.strftime("%Y-%m-%d"),group_by:'title',order_by:'bigliettini_multicopia_split'), class:'btn btn-warning')
+  end
+%>
+
+<%=
+  if !@sbct_supplier.nil?
+   link_to("Stampa Arrivati oggi (note fornitore)", stampa_assegnazioni_copie_sbct_titles_path(format:'pdf',order_status:'A',supplier_id:@sbct_supplier.id,data_arrivo:Time.now.strftime("%Y-%m-%d"),group_by:'title',note_fornitore:'notnull',order_by:'bigliettini'), class:'btn btn-warning')
+  end
+%>
+
+
+<% if !@sbct_supplier.nil? %>
+ <br/>Ordinati o arrivati (attenzione: il link alle biblioteche non funziona correttamente)
+ <%= content_tag(:div, sbct_items_per_libraries({supplier_id:@sbct_supplier.id,arrivati_o_ordinati:true})) %>
+<% end %>
+
+
+<!--
+<pre>
+Esempio di stampa bigliettini partendo da id copie:
+https://clavisbct.comperio.it/sbct_titles/stampa_assegnazioni_copie.pdf?group_by=title&id_copia=565405+88502+264818+27512
+</pre>
+-->
+
+<%=
+  content_tag(:div, sbct_orders_check_dup) if current_user.role?('AcquisitionManager')
+%>
+  

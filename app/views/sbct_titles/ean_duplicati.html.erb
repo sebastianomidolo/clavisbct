@@ -1,0 +1,8 @@
+<%= render :partial => 'sbct_titles/homepage' %>
+
+<%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, sbct_short_titles_list(@sbct_titles, content_tag(:h4, "Titoli duplicati: #{@sbct_titles.total_entries}"))) %>
+
+
+

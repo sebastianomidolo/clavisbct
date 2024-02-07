@@ -5,14 +5,43 @@
   <div class="form-inputs">
 
     <%= f.input :autore, as: 'string', input_html: {size: 80} %>
-    <%= f.input :titolo, as: 'string', input_html: {size: 80} %>
-    <%= f.input :manifestation_id %>
-    <%= f.input :ean, as: 'string', input_html: {size: 13} %>
-    <%= f.input :isbn, as: 'string', input_html: {size: 13} %>
-    <%= f.input :editore, as: 'string', input_html: {size: 40} %>
-    <%= f.input :collana, as: 'string', input_html: {size: 40} %>
-    <%= f.input :prezzo %> (per i decimali usare la virgola, esempio: 12,46)
+    <%=
+      hint = nil
+      if !@sbct_title.titolo.blank?
+       if @sbct_title.clavis_manifestation.nil?
+        tit = @sbct_title.titolo
+        tlen = tit.length
+        clen = tit.scan(/[A-Z]/).length
+        if clen > (tlen/2)
+         hint = tit.capitalize.split('. ').collect{|t| t.capitalize}.join('. ')
+        end
+       else
+        hint = @sbct_title.clavis_manifestation.title if @sbct_title.titolo != @sbct_title.clavis_manifestation.title
+       end
+    end
+       f.input :titolo, as: 'string', hint:hint, input_html: {size: 80}
+     %>
 
+
+    Reparto: <%= select_tag('sbct_title[reparto]', options_for_select(SbctTitle.options_for_select(:reparto),
+			@sbct_title.reparto), include_blank:true) %>
+
+    
+    <%= f.input :manifestation_id if can? :manage, SbctTitle %>
+    <%= f.input :isbn, as: 'string', input_html: {size: 13} %>
+    <%= f.input :ean, as: 'string', input_html: {size: 13} if can? :manage, SbctTitle %>
+    <%= f.input :editore, as: 'string', input_html: {size: 40} %>
+    <%= f.input :anno, hint:'anno di edizione' %>
+    <%= f.input :collana, as: 'string', input_html: {size: 40} %>
+    <%= f.input :prezzo, hint:"(per i decimali usare la virgola, esempio: #{(rand(10.00..40.5)).round(2).to_s.sub('.',',')})" %> 
+    <%= f.input :note, as: 'string', input_html: {size: 80} %>
+
+    <%= f.input :keywords, as: 'string', input_html: {size: 80}, hint:"esempio manga (separare le parole chiave multiple con ;)" %>
+
+
+    Target lettura: <%= select_tag('sbct_title[target_lettura]', options_for_select(SbctTitle.options_for_select(:target_lettura),
+			@sbct_title.target_lettura), include_blank:true) %>
+    
     <!--
     <br/>Tipologia: <%= select_tag(:tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
 			params[:tipo_titolo]), include_blank:false) %>

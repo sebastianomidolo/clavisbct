@@ -1,4 +1,11 @@
 <h4>Inserimento lista di acquisto</h4>
 
+<% if params[:parent_id].blank? %>
+
 <%= render 'form' %>
 
+<% else %>
+
+<%= render 'restricted_form' %>
+
+<% end %>

@@ -1,0 +1,21 @@
+
+
+<%= simple_form_for(@sbct_invoice) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= f.input :label, hint: "Numero fattura", label:false %>
+    <%= f.input :rounding, hint: "Arrotondamento", label:false %>
+    <!--  f.input :invoice_date, hint: "Data fattura", label:false -->
+    <%= f.input :total_amount, hint: "Totale fattura", label:false %>
+
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

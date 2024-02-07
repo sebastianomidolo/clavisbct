@@ -1,0 +1,24 @@
+    <% if params[:nobudget]=='true' %>
+      <%=
+        @sbct_item.budget_id=27
+	f.input :budget_id, as: 'hidden'
+       %>
+      <% else %>
+
+     <%=
+      if @current_budget.nil?
+        collection = SbctBudget.label_select(params,current_user)
+        if SbctTitle.user_roles(current_user).include?('AcquisitionStaffMember')
+          selected = nil
+        else
+          selected = nil
+        end
+        collection << ['MiC-Style Budget', 0]
+        f.association :sbct_budget, label:'Budget', include_blank:false, collection:collection, selected:selected,
+             input_html:{multiple:false, size:collection.size}
+      else
+        @sbct_item.budget_id=@current_budget.id
+        f.input :budget_id, as: 'hidden'
+      end
+     %>
+    <% end %>

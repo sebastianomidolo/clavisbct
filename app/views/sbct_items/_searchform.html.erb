@@ -4,21 +4,51 @@
 
   <div class="form-inputs">
 
-         <%= f.association :clavis_library, collection: SbctTitle.libraries_select, hint: nil,
-	 as:'select', include_blank:true, label: 'Biblioteca'   %>
+    <%=
+          label = @prezzo_totale==0 ? 'Biblioteca' : "Somma dei prezzi scontati: #{number_to_currency(@prezzo_totale)}"
+        label = 'Biblioteca'
+        f.association :clavis_library, collection: SbctTitle.libraries_select, hint: nil,
+       as:'select', include_blank:true, label: label
+    %>
 
-
+    <%=
+      label = 'Biblioteca di destinazione (non incrociare con "Stato in Clavis")'
+      f.association :clavis_home_library, collection: SbctTitle.libraries_select, hint: nil,
+      as:'select', include_blank:true, label: label
+    %>
     
-	
     <% f.input :numcopie, label:'Numero copie' %>
-    <%= f.association :sbct_supplier, label:'Fornitore' %>
-    <%= f.association :sbct_budget, label:'Budget' %>
-    <%= f.association :sbct_order_status, label:"Stato dell'ordine" %>
 
+    <%
+      collection = SbctSupplier.label_select(params,current_user)
+      f.association :sbct_supplier, label:'Fornitore', include_blank:true, collection:collection
+    %>
+    <%=
+      budget_label = "Budget"
+      if !@sbct_item.sbct_budget.nil?
+        budget_label = "Importo residuo: #{number_to_currency(@sbct_item.sbct_budget.importo_residuo)}"
+      end
+      f.association :sbct_budget, label:budget_label
+      %>
+    <label>
+    Scelti da biblioteche sulla propria quota di budget <%= check_box_tag('qb', 't', (params[:qb]=='t' ? true : false)) %>
+    </label>
+
+    <%= f.association :sbct_order_status, collection:SbctOrderStatus.options_for_select, label:"Stato dell'ordine" %>
+
+    Stato in Clavis <%= select_tag(:item_status, options_for_select(ClavisItem.item_status, params[:item_status]), include_blank:true) %><br/>
+    Sorgente <%= select_tag(:item_source, options_for_select(ClavisItem.item_source, params[:item_source]), include_blank:true) %><br/>
+      
+    Inserito da <%= select_tag(:created_by, options_for_select(SbctItem.created_by_select, params[:created_by]), include_blank:true) %>
+    Modificato da <%= select_tag(:updated_by, options_for_select(SbctItem.updated_by_select, params[:updated_by]), include_blank:true) %>
+    
+   <%= f.input :supplier_label, as: 'string',
+         hint:'pattern fornitore, esempio: MiC22', label: 'Fornitore', input_html: {size: 24} %>
+    
   </div>
 
   <div class="form-actions">
-    <%= f.button :submit, value: 'Cerca' , class:'btn btn-success'%>
+    <%= f.button :submit, value: 'Cerca' , class:'btn btn-success', style:'color:#0a0a0a'%>
   </div>
 <% end %>
 

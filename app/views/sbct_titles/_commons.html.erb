@@ -3,7 +3,7 @@
   (f.input :reparto, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
 %>
 <%=
-  slc = SbctTitle.sottoreparto_select(params)
+  slc = SbctTitle.sottoreparto_select(params,@sbct_title.reparto)
   (f.input :sottoreparto, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
 %>
 <%=
@@ -11,20 +11,76 @@
   (f.input :target_lettura, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
 %>
 
-<%= select_tag(:order_status, options_for_select(SbctOrderStatus.options_for_select,
+
+Stato copie: <%= select_tag(:order_status, options_for_select(SbctOrderStatus.options_for_select,
 			params[:order_status]), :onchange=>'inviaform();', include_blank:true) %>
 
-<%= check_box_tag('con_copie', 'S', params[:con_copie], onchange:'inviaform()') %>
- <%= label_tag(:con_copie, 'Con copie') %>
+<!-- Inserito/modificato da <%= select_tag(:created_or_updated_by, options_for_select(SbctTitle.created_or_updated_by_select,
+			params[:order_status]), :onchange=>'inviaform();', include_blank:true) %>
+  -->
 
- <%= check_box_tag('nocovers', 'S', params[:nocovers], onchange:'inviaform()') %>
- <%= label_tag(:nocovers, 'Senza copertine') %>
+Titolo inserito da <%= select_tag(:created_by, options_for_select(SbctTitle.created_by_select,
+		params[:created_by]), :onchange=>'inviaform();', include_blank:true) %>
 
- <%= check_box_tag('in_clavis', 'S', params[:in_clavis], onchange:'inviaform()') %>
- <%= label_tag(:in_clavis, 'In Clavis') %>
 
- <%= check_box_tag('non_in_clavis', 'S', params[:non_in_clavis], onchange:'inviaform()') %>
- <%= label_tag(:non_in_clavis, 'Non in Clavis') %>
+<br/>
+<% f.input :crold_notes, as: 'string', label: 'Cerca nel campo annotazioni (programma PalRap)', input_html: {size: 20} %>
+
+
+
+<%= check_box_tag('pproposal', 'S', params[:pproposal], onchange:'inviaform()') %>
+<%= label_tag(:pproposal, 'Proposte') %>
+
+
+
+<%= check_box_tag('reserv', 'S', params[:reserv], onchange:'inviaform()') %>
+<%= label_tag(:reserv, 'Prenotazioni') %>
+
+<%= check_box_tag('copie_clavis', 'S', params[:copie_clavis], onchange:'inviaform()') %>
+<%= label_tag(:copie_clavis, 'Con conteggio copie Clavis') %>
+
+<%= check_box_tag('ean_dupl', 'S', params[:ean_dupl], onchange:'inviaform()') %>
+<%= label_tag(:ean_dupl, 'Ean duplicati') %>
+
+
+<% check_box_tag('items_per_libraries', 'S', params[:items_per_libraries]) %>
+<% label_tag(:items_per_libraries, 'Distribuzione per biblioteche') %>
+
+
+<br/>Scelti da:  <%= select_tag(:qb_select, options_for_select(
+   [
+    ['Ufficio Acquisti','N'],
+    ['Biblioteche','S'],
+   ], params[:qb_select]), prompt: '', onchange: 'inviaform()') %>
+
+
+
+<br/>
+
+
+
+
+<% check_box_tag('nocovers', 'S', params[:nocovers], onchange:'inviaform()') %>
+<% label_tag(:nocovers, 'Senza copertine') %>
+
+
+ <%= select_tag(:copie, options_for_select(
+   [
+    ['Con copie','y'],
+    ['Senza copie','n'],
+   ], params[:copie]), prompt: 'Copie...', onchange: 'inviaform()') %>
+
+
+
+
+
+ <%= select_tag(:in_clavis, options_for_select(
+   [
+    ['Presente in Clavis','y'],
+    ['Non presente in Clavis','n'],
+   ], params[:in_clavis]), prompt: 'Presenza in Clavis...', onchange: 'inviaform()') %>
+
+
 
  <!--
  <%= check_box_tag('con_reparto', 'S', params[:con_reparto], onchange:'inviaform()') %>

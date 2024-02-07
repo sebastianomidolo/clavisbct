@@ -1,6 +1,48 @@
 <%= content_tag(:h4, "edit #{@sbct_item.to_label}") %>
+<%= content_tag(:h5, link_to("Vedi titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
 
-<%= render 'form' %>
+<% if can? :manage, SbctOrder %>
+<%=
+  link_to("<b>Assegna copia a un (altro) fornitore/ordine</b>".html_safe, assign_to_other_supplier_sbct_item_path(pattern:'^MiC',tolleranza:0), class:'btn btn-warning') if !@sbct_item.budget_id.nil?
+  %>
+<%=
+  link_to("<b>Sposta copia su altra notizia</b>".html_safe, assign_to_other_title_sbct_item_path, class:'btn btn-warning')
+%>
 
-<%= content_tag(:div, sbct_suppliers_per_budget(@sbct_item.sbct_budget)) %>
+<%=
+  if !@sbct_item.order_id.nil? and !@sbct_item.sbct_order.inviato?
+  link_to("<b>Togli la copia dall'ordine #{@sbct_item.sbct_order.id}</b>".html_safe,
+  togli_da_ordine_sbct_item_path, method: :delete, data: { confirm: "Sicura di voler togliere questa copia dall'ordine?"},
+      class:'btn btn-warning')
+  end
+%>
+
+
+<%=
+  if !@current_order.nil? and @sbct_item.order_id.nil? and @current_order.supplier_id==@sbct_item.supplier_id
+  link_to("<b>Aggiungi la copia all'ordine #{@current_order.id}</b>".html_safe,
+  aggiungi_a_ordine_sbct_item_path(order_id:@current_order.id), method: :post, data: { confirm: "Vuoi aggiungere questa copia dall'ordine #{@current_order.id}?"},
+      class:'btn btn-warning')
+  end
+%>
+<% end %>
+
+<%=
+  if @sbct_item.order_id.nil?
+    render 'form'
+  else
+    render 'restricted_form'
+  end
+ %>
+
+
+
+
+<%
+  begin
+  content_tag(:div, sbct_suppliers_per_budget(@sbct_item.sbct_budget))
+  rescue
+  $!
+  end %>
+
 

@@ -4,9 +4,20 @@
   <%= f.error_notification %>
 
   <div class="form-inputs">
+    <%= f.input :label, label:'Nome' %>
+    <%= f.input :total_amount, label:"Importo totale (in Clavis risulta essere #{@sbct_budget.clavis_budget.total_amount})" if !@sbct_budget.clavis_budget.nil? %>
+    <%= f.input :clavis_budget_id, as:'hidden' %>
+    <%= f.association :sbct_supplier, label:'Fornitore (non indicare nel caso di fornitura "MiC")', collection:SbctSupplier.label_select(params,current_user) %>
+    <%=
+  slc = SbctTitle.reparto_select(params)
+  (f.input :reparto, collection: slc, hint: 'Da usare in pratica solo per RAGAZZI', as:'select', :input_html => {:onchange => "inviaform()"}, include_blank:true) if slc.size>0
+%>
 
-    <%= f.association :sbct_supplier %>
+    <%= f.input :locked, label:'Chiuso?', hint:'Spuntare la casella se il budget è chiuso', as:'boolean' %>
 
+    <% f.input :current, label:'Corrente?', hint:'Spuntare la casella se il budget è "corrente" (vedi documentazione)', as:'boolean' %>
+
+    <%= f.input :auto_assign_suppliers, label:'Permetti assegnazione automatica (per i budget poli-fornitore)', hint:"Deselezionare la casella per impedire l'assegnazione automatica dei fornitori", as:'boolean' %>
   </div>
 
   <div class="form-actions">

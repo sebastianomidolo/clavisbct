@@ -1,0 +1,36 @@
+
+<%= render 'readonly_info' %>
+
+<%= simple_form_for(@sbct_item) do |f|  %>
+  <%= f.error_notification %>
+  <div class="form-inputs">
+    <%= f.input :id_titolo, as: 'hidden' %>
+    <%= f.input :note_interne, as: 'string', label:'Note interne (non vengono comunicate al fornitore)' %>
+    <%= f.input :note_fornitore, as: 'string', label:'Note per il fornitore' if !@sbct_order.nil? and !@sbct_order.inviato %>
+
+     Destinato alla biblioteca
+     <%= select_tag('sbct_item[home_library_id]', options_for_select(SbctTitle.libraries_select, @sbct_item.home_library_id), include_blank:true) %>
+
+     <%=
+      (
+       ps=@sbct_item.prezzo_con_sconto_applicato.to_s.sub('.',',')
+       f.input :prezzo, label:"Prezzo ( listino: #{@sbct_item.sbct_title.prezzo.to_s.sub('.',',')} - scontato: #{ps} )" if current_user.role?(['AcquisitionManager'])
+      )
+     %>
+
+     <%=
+       # if current_user.role?(['AcquisitionManager']) and @sbct_item.order_status == 'N'
+        if current_user.role?(['AcquisitionManager'])
+        status = SbctOrderStatus.options_for_select(['A','N','O'])
+        f.association :sbct_order_status, label:"Cambia stato (solo per amministratori PAC)", collection:status
+       end
+     %>
+
+    
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+

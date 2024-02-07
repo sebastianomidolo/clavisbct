@@ -1,4 +1,8 @@
 <%= content_tag(:h4, "Modifica lista \"#{@sbct_list.to_label}\"") %>
 
 
-    <%= render 'form' %>
+<% if current_user.role?('AcquisitionManager') %>
+ <%= render 'form' %>
+<% else %>
+ <%= render 'restricted_form' %>
+<% end %>

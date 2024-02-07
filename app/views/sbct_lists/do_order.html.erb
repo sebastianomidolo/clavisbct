@@ -1,20 +1,27 @@
-<%= content_tag(:h4, "Preparazione ordine per #{@sbct_list.to_label}") %>
+<%= content_tag(:h4, "Budget per questa lista: #{link_to(@sbct_budget.to_label,sbct_budget_path(@sbct_budget))}".html_safe) %>
 
-<%= content_tag(:h4, "Totale copie da ordinare: #{@sbct_items.total_entries}") %>
+<%= content_tag(:h4, "Ordine sul quel verrano caricare le copie sotto elencate: #{link_to(@sbct_order.to_label,sbct_order_path(@sbct_order.id))}".html_safe) %>
+<%= content_tag(:h4, "Totale copie da ordinare: #{@sbct_items.total_entries} pari a #{number_to_currency(@prezzo_totale)}") %>
 
+<% content_tag(:div, sbct_budget_report(@sbct_budget)) %>
 
 <%= will_paginate @sbct_items, renderer: BootstrapPagination::Rails %>
 
-<%= form_tag create_order_sbct_items_path, method: :post do %>
+<%= form_tag add_items_to_order_sbct_order_path(@sbct_order), method: :post do %>
 
-  <%= hidden_field_tag(:id_lista, @sbct_list.id) %>
-  <%= submit_tag("Conferma ordine per le copie visualizzate e selezionate", data: { confirm: "Confermi ordine?" }, class:'btn btn-success') if @sbct_items.total_entries > 0 %>
+<%= hidden_field_tag(:id_lista, @sbct_list.id) %>
+<%= hidden_field_tag(:order_id, @sbct_order.id) %>
+
+  <% submit_tag("Conferma ordine per le copie visualizzate e selezionate", data: { confirm: "Confermi inserimento nell'ordine #{@sbct_order.to_label}?" }, class:'btn btn-success') if @sbct_items.total_entries > 0 %>
+
+  (temporanamente non funziona)
+
   <%= content_tag(:div, sbct_items_order_list(@sbct_items)) %>
 
 <% end %>
 
 
 
-<%= content_tag(:pre, @sbct_list.sql_for_prepara_ordine) %>
+<%= content_tag(:pre, @sql) if current_user.email=='seba' %>
 
 

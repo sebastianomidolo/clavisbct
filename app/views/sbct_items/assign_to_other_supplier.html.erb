@@ -1,0 +1,43 @@
+
+<%=
+  if @sbct_item.sbct_supplier.nil?
+    content_tag(:h4, "Assegnazione di questa copia a un fornitore")
+  else
+    content_tag(:h4, "Assegnazione di questa copia a un altro fornitore")
+  end
+
+ %>
+<%= content_tag(:h5, link_to("Vedi titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
+
+<hr/>
+
+<%=
+  begin
+  render 'readonly_info'
+  rescue
+    "<pre>Errore: #{$!} - caller: #{caller.first}</pre>".html_safe
+  end
+  %>
+
+<% if @sbct_item.order_status=='A' %>
+  <%= content_tag(:h4, "<em>Copia già arrivata non può essere ad altri assegnata</em>".html_safe) %>
+<% else %>
+
+ <% if !@sbct_item.sbct_order.nil? and @sbct_item.sbct_order.inviato? %>
+  <%= content_tag(:h4, "Attenzione: ordine #{@sbct_item.sbct_order.id} già inviato, non conviene assegnare la copia a altro fornitore") %>
+ <% end %>
+
+ <%=
+  if @sbct_item.prezzo.nil?
+    content_tag(:h4, "Manca forse il prezzo?")
+   else
+    content_tag(:div, sbct_suppliers_reassign_list(@sbct_suppliers,@sbct_item))
+  end
+%>
+
+
+<% end %>
+
+
+
+

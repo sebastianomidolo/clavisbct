@@ -1,0 +1,10 @@
+<%= content_tag(:h4, "Evento: #{@sbct_event.to_label}") %>
+<%=
+  link_to("Modifica", edit_sbct_event_path(@sbct_event), class:'btn btn-warning') if can? :edit,SbctEvent
+%>
+
+
+
+<%= content_tag(:div, sbct_titles_list(@sbct_titles, '')) %>
+
+

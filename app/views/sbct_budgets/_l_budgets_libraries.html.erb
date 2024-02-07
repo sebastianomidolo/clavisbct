@@ -1,0 +1,13 @@
+<%=
+  if can? :edit, @sbct_budget and not @sbct_budget.locked?
+   lnk = link_to('Modifica ripartizione budget', sbct_l_budget_libraries_path(budget_id:@sbct_budget.id), class:'btn btn-warning')
+   user = current_user
+  else
+   lnk = ''
+   user = nil
+  end
+  content_tag(:h4, "Ripartizione #{@sbct_budget.to_label} #{lnk}".html_safe)
+  lnk
+%>
+<% content_tag(:div, sbct_budget_libraries(@sbct_budget, user)) %>
+

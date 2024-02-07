@@ -1,0 +1,43 @@
+
+<% content_tag(:pre, user_session[:current_params]) %>
+
+Distribuzione dei titoli per biblioteche
+
+<%=
+  parms=user_session[:current_params]
+  sbct_title=SbctTitle.new(parms[:sbct_title])
+  budget = sbct_title.split_query.budget
+  order_status = parms[:order_status]
+  order_status = 'O' if order_status=='OP'
+  order_id = parms[:order_id]
+  supplier_id = parms[:supplier_id]
+  cond = []
+  join_budgets = join_orders = ''
+  cond << "c.supplier_id=#{supplier_id.to_i}" if supplier_id.to_i > 0
+  if !budget.blank?
+    cond << "b.label ~* #{SbctTitle.connection.quote(budget)}"
+    join_budgets = 'JOIN sbct_acquisti.budgets b on(b.budget_id=c.budget_id)'
+  end	  
+  cond << "c.order_status=#{SbctTitle.connection.quote(order_status)}" if !order_status.blank?
+  if !order_id.blank?
+    cond << "c.order_id=#{order_id.to_i}"
+    cond << "not o.inviato" if parms[:order_status]=='OP'		  
+    join_orders = 'JOIN sbct_acquisti.orders o using (order_id)'
+  end
+  cond = cond.join(" AND ")
+  cond = "WHERE #{cond}" if !cond.blank?
+
+  sql = %Q{with t1 as (#{user_session[:current_sql]})\n
+    select c.library_id,lc.label as siglabib,count(c.library_id) as numtitoli,sum(c.numcopie) as numcopie,
+      sum(c.prezzo) as importo
+     from t1 join sbct_acquisti.copie c using(id_titolo)
+    join sbct_acquisti.library_codes lc on(lc.clavis_library_id=c.library_id)
+     #{join_budgets}
+     #{join_orders}
+    #{cond}
+        group by c.library_id,lc.label order by numcopie desc;}
+  content_tag(:div, sbct_titles_analisi_biblioteche(SbctTitle.connection.execute(sql).to_a))
+%>
+
+<%= content_tag(:pre, parms) %>
+<%= content_tag(:pre, sql) %>

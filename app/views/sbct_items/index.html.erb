@@ -1,3 +1,5 @@
+<%= render :partial => 'sbct_titles/homepage' %>
+
 <% if @sbct_item.id_titolo.nil? %>
  <%= render :partial => 'searchform' %>
  <%= content_tag(:p, @sbct_items.total_entries) %>
@@ -9,4 +11,4 @@
 <% end %>
 
 <%= content_tag(:div, sbct_items_list(@sbct_items)) %>
-<%= content_tag(:pre, @sql) %>
+<% content_tag(:pre, @sql) %>

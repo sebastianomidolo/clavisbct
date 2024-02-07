@@ -1,0 +1,31 @@
+
+
+<%= simple_form_for(@sbct_supplier) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= f.input :shortlabel, label:'Nome breve (per stampa etichette)', input_html: {size: 13} %>
+
+    <%= f.input :deposito_legale %>
+        (oppure)
+    <%= f.input :donatore %>
+
+    <%= f.input :esclusivo_per_tipologia %>
+
+    <%= f.input :external_user_id %>
+
+
+
+    <%= f.input :tipologie, hint:'Esempio: RAGAZZI oppure GUIDE oppure MUSICA; separare le voci con ";" (con o senza spazio, è indifferente), esempio "RAGAZZI ; MANGA"' %>
+
+    
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

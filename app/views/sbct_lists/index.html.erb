@@ -1,14 +1,33 @@
+<%= render :partial => 'sbct_titles/homepage' %>
 <%= render :partial => 'searchform' %>
 
 <%=
-  link_to("<b>Nuova lista d'acquisto</b>".html_safe, new_sbct_list_path, class:'btn btn-warning')  if can? :new, SbctList
+  link_to("<b>Nuova lista</b>".html_safe, new_sbct_list_path, class:'btn btn-warning')  if can? :new, SbctList
 %>
 
+<%=
+  if params[:locked]=='true'
+   link_to('<b>Liste aperte</b>'.html_safe, sbct_lists_path(locked:false), class:'btn btn-warning')
+   else
+    link_to('<b>Liste a sola lettura</b>'.html_safe, sbct_lists_path(locked:true), class:'btn btn-warning')
+   end
+%>
 
 <%= will_paginate @sbct_lists, renderer: BootstrapPagination::Rails %>
 
 <% content_tag(:h5, "#{@sbct_lists.total_entries} liste (distinte per tipo di titolo, generate a partire da #{SbctList.count} liste con date univoche)") %>
 
+<%= sbct_private_lists(current_user.sbct_lists) %>
+
 <%= sbct_lists_index(@sbct_lists) %>
 
-
+<!--
+<pre>
+  Se la lista è "chiusa" non possiamo aggiungere o togliere titoli, ma possiamo comunque
+  selezionare le copie per i titoli già presenti nella lista stessa.
+  Se invece la lista risulta "aperta" possiamo aggiungere o togliere titoli (e naturalmente
+  anche selezionare le copie).
+  PS: qualcuno lo spieghi in maniera più chiara...
+  
+</pre>
+-->

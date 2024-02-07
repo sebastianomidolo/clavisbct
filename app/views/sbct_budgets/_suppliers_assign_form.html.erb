@@ -1,0 +1,23 @@
+<%= simple_form_for(@sbct_budget,url:suppliers_assign_sbct_budgets_path) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= %>
+  </div>
+
+  <div class="form-actions">
+    <%=
+      btntext = "Procedi all'assegnazione (non ancora)"
+      f.button :submit, value: btntext , class:'btn btn-success', data: { confirm: "Confermi assegnazione fornitori ELIMINANDO LE PRECEDENTI SELEZIONI?!?" }
+      %>
+  </div>
+  <%=
+    prm=params.merge({supplier:'null',selected:true,checkbox:true,auto_assign_suppliers:true})
+    @sbct_budgets = SbctBudget.tutti(prm,current_user)
+    content_tag(:div, sbct_budgets_list(@sbct_budgets,prm))
+   %>
+
+
+<% end %>
+
+

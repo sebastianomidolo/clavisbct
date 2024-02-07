@@ -1,0 +1,34 @@
+<%= content_tag(:h4, "Manutenzione lista \"#{@sbct_list.to_label}\"") %>
+
+<% content_tag(:p, "Totale impegnato: #{number_to_currency(@sbct_list.totale_ordine)}") %>
+
+<%=
+  contatitoli=@sbct_list.conta_titoli
+  content_tag(:p, "Contiene #{contatitoli} titoli pari a #{number_to_currency(@sbct_list.valore_titoli)}")
+  %>
+
+<% if @sbct_list.owner_id==current_user.id or can? :edit, SbctList %>
+<%=
+   link_to("Elimina", @sbct_list, method: :delete, data: { confirm: "Confermi eliminazione della lista?" }, class:'btn btn-warning')
+  link_to("<b>Cancella i titoli senza copie e non appartenenti a nessun'altra lista con data di pubblicazione futura</b>".html_safe, delete_future_titles_sbct_list_path(@sbct_list),
+    method: :delete, data: { confirm: "Confermi la cancellazione dei titoli di questa lista, privi di copie e non appartenenti a nessun'altra lista, con data di pubblicazione successiva a 90 giorni da ora?" }, class:'btn btn-warning') %>
+
+<% if @sbct_list.protected? %>
+<br/>
+<%= content_tag(:span, "Questa lista non può essere svuotata in una sola operazione") %>
+<% else %>
+<%= link_to("<b>Svuota completamente la lista".html_safe, remove_all_titles_sbct_list_path(@sbct_list),
+    method: :post, data: { confirm: "Confermando lo svuotamento della lista verranno rimossi i #{contatitoli} titoli in essa contenuti (che rimarranno comunque presenti in PAC)" }, class:'btn btn-warning') if contatitoli > 0 %>
+<% end %>
+
+<%=
+  # Chiamo descendants_index con user=nil perché se ci sono discendenti nascosti non posso comunque eliminare la lista
+  # quindi mi interessano tutti i discendenti, indipendentemente dal proprietario della lista
+  if can? :new, @sbct_list, current_user and @sbct_list.descendants_index(user=nil).size==0 and @sbct_list.sbct_titles.count==0
+   link_to("Elimina la lista (che è vuota)", @sbct_list, method: :delete, data: { confirm: "Confermi eliminazione della lista?" }, class:'btn btn-warning')
+  end
+%>
+
+<% else %>
+
+<% end %>

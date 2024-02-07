@@ -1,0 +1,5 @@
+DL - Deposito Legale
+<%=
+  collection = SbctSupplier.dl_select
+  f.association :sbct_supplier, label:'Fornitore Deposito Legale', include_blank:false, collection:collection
+%>
