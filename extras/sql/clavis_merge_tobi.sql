@@ -1,6 +1,6 @@
 -- Decommentare linea seguente per esecuzioni "al volo"
+-- se esegui al volo (non è una buona idea, però) ricordati di dare prima DROP TABLE clavis.collocazioni
 -- ALTER TABLE clavis.item disable trigger aggiorna_clavis_collocazioni ;
-
 
 set standard_conforming_strings to false;
 set backslash_quote to 'safe_encoding';
@@ -49,7 +49,7 @@ UPDATE excolloc SET excollocazione=replace(excollocazione,' ','.') WHERE excollo
 SELECT setval('clavis.item_item_id_seq', (SELECT MAX(item_id) FROM clavis.item)+1000);
 INSERT INTO clavis.item(
    manifestation_id,home_library_id,owner_library_id,inventory_serie_id,inventory_number,
-   collocation,title,item_media,issue_number,item_icon,
+   collocation,title,item_media,item_status,issue_number,item_icon,
    date_created,date_updated,custom_field2,custom_field3
    )
    (select
@@ -59,7 +59,7 @@ INSERT INTO clavis.item(
      ELSE
 	titolo
      END as titolo,
-     'F',0,'',
+     'F','F',0,'',
      date_created,date_updated,'Inserito in ToBi da ' || login,source_id
     from da_inserire_in_clavis
    );
@@ -102,6 +102,9 @@ UPDATE clavis.collocazioni
 
 UPDATE clavis.collocazioni SET collocazione = replace(collocazione, ' ','.') WHERE collocazione ~ '^LP';
 
+-- Aggiunto 30 gennaio 2024:
+update clavis.collocazioni set collocazione=trim(regexp_replace(collocazione, '\\s+', '.', 'g')) where collocazione ~ ' ';
+
 UPDATE clavis.collocazioni SET collocazione=upper(collocazione) WHERE collocazione ~* '^per';
 UPDATE clavis.collocazioni SET collocazione=replace(collocazione, ' ', '.') WHERE collocazione ~ '^PER';
 UPDATE clavis.collocazioni SET collocazione=replace(collocazione, '..', '.') WHERE collocazione like 'PER..%';
@@ -123,12 +126,21 @@ alter table clavis.collocazioni add column primo_i integer;
 alter table clavis.collocazioni add column secondo_i integer;
 alter table clavis.collocazioni add column terzo_i integer;
 
+
+-- select item_id,collocazione, regexp_split_to_array(collocazione, '\\.| ') as a
+
 with t1 as
+
 (select item_id,collocazione,string_to_array(collocazione, '.') as a
    from clavis.collocazioni cc join clavis.item ci using(item_id)
     where ci.item_status != 'E')
 update clavis.collocazioni c set primo = t1.a[1],secondo = t1.a[2],terzo = t1.a[3]
     from t1 where c.item_id=t1.item_id;
+
+
+update clavis.collocazioni set secondo=substr(secondo,1,9) where length(secondo)> 9;
+update clavis.collocazioni set terzo=substr(terzo,1,9) where length(terzo)> 9;
+
 update clavis.collocazioni set primo_i = primo::integer where primo_i is null and primo ~ '^\\d+$';
 update clavis.collocazioni set secondo_i = secondo::integer where secondo_i is null and secondo ~ '^\\d+$';
 update clavis.collocazioni set terzo_i = terzo::integer where terzo_i is null and terzo ~ '^\\d+$';

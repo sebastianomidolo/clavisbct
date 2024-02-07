@@ -4,23 +4,21 @@ set escape_string_warning to false;
 
 drop table if exists clavis.centrale_locations;
 
+--    where (ci.home_library_id=2 and ci.item_status IN ('F','G','S'))
 
 create table clavis.centrale_locations as
-select home_library_id as library_id,item_id,collocazione from clavis.collocazioni cc
+select item_id,collocazione from clavis.collocazioni cc
   join clavis.item ci using(item_id)
-    where (ci.home_library_id in
-    (select distinct library_id from public.schema_collocazioni_centrale) and ci.item_status NOT IN ('A','L','M'))
-     OR (ci.home_library_id in (select distinct library_id from public.schema_collocazioni_centrale) and ci.owner_library_id=-1);
+    where (ci.home_library_id=2 and ci.item_status NOT IN ('A','L','M'))
+     OR (ci.home_library_id=2 and ci.owner_library_id=-1);
 
 delete from clavis.centrale_locations where item_id in
   (select item_id from clavis.item where owner_library_id not in
     (select library_id from clavis.library where library_internal = '1')
       and owner_library_id not in (-1,-3));
 
-alter table clavis.centrale_locations add primary key(item_id);
 
-alter table clavis.centrale_locations add column piano varchar(32);
-alter table clavis.centrale_locations add column bib_section_id integer;
+alter table clavis.centrale_locations add column piano varchar(24);
 alter table clavis.centrale_locations add column primo_elemento varchar(128);
 
 update clavis.centrale_locations set collocazione=replace(collocazione,'A.A.','AA.') where collocazione ~ '^A\.A\.';
@@ -58,7 +56,7 @@ with numeri as
 	 terzo_elemento=NULL
   from numeri where numeri.item_id=y.item_id;
 
--- create index clavis_centra_locations_item_id_idx on clavis.centrale_locations(item_id);
+create index clavis_centra_locations_item_id_idx on clavis.centrale_locations(item_id);
 create index clavis_centra_locations_piano_idx on clavis.centrale_locations(piano);
 create index clavis_centra_locations_primo_elemento_idx on clavis.centrale_locations(primo_elemento);
 

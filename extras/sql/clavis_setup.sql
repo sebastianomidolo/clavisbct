@@ -1,4 +1,3 @@
-CREATE INDEX clavis_acquisition_year_idx on clavis.item(acquisition_year);
 
 CREATE INDEX clavis_item_collocation_idx on clavis.item(collocation);
 CREATE INDEX clavis_item_serieinv_idx on clavis.item(inventory_serie_id);
@@ -10,6 +9,7 @@ create index clavis_item_manifestation_id_ndx on clavis.item(manifestation_id);
 -- create index clavis_item_title_ndx on clavis.item(to_tsvector('simple', title));
 
 UPDATE clavis.patron SET opac_username = lower(opac_username) WHERE opac_enable='1';
+update clavis.patron set barcode = 'barcode_cancellato' where barcode is null;
 CREATE INDEX clavis_patron_opac_username_idx on clavis.patron(opac_username) WHERE opac_enable='1';
 
 CREATE INDEX item_title_idx ON clavis.item USING gin(to_tsvector('simple', title));
@@ -43,7 +43,6 @@ alter table clavis.item add column talking_book_id integer;
 update clavis.item set talking_book_id = custom_field1::integer where custom_field1 ~ '^[0-9\.]+$'
   and  item_media='T' and section='LP';
 create index item_talking_book_id_ndx on clavis.item(talking_book_id) where talking_book_id notnull;
-  
 
 CREATE INDEX clavis_authorities_full_text ON clavis.authority(full_text);
 CREATE INDEX clavis_authorities_authority_id ON clavis.authority(authority_id);
@@ -111,7 +110,7 @@ select c1.authority_id as mso_id,c1.subject_class as mso_class,c1.full_text as i
 update clavis.item set sequence2=NULL where section = 'BCTA' and sequence2 = '(su prenotazione)';
 update clavis.item set sequence2=NULL where section = 'BCTA' and sequence2 = '. (su prenotazione)';
 
-REFRESH MATERIALIZED VIEW dobjects ;
+-- REFRESH MATERIALIZED VIEW dobjects ;
 
 create index l_authority_manifestation_manifestation_id_ndx on clavis.l_authority_manifestation (manifestation_id);
 create index l_manifestation_manifestation_id_down_ndx on clavis.l_manifestation (manifestation_id_down);
@@ -160,6 +159,8 @@ UPDATE clavis.item SET acquisition_year = ay.year
  FROM public.estremi_registri_inventariali ay WHERE inventory_serie_id='V'
   AND acquisition_year IS NULL AND ABS(inventory_number) BETWEEN range_from AND range_to;
 
+CREATE INDEX clavis_acquisition_year_idx on clavis.item(acquisition_year);
+
 
 -- 17 aprile 2020
 drop table if exists clavis.buchi_dvd;
@@ -183,6 +184,9 @@ create index loan_patron_id_ndx on clavis.loan(patron_id);
 
 -- Creazione temporanea biblioteca Ferrante Aporti per inserimento in ordine periodici 2022-23
 -- (biblioteca non ancora presente in Clavis, valutare se inserirla)
+-- Nota 23 gennaio 2024: creata vera biblioteca Ferrante in Clavis con id 1350, non serve più
+-- inserire una finta biblioteca e dunque non eseguo il codice seguente:
+/*
 insert into clavis.library(library_id,library_class,consortia_id,description,label,
    shortlabel,library_type,library_internal,library_status,ill_code)
     (select 999999,library_class,consortia_id,'999999 - Biblioteca presso Istituto Ferrante Aporti',
@@ -190,7 +194,7 @@ insert into clavis.library(library_id,library_class,consortia_id,description,lab
        from clavis.library where library_id=21);
 insert into clavis.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,13,0,0);
 insert into clavis.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,3,0,0);
-
+*/
 
 
 create temp table r1 as (select manifestation_id,count(*) as reqnum from clavis.item_request
@@ -208,5 +212,32 @@ select  *, round((available_items::numeric / reqnum::numeric)*100,2) as percentu
 
 
 -- Provvisorio, fino a quando non verranno inseriti in Clavis i fornitorei MiC22
-SELECT setval('clavis.supplier_supplier_id_seq', (SELECT MAX(supplier_id) FROM clavis.supplier)+1);
-insert into clavis.supplier (supplier_name,email,address,city,vat_code,notes,phone_number,phone_number2) (select * from temp_supplier_mic22);
+-- SELECT setval('clavis.supplier_supplier_id_seq', (SELECT MAX(supplier_id) FROM clavis.supplier)+1);
+-- insert into clavis.supplier (supplier_name,email,address,city,vat_code,notes,phone_number,phone_number2) (select * from temp_supplier_mic22);
+
+alter table clavis.purchase_proposal add column sbct_title_id integer;
+alter table clavis.purchase_proposal ADD CONSTRAINT fk_sbct_titles FOREIGN KEY (sbct_title_id)
+   REFERENCES sbct_acquisti.titoli on update cascade on delete set null;
+update clavis.purchase_proposal pp set sbct_title_id = t.id_titolo from sbct_acquisti.titoli t where t.ean=pp.ean;
+create index sbct_title_id_clavis_purchase_proposal_ndx on clavis.purchase_proposal(sbct_title_id);
+
+insert into sbct_acquisti.l_clavis_purchase_proposals_titles (id_titolo,proposal_id)
+   (select sbct_title_id,proposal_id from clavis.purchase_proposal where sbct_title_id notnull)
+     on conflict do nothing;
+
+update clavis.supplier set vat_code=NULL where vat_code='';
+
+
+-- 17 novembre 2023
+create table clavis.last_item_actions as select * from clavis.item_action where action_type='I' and date_created > now() - interval '12 months';
+create table clavis.last_notifications as select * from clavis.notification where notification_class='F' and date_created > now() - interval '12 months';
+alter table clavis.last_notifications add primary key(notification_id);
+alter table clavis.last_item_actions  add primary key(item_action_id);
+create index last_notification_object_id_ndx on clavis.last_notifications(object_id);
+create index last_notifications_date_created_idx on clavis.last_notifications(date_created);
+create index last_item_actions_action_date_idx on clavis.last_item_actions(action_date);
+create index last_item_actions_action_type_idx on clavis.last_item_actions(action_type);
+create index last_item_actions_action_patron_id_idx on clavis.last_item_actions(patron_id);
+
+
+-- REFRESH MATERIALIZED VIEW dobjects;

@@ -1,8 +1,8 @@
+SET SEARCH_PATH TO import;
+-- BEGIN;DROP VIEW view_prestiti;COMMIT;
 
--- BEGIN;DROP VIEW clavis.view_prestiti;COMMIT;
-
-CREATE OR REPLACE VIEW clavis.view_prestiti AS
-SELECT l.patron_id, clavis.collocazione(ci.section, ci.collocation, ci.specification, 
+CREATE OR REPLACE VIEW view_prestiti AS
+SELECT l.patron_id, collocazione(ci.section, ci.collocation, ci.specification, 
     ci.sequence1, ci.sequence2) as collocazione, substr(trim(ci.title),1,80) as title,
     ci.section, ci.collocation, ci.specification, 
     ci.sequence1, ci.sequence2,
@@ -12,24 +12,24 @@ SELECT l.patron_id, clavis.collocazione(ci.section, ci.collocation, ci.specifica
     ci.item_media,
     p.barcode,ci.barcode as item_barcode,
     ci.inventory_serie_id || '-' || ci.inventory_number as inventario
-  FROM clavis.loan l join clavis.item ci using(item_id)
-       join clavis.patron p on(p.patron_id=l.patron_id);
+  FROM loan l join item ci using(item_id)
+       join patron p on(p.patron_id=l.patron_id);
 
 
 
-CREATE OR REPLACE VIEW clavis.view_prestiti2 as
+CREATE OR REPLACE VIEW view_prestiti2 as
 SELECT ci.item_id,cl.loan_id, cl.loan_status, ls.value_label as loan_status_label,
  cl.loan_date_begin, cl.loan_date_end, cl.renew_count,
   extract(days from cl.loan_date_end - cl.loan_date_begin) as giorni
 FROM
-    clavis.loan cl JOIN clavis.item ci USING(item_id)
-     JOIN clavis.lookup_value ls
+    loan cl JOIN item ci USING(item_id)
+     JOIN lookup_value ls
        ON(cl.loan_status=ls.value_key AND value_class ~ 'LOANSTATUS' AND value_language='it_IT')
 WHERE cl.loan_status!='H';
 
 /*
 SELECT collocazione,title,espandi_collocazione(collocazione)
-from clavis.view_prestiti
+from view_prestiti
   WHERE
   owner_library_id=2
     and loan_date_begin='2013-02-20'
@@ -38,7 +38,7 @@ from clavis.view_prestiti
    specification, sequence1, sequence2;
 */
 
-CREATE OR REPLACE VIEW clavis.view_prestiti_sciutti AS
+CREATE OR REPLACE VIEW view_prestiti_sciutti AS
 SELECT
  l.loan_id,
  l.loan_status,l.manifestation_id as loan_mid,
@@ -55,34 +55,56 @@ SELECT
  p.last_seen,
  p.patron_id
  FROM
- clavis.loan l
- join clavis.item ci using(item_id)
- left join clavis.patron p on(l.patron_id=p.patron_id);
+ loan l
+ join item ci using(item_id)
+ left join patron p on(l.patron_id=p.patron_id);
  
 	  
-CREATE TABLE clavis.tobi_loan AS
- SELECT * FROM clavis.view_prestiti_sciutti
+
+/*
+\o /home/storage/preesistente/static/sara.csv
+\copy (SELECT * FROM sara WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
+\o
+\o /home/storage/preesistente/static/sara_include_non_prestati.csv
+\copy (SELECT * FROM sara2 WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
+\o
+
+Esempio di query che limita la ricerca alle biblioteche BCT con siglabib (le "nostre"):
+select * from tobi_loan l join sara2 s on (s.manifestation_id=l.loan_mid) 
+  join sbct_acquisti.library_codes lc on (lc.clavis_library_id=l.item_owner_library_id);
+
+-- eventualmente limitare a: class_code is not null and bib_level='m'
+
+*/
+  
+
+
+/*
+ * Comando da dare a mano per estrarre i dati necessari a Fabrizio Sciutti per le statistiche annuali 
+ * NOTA: la tobi_loan serve solo per le statistiche di Sciutti, dunque inutile crearla ogni volta, ma sono quando serve:
+
+CREATE TABLE tobi_loan AS
+ SELECT * FROM view_prestiti_sciutti
   WHERE loan_date_begin notnull and due_date notnull
  UNION
- SELECT * FROM clavis.view_prestiti_sciutti
+ SELECT * FROM view_prestiti_sciutti
   WHERE age(loan_date_end,loan_date_begin) > interval '0 seconds'
  UNION
-  SELECT * FROM clavis.view_prestiti_sciutti
+  SELECT * FROM view_prestiti_sciutti
  WHERE loan_date_begin is null;
 
-ALTER TABLE clavis.tobi_loan add primary key (loan_id);
+ALTER TABLE tobi_loan add primary key (loan_id);
 
-
-CREATE OR REPLACE VIEW clavis.view_export_prestiti_sciutti AS
+CREATE OR REPLACE VIEW view_export_prestiti_sciutti AS
 SELECT
 loan_id,loan_status,loan_mid,item_id,class_code,external_library_id,item_owner_library_id,
 item_home_library_id,from_library,to_library,end_library,loan_date_begin,loan_date_end,due_date,
 durata,renew_count,item_media,last_seen,patron_id
- FROM clavis.tobi_loan
+ FROM tobi_loan
  WHERE loan_status!='H';
 
 
-create or replace view clavis.sara as
+create or replace view sara as
   select
   cm."ISBNISSN" as isbn,
   cm.bib_level,
@@ -95,7 +117,7 @@ create or replace view clavis.sara as
   cm.edition_language as lingua,
   count(*) as numero_prestiti,
   manifestation_id
-  from clavis.view_export_prestiti_sciutti p join clavis.manifestation cm  on(manifestation_id=loan_mid)
+  from view_export_prestiti_sciutti p join manifestation cm  on(manifestation_id=loan_mid)
 --  where edition_date between 2012 and 2022
   where item_owner_library_id=2 -- Civica centrale
   group by
@@ -110,7 +132,7 @@ create or replace view clavis.sara as
   lingua,
   manifestation_id;
 
-create or replace view clavis.sara2 as
+create or replace view sara2 as
   select
   cm."ISBNISSN" as isbn,
   cm.bib_level,
@@ -126,11 +148,11 @@ create or replace view clavis.sara2 as
   count(p.loan_id) as numero_prestiti,
   manifestation_id
   from 
-    clavis.manifestation cm
+    manifestation cm
     left join
-    clavis.view_export_prestiti_sciutti p on(manifestation_id=loan_mid)
+    view_export_prestiti_sciutti p on(manifestation_id=loan_mid)
     left join sbct_acquisti.library_codes lc on (lc.clavis_library_id=p.item_home_library_id)
-    join clavis.item ci using(manifestation_id)
+    join item ci using(manifestation_id)
 
 --  where edition_date between 2012 and 2022
 --   where item_owner_library_id=2 -- Civica centrale
@@ -149,72 +171,43 @@ where cm.bib_level='m'
   ci.home_library_id;
 
 
-/*
-\o /home/storage/preesistente/static/sara.csv
-\copy (SELECT * FROM clavis.sara WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
-\o
-\o /home/storage/preesistente/static/sara_include_non_prestati.csv
-\copy (SELECT * FROM clavis.sara2 WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
-\o
-
-Esempio di query che limita la ricerca alle biblioteche BCT con siglabib (le "nostre"):
-select * from clavis.tobi_loan l join clavis.sara2 s on (s.manifestation_id=l.loan_mid) 
-  join sbct_acquisti.library_codes lc on (lc.clavis_library_id=l.item_owner_library_id);
-
--- eventualmente limitare a: class_code is not null and bib_level='m'
-
-*/
-  
-
-
-
-
-
-/*
- * Comando da dare a mano per estrarre i dati necessari a Fabrizio Sciutti per le statistiche annuali 
-
-\o /home/storage/preesistente/static/stat/2023_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2022-11-01' AND '2022-12-31' ORDER BY loan_id) TO stdout csv header
-\o
-
-
 \o /home/storage/preesistente/static/stat/2022_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2021-11-01' AND '2021-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2021-11-01' AND '2021-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 
 \o /home/storage/preesistente/static/stat/2021_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2020-11-01' AND '2020-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2020-11-01' AND '2020-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 
 \o /home/storage/preesistente/static/stat/2020_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2019-11-01' AND '2019-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2019-11-01' AND '2019-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 \o /home/storage/preesistente/static/stat/2019_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2018-11-01' AND '2018-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2018-11-01' AND '2018-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 \o /home/storage/preesistente/static/stat/2018_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2017-11-01' AND '2017-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2017-11-01' AND '2017-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 \o /home/storage/preesistente/static/stat/2017_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2016-11-01' AND '2016-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2016-11-01' AND '2016-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 \o /home/storage/preesistente/static/stat/2016_prestiti_bct.csv
-\copy (SELECT * FROM clavis.view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2015-11-01' AND '2015-12-31' ORDER BY loan_id) TO stdout csv header
+\copy (SELECT * FROM view_export_prestiti_sciutti WHERE loan_date_begin BETWEEN '2015-11-01' AND '2015-12-31' ORDER BY loan_id) TO stdout csv header
 \o
 
 \o /home/storage/preesistente/static/stat/tobi_loan.csv
-\copy (select * from clavis.tobi_loan) TO stdout csv header;
+\copy (select * from tobi_loan) TO stdout csv header;
 \o
 
 
 \o /home/storage/preesistente/static/stat/esemplari.csv
-\copy (select * from clavis.item where loan_status notnull) TO stdout csv header;
+\copy (select * from item where loan_status notnull) TO stdout csv header;
 \o
 
 */    

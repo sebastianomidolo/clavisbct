@@ -144,7 +144,7 @@ case when cdd.class_code is null
         ( (ci.section in ('R','RN','CAA')) OR (cc.collocazione ~ ('^R\.|^R |^RN\.|^RN |^RC\.|^RC |^DVD\.R\.|^DVD\.RN\.') ) )
         OR
       ( (ci.owner_library_id=2 and ci.inventory_serie_id='RAG') )
---         OR      ( u.unimarc_105 = 'r' )
+         OR      ( u.unimarc_105 = 'r' )
      then 'ragazzi'
      else 'adulti'
    end as pubblico,

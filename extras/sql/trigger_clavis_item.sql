@@ -1,7 +1,7 @@
 -- Da commentare in produzione:
 -- DROP TRIGGER aggiorna_clavis_collocazioni ON clavis.item;
--- DROP TRIGGER aggiorna_centrale_locations ON clavis.collocazioni;
 -- DROP TRIGGER aggiorna_clavis_ricollocati ON clavis.item;
+-- DROP TRIGGER aggiorna_clavisitem_talking_book_id ON clavis.item;
 
 -- Da non commentare:
 DROP TRIGGER aggiorna_topografico_non_in_clavis ON public.topografico_non_in_clavis;
@@ -14,8 +14,14 @@ switch $TG_op {
 	set cmd "UPDATE clavis.collocazioni AS cc  SET collocazione = \
 	 public.compact_collocation(ci.\"section\",ci.collocation,ci.specification,ci.sequence1,ci.sequence2)
            FROM clavis.item ci WHERE cc.item_id=$NEW(item_id) AND ci.item_id=cc.item_id; \
-         UPDATE clavis.collocazioni SET sort_text=public.espandi_collocazione(collocazione) WHERE item_id=$NEW(item_id)"
-	spi_exec $cmd
+         UPDATE clavis.collocazioni SET sort_text=public.espandi_collocazione(collocazione) WHERE item_id=$NEW(item_id); \
+with t1 as (select item_id,string_to_array(collocazione, '.') as a from clavis.collocazioni where item_id=$NEW(item_id)) \
+ update clavis.collocazioni c set primo = t1.a\[1], secondo = t1.a\[2], terzo = t1.a\[3] from t1 where c.item_id=t1.item_id;"
+ 	spi_exec $cmd
+	set cmd "update clavis.collocazioni set primo_i = primo::integer     where item_id=$NEW(item_id) and primo ~ '^\\d+\$'; \
+update clavis.collocazioni set secondo_i = secondo::integer where item_id=$NEW(item_id) and secondo ~ '^\\d+\$'; \
+update clavis.collocazioni set terzo_i = terzo::integer     where item_id=$NEW(item_id) and terzo ~ '^\\d+\$';"
+ 	spi_exec $cmd
 	return [array get NEW];
     }
     "INSERT" {
@@ -95,7 +101,7 @@ $$ LANGUAGE pltcl;
 CREATE TRIGGER aggiorna_topografico_non_in_clavis AFTER UPDATE OR INSERT OR DELETE
   ON public.topografico_non_in_clavis FOR EACH ROW EXECUTE PROCEDURE aggiorna_topografico_non_in_clavis();
 
-
+/*
 CREATE OR REPLACE FUNCTION aggiorna_centrale_locations() RETURNS trigger AS $$
 switch $TG_op {
     "UPDATE" {
@@ -143,7 +149,7 @@ switch $TG_op {
 $$ LANGUAGE pltcl;
 CREATE TRIGGER aggiorna_centrale_locations AFTER UPDATE OR INSERT OR DELETE
    ON clavis.collocazioni FOR EACH ROW EXECUTE PROCEDURE aggiorna_centrale_locations();
-
+*/
 
 CREATE OR REPLACE FUNCTION aggiorna_clavis_ricollocati() RETURNS trigger AS $$
 switch $TG_op {
