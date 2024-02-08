@@ -2,6 +2,7 @@
   <%= f.error_notification %>
 
   <div class="form-inputs">
+    <%= f.association :clavis_library, label:'Biblioteca', collection: SbctTitle.libraries_select(current_user), include_blank:false %>
    <%= f.input :collocazione, as: 'string', input_html: {size: 20} %>
    <%= f.input :titolo, input_html: {cols: 80, rows: 3} %>
    <%= f.input :inventory_serie_id, collection: ClavisLibrary.find(@extra_card.home_library_id).inventory_serie_select, label: 'Serie inventariale' %>
@@ -9,10 +10,14 @@
    <%= f.input :inventory_number, label: 'Numero di inventario' %>
    <%= f.input :note_interne, as: 'string', input_html: {size: 60} %>
    <%= f.input :mancante %>
-   <%= f.input :home_library_id, as: 'hidden' %>
+
+
+
   </div>
 
   <div class="form-actions">
     <%= f.button :submit, value: 'Salva modifiche' %>
   </div>
 <% end %>
+
+<%= link_to('topografico', extra_cards_path) %>

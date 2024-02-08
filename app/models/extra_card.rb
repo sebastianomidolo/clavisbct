@@ -9,7 +9,10 @@ class ExtraCard < ActiveRecord::Base
   belongs_to :created_by, class_name: 'User', foreign_key: :created_by
   belongs_to :updated_by, class_name: 'User', foreign_key: :updated_by
 
-  validates :titolo, :collocazione, presence: true
+  belongs_to :clavis_library, foreign_key: :home_library_id
+
+  # validates :titolo, :collocazione, presence: true
+  validates :collocazione, presence: true
 
   before_save :check_record
   after_save :verifica_piano_centrale
@@ -19,9 +22,10 @@ class ExtraCard < ActiveRecord::Base
   end
 
   def verifica_piano_centrale
+    return if self.collocazione.blank?
     ci=self.clavis_item
     return if ci.nil?
-    ci.piano_centrale
+    ci.piano_centrale(self.collocazione)
   end
 
   def serieinv

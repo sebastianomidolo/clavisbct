@@ -18,22 +18,30 @@ class ExtraCardsController < ApplicationController
 
     cond=[]
     @extra_cards = ExtraCard.paginate_by_sql("SELECT * FROM topografico_non_in_clavis WHERE false", :page=>1);
+    deleted = false
     @attrib.each do |a|
       name,value=a
       case name
       when 'titolo'
         ts=ExtraCard.connection.quote_string(value.split.join(' & '))
         cond << "to_tsvector('simple', titolo) @@ to_tsquery('simple', '#{ts}')"
-      when 'mancante'
-        x = value=='1' ? 'true' : 'false'
-        cond << "#{name} is #{x}"
+      when 'deleted'
+        deleted=true
       when 'inventory_number'
         cond << "#{name}=#{value}"
+      when 'home_library_id'
+        cond << "#{name}=#{value.to_i}"
       else
         ts=ExtraCard.connection.quote_string(value)
         cond << "#{name} ~* '#{ts}'"
       end
     end
+    if deleted.class==TrueClass
+      cond << "deleted is true"
+    else
+      cond << "deleted is false"
+    end
+    cond << "false" if cond.size < 2
     cond = cond.join(" AND ")
     @sql_conditions=cond
     order_by = cond.blank? ? nil : 'espandi_collocazione(collocazione)'

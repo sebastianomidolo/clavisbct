@@ -1,0 +1,27 @@
+<h3>Caricamento file excel per Topografico</h3>
+
+<% if @message.blank? %>
+<pre>
+  Importante: assicurarsi che il file excel da caricare sia composto esattamente da 5 colonne:
+
+    Numero di catena,Titolo,Serie inventariale,Numero di inventario,Note interne
+
+  Non importa come si chiamano le colonne, l'importante è che siano 5 e che il contenuto sia coerente.
+  
+  Il nome del file deve essere formato da un numero seguito da spazio seguito da una lettera, più l'estensione, esempio:
+
+     624 B.xls
+</pre>
+<% end %>
+
+
+<%= content_tag(:pre, @message) if !@message.blank? %>
+
+<%= link_to("Cerca #{@basecoll} in ClavisBct", "/clavis_items?clavis_item%5Bcollocation%5D=#{@basecoll}", target:'_new') if !@basecoll.blank? %>
+
+<%= form_tag({action: :upload_xls}, multipart: true) do %>
+ <br/><%= file_field_tag 'filename' %>
+  <%= submit_tag 'Invia file' %>
+<% end %>
+
+<%= content_tag(:pre, @data.html_safe) if !@data.blank? %>
