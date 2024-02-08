@@ -1,5 +1,8 @@
 
 <%= simple_form_for(@clavis_item, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+<%= hidden_field_tag('piano', params[:piano]) %>
+<%= hidden_field_tag('location', params[:location]) %>
+
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
   <%= f.input :collocation, hint: 'collocazione (inserire la collocazione con spazio al posto del punto per avere la ricerca puntuale, esempio: 509 d 35)', label: false, placeholder: 'collocazione' %>
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
@@ -7,7 +10,21 @@
   <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
   <%= f.input :acquisition_year, hint: 'Anno di acquisizione (solo per serieinv V)', label: false, placeholder: 'anno',
             input_html: { min: '1897', max: '1988' } %>
-  <%= f.association :home_library, collection: ClavisItem.home_library, hint: 'Biblioteca di gestione', include_blank: false, label: false %>
+
+  <%= f.input :publication_year, hint: 'Anno di pubblicazione', label: false %>
+
+  
+
+<%= f.association :home_library, collection: ClavisItem.home_library, hint: 'Biblioteca',
+    :input_html => {:onchange => "document.location='/clavis_items?library_id=' + clavis_item_home_library_id.value"}, include_blank:true, label: false %>
+
+<% lofs = Location.options_for_select(@clavis_item.home_library_id)
+   if lofs.size>0
+  %>
+Ubicazione: <%= select_tag(:location, options_for_select(lofs, params[:location]), :onchange=>'submit();', include_blank:true) %>
+<% end %>
+
+  
   <div class='control-group'>
    Con prenotazioni pendenti in grado di essere soddisfatte da almeno una biblioteca <%= check_box_tag 'con_prenotazioni', 'S', params[:con_prenotazioni] %>
   </div>
@@ -23,6 +40,7 @@
      Includi dati di pubblicazione <%= check_box_tag 'with_manifestations', 'S', params[:with_manifestations] %>
      Visualizza copertine <%= check_box_tag 'view_covers', 'S', params[:view_covers] %>
      <br/>Copie uniche sul sistema <%= check_box_tag 'unique_items', 'S', params[:unique_items] %>
+  Con nota al prestito <%= check_box_tag 'loan_alert_note', 'S', params[:loan_alert_note] %>
   </div>
 
   <% if can? :manage, Container %>
@@ -39,6 +57,7 @@
   <%= f.input :item_media, collection: ClavisItem.item_media, hint: 'Item media', include_blank: true, label:false %>
   <%= f.input :loan_status, collection: ClavisItem.loan_status, hint: 'Loan status', include_blank: true, label:false %>
   <%= f.input :loan_class, collection: ClavisItem.loan_class, hint: 'Loan class', include_blank: true, label:false %>
+  <%= f.input :item_source, collection: ClavisItem.item_source, hint: 'Item source', include_blank: true, label:false %>
   <%= f.input :opac_visible, collection: [['Visibile in Opac', 1] ,['Non visibile in Opac', 0]],
       label: false, hint: 'Visibilità in opac' %>
 
@@ -47,13 +66,15 @@
   <% end %>
 
   <% if current_user.email=='seba' %>
+  <!--
     <p>Filtro addizionale, esempio: inventory_date BETWEEN '2016-01-01' AND '2016-12-31' oppure inventory_date < '2018-01-01'</p>
     <%= text_field_tag 'sql_and', params[:sql_and], size:80 %>
+  -->
   <% else %>
    <%= hidden_field_tag('sql_and', params[:sql_and]) %>
   <% end %>
 
-  <% if current_user.email=='seba' %>
+  <% if current_user.email=='sebaxx' %>
     Shelf_id: <%= text_field_tag 'shelf_id', params[:shelf_id], size:10 %>
   <% else %>
      <%= hidden_field_tag('shelf_id', params[:shelf_id]) %>
@@ -63,7 +84,18 @@
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
 
   <%= link_to('Inserisci esemplare', new_extra_card_path(home_library_id:@clavis_item.home_library_id)) if can? :manage, ExtraCard %>
-  <%= link_to('Riepilogo esemplari', clavis_items_path(home_library_id:0)) %>
+  <% link_to('Riepilogo esemplari', clavis_items_path(home_library_id:0)) %>
+
+
+   <%=
+     if can?(:stat, ClavisItem) and !user_session[:sql_itemsearch_conditions].nil?
+     link_to('Statistica prestiti', clavis_items_path(op:'loans_report',n:@clavis_items.total_entries), title:"Prestiti su #{@clavis_items.total_entries} esemplari trovati", data: { confirm: "Questa operazione è un po' lunga, confermi?"})
+     # clavis_items_op_select_tag
+     end
+    %>
+
+
+  
   <%= button_to_function("mostra tutti i campi di ricerca", "$('#mostra_tutti_i_campi').hide();$('.control-group','#new_clavis_item').show();", id: "mostra_tutti_i_campi", class: "btn btn-success") if @attrib.size>0 %>
 
 
@@ -81,10 +113,10 @@
     <%= link_to('segnaposto', params.merge(format:'pdf')) + ' | '  %>
     <%= link_to('elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999)) + ' | ' %>
     <%=
-      if ['seba','patraiz'].include?(current_user.email)
+      #if ['seba','patraiz'].include?(current_user.email)
         titolo = @clavis_items[0].title.sub(' [note: ]', '')
       link_to('Topografico', params.merge(format:'pdf',heading:titolo,pdf_template:'topografico',per_page:999999)) + ' | '
-      end
+      #end
       %>
 
  <% end %>
@@ -95,6 +127,7 @@
   <% else %>
    <%= link_to('ordina_per_collocazione', params.merge(order:'collocation')) if @clavis_items.count>1 %>
   <% end %>
+   <%= link_to('ordina_per_nota_prestito', params.merge(order:'loan_alert_note')) if @clavis_items.count>1 %>   
  <% end %>
   
 <% end %>

@@ -9,9 +9,11 @@ class ClavisItem < ActiveRecord::Base
 
   attr_accessible :title, :owner_library_id, :item_status, :opac_visible, :manifestation_id,
   :item_media, :section, :collocation, :inventory_number, :inventory_serie_id, :manifestation_dewey,
-  :current_container, :in_container, :dewey_collocation, :barcode, :loan_status, :loan_class,
+  :current_container, :in_container, :dewey_collocation, :barcode, :loan_status, :loan_class, :item_source,
   :home_library_id, :issue_number, :item_icon, :custom_field1, :custom_field3,
-  :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by, :acquisition_year
+  :rfid_code, :actual_library_id, :date_updated, :created_by, :modified_by, :acquisition_year, :supplier_id, :publication_year
+
+  attr_accessor :publication_year
 
   belongs_to :owner_library, class_name: 'ClavisLibrary', foreign_key: 'owner_library_id'
   belongs_to :home_library, class_name: 'ClavisLibrary', foreign_key: 'home_library_id'
@@ -22,13 +24,34 @@ class ClavisItem < ActiveRecord::Base
   has_one :open_shelf_item, foreign_key:'item_id'
 
   before_save :check_record
-  after_save :piano_centrale
+  # after_save :piano_centrale
 
   def to_label
     if self.clavis_manifestation.nil?
       self.la_collocazione
     else
       "#{self.la_collocazione} (#{self.clavis_manifestation.title.strip})"
+    end
+  end
+
+  def in_deposito_esterno?
+    sql = %Q{select bs.external
+  from clavis.item AS ci
+       join clavis.collocazioni AS cc ON(cc.item_id=ci.item_id)
+       join public.locations AS l ON(l.id = cc.location_id)
+       join public.bib_sections AS bs ON(bs.id = l.bib_section_id)
+      where cc.item_id = #{self.id};}
+    res = self.connection.execute(sql).first
+    return false if res.nil?
+    res['external']=='t' ? true : false
+  end
+
+  def richiedibile?
+    return false if self.in_deposito_esterno?
+    if self.loan_status == 'A' or self.owner_library_id == -1
+      true
+    else
+      false
     end
   end
 
@@ -44,6 +67,15 @@ class ClavisItem < ActiveRecord::Base
   def inventario
     # return 'fuori catalogo' if self.manifestation_id==0
     "#{inventory_serie_id}-#{inventory_number}"
+  end
+
+  def allinea_pac
+    return nil if self.manifestation_id==0;
+    sql = %Q{select distinct id_titolo FROM sbct_acquisti.copie WHERE id_titolo = 
+      (select id_titolo from sbct_acquisti.titoli where manifestation_id = #{self.manifestation_id})}
+    self.connection.execute(sql).each do |r|
+      SbctItem.set_clavis_item_ids(r['id_titolo'].to_i)
+    end
   end
 
   def consistency_notes
@@ -84,18 +116,28 @@ class ClavisItem < ActiveRecord::Base
     r.join('.')
   end
 
-  def piano_centrale
-    sql="SELECT collocazione,piano FROM clavis.centrale_locations WHERE item_id=#{self.id}"
-    puts sql
+  # Non usata da settembre 2023
+  def piano_centrale(collocazione=nil)
+    return ''
+    sql="SELECT collocazione,piano,library_id FROM clavis.centrale_locations WHERE item_id=#{self.id}"
+    # puts sql
     res=self.connection.execute(sql)
-    return nil if res.ntuples==0
+    if res.ntuples==0
+      # puts "Non ho trovato in clavis.centrale_locations item_id #{self.item_id} con collocazione #{collocazione}"
+      sql = %Q{INSERT INTO clavis.centrale_locations (library_id,item_id,collocazione)
+                 VALUES(#{self.home_library_id},#{self.id},#{self.connection.quote(collocazione)}) ON CONFLICT(item_id) DO NOTHING;}
+      self.connection.execute(sql)
+      self.piano_centrale
+      return
+    end
     piano=res.first['piano']
+    library_id=res.first['library_id'].to_i
     if piano.nil?
-      piano=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'].upcase.gsub(' ',''))
+      piano=SchemaCollocazioniCentrale.find_bib_section(res.first['collocazione'].upcase.gsub(' ',''),library_id)
       sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano)} WHERE item_id=#{self.id}"
       self.connection.execute(sql)
     else
-      piano_new=SchemaCollocazioniCentrale.trova_piano(res.first['collocazione'].upcase.gsub(' ',''))
+      piano_new=SchemaCollocazioniCentrale.find_bib_section(res.first['collocazione'].upcase.gsub(' ',''),library_id)
       if piano_new != piano
         # VERIFICARE IL SENSO DI QUESTA UPDATE (potrebbe essere causa di errori)
         # sql="UPDATE clavis.centrale_locations SET piano=#{self.connection.quote(piano_new)} WHERE item_id=#{self.id}"
@@ -186,7 +228,8 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def item_info
-    sql=%Q{select c.*,ci.item_id, os.*,l.label as nomebib, pp.*, ir.id as csir_id, ir.*,cp.lastname,cl.piano
+    sql=%Q{select c.*,ci.item_id, os.*,l.label as nomebib, pp.*, ir.id as csir_id, ir.*,cp.lastname,
+            concat_ws(' ', vloc.loc_name, vloc.notes) as piano
   from clavis.item ci
   left join clavis.items_con_prenotazioni_pendenti pp
    using(item_id) left join closed_stack_item_requests ir
@@ -197,8 +240,14 @@ class ClavisItem < ActiveRecord::Base
  on(c.id=i.container_id) left join clavis.library l
  on(l.library_id=c.library_id) left join open_shelf_items os
  on(os.item_id=ci.item_id)
- left join clavis.centrale_locations cl on(cl.item_id=ci.item_id)
+ left join clavis.collocazioni colloc on(colloc.item_id=ci.item_id)
+ left join public.view_locations vloc on(vloc.id=colloc.location_id)
   where ci.item_id = #{self.id}}
+
+    #fd = File.open('/home/seb/sql_clavis_item_info.sql', 'w')
+    #fd.write("#{sql};\n")
+    #fd.close
+        
     return ActiveRecord::Base.connection.execute(sql).first
   end
 
@@ -229,29 +278,17 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def rest_get_item_status
-    config = Rails.configuration.database_configuration
-    require 'net/http'
-    uri = URI("https://sbct.comperio.it/api/v1/item/status/#{self.barcode}")
-    req = Net::HTTP::Get.new(uri)
-    # req['X-Clavis-Signature'] = 'ClavisSecretKey!?'
-    req['X-Clavis-Username'] = config[Rails.env]['clavis_username']
-    req['X-Clavis-Password'] = config[Rails.env]['clavis_passwd']
-    req['X-Clavis-Library'] = '1'
-    req['Content-Type'] = 'application/x-www-form-urlencoded'
-    req['accept'] = 'application/json'
-    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http|
-      http.request(req)
-    }
-    # res = Net::HTTP.get_response(uri)
-    # puts res.body if res.is_a?(Net::HTTPSuccess)
-    h=JSON.parse res.body.gsub('=>', ':')
-    h['REPLY']['RESULT'].nil? ? h['REPLY'] : h['REPLY']['RESULT']
+    ClavisItem.rest_get_item_status(self.barcode)
   end
 
   def item_loan_status_update
-    h = self.rest_get_item_status
+    return if self.barcode.nil?
+    h = ClavisItem.rest_get_item_status(self.barcode)
     self.loan_status = h['LoanStatus']
-    self.save if self.changed?
+    if self.changed?
+      self.date_updated=Time.now
+      self.save
+    end
     self
   end
 
@@ -291,10 +328,12 @@ class ClavisItem < ActiveRecord::Base
     r
   end
 
-  def self.item_status
+  def self.item_status(include_null:nil)
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
   where value_language = 'it_IT' and value_class='ITEMSTATUS' order by value_key}
-    self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+    a = self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+    a.append(["Non presente in Clavis", "NP"])
+    a
   end
 
   def self.loan_status
@@ -309,6 +348,14 @@ class ClavisItem < ActiveRecord::Base
     self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
   end
 
+
+  def self.item_source
+    sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
+  where value_language = 'it_IT' and value_class='ITEMSOURCE' order by value_key}
+    self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
+  end
+
+  
   def self.item_media
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
   where value_language = 'it_IT' and value_class='ITEMMEDIATYPE' order by value_key}
@@ -417,7 +464,9 @@ class ClavisItem < ActiveRecord::Base
  WHERE
   edition_date between 1500 and date_part('year', now())-50 and loan_class='B' and
      ci.owner_library_id=#{library_id}
-   and ci.item_media='F' and not ci.volume_text ~* '(ristampa|rist).*[12][0-9]{3}'
+   and ci.item_media='F' and 
+-- not
+   ci.volume_text ~* '(ristampa|rist).*[12][0-9]{3}'
   order by cm.edition_date, ci.item_id}
     ClavisItem.find_by_sql(sql)
   end
@@ -555,11 +604,14 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
   def ClavisItem.genera_lista_non_catalogati(range_scaffali,range_palchetti, outfile, library_id)
     fd = File.open(outfile, 'w')
     cnt=0
+    scaffali_mancanti = []
     range_scaffali.each do |scaffale|
-      puts scaffale
+      puts "scaffale: #{scaffale}"
+      empty = true
       range_palchetti.each do |palchetto|
         r = ClavisItem.missing_numbers(scaffale,palchetto,library_id)
         next if r.size==0
+        empty=false
         n = ClavisItem.conta_elementi_in_lista_numeri_catena(r.join(', '))
         cnt += n
         info = n>1000 ? 'CHECK: ' : ''
@@ -567,8 +619,11 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
         puts ("#{scaffale}.#{palchetto} => #{r.join(', ')} ==> n: #{n}")
         fd.flush
       end
+      scaffali_mancanti << scaffale if empty
+      puts "fine analisi scaffale: #{scaffale} - empty: #{empty}"
     end
     fd.write("\nTOTALE non catalogati: #{cnt}\n")
+    fd.write("\nScaffali non esistenti nel range #{range_scaffali}: #{scaffali_mancanti.join(', ')}\n")
     puts "cnt: #{cnt}"
     fd.close
   end
@@ -659,7 +714,28 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     sql=%Q{select array_agg(item_id) as ids,barcode from clavis.item where barcode in
                   (select barcode from clavis.item where barcode ~* '^b' and item_status!='E'
                    group by barcode having count(*)>1) group by item.barcode order by item.barcode}
-    puts sql
+    # puts sql
     self.connection.execute(sql).to_a
   end
+
+  def ClavisItem.rest_get_item_status(barcode)
+    config = Rails.configuration.database_configuration
+    require 'net/http'
+    uri = URI("https://sbct.comperio.it/api/v1/item/status/#{barcode}")
+    req = Net::HTTP::Get.new(uri)
+    # req['X-Clavis-Signature'] = 'ClavisSecretKey!?'
+    req['X-Clavis-Username'] = config[Rails.env]['clavis_username']
+    req['X-Clavis-Password'] = config[Rails.env]['clavis_passwd']
+    req['X-Clavis-Library'] = '1'
+    req['Content-Type'] = 'application/x-www-form-urlencoded'
+    req['accept'] = 'application/json'
+    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') { |http|
+      http.request(req)
+    }
+    # res = Net::HTTP.get_response(uri)
+    # puts res.body if res.is_a?(Net::HTTPSuccess)
+    h=JSON.parse res.body.gsub('=>', ':')
+    h['REPLY']['RESULT'].nil? ? h['REPLY'] : h['REPLY']['RESULT']
+  end
+
 end

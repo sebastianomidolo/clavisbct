@@ -1,0 +1,6 @@
+<%= content_tag(:h4, "Report prestiti su #{params[:n]} esemplari trovati con l'ultima ricerca effettuata") %>
+
+<%= content_tag(:div, op_loans_report(@sql)) %>
+
+
+<%= content_tag(:pre, @sql) %>

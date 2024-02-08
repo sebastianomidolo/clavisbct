@@ -1,0 +1,17 @@
+<% library_id=params[:home_library_id].to_i
+   if library_id==0
+   %>
+<%=
+  res=[]
+  ClavisLibrary.library_select.each do |r|
+   res << content_tag(:li, link_to(r[1], clavis_items_path(home_library_id:r[0])))
+  end
+  content_tag(:ol, res.join.html_safe)
+ %>
+<% else %>
+<%= content_tag(:h2, "#{link_to('Riepilogo esemplari', clavis_items_path(home_library_id:0))} per #{ClavisLibrary.find(library_id).to_label}".html_safe) %>
+<%= content_tag(:div, clavis_items_group_by(ClavisItem.group_by(params[:home_library_id],:item_status,'ITEMSTATUS'))) %>
+<%= content_tag(:div, clavis_items_group_by(ClavisItem.group_by(params[:home_library_id],:item_media,'ITEMMEDIATYPE'))) %>
+<%= content_tag(:div, clavis_items_group_by(ClavisItem.group_by(params[:home_library_id],:loan_class,'LOANCLASS'))) %>
+<%= content_tag(:div, clavis_items_group_by(ClavisItem.group_by(params[:home_library_id],:loan_status,'LOANSTATUS'))) %>
+<% end %>

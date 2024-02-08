@@ -12,12 +12,23 @@ class ClavisItemsController < ApplicationController
     @pagetitle='Ricerca esemplari ClavisBCT'
     @clavis_item = ClavisItem.new(params[:clavis_item])
 
-    
+    cond=[]
     if params[:shelf_id].blank?
       join_shelfs=''
     else
       join_shelfs=" join clavis.shelf_item si on(si.object_class='item' and si.shelf_id=#{params[:shelf_id].to_i} and si.object_id=clavis.item.item_id)"
     end
+
+    if !params[:location].blank?
+      @location=Location.find(params[:location].to_i)
+      @clavis_item.home_library_id = @location.bib_section.library_id
+      cond << "cc.location_id = #{@location.id}"
+    end
+    
+    #if !params[:bib_section].blank?
+    #  @bib_section = BibSection.find(params[:bib_section].to_i)
+    #  @clavis_item.home_library_id = @bib_section.library_id
+    #end
 
     if can? :search, ClavisItem
       if @clavis_item.home_library_id.nil?
@@ -41,7 +52,7 @@ class ClavisItemsController < ApplicationController
       toskip.include?(r.first)
     end
 
-    cond=[]
+
     @clavis_items=[]
     @attrib.each do |a|
       name,value=a
@@ -78,10 +89,16 @@ class ClavisItemsController < ApplicationController
           x=value.sub(/^!/,'')
           cond << "item.#{name}!=#{ClavisItem.connection.quote(x)}"
         else
-          cond << "item.#{name}=#{ClavisItem.connection.quote(value)}"
+          if value=='NULL'
+            cond << "item.#{name} IS NULL"
+          else
+            cond << "item.#{name}=#{ClavisItem.connection.quote(value)}"
+          end
         end
       end
     end
+    @clavis_item.item_status='F' if @clavis_item.item_status.blank?
+    @clavis_item.item_media='F' if @clavis_item.item_media.blank?
 
     join_clavis_loans=''
     if !params[:sql_and].blank?
@@ -98,8 +115,12 @@ class ClavisItemsController < ApplicationController
         params[:item_ids] += items
       end
     end
-    
-    if !params[:clavis_item].nil? or !params[:item_ids].blank? or !params[:senzapiano].blank? or !params[:piano].blank?
+    if !params[:clavis_item].nil? or !params[:item_ids].blank? or !params[:senzapiano].blank? or !@location.nil? or !@bib_section.nil?
+      do_search = true
+    else
+      do_search = false
+    end
+    if do_search
       @attrib << ['title','']
       @attrib << ['inventory_number','']
       if user_signed_in?
@@ -144,16 +165,9 @@ class ClavisItemsController < ApplicationController
         select_item_requests="cir.*,"
       end
 
-      if params[:senzapiano]=='y'
-        #cond << %Q{piano is null and ((home_library_id != -3 and manifestation_id!=0 and item_status IN ('F','G','S'))
-        #         OR (home_library_id = -1 and owner_library_id=2)) }
-        cond << %Q{(piano='__non assegnato__' or piano is null) and ((item.home_library_id = 2 and item_status IN ('F','G','S'))
-                 OR (item.home_library_id=2 and owner_library_id=-1)) }
-      end
+      cond << @bib_section.sql_conditions(true) if !@bib_section.nil?
 
-      if !params[:piano].blank?
-        cond << %Q{piano=#{ClavisItem.connection.quote(params[:piano])}}
-      end
+      cond << "length(loan_alert_note) > 10" if !params[:loan_alert_note].blank?
 
       if params[:cover_images].blank?
         join_cover_images=select_cover_images=''
@@ -173,18 +187,37 @@ class ClavisItemsController < ApplicationController
       end
 
       join_with_manifestations=select_with_manifestations=''
-      if !params[:with_manifestations].blank? or !params[:ean_presence].blank?
+      if !params[:with_manifestations].blank? or !params[:ean_presence].blank? or !@clavis_item.publication_year.blank?
         cond << "item.manifestation_id>0"
-        if params[:ean_presence]=='t'
-          cond << %Q{ ((cm."EAN" != '') OR (cm."ISBNISSN" != '')) }
+        params[:with_manifestations] = true
+        if !params[:edition_date].blank?
+          cond << %Q{ cm.edition_date=#{params[:edition_date].to_i}}
         else
-          cond << %Q{ (cm."EAN" is null or cm."EAN"='') AND (cm."ISBNISSN" is null or cm."ISBNISSN"='') }
+          if !params[:ean_presence].blank?
+            if params[:ean_presence]=='t'
+              cond << %Q{ ((cm."EAN" != '') OR (cm."ISBNISSN" != '')) }
+            else
+              cond << %Q{ (cm."EAN" is null or cm."EAN"='') AND (cm."ISBNISSN" is null or cm."ISBNISSN"='') }
+            end
+          end
         end
+        if !@clavis_item.publication_year.blank?
+          (
+            f,t=@clavis_item.publication_year.split('-')
+            if t.blank?
+              cond << %Q{cm.edition_date=#{f.to_i}}              
+            else
+              cond << %Q{cm.edition_date BETWEEN #{f.to_i} and #{t.to_i}} 
+            end
+          )
+        end
+
         join_with_manifestations = %Q{LEFT JOIN clavis.manifestation cm using(manifestation_id)}
         select_with_manifestations=%Q{cm."EAN" as ean,cm."ISBNISSN" as isbnissn,cm.publisher,cm.edition_date,(xpath('//d210/sa/text()',cm.unimarc::xml))[1] as luogo_di_pubblicazione,}
       end
 
       cond = cond.join(" AND ")
+      # render text:cond and return
       @sql_conditions=cond if current_user.email=='seba'
       if @clavis_item.item_media=='S'
         order_by = 'clavis.item.manifestation_id, clavis.item.issue_year,clavis.item.issue_number'
@@ -199,10 +232,17 @@ class ClavisItemsController < ApplicationController
               order_by = 'clavis.item.date_updated::date desc, cc.sort_text, clavis.item.title'
             end
           else
-            order_by = cond.blank? ? nil : 'cl.piano, cc.sort_text, clavis.item.title'
+            order_by = cond.blank? ? nil : 'vloc.loc_name, cc.sort_text, clavis.item.title'
+            if params[:order]=='loan_alert_note'
+              order_by = 'loan_alert_note, cc.sort_text, clavis.item.title'
+            end
           end
         end
       end
+
+
+      # render text:@clavis_item.home_library_id and return
+      
       # order_by = cond.blank? ? nil : 'cc.sort_text, clavis.item.title'
       if params[:con_prenotazioni].blank?
         join_prenotazioni=select_prenotazioni=''
@@ -221,15 +261,37 @@ class ClavisItemsController < ApplicationController
         page:params[:page],
         per_page:params[:per_page].blank? ? 135 : params[:per_page],
       }
-      qparm[:select]="#{select_with_manifestations}#{select_cover_images}#{select_prenotazioni}#{select_item_requests}item.*,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,cl.piano,containers.label,ec.note_interne"
-      qparm[:joins]="#{join_with_manifestations}#{join_cover_images}#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)#{join_unique_items}#{join_clavis_loans}#{join_shelfs}#{join_item_requests}"
+      qparm[:select]="#{select_with_manifestations}#{select_cover_images}#{select_prenotazioni}#{select_item_requests}item.*,vloc.loc_name,vloc.id as location_id,vloc.bib_section_id,l.value_label as item_media_type,ist.value_label as item_status,lst.value_label as loan_status,cc.collocazione,containers.label,ec.note_interne"
+      qparm[:joins]="#{join_with_manifestations}#{join_cover_images}#{join_prenotazioni}left join clavis.collocazioni cc using(item_id) left join public.view_locations vloc on(vloc.id=cc.location_id) left join clavis.lookup_value l on(l.value_class='ITEMMEDIATYPE' and l.value_key=item_media and value_language='it_IT') left join clavis.lookup_value ist on(ist.value_class='ITEMSTATUS' and ist.value_key=item_status and ist.value_language='it_IT') left join clavis.lookup_value lst on(lst.value_class='LOANSTATUS' and lst.value_key=loan_status and lst.value_language='it_IT') left join #{ExtraCard.table_name} ec on (custom_field3=ec.id::varchar) left join container_items cont using(item_id,manifestation_id) left join containers on (containers.id=cont.container_id or containers.id=ec.container_id)#{join_unique_items}#{join_clavis_loans}#{join_shelfs}#{join_item_requests}"
       qparm[:order]=order_by      
 
       @clavis_items = ClavisItem.paginate(qparm)
 
-      @sql_conditions = qparm.inspect if current_user.email=='seba'
+      @sql_conditions = "SELECT #{qparm[:select]}\nFROM clavis.item #{qparm[:joins]}\nWHERE #{qparm[:conditions]}"
+
+      if current_user.email=='seba' and !params[:op].blank? and !user_session[:sql_itemsearch_conditions].nil?
+        # render text:"<pre>Operazione #{params[:op]} con sql\n #{user_session[:sql_itemsearch_conditions]}</pre>" and return
+      end
+
+      user_session[:sql_itemsearch_conditions] = %Q{with ci as (SELECT * FROM clavis.item #{qparm[:joins]}\nWHERE #{qparm[:conditions]})}
     else
+
+
+      if can?(:stat, ClavisItem) and !user_session[:sql_itemsearch_conditions].nil? and !params[:op].blank?
+
+        h=ClavisItem.connection.execute("select label,controller,exec_prefix from public.custom_ror_views where controller='#{params[:controller]}'")
+        hfmt = h.collect {|i| i['label']}
+        @sql=user_session[:sql_itemsearch_conditions]
+        if hfmt.include?(params[:op])
+          render "op_#{params[:op]}"
+        else
+          # render text:"<pre>params[:op] = #{params[:op]} - Operazione #{params[:op]} con sql\n #{user_session[:sql_itemsearch_conditions]}</pre>"
+          render template:'clavis_items/custom_ror_views'
+        end
+        return
+      end
       @clavis_items = ClavisItem.paginate_by_sql("SELECT * FROM clavis.item WHERE false", :page=>1);
+      user_session[:sql_itemsearch_conditions] = nil
     end
 
     if !user_session[:item_ids].blank?
@@ -239,13 +301,26 @@ class ClavisItemsController < ApplicationController
       @esemplari_non_trovati = (a-b) | (b-a)
     end
 
+
     respond_to do |format|
       format.html
       format.csv {
         page=params[:page].blank? ? '' : "_pagina_#{params[:page]}"
         fname = "barcodes#{page}.csv"
-        csv_data=@clavis_items.collect {|x| x.barcode}
-        send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
+
+        require 'csv'
+        csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
+          csv << ['barcode','collocazione','serie-inv','nota al prestito','titolo']
+          @clavis_items.each do |r|
+            csv << [r.barcode,r.collocation,"#{r.inventory_serie_id}-#{r.inventory_number}",r.loan_alert_note,r.title]
+          end
+        end
+        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=#{fname}"
+
+
+        
+        #csv_data=@clavis_items.collect {|x| x.barcode}
+        #send_data csv_data.join("\n"), type: Mime::CSV, disposition: "attachment; filename=#{fname}"
       }
       format.pdf {
 
@@ -311,17 +386,38 @@ class ClavisItemsController < ApplicationController
     headers['Access-Control-Allow-Origin'] = "*"
 
     if params[:id]=='0'
-      issue_id=params[:issue_id]
-      sel="item_id,item_status,loan_class,section,collocation,inventory_serie_id,item_media"
-      @clavis_item = ClavisItem.all(:select=>sel,:limit=>1,:conditions=>{:issue_id=>issue_id,:owner_library_id=>params[:owner_library_id]})
-      if @clavis_item!=[]
-        @clavis_item = @clavis_item.first
+      if params[:topografico_non_in_clavis].to_i > 0
+        @extra_card = ExtraCard.find_by_sql("select t.*,l.label as library_label from topografico_non_in_clavis t join clavis.library l on (l.library_id=t.home_library_id) where id=#{params[:topografico_non_in_clavis].to_i}").first
+      end
+      if params[:pac_search].to_i > 0
+        if !params[:ean].blank?
+          # Nota: params[:ean] viene correttamente quotato dalla associa_ean_con_manifestation_id (evitando sql injection)
+          found_title_id=SbctTitle.associa_ean_con_manifestation_id(params[:ean], params[:pac_search].to_i)
+          if !found_title_id.nil?
+            fd=File.open("/home/seb/logs/associa_ean_con_manifestation_id.log", "a")
+            fd.write("#{Time.now} - SbctTitle.associa_ean_con_manifestation_id(#{SbctTitle.connection.quote(params[:ean])}, #{params[:pac_search].to_i}) => #{found_title_id}\n")
+            fd.close
+          end
+        end
+        gest_data = ClavisItem.find_by_sql(SbctItem.sql_for_gest_data(clavis_manifestation_id=params[:pac_search].to_i, params[:supplier_id]))
+        if params[:index]=='true'
+          @clavis_item=gest_data
+        else
+          @clavis_item=gest_data.first
+        end
       else
-        # @clavis_item=ClavisItem.first
-        @clavis_item=nil
-        if ClavisIssue.exists?(issue_id)
-          ci=ClavisIssue.find(issue_id)
-          @clavis_item = ClavisItem.first(:select=>sel,:conditions=>{:manifestation_id=>ci.manifestation_id,:owner_library_id=>params[:owner_library_id], :item_status=>'F'})
+        issue_id=params[:issue_id]
+        sel="item_id,item_status,loan_class,section,collocation,inventory_serie_id,item_media"
+        @clavis_item = ClavisItem.all(:select=>sel,:limit=>1,:conditions=>{:issue_id=>issue_id,:owner_library_id=>params[:owner_library_id]})
+        if @clavis_item!=[]
+          @clavis_item = @clavis_item.first
+        else
+          # @clavis_item=ClavisItem.first
+          @clavis_item=nil
+          if ClavisIssue.exists?(issue_id)
+            ci=ClavisIssue.find(issue_id)
+            @clavis_item = ClavisItem.first(:select=>sel,:conditions=>{:manifestation_id=>ci.manifestation_id,:owner_library_id=>params[:owner_library_id], :item_status=>'F'})
+          end
         end
       end
     else
@@ -340,7 +436,13 @@ class ClavisItemsController < ApplicationController
           end
         end
       }
-      format.json { render :json => @clavis_item }
+      format.json {
+        if @extra_card.nil?
+          render :json => @clavis_item
+        else
+          render :json => @extra_card
+        end
+      }
     end
   end
 
@@ -372,11 +474,15 @@ class ClavisItemsController < ApplicationController
       @c_item.custom_field1=@clavis_item.custom_field1
       @c_item.custom_field3=@clavis_item.custom_field3
       @c_item.date_updated=@clavis_item.date_updated
-      ['owner_library_id','home_library_id','actual_library_id'].each do |f|
+      @c_item.inventory_date = @clavis_item.date_updated if @clavis_item.inventory_date.blank?
+      ['owner_library_id','home_library_id','actual_library_id','supplier_id'].each do |f|
         @c_item[f] = @clavis_item.send(f) 
       end
       @c_item.sanifica_collocazione
-      @c_item.save if @c_item.changed?
+      if @c_item.changed?
+        @c_item.save
+        @c_item.allinea_pac
+      end
     else
       @clavis_item.loan_status=ClavisItem.label_to_key(@clavis_item.loan_status,'LOANSTATUS')
       @clavis_item.item_media=ClavisItem.label_to_key(@clavis_item.item_media,'ITEMMEDIATYPE')
@@ -417,7 +523,7 @@ class ClavisItemsController < ApplicationController
     #  res[r[:manifestation_id]]=r.collocazione
     #end
 
-    sel='manifestation_id,section,collocation,specification,sequence1,sequence2'
+    sel='manifestation_id,case when section is null then '' else section end as section,collocation,specification,sequence1,sequence2'
 
     sql="SELECT #{sel} FROM clavis.item WHERE #{cond}"
     # logger.warn(sql)
@@ -433,7 +539,7 @@ class ClavisItemsController < ApplicationController
   def closed_stack_item_request
     # headers['Access-Control-Allow-Origin'] = "*"
     headers['Access-Control-Allow-Origin'] = "https://bct.comperio.it"
-
+    # sleep 10
     # Vero if da usare: if params[:dng_user].blank?
     # Per debug uso utente sebastiano:
     if params[:dng_user].blank?
@@ -454,14 +560,15 @@ class ClavisItemsController < ApplicationController
     logger.warn("#{Time.now} CSIRTEST: entrato #{params[:dng_user]}")
     cm=ClavisManifestation.find(params[:manifestation_id])
     logger.warn("#{Time.now} CSIRTEST: manifestation_id => #{cm.id}")
-    patron=ClavisPatron.find_by_opac_username(params[:dng_user].downcase)
+    # patron=ClavisPatron.find_by_opac_username(params[:dng_user].downcase)
+    patron=ClavisPatron.find_by_sql("SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(params[:dng_user])})").first
     logger.warn("#{Time.now} CSIRTEST: patron_id => #{patron.id}")
     dng_session=DngSession.find_by_params_and_request(params,request)
     if dng_session.nil?
       fd=File.open("/home/seb/utenti_senza_dng_session.log", 'a')
-      fd.write("#{Time.now} patron_id => #{patron.id}\n")
+      fd.write("#{Time.now} patron_id => #{patron.id} - #{DngSession.format_client_ip(request)}\n")
       fd.close
-      render json:{status:'error', requests:ClosedStackItemRequest.count, msg:'Non siamo riusciti a registrare la richiesta a causa di un problema tecnico alla cui soluzione stiamo lavorando, ci scusiamo per il disagio', collocazione:params[:collocazione]}
+      render json:{status:'error', requests:ClosedStackItemRequest.count, msg:'Non siamo riusciti a registrare la richiesta - prova a effettuare nuovamente il login', collocazione:params[:collocazione]}
       return
     end
     logger.warn("#{Time.now} CSIRTEST: dng_session_id => #{dng_session.inspect}")
@@ -540,7 +647,9 @@ class ClavisItemsController < ApplicationController
       sourcefile = File.join(Rails.root, 'extras/sql/search', $1)
       File.read(sourcefile)
     else
-      sql_source
+      # Disabilito 23 marzo 2023 per evitare problemi di sql injection, anche se questo tipo di ricerca
+      # in teoria dovrebbe provenire da fonte sicura
+      raise "Non mi fido di eseguire #{sql_source} - usare opzione -f, casomai"
     end
   end
 end

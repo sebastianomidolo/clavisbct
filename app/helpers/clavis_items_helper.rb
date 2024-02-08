@@ -1,4 +1,5 @@
 # coding: utf-8
+
 module ClavisItemsHelper
   def clavis_item_show(record)
     res=[]
@@ -24,7 +25,15 @@ module ClavisItemsHelper
           end
         end
       when 'manifestation_id'
-        txt = record[k]==0 ? 'FUORI CATALOGO' : link_to(record[k], clavis_manifestation_path(record[k]))
+        if record[k]==0
+          if record['owner_library_id']==-1
+            txt = %Q{(topografico - non in Clavis) #{link_to('Inserisci come fuori catalogo in Clavis', "https://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&topografico_non_in_clavis=#{record.custom_field3}", target:'_new',class:'btn btn-warning')}}.html_safe
+          else
+            txt = "(fuori catalogo)"
+          end
+        else
+          txt = link_to(record[k], clavis_manifestation_path(record[k]))
+        end
       else
         txt = record[k]
       end
@@ -65,7 +74,8 @@ module ClavisItemsHelper
     else
       coll=link_to(colloc, clavis_item_path(record))
     end
-    piano = record.piano_centrale
+    # piano = record.piano_centrale
+    piano = 'piano ?'
     classe = ''
 
     if edit_in_place
@@ -155,13 +165,17 @@ module ClavisItemsHelper
             lnk << "</br>Esemplare prenotato per #{patron_link} - #{r.request_date}".html_safe
           end
         end
-        lnk << "</br>#{link_to('[vedi notizia]', ClavisManifestation.clavis_url(r.manifestation_id,:show),:target=>'_blank')}".html_safe if r.manifestation_id!=0
-        lnk << " #{link_to(r.manifestation_id, clavis_manifestation_path(r.manifestation_id))}".html_safe if r.manifestation_id!=0
+        if r.manifestation_id!=0
+          lnk << "</br>#{link_to('[vedi notizia]', ClavisManifestation.clavis_url(r.manifestation_id,:show),:target=>'_blank')}".html_safe
+          lnk << " #{link_to('[OPAC]', ClavisManifestation.clavis_url(r.manifestation_id,:opac),:target=>'_blank')}".html_safe
+          # lnk << " #{link_to('[OPAC]', ClavisManifestation.clavis_url(r.manifestation_id,:opac),:target=>'_blank')}".html_safe 
+          lnk << " #{link_to(r.manifestation_id, clavis_manifestation_path(r.manifestation_id))}".html_safe
+        end
 
         if !params[:with_manifestations].blank? or !params[:ean_presence].blank?
           covers = []
-          covers << " Possibile copertina corrispondente a EAN " + link_to("<b>#{r.ean}</b>".html_safe , "https://covers.comperio.it/calderone/viewmongofile.php?ean=#{r.ean}") if !r.ean.blank?
-          covers << " Possibile copertina corrispondente a ISBN " + link_to("<b>#{r.isbnissn}</b>".html_safe , "https://covers.comperio.it/calderone/viewmongofile.php?ean=#{r.isbnissn}") if !r.isbnissn.blank? and r.isbnissn!=r.ean
+          covers << " Possibile copertina corrispondente a EAN " + link_to("<b>#{r.ean}</b>".html_safe , "https://covers.biblioteche.cloud/covers/#{r.ean}") if !r.ean.blank?
+          covers << " Possibile copertina corrispondente a ISBN " + link_to("<b>#{r.isbnissn}</b>".html_safe , "https://covers.biblioteche.cloud/covers/#{r.isbnissn}") if !r.isbnissn.blank? and r.isbnissn!=r.ean
           lnk << covers.join('<br/>').html_safe if covers.size>0
         end
 
@@ -212,9 +226,12 @@ module ClavisItemsHelper
       end
 
       coll << "</br>RICOLLOCATO".html_safe if r.owner_library_id==-3
-      coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
+      # coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
+      coll << "</br>#{link_to(r.loc_name, location_path(r.location_id))}".html_safe if !r.loc_name.nil?
       coll << "</br><em>#{r.requests_count} #{r.requests_count=='1' ? 'prenotazione' : 'prenotazioni' }</em>".html_safe if r.respond_to?('requests_count')
 
+      coll << "</br>#{r.loan_alert_note}".html_safe if !r.loan_alert_note.blank? and !params[:loan_alert_note].blank?
+      
       # cover_column = params[:cover_images]=='t' ? content_tag(:td, image_tag("https://sbct.comperio.it/index.php?file=#{r.cover_id}", :size=>'100x125')) : ''
       # cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag("https://covers.comperio.it/calderone/viewmongofile.php?ean=", :size=>'100x125')) : ''
       cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag(dnl_d_object_path(1, format:'jpeg', manifestation_id:r.manifestation_id,size:'200x'))) : ''
@@ -230,7 +247,10 @@ module ClavisItemsHelper
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
     else
-      res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
+      (
+        v = @location.nil? ? '' : " in #{@location.collocazione_intera} (#{@location.bib_section.name})"
+        res << content_tag(:div, "Trovati #{records.total_entries} esemplari#{v}".html_safe, class: 'panel-heading')
+      )
     end
     res=content_tag(:table, res.join("\n").html_safe, {:id=>table_id, class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
@@ -392,13 +412,13 @@ module ClavisItemsHelper
 
     # Qualcosa di specifico per la musicale, lasciato poi in sospeso (commento il codice)
     if record.home_library_id == 3
-      res = []
-      record.d_objects_folders.each do |r|
+    #  res = []
+    #  record.d_objects_folders.each do |r|
         # res << link_to(r.name, "https://clavisbct.comperio.it/d_objects_folders/#{r.id}")
         # res << " manifestation_id: <b>#{record.manifestation_id}</b>"
-      end
+    #  end
       # res << "Esemplare delle Biblioteca Musicale"
-      return clavis_item_formatta_info(res.join.html_safe)
+    #  return clavis_item_formatta_info(res.join.html_safe)
     end
 
     if !record.collocazione_per.nil?
@@ -427,10 +447,21 @@ module ClavisItemsHelper
     # return "info: #{record.inspect}"
     return '' if info.nil?
     res=[]
-    res << "Scaffale aperto - sezione #{info['os_section']}" if !info['os_section'].blank?
+    if !info['os_section'].blank?
+      if record.section == info['os_section']
+        res << "Spostato in #{info['os_section']} (#{record.custom_field1})"
+      else
+        res << "Candidato a scaffale aperto - sezione #{info['os_section']}"
+      end
+    end
     res << "In deposito esterno: contenitore #{info['label']} - si trova presso #{info['nomebib']}" if !info['label'].blank?
-    if !info['piano'].blank? and record.home_library_id==2
-      res << content_tag(:b, " Collocazione in Civica Centrale: #{info['piano']}")
+    # if !info['piano'].blank? and record.home_library_id==2
+    if !info['piano'].blank?
+      if record.item_status=='F'
+        res << content_tag(:b, " Ubicazione: #{info['piano']}")
+      else
+        res << content_tag(:b, " Ubicazione: #{info['piano']} - attenzione, non è su scaffale (item_status: #{record.item_status})")
+      end
       if record.item_media=='S' and record.manifestation_id > 0
         ClavisConsistencyNote.where(manifestation_id:record.manifestation_id,library_id:record.home_library_id).each do |x|
           res << content_tag(:b, " --- Consistenza periodico: #{x.text_note}")
@@ -512,6 +543,19 @@ module ClavisItemsHelper
     "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nclink.join(', ')}".html_safe
   end
 
+  def clavis_items_dup_numbers(collocazione)
+    return '' if collocazione.blank?
+    scaffale,palchetto=collocazione.split('.')
+    return '' if palchetto.nil? or scaffale.to_i == 0
+    sql = %Q{select distinct terzo_i from clavis.collocazioni where collocazione in (select collocazione from clavis.collocazioni where collocazione ~* '^#{collocazione}' group by collocazione having count(*)>1);}
+    res = []
+    ClavisItem.connection.execute(sql).to_a.each do |r|
+      res << r['terzo_i']
+    end
+    return '' if res.size==0
+    "Numeri di catena duplicati <b>#{res.join(', ')}</b>".html_safe
+  end
+  
   def clavis_items_senza_copertina(records)
     res=[]
     records.each do |r|
@@ -521,7 +565,7 @@ module ClavisItemsHelper
       else
         ean = r['EAN']
       end
-      img_link = ean.blank? ? '' : image_tag("https://covers.comperio.it/calderone/viewmongofile.php?ean=#{ean}")
+      img_link = ean.blank? ? '' : image_tag("https://covers.biblioteche.cloud/covers/#{ean}")
       res << content_tag(:tr, content_tag(:td, img_link) +
                               content_tag(:td, ean.blank? ? '-' : ean) +
                               content_tag(:td, link_to(r['title'], ClavisManifestation.clavis_url(r['manifestation_id'],:edit))) +
@@ -545,5 +589,57 @@ module ClavisItemsHelper
     end
     res=content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
     content_tag(:div , content_tag(:div, res, class: 'panel-body'), class: 'panel panel-default table-responsive')
+  end
+
+  def clavis_item_details(item)
+    res=[]
+    r = ClavisItem.find_by_sql("SELECT * FROM public.dinotola WHERE manifestation_id=#{item.manifestation_id}")
+    cm = r.first
+    return '' if cm.nil?
+    cm.attributes.keys.each do |k|
+      next if cm[k].blank?
+      txt = cm[k]
+      res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, txt))
+    end
+    content_tag(:table, res.join.html_safe)
+  end
+
+  def op_loans_report(with_sql)
+    sql = %Q{#{with_sql} select date_part('year', cl.loan_date_begin) as anno_prestito,
+            count(cl) as numero_prestiti
+             from ci left join clavis.loan cl using(item_id) where cl.loan_date_begin notnull
+               group by rollup(1) order by 1;}
+
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno prestito', class:'col-md-2') +
+                            content_tag(:td, 'Numero prestiti', class:'col-md-10'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.anno_prestito) +
+                              content_tag(:td, r.numero_prestiti))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def op_classif(with_sql)
+    sql = %Q{#{with_sql}
+select substr(trim(ci.manifestation_dewey), 1,1) || 'xx'  as classif,count(*)
+from ci join clavis.manifestation cm on (cm.manifestation_id=ci.manifestation_id)
+    group by rollup(1) order by 1;}
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Classe', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.classif) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def clavis_items_op_select_tag
+    sql = "select label,controller,exec_prefix from public.custom_ror_views where controller='#{params[:controller]}'"
+    h=ClavisItem.connection.execute(sql)
+    hfmt = []
+    h.collect {|i| hfmt << [i['label'],i['label']]}
+    select_tag(:op, options_for_select(hfmt, params[:op]), prompt: 'Scegli operazione', onchange: 'submit()')
   end
 end

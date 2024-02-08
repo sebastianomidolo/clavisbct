@@ -1,3 +1,5 @@
+<% @clavis_item.item_loan_status_update %>
+
 <%= link_to('[Ricolloca]', ClavisItem.clavis_url(@clavis_item.id,:ricolloca,'yes')) if can? :manage, ClavisItem %>
 
 <%= content_tag(:div, clavis_item_show(@clavis_item)) %>
@@ -8,3 +10,12 @@
   y = @clavis_item.anno_inventariazione_bibcentrale
   content_tag(:h4, "Anno inventariazione Civica Centrale: #{y}") if !y.nil?
 %>
+
+<%=
+  if params[:details]=='y'
+   content_tag(:pre, clavis_item_details(@clavis_item))
+  else
+   link_to("Informazioni su numero prestiti per questo esemplare", clavis_item_path(details:'y'))
+  end
+ %>
+

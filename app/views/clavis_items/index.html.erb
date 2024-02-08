@@ -2,7 +2,12 @@
 
 <% content_tag(:div, @sql_conditions, class: 'panel panel-success') if current_user.email=='seba' %>
 <%= content_tag(:div, clavis_items_missing_numbers(@clavis_item.collocation)) %>
+
+<%= content_tag(:div, clavis_items_dup_numbers(@clavis_item.collocation)) %>
+
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
 <%= clavis_items_shortlist(@clavis_items) %>
 
-<%= content_tag(:pre, @sql_conditions) %>
+<%= content_tag(:pre, user_session[:sql_itemsearch_conditions]) if current_user.email=='seba' %>
+
+
