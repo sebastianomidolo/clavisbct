@@ -1,8 +1,16 @@
 # coding: utf-8
 Clavisbct::Application.routes.draw do
 
+  resources :requests
+
+  resources :stats
+
+
   resources :manoscritti
   resources :serial_titles do
+    member do
+      get 'subscr'
+    end
     collection do
       get 'print'
     end
@@ -10,6 +18,11 @@ Clavisbct::Application.routes.draw do
   resources :serial_subscriptions
   resources :serial_libraries
   resources :serial_invoices
+  resources :serial_reminders do
+    collection do
+      post 'reminders_send'
+    end
+  end
 
   resources :serial_lists do
     member do
@@ -34,8 +47,14 @@ Clavisbct::Application.routes.draw do
 
   resources :bio_iconografico_topics
 
-
-  resources :clavis_purchase_proposals
+  resources :discard_rules
+  
+  resources :clavis_purchase_proposals do
+    collection do
+      get 'sql_shelf_update'
+      get 'sql_cpp_update'
+    end
+  end
 
   resources :omeka_files, only:[:index,:upload] do
     collection do
@@ -70,6 +89,22 @@ Clavisbct::Application.routes.draw do
   resources :bct_places
 
   resources :adabas_inventories
+
+  resources :services do
+    member do
+      get 'roles'
+      get 'd_objects'
+      get 'add_d_object'
+      delete 'd_objects'
+    end
+  end
+  resources :service_docs do
+    member do
+      get 'd_objects'
+      get 'add_d_object'
+      delete 'd_objects'
+    end
+  end
 
   resources :extra_cards do
     member do
@@ -107,6 +142,7 @@ Clavisbct::Application.routes.draw do
   devise_for :users
   scope "/minad" do
     resources :users
+    resources :roles
   end
 
   devise_for :clavis_patrons
@@ -132,6 +168,8 @@ Clavisbct::Application.routes.draw do
       get 'dnl'
       get 'dnl_pdf'
       get 'set_as_cover_image'
+      post 'myfolder'
+      delete 'myfolder'
     end
   end
 
@@ -142,15 +180,20 @@ Clavisbct::Application.routes.draw do
       get 'mancato_ritiro'
       get 'stat'
       get 'duplicates'
+      get 'nppnc'
     end
     member do
       post 'csir_insert'
       get 'autocert'
       get 'loans_analysis'
+      get 'cf'
     end
   end
 
   resources :d_objects_folders, only: [:index,:show,:edit,:update,:destroy] do
+    collection do
+      get 'users'
+    end
     member do
       post 'makepdf'
       get 'makepdf'
@@ -160,6 +203,7 @@ Clavisbct::Application.routes.draw do
       get 'set_pdf_params'
       get 'derived'
       get 'download'
+      post 'pagenumbers'
       delete 'delete_contents'
     end
   end
@@ -173,6 +217,11 @@ Clavisbct::Application.routes.draw do
       get 'numera'
       get 'intesta'
       delete 'delete'
+    end
+  end
+
+  resources :bio_iconografico_namespaces do
+    member do
       get 'info'
     end
   end
@@ -193,6 +242,7 @@ Clavisbct::Application.routes.draw do
   resources :talking_books do
     member do
       get 'download_mp3'
+      get 'prenota'
     end
     collection do
       get 'opac_edit_intro'
@@ -348,6 +398,9 @@ Clavisbct::Application.routes.draw do
       get 'info'
       get 'dupl'
     end
+    member do
+      get 'spacchetta'
+    end
   end
 
   resources :schema_collocazioni_centrales, only: [:index, :show, :edit, :update, :new, :create, :destroy] do
@@ -356,6 +409,8 @@ Clavisbct::Application.routes.draw do
       get 'list'
     end
   end
+  resources :locations
+  resources :bib_sections
 
   resources :closed_stack_item_requests, only: [:index,:show,:destroy] do
     member do
@@ -372,10 +427,20 @@ Clavisbct::Application.routes.draw do
       get 'confirm_request'
       get 'search'
       get 'stats'
+      get 'csir_status'
+      post 'onoff'
+      delete 'onoff'
     end
   end
 
   resources :clavis_librarians, only: [:index,:show] do
+  end
+
+  resources :sbct_presets
+  resources :sbct_users, only: [:show] do
+    member do
+      get 'set_default_library'
+    end
   end
 
   resources :sbct_titles do
@@ -394,18 +459,28 @@ Clavisbct::Application.routes.draw do
       get 'edit_user'
       get 'stampa_assegnazioni_copie'
       get 'ean_duplicati'
+      get 'delivery_notes'
+      get 'upload'
+      post 'upload'
+      post 'mass_edit'
     end
   end
 
   resources :sbct_items do
-    #collection do
-    #  post 'create_order'
-    #  get 'orders'
-    #end
+    collection do
+      post 'add'
+      post 'budget_assign'
+    end
     member do
       get 'assign_to_other_supplier'
+      get 'assign_to_other_budget'
+      get 'assign_to_other_title'
+      get 'assign_to_library'
       get 'change_item_order_status'
       delete 'togli_da_ordine'
+      delete 'supplier_unassign'
+      post 'aggiungi_a_ordine'
+      post 'selection_confirm'
     end
   end
 
@@ -413,17 +488,29 @@ Clavisbct::Application.routes.draw do
     collection do
       get 'upload'
       post 'upload'
+      get 'upload_from_clavis_shelf'
+      post 'upload_from_clavis_shelf'
+      get 'lastins'
     end
     member do
-      get 'report'
+      get 'man'
+      post 'remove_all_titles'
+      post 'remove_titles'
       get 'do_order'
       get 'budget_assign'
+      delete 'delete_old_uploads'
+      delete 'delete_future_titles'
     end
   end
 
   resources :sbct_budgets do
     collection do
       get 'suppliers_assign'
+      post 'suppliers_assign'
+    end
+    member do
+      get 'suppliers'
+      post 'release'
     end
   end
 
@@ -433,6 +520,9 @@ Clavisbct::Application.routes.draw do
     member do
       get 'invoices'
       get 'orders_report'
+      post 'clavisbct_access'
+      delete 'clavisbct_access'
+      get 'clavisbct_password'
     end
   end
   
@@ -440,6 +530,7 @@ Clavisbct::Application.routes.draw do
     member do
       post 'add_items_to_order'
       get 'prepare'
+      get 'vrfy'
     end
   end
 
@@ -455,6 +546,12 @@ Clavisbct::Application.routes.draw do
   resources :sbct_event_types
 
   resources :sbct_l_event_titles
+  resources :sbct_l_budget_libraries, only: [:index,:edit,:create,:update,:destroy,:new] do
+    collection do
+      get 'add_library'
+      post 'add_library'
+    end
+  end
 
   match '/periodici_e_fatture' => 'clavis_items#periodici_e_fatture'
   match '/periodici_ordini' => 'clavis_manifestations#periodici_ordini'
@@ -475,6 +572,9 @@ Clavisbct::Application.routes.draw do
   match '/sa' => 'clavis_items#ricollocazioni'
 
   match '/cr' => 'sbct_titles#homepage'
+  match '/pac' => 'sbct_titles#homepage'
+
+  match '/repertoribct' => 'bio_iconografico_namespaces#index'
 
   match '/pmr' => 'home#periodici_musicale_in_ritardo'
 
@@ -482,15 +582,21 @@ Clavisbct::Application.routes.draw do
 
   match '/cp_wc' => 'clavis_patrons#wrong_contacts'
 
+  match '/bumbam' => 'clavis_manifestations#bumbam'
+
   get 'controllo_provincia/:city/:province', to: 'home#controllo_provincia'
 
   get 'getpdf/:manifestation_id', to: 'home#getpdf'
 
-  get 'dob/:foldername', to: 'd_objects_folders#access_by_name'
+  # get 'dob/:foldername', to: 'd_objects_folders#access_by_name'
 
-  get 'cces/', to: 'home#confronto_consistenze_esemplari'
+  get 'dob', to: 'd_objects_folders#access_by_name'
 
-  get 'cercafc', to: 'clavis_items#cerca_fuoricatalogo'
+  get 'clinic(/:rep(/:sub))', to:'clinic#index'
+
+  # get 'cces/', to: 'home#confronto_consistenze_esemplari'
+
+  # get 'cercafc', to: 'clavis_items#cerca_fuoricatalogo'
 
   get 'spl/:manifestation_id', to: 'sp_items#redir'
 
