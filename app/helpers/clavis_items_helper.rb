@@ -42,6 +42,18 @@ module ClavisItemsHelper
     res=content_tag(:table, res.join.html_safe)
   end
 
+  def clavis_item_show_raw(record)
+    res=[]
+
+    record.attributes.keys.each do |k|
+      # next if record[k].blank?
+      txt = record[k]
+      res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, txt))
+    end
+    res=content_tag(:table, res.join.html_safe)
+  end
+
+
   def clavis_items_row(record)
     edit_in_place=false
     coll=record.collocazione
@@ -530,30 +542,36 @@ module ClavisItemsHelper
   end
 
 
-  def clavis_items_missing_numbers(collocazione)
+  def clavis_items_missing_numbers(item)
+    collocazione = item.collocation
+    collocazione.chop! if collocazione =~ /\.$/
     return '' if collocazione.blank?
     scaffale,palchetto=collocazione.split('.')
     return '' if palchetto.nil? or scaffale.to_i == 0
-    nc=ClavisItem.missing_numbers(scaffale.to_i,palchetto.upcase)
+    nc=ClavisItem.missing_numbers(scaffale.to_i,palchetto.upcase,item.home_library_id)
     return '' if nc.size==0
     nclink=[]
     nc.each do |n|
-      nclink << link_to(n, new_extra_card_path(collocazione:"#{collocazione}.#{n}"),target:'_blank') if can? :manage, ExtraCard
+      nclink << link_to(n, new_extra_card_path(collocazione:"#{collocazione}.#{n}",home_library_id:item.home_library_id),target:'_blank') if can? :manage, ExtraCard
     end
     "Numeri di catena non presenti in <b>#{scaffale}.#{palchetto.upcase}</b>: #{nclink.join(', ')}".html_safe
   end
 
-  def clavis_items_dup_numbers(collocazione)
+  def clavis_items_dup_numbers(item)
+    collocazione = item.collocation
     return '' if collocazione.blank?
     scaffale,palchetto=collocazione.split('.')
     return '' if palchetto.nil? or scaffale.to_i == 0
-    sql = %Q{select distinct terzo_i from clavis.collocazioni where collocazione in (select collocazione from clavis.collocazioni where collocazione ~* '^#{collocazione}' group by collocazione having count(*)>1);}
+    sql = %Q{select distinct terzo_i from clavis.collocazioni where collocazione in
+     (select collocazione from clavis.collocazioni cc join clavis.item ci using(item_id)
+       where ci.home_library_id=#{item.home_library_id} and cc.collocazione ~* '^#{collocazione}' group by cc.collocazione having count(*)>1)
+       order by terzo_i;}
     res = []
     ClavisItem.connection.execute(sql).to_a.each do |r|
       res << r['terzo_i']
     end
     return '' if res.size==0
-    "Numeri di catena duplicati <b>#{res.join(', ')}</b>".html_safe
+    "Numeri di catena duplicati in <b>#{scaffale}.#{palchetto.upcase}</b>: #{res.join(', ')}".html_safe
   end
   
   def clavis_items_senza_copertina(records)
@@ -635,8 +653,150 @@ from ci join clavis.manifestation cm on (cm.manifestation_id=ci.manifestation_id
     content_tag(:table, res.join.html_safe, class:'table')
   end
 
+  def op_item_media_report_rplot(items)
+    totale=items.pop
+    max = 0
+    items.each {|i| max = i.count.to_i if max < i.count.to_i}
+    width = 150*items.size
+    template = %Q{
+
+data <-data.frame(
+__X__,
+__Y__
+)
+jpeg(filename='/home/storage/preesistente/static/test.jpg', width=#{width}, height=480)
+barplot(height=data$value, names=data$name,
+col=rgb(0.8,0.1,0.1,0.6),
+xlab="MediaType",
+ylab="Numero copie",
+main="Totale #{totale.count} esemplari",
+ylim=c(0,#{max})
+)
+dev.off()
+}
+    x = items.collect {|i| i.item_media_label.blank? ? "'Non precisato (#{i.count})'" : "'#{i.item_media_label} (#{i.count})'"}
+    y = items.collect {|i| i.count}
+    template.sub!("__X__", "name  = c(#{x.join(',')})")
+    template.sub!("__Y__", "value = c(#{y.join(',')})")
+    fd = File.open("/home/seb/prova_rplot.r", 'w')
+    fd.write(template)
+    fd.close
+  end
+
+  def op_item_media_report(with_sql)
+    sql = %Q{#{with_sql} select item_media_label,count(*) from ci group by rollup(1) order by 1;}
+    # return content_tag(:pre, sql)
+    items = ClavisItem.find_by_sql(sql)
+    begin
+      self.send("#{__method__}_rplot", Array.new(items))
+    rescue
+      return "errore #{$!}"
+    end
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'MediaType', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    items.each do |r|
+      res << content_tag(:tr, content_tag(:td, r.item_media_label) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def op_item_status_report(with_sql)
+    sql = %Q{#{with_sql} select item_status_label,count(*) from ci group by rollup(1) order by 1;}
+    # return content_tag(:pre, sql)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'ItemStatus', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.item_status_label) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def op_item_source_report(with_sql)
+    sql = %Q{#{with_sql} select l.value_label as item_source_label,count(*) from ci
+         left join clavis.lookup_value l on(l.value_class='ITEMSOURCE' and l.value_key=item_media
+           and value_language='it_IT') group by rollup(1) order by 1}
+    # return content_tag(:pre, sql)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'ItemSource - not yet', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.item_source_label) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def op_loan_class_report_rplot(items)
+    totale=items.pop
+    max = 0
+    items.each {|i| max = i.count.to_i if max < i.count.to_i}
+    width = 200*items.size
+    template = %Q{
+
+data <-data.frame(
+__X__,
+__Y__
+)
+jpeg(filename='/home/storage/preesistente/static/test.jpg', width=#{width}, height=480)
+barplot(height=data$value, names=data$name,
+col=rgb(0.8,0.1,0.1,0.6),
+xlab="Classe di prestito",
+ylab="Numero copie",
+main="Totale #{totale.count} esemplari",
+ylim=c(0,#{max})
+)
+dev.off()
+}
+    x = items.collect {|i| i.loan_class_label.blank? ? "'Non precisato (#{i.count})'" : "'#{i.loan_class_label} (#{i.count})'"}
+    y = items.collect {|i| i.count}
+    template.sub!("__X__", "name  = c(#{x.join(',')})")
+    template.sub!("__Y__", "value = c(#{y.join(',')})")
+    fd = File.open("/home/seb/prova_rplot.r", 'w')
+    fd.write(template)
+    fd.close
+  end
+
+  def op_loan_class_report(with_sql)
+    sql = %Q{#{with_sql} select lk.value_label as loan_class_label,count(*) from ci
+        left join clavis.lookup_value lk on(lk.value_class='LOANCLASS' and lk.value_key=loan_class and value_language='it_IT')
+      group by rollup(1) order by 1;}
+    # return content_tag(:pre, sql)
+    mn = "#{__method__}_rplot"
+    
+    items = ClavisItem.find_by_sql(sql)
+    begin
+      self.send("#{__method__}_rplot", Array.new(items))
+    end
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Classe di prestito', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    items.each do |r|
+      res << content_tag(:tr, content_tag(:td, r.loan_class_label) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def op_sections_report(with_sql)
+    sql = %Q{#{with_sql} select section,count(*) from ci group by rollup(1) order by 1;}
+    # return content_tag(:pre, sql)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Sezione', class:'col-md-2') +
+                            content_tag(:td, 'Numero copie', class:'col-md-10'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, r.section) +
+                              content_tag(:td, r.count))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  
   def clavis_items_op_select_tag
-    sql = "select label,controller,exec_prefix from public.custom_ror_views where controller='#{params[:controller]}'"
+    sql = "select label,controller,exec_prefix from public.custom_ror_views where controller='#{params[:controller]}' order by label"
     h=ClavisItem.connection.execute(sql)
     hfmt = []
     h.collect {|i| hfmt << [i['label'],i['label']]}
