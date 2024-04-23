@@ -61,6 +61,7 @@ class ClavisItem < ActiveRecord::Base
 
   def view
     extra = self['value_label'].nil? ? '' : "#{self['value_label']}: "
+    return "titolo da verificare per item_id #{self.id}" if self.title.nil?
     "#{extra}#{self.title.strip}#{self.la_collocazione}"
   end
 
@@ -282,7 +283,7 @@ class ClavisItem < ActiveRecord::Base
   end
 
   def item_loan_status_update
-    return if self.barcode.nil?
+    return if self.barcode.blank?
     h = ClavisItem.rest_get_item_status(self.barcode)
     self.loan_status = h['LoanStatus']
     if self.changed?
