@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
+    <meta name="robots" content="noindex"/>
     <meta name="author" content="">
     <%= @pagetitle.nil? ? content_tag(:title, params[:controller] + ': ' + params[:action]) : content_tag(:title, @pagetitle) %> 
     <%= stylesheet_link_tag    "application", :media => "all" %>
@@ -51,15 +52,20 @@ end
           <ul class="nav navbar-nav">
             <li><a href="/talking_books">Libro parlato</a></li>
             <!-- <li><a href="/audio_visuals">Audiovisivi</a></li> -->
-	    <% if can? :search, DObject %>
-               <li><a href="/d_objects_folders">Oggetti digitali</a></li>
+	    <% if can? :index, DObject %>
+               <li><a href="/d_objects_folders" class="btn btn-success">Oggetti digitali</a></li>
             <% end %>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Altre risorse <b class="caret"></b></a>
               <ul class="dropdown-menu">
                 <li><a href="/clavis_manifestations">Controllo BID</a></li>
 		<li><a href="/clavis_manifestations/bid_duplicati">BID duplicati</a></li>
-                <li><a href="/clavis_authorities?authority_type=A&bidnotnull=true">Controllo authorities 'A'</a></li>
+
+		<% if user_signed_in? %>
+                  <li><a href="/clavis_authorities?authority_type=A&bidnotnull=true">Controllo authorities 'A'</a></li>
+		  <li><a href="/clavis_items/fifty_years?owner_library_id=2">Fifty years (Centrale)</a></li>
+		  <li><a href="/clavis_items/fifty_years?owner_library_id=3">Fifty years (Musicale)</a></li>
+		<% end %>
                 <li class="divider"></li>
                 <li class="dropdown-header">Altre risorse</li>
 <!--                <li><a href="/ordini">Ordini periodici</a></li> -->
@@ -71,10 +77,12 @@ end
                 <!-- <li><a href="/d_objects?show_attachments=true">Show attachments...</a></li> -->
                 <li><a href="/iss_journals/">Riviste digitalizzate</a></li>
                 <li><a href="/bct_letters/">Lettere autografe</a></li>
-		<li><a href="/clavis_items/fifty_years?owner_library_id=2">Fifty years (Centrale)</a></li>
-		<li><a href="/clavis_items/fifty_years?owner_library_id=3">Fifty years (Musicale)</a></li>
+                <li><a href="/procultura/">Pro Cultura</a></li>
+
         	<!-- <li><a href="/clavis_authorities?authority_type=L&in_subjects=true">Intestazioni L usate impropriamente nei soggetti</a></li>-->
-                <li><a href="/clavis_authorities?authority_type=L&in_keywords=true">Intestazioni L usate impropriamente nel legame 619 con notizie</a></li>
+                <!-- <li><a href="/clavis_authorities?authority_type=L&in_keywords=true">Intestazioni L usate impropriamente nel legame 619 con notizie</a></li> -->
+
+		
               </ul>
             </li>
           </ul>
