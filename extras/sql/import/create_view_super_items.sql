@@ -4,7 +4,7 @@ SET SEARCH_PATH TO import;
 set standard_conforming_strings to false;
 set backslash_quote to 'safe_encoding';
 
-DROP VIEW IF EXISTS view_super_items;
+DROP VIEW IF EXISTS view_super_items CASCADE;
 CREATE OR REPLACE VIEW view_super_items as
 
 SELECT
@@ -57,13 +57,22 @@ case when
    )
 then true else false end as piemonte,
 
-case when
-     ci.loan_class = 'F'
+case
+ when ci.loan_class = 'F'
      or cc.colloc_stringa ~ (E'^Cons\\.|^C\\.')
      or cc.colloc_stringa ~ (E'^RC|^R\\.C|^RNC|^RN\\.C')
      or (cc.colloc_stringa ~ E'^P\\.C\\.' and ci.home_library_id not in (2,3))
 then true else false end as consultazione,
 
+case
+  when lc1 is null then null
+  when cc.colloc_stringa ~ (E'^RN|^R\\.N|^N|^CCNC|^CCPT') then 'N'
+  when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,1,3)::char(3)
+  when cdd.class_code is not null then substr(cdd.class_code,1,3)::char(3)
+  when upclass.up_class_code is not null then substr(upclass.up_class_code,1,3)::char(3)
+  else 'nc'
+end as dw3,
 
 case -- per statcol
   when cm.bib_type='i02' then 'CDi02'
@@ -71,8 +80,6 @@ case -- per statcol
   when ci.item_media = 'A' then 'Audiovisivi'
   when ci.item_media = 'T' then 'Libri parlati'
   when ci.item_media = 'Q' then 'DVD'
-  when ci.loan_class = 'F' then 'Consultazione'
-  when cc.colloc_stringa ~ (E'^Cons\\.|^RC|^R\\.C') then 'Consultazione'
   else
   case
     when cc.primo not in ('RN','R','RC') then
@@ -140,6 +147,7 @@ end as statcol,
    end as pubblico,
 
    case
+     when ci.item_media IN ('A', 'Q') then NULL
      when cc.colloc_stringa ~ (E'^Cons\\.|^RC\\.|^RC ') then NULL
      else
       case
@@ -147,7 +155,25 @@ end as statcol,
         then 'narrativa'
         else 'saggistica'
      end
-   end as genere
+   end as genere,
+
+/*
+test:
+select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_genere ~ '^errato' limit 100;
+*/
+   case
+     when ci.item_media IN ('A', 'Q') then NULL
+     when cc.colloc_stringa ~ (E'^Cons\\.|^RC\\.|^RC ') then NULL
+     else
+      case
+       when cc.primo = 'R'  and cc.secondo ~ E'^\\d{2}$' then 'errato (2 cifre invece di 3)'
+       when cc.primo = 'RN' and cc.secondo ~ E'^\\d{3}$' then 'errato (3 cifre invece di 2)'
+       when (ci.section in ('RN','CCNC','N','NG')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
+         then 'narrativa'
+         else 'saggistica'
+      end
+   end as alt_genere
+
 
    FROM item AS ci
     LEFT JOIN sbct_acquisti.library_codes lc1 ON(lc1.clavis_library_id=ci.home_library_id  and lc1.owner='bct')
@@ -219,6 +245,3 @@ end as statcol,
 
       WHERE ci.item_media != 'S' AND ci.item_status != 'E';
       
---        and ci.owner_library_id != -3;
-
-
