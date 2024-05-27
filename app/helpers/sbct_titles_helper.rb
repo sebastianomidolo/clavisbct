@@ -40,6 +40,21 @@ module SbctTitlesHelper
     table_title + content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
   end
 
+  def sbct_titles_lastins_list(records)
+    return '' if records.size==0
+    res = []
+    res << content_tag(:tr, content_tag(:td, "Lista", class:'col-md-2') +
+                            content_tag(:td, "Inserito", class:'col-md-1') +
+                            content_tag(:td, "Titolo", class:'col-md-8') +
+                            content_tag(:td, "Note", class:'col-md-1'), class:'success')
+    records.each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r.order_sequence, sbct_list_path(r.root_id))) +
+                              content_tag(:td, link_to(r.username, lastins_sbct_lists_path(username:r.username))) +
+                              content_tag(:td, "#{link_to(r.titolo,r)}<br/><em>Inserimento in lista: #{r.date_created.to_date}</em>".html_safe) +
+                              content_tag(:td, r.note))
+    end
+    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
+  end
   
   def sbct_titles_list(records, managed_libraries=[])
     checkbox_on = false
@@ -106,6 +121,10 @@ module SbctTitlesHelper
       data_inserimento = r.date_created.blank? ? '' : "<br/><b>DataIns: #{r.date_created.to_date}</b>".html_safe
       prezzo = r.prezzo.blank? ? "<br/><i>[prezzo mancante]</i>".html_safe : "<br/><b>Prezzo: #{number_to_currency(r.prezzo)}</b>".html_safe
       target_lettura = r.target_lettura.blank? ? '' : "<br/><b>Target lettura: #{r.target_lettura}</b>".html_safe
+
+      in_liste_da = r.data_ins_in_lista.blank? ? '' : "<br/><b>InListeDa: #{r.data_ins_in_lista}</b>".html_safe
+      note = r.note.blank? ? '' : "<br/><b>Note: #{r.note}</b>".html_safe
+      
       ref_tit = link_to(r.titolo,sbct_title_path(r.id_titolo, :page=>params[:page], budget_id:params[:budget_id], id_lista:id_lista, selection_mode:params[:selection_mode]), target:'_blank')
       # if params[:nocovers].blank?
 
@@ -134,7 +153,7 @@ module SbctTitlesHelper
                               content_tag(:td, sbct_titles_user_checkbox(managed_libraries,@sbct_list,r.id,r.library_codes,libraries_with_code), colspan:sel_span_2),class:'active') if params[:selection_mode]=='S'
       res << content_tag(:tr, "#{checkbox}#{ref_img}".html_safe +
                               content_tag(:td, (r.autore.blank? ? '' : link_to(r.autore, sbct_titles_path("sbct_title[titolo]":"autore:#{r.autore}",id_lista:id_lista)))) +
-                              content_tag(:td, ref_tit + prezzo + lacollana + datapubbl + anno + reparto + target_lettura + data_inserimento) +
+                              content_tag(:td, ref_tit + prezzo + lacollana + datapubbl + anno + reparto + target_lettura + data_inserimento + in_liste_da + note) +
                               content_tag(:td, lnk_editore) +
                               content_tag(:td, lesigle) +
                               content_tag(:td, extlnk.join(' ').html_safe), id:"title_#{r.id}")
@@ -288,7 +307,7 @@ def sbct_titles_format_infocopie(infocopie)
             #  lnk = ''.html_safe
             #end
 
-            if can? :edit, SbctTitle
+            if can? :edit, SbctTitle and SbctTitle.libraries_select(current_user).size > 0
               lnk = link_to("<b>Modifica titolo</b>".html_safe, edit_sbct_title_path(record.id), class:'btn btn-warning')
             else
               lnk = ''.html_safe
@@ -300,13 +319,14 @@ def sbct_titles_format_infocopie(infocopie)
             if !@current_list.nil? and (can? :edit, SbctList or !@current_list.assign_user_session(current_user, @current_list).nil?)
               
               if @sbct_title.sbct_lists.include?(@current_list)
-                lnk << link_to("<b>Rimuovi dalla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-danger')
+                # lnk << link_to("<b>Rimuovi dalla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-danger')
               else
-                lnk << link_to("<b>Aggiungi alla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-success')
+                # lnk << link_to("<b>Aggiungi alla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-success')
               end
-              lnk << link_to('[cambia lista]', sbct_lists_path(current_title_id:record))
+              # lnk << link_to('[cambia lista]', sbct_lists_path(current_title_id:record))
+              lnk << link_to('[cambia lista]', sbct_title_path(record,req:'chlist'))
             end
-            lnk << link_to('<b>Aggiungi copie</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo), class:'btn btn-warning') if can? :new, SbctItem and record.prezzo.to_i > 0
+            lnk << link_to('<b>Aggiungi copie</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo), class:'btn btn-warning') if can? :new, SbctItem and record.prezzo.to_i > 0 and SbctTitle.libraries_select(current_user).size > 0
             lnk << link_to('<b>Aggiungi copie dono</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo,nobudget:true), class:'btn btn-warning') if can? :manage, SbctItem
             lnk << link_to('<b>Deposito legale</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo,dl:true), class:'btn btn-warning') if can? :manage, SbctItem
 
@@ -445,7 +465,7 @@ def sbct_titles_format_infocopie(infocopie)
       library_name = r.siglabib
       library_title = r.clavis_library.to_label
     end
-    # return "test - scusate, fra qualche minuto torno a funzionare - opt: '#{status_options}' - #{trclass} #{library_name}"
+    # return "test - scusate, fra qualche secondo torno a funzionare - opt: '#{status_options}' - #{trclass} #{library_name}"
 
     delete_lnk = ''
     confirm_lnk = ''
@@ -563,11 +583,21 @@ def sbct_titles_format_infocopie(infocopie)
       supplier += "<br/>#{link_to('cancella copia', r, method: :delete, data: { confirm: 'Confermi cancellazione copia?'}, class:'btn btn-danger')}".html_safe if (current_user.role?('AcquisitionManager') or current_user.role?('AcquisitionStaffMember')) and r.created_by.nil? and r.budget_id.nil?
     end
 
+    budget_lnk = ''
+    if r.sbct_budget.nil?
+      budget_lnk = ''
+    else
+      budget_lnk = link_to(r.sbct_budget.label,sbct_budget_path(r.sbct_budget.id))
+      if current_user.role?('AcquisitionManager') and r.order_status=='S'
+        budget_lnk << "<br/>#{link_to('Cambio budget', assign_to_other_budget_sbct_item_path(r.id))}".html_safe
+      end
+    end
+
     content_tag(:tr, content_tag(:td, lnk, title:library_title) +
                      content_tag(:td, infouser.join('<br/>').html_safe) +
                      content_tag(:td, infodat.join('<br/>').html_safe) +
                      content_tag(:td, number_to_currency(r.prezzo)) +
-                     content_tag(:td, r.sbct_budget.nil? ? '' : link_to(r.sbct_budget.label,sbct_budget_path(r.sbct_budget.id))) +
+                     content_tag(:td, budget_lnk) +
                      content_tag(:td, order_lnk) +
                      content_tag(:td, "#{orderstatus}#{dataarrivo}#{dataordine}".html_safe) +
                      content_tag(:td, supplier.html_safe) +
@@ -663,29 +693,32 @@ def sbct_titles_format_infocopie(infocopie)
     end
 
     links << link_to('PAC', '/pac', {title:'Pagina di partenza per le Procedure Acquisti Coordinati'})
-    if params[:controller]=='sbct_lists' and ['man','show','index','new','edit', 'upload','upload_from_clavis_shelf','do_order'].include?(params[:action])
+    if params[:controller]=='sbct_lists' and ['import','man','show','index','new','edit', 'upload','upload_from_clavis_shelf','do_order'].include?(params[:action])
       if !params[:selection_mode].blank?
         links << link_to('Selezione', sbct_titles_path(:selection_mode=>'S', id_lista:params[:id]))
       else
-        links << link_to("Liste", sbct_lists_path(current_title_id:params[:current_title_id]))
+        links << link_to("Liste", sbct_lists_path(current_title_id:params[:current_title_id],req:params[:req]))
       end
       if !@sbct_list.id.nil?
         loop_list = @sbct_list.parent
         t1 = []
         while !loop_list.nil?
-          t1 << link_to(loop_list.label, sbct_list_path(loop_list,current_title_id:params[:current_title_id]))
+          t1 << link_to(loop_list.label, sbct_list_path(loop_list,current_title_id:params[:current_title_id],req:params[:req]))
           # links << link_to(loop_list.label, sbct_list_path(loop_list))
           loop_list = loop_list.parent
         end
         t1.reverse.each do |e|
           links << e
         end
-        links << link_to(@sbct_list.label, sbct_list_path(@sbct_list))
+        links << link_to(@sbct_list.label, sbct_list_path(@sbct_list,current_title_id:params[:current_title_id],req:params[:req]))
       end
       if params[:current_title_id].to_i > 0
         tit = SbctTitle.find(params[:current_title_id].to_i)
         links << link_to(tit.titolo, sbct_title_path(tit))
       end
+    end
+    if params[:action]=='lastins'
+      links << link_to("Liste", sbct_lists_path(current_title_id:params[:current_title_id]))
     end
     if params[:controller]=='sbct_budgets' and ['show','index'].include?(params[:action])
       links << link_to('Budgets', sbct_budgets_path)

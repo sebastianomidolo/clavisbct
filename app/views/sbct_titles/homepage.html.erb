@@ -3,7 +3,11 @@
 <%= render :partial => 'searchform' %>
 
 <hr/>
-<%= content_tag(:h5, link_to("[Leggere]", "https://h3ol.leggere.it/")) %>
+<%= content_tag(:h5,
+    link_to("[Leggere]", "https://h3ol.leggere.it/") + ' | ' +
+    link_to("[Documentazione PAC]", "https://clavisbct.comperio.it/services/2")
+    ) %>
+
 
 
 

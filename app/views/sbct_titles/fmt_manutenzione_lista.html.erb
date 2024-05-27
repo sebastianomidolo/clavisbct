@@ -1,0 +1,49 @@
+<%
+  parms=user_session[:current_params]
+%>
+
+<%=
+  @sbct_list = SbctList.find(parms[:id_lista])
+  content_tag(:p, "Cancellazione dalla lista <b>#{link_to(@sbct_list.to_label,@sbct_list)}</b>".html_safe)
+ %>
+
+
+<%=
+  sql = %Q{with t1 as (#{user_session[:current_sql]})\n
+  select t1.*
+from t1 join sbct_acquisti.l_titoli_liste tl using(id_titolo)
+  join sbct_acquisti.liste l on(l.id_lista=tl.id_lista and l.id_lista=#{@sbct_list.id})
+  order by tl.date_created ASC NULLS LAST
+  -- where l.hidden is false
+  -- and l.label != ''
+  -- and tl.date_created < '2023-06-30'
+  }
+  
+  titles=SbctTitle.paginate_by_sql(sql, page:params[:page], per_page:100)
+
+ content_tag(:div, "totale titoli filtrati: (#{SbctTitle.params_to_human(user_session[:current_params])}): #{titles.total_entries}")
+%>
+
+
+
+
+<% @sbct_item = SbctItem.new
+   if !params[:library_id].blank?
+     @library_id = @sbct_item.clavis_library = ClavisLibrary.find(params[:library_id])
+   end
+ %>
+
+<%= will_paginate titles, renderer: BootstrapPagination::Rails %>
+
+<%= simple_form_for(@sbct_list, url:remove_titles_sbct_list_path(@sbct_list), :method=>'post', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+
+<div class="form-actions">
+  <%= f.button :submit, {value: "Rimuovi i titoli selezionati", class:'btn btn-warning', confirm: "Confermi la rimozione dalla lista \"#{@sbct_list.to_label}\" dei titoli selezionati?"} %>
+</div>
+
+<%= content_tag(:div, sbct_titles_list(titles)) %>
+
+
+<% end %>
+
+

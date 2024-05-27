@@ -136,7 +136,7 @@ class SbctTitle < ActiveRecord::Base
         left join sbct_acquisti.order_status os on(os.id=cp.order_status)
         left join sbct_acquisti.orders ord using(order_id)
          where id_titolo=#{self.id} order by lc.label;}
-    puts sql
+    # puts sql
     SbctItem.find_by_sql(sql)
   end
 
@@ -148,12 +148,16 @@ class SbctTitle < ActiveRecord::Base
         join clavis.library cl on (cl.library_id=cp.preferred_library_id)
         join sbct_acquisti.library_codes lc on(lc.clavis_library_id=cl.library_id)
      where ppt.id_titolo = #{self.connection.quote(self.id_titolo)} order by cpp.proposal_date desc}
-    puts sql
+    # puts sql
     ClavisPurchaseProposal.find_by_sql(sql)
   end
 
   def add_to_sbct_list(list_id, user_id)
     self.connection.execute "INSERT INTO sbct_acquisti.l_titoli_liste (id_titolo,id_lista,date_created,created_by) VALUES(#{self.id},#{list_id},now(),#{user_id}) on conflict(id_titolo,id_lista) do nothing"
+  end
+
+  def remove_from_sbct_list(sbct_list)
+    self.sbct_lists.delete(sbct_list)
   end
 
   def copie
@@ -491,7 +495,7 @@ order by siglabct;}
     library_status = ''
     sql=%Q{select library_id as key,lc.label || ' (' || substr(cl.label,6) || ')' as label
          FROM sbct_acquisti.library_codes lc join clavis.library cl on(cl.library_id=lc.clavis_library_id)
-            WHERE library_internal='1' #{ids} #{library_status} order by lc.label;}
+            WHERE lc.pac is true #{ids} #{library_status} order by lc.label;}
     self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
   end
 
@@ -872,7 +876,11 @@ order by siglabct;}
     if sbct_title.inliste == 'y'
       join_l_titoli_liste = "join sbct_acquisti.l_titoli_liste tl using(id_titolo)"
     end
-
+    if sbct_title.inliste == 'nodatains'
+      join_l_titoli_liste = "join sbct_acquisti.l_titoli_liste tl using(id_titolo)"
+      cond << " tl.date_created is null" ; # cioè, senza data di inserimento in lista
+    end
+    
     join_budgets = ''
     if !sbct_budget.nil?
       # if !params[:con_copie].blank?
@@ -884,8 +892,12 @@ order by siglabct;}
       end
     end
     if !sbct_title.budget.blank?
-      join_budgets = 'JOIN sbct_acquisti.budgets b on(b.budget_id=cp.budget_id)'
-      cond << "b.label ~* #{sbct_title.connection.quote(sbct_title.budget)}"
+      if sbct_title.budget=='null'
+        cond << "cp.budget_id is null"
+      else
+        join_budgets = 'JOIN sbct_acquisti.budgets b on(b.budget_id=cp.budget_id)'
+        cond << "b.label ~* #{sbct_title.connection.quote(sbct_title.budget)}"
+      end
     end
 
     # params[:pproposal] = true if params[:order]=='10'
@@ -966,11 +978,11 @@ order by siglabct;}
       order_by = 'order by numcopie desc'
       cond << "numcopie is not null"
     when '6'
-      order_by = 'order by t.anno desc,t.autore,t.titolo'
-      cond << "t.anno notnull"
+      order_by = 'order by t.anno desc nulls last,t.autore,t.titolo'
+      # cond << "t.anno notnull"
     when '7'
-      order_by = 'order by t.datapubblicazione desc,t.anno desc,t.autore,t.titolo'
-      cond << "t.datapubblicazione notnull"
+      order_by = 'order by t.datapubblicazione desc nulls last,t.anno desc,t.autore,t.titolo'
+      # cond << "t.datapubblicazione notnull"
     when '8'
       order_by = 'order by random()'
     when '9'
@@ -1032,38 +1044,20 @@ order by siglabct;}
 
     # array_length(array_agg(cp.library_id),1) as numcopie,
     
+    if join_l_titoli_liste.blank?
+      select_titoli_liste = 'NULL as data_ins_in_lista,'
+    else
+      select_titoli_liste = "array_to_string(array_agg(distinct tl.date_created::date order by tl.date_created::date desc), ',') as data_ins_in_lista,"
+    end
+      
     sql=%Q{
 #{sql_comment.join("\n")}
-select t.id_titolo,t.collana,t.autore,t.titolo,t.editore,t.manifestation_id,t.prezzo,t.target_lettura,t.isbn,t.anno,t.reparto,t.datapubblicazione,#{select_pproposal}#{select_reserv}
-array_to_string(array_agg(concat_ws('-',lcod.label,cp.numcopie,
-    (case when cp.order_status is null then 'I' else cp.order_status end)) order by lcod.label),',') as infocopie,
-array_to_string(array_agg(distinct cp.library_id),',') as library_ids,
-array_to_string(array_agg(distinct lcod.label order by lcod.label),',') as library_codes,
-#{select_copie_clavis}
-sum(cp.numcopie) as numcopie,t.date_created,t.date_updated
- from sbct_acquisti.titoli t
- #{join_l_titoli_liste}
- #{join_lists}
- #{join_type_libraries} join sbct_acquisti.copie cp using(id_titolo)
- #{join_type_libraries} join sbct_acquisti.library_codes lcod on (lcod.clavis_library_id = cp.library_id)
- #{join_pproposal}
- #{join_copie_clavis}
- #{join_reserv}
- #{join_budgets}
- #{join_order}
- #{join_suppliers}#{join_event}#{join_dnotes}
-     #{cond}
-     group by t.id_titolo,t.autore,t.titolo,t.editore,t.manifestation_id,t.prezzo,t.target_lettura,t.isbn,t.anno,t.datapubblicazione#{group_pproposal}#{group_reserv}
-    #{order_by}
-    }
-
-    sql=%Q{
-#{sql_comment.join("\n")}
-select t.id_titolo,t.collana,t.autore,t.titolo,t.editore,t.manifestation_id,t.prezzo,t.target_lettura,t.isbn,t.anno,t.reparto,t.datapubblicazione,#{select_pproposal}#{select_reserv}
+select t.id_titolo,t.collana,t.autore,t.titolo,t.editore,t.manifestation_id,t.prezzo,t.target_lettura,t.isbn,t.anno,t.reparto,t.datapubblicazione,t.note,#{select_pproposal}#{select_reserv}
 -- array_to_string(array_agg(concat_ws('-',lcod.label,cp.numcopie, (case when cp.order_status is null then 'I' else cp.order_status end)) order by lcod.label),',') as infocopie,
 -- array_to_string(array_agg(distinct cp.library_id),',') as library_ids,
 -- array_to_string(array_agg(distinct lcod.label order by lcod.label),',') as library_codes,
 #{select_copie_clavis}
+#{select_titoli_liste}
 array_to_string(array_agg(distinct copie.lbl),',') as infocopie,
 sum(cp.numcopie) as numcopie,
 t.date_created,t.date_updated
@@ -1186,6 +1180,20 @@ COMMIT;
     # return sql
   end
 
-
+  def SbctTitle.params_to_human(prms)
+    res = []
+    skip = ['utf8', 'commit', 'action', 'controller']
+    prms.each_pair do |k,v|
+      next if skip.include?(k) or v.blank?
+      if v.class!=String
+        v.each_pair do |k1,v1|
+          res << "#{k1}: #{v1}" if !v1.blank?
+        end
+      else
+        res << "#{k}: #{v}"
+      end
+    end
+    res.join(', ')
+  end
   
 end

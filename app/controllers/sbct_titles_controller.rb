@@ -13,7 +13,11 @@ class SbctTitlesController < ApplicationController
     @sbct_title = SbctTitle.new(params[:sbct_title])
     if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian')
       # user_session[:current_library] = current_user.clavis_libraries.first.id
-      user_session[:current_library] = current_user.clavis_librarian.default_library_id
+      if current_user.clavis_default_library.nil? or current_user.clavis_default_library.siglabct.blank?
+        user_session[:current_library] = nil
+      else
+        user_session[:current_library] = current_user.clavis_librarian.default_library_id
+      end
     end
     if (current_user.role?('AcquisitionManager') or current_user.email=='opeseba') and !params[:fmt].blank?
       hfmt = [
@@ -23,10 +27,11 @@ class SbctTitlesController < ApplicationController
         'autoseleziona_copie',
         'mass_edit',
         'budget_assign',
+        'manutenzione_lista',
       ]
       if hfmt.include?(params[:fmt])
         render "fmt_#{params[:fmt]}" and return
-        # render text:"fmt_#{params[:fmt]} con sql uguale a #{user_session[:current_sql]}" and return
+        # render text:"<pre>\nfmt_#{params[:fmt]} con sql uguale a #{user_session[:current_sql]}\n</pre>" and return
       end
     end
     user_session[:sbct_titles_ids]=nil
@@ -102,6 +107,7 @@ class SbctTitlesController < ApplicationController
   end
 
   def new
+    render text:'Inserimento titolo non abilitato', layout:true and return if SbctTitle.libraries_select(current_user).size == 0
     user_session[:sbct_titles_ids]=nil
     @pagetitle="PAC-IT (inserimento titolo)"
     # @sbct_title = SbctTitle.new
@@ -203,7 +209,7 @@ class SbctTitlesController < ApplicationController
   end
 
   def edit
-    render text:'non accessibile in modifica', layout:true if !@sbct_title.editable?(current_user)
+    render text:'Titolo non accessibile in modifica', layout:true if !@sbct_title.editable?(current_user) or SbctTitle.libraries_select(current_user).size == 0
     @pagetitle="PAC-MT-#{@sbct_title.id}"
   end
 
@@ -244,6 +250,7 @@ class SbctTitlesController < ApplicationController
 
   def show
     @sbct_title=SbctTitle.find(params[:id])
+
     begin
       @sbct_title.repair
     rescue
@@ -284,8 +291,13 @@ class SbctTitlesController < ApplicationController
         end
         sql = "select distinct budget_id,supplier_id from public.pac_budgets where not locked and library_id=#{library_id} and supplier_id is not null and #{cond}"
         res = @sbct_title.connection.execute(sql).first
-        budget_id = res['budget_id'].to_i
-        supplier_id = res['supplier_id'].to_i
+        if res.nil?
+          budget_id = nil
+          supplier_id = nil
+        else
+          budget_id = res['budget_id'].to_i
+          supplier_id = res['supplier_id'].to_i
+        end
       else
         (
           b = SbctBudget.find(budget_id)

@@ -11,11 +11,22 @@
     # res << content_tag(:span, "#{link_to(l.to_label, sbct_titles_path(id_lista:l.id, budget_id:params[:budget_id], selection_mode:params[:selection_mode]))}".html_safe)
     res << content_tag(:span, "#{link_to(l.to_label, sbct_list_path(l.id,current_title_id:@sbct_title))}".html_safe) if !l.hidden or(l.owner_id==current_user.id)
   end
+
+   chlist_lnk=''
+   if current_user.role?(['AcquisitionManager','AcquisitionStaffMember','AcquisitionLibrarian'])
+    if params[:req]=='chlist'
+     chlist_lnk = link_to('[conferma assegnazioni]'.html_safe, sbct_title_path(req:''), class:'label label-info')
+	   
+    else
+     chlist_lnk = link_to('inserisci in lista'.html_safe, sbct_title_path(req:'chlist'), class:'label label-success', title:'Inserisci/rimuovi il titolo dalle liste' )
+    end
+   end
+
   if res.size==0
-    content_tag(:h5, "IdTitolo #{@sbct_title.id}")
+    content_tag(:h5, "IdTitolo #{@sbct_title.id} #{chlist_lnk}".html_safe)
   else
     txt = res.size==1 ? 'nella lista' : 'nelle liste:'
-    content_tag(:h5, "Titolo #{@sbct_title.id} presente #{txt} #{res.join(', ').html_safe}".html_safe)
+    content_tag(:h5, "Titolo #{@sbct_title.id} #{chlist_lnk} presente #{txt} #{res.join(', ')}".html_safe)
   end
 %>
 
@@ -26,8 +37,13 @@
 <% if @sbct_title.is_parent? %>
  <%= content_tag(:div, sbct_titles_show_parent_title(@sbct_title)) %>
 <% else %>
- <%= render partial:'show_panel' %> 
- <%= content_tag(:div, sbct_titles_show_title(@sbct_title)) %>
+ <%= render partial:'show_panel' %>
+ <%= if params[:req]=='chlist'
+       content_tag(:div, sbct_lists_assign(@sbct_title,current_user))
+     else
+       content_tag(:div, sbct_titles_show_title(@sbct_title))
+     end
+  %>
 <% end %>
 
 <hr/>

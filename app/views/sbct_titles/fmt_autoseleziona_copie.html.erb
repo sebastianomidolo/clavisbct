@@ -48,6 +48,7 @@ Seleziona automatica delle copie
     sql = SbctItem.auto_insert(user_session[:current_sql],@sbct_item,user_session[:current_params])
     titles=SbctTitle.find_by_sql(sql)
     content_tag(:div, sbct_titles_list(titles))
+    # content_tag(:pre, sql)
   end
 %>
  

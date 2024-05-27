@@ -21,7 +21,7 @@
   ["Ordini","params[:controller]=='sbct_orders'", "can? :index, SbctOrder", "sbct_orders_path"],
   ["Più richiesti", "params[:controller]=='sbct_titles' and params[:action]=='piurichiesti'", "can? :index, SbctTitle", "piurichiesti_sbct_titles_path"],
   ["Inserimento titolo", "params[:controller]=='sbct_titles' and params[:action]=='new'", "can? :create, SbctTitle", "new_sbct_title_path"],
-  ["PacUsers", "params[:controller]=='sbct_titles' and params[:action]=='view_users'", "current_user.role?('SysAdmin')", "view_users_sbct_titles_path"],
+  ["PacUsers", "params[:controller]=='sbct_titles' and params[:action]=='view_users'", "current_user.role?('AcquisitionManager')", "view_users_sbct_titles_path"],
   ["CaricaReport", "params[:controller]=='sbct_titles' and params[:action]=='upload'", "current_user.role?('AcquisitionManager')", "upload_sbct_titles_path"],
   ["Crea scorciatoia", "params[:controller]=='sbct_presets' and params[:action]=='create'", "current_user.role?('AcquisitionManager')", "new_sbct_preset_path(path:request.original_url)"],
   ["Scorciatoie", "params[:controller]=='sbct_presets'", "current_user.role?('AcquisitionLibrarian')", "sbct_presets_path"],
