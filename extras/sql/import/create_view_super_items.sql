@@ -168,7 +168,9 @@ case -- per statcol
 
   when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
 
-  when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
+  when cle.label is not null then cc.primo || '.' || cc.terzo
+
+  -- when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
   when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
 
 
@@ -263,7 +265,9 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
          then 'narrativa'
          else 'saggistica'
       end
-   end as alt_genere
+   end as alt_genere,
+
+   cle.label as codice_lingua
 
 
    FROM item AS ci
@@ -279,6 +283,8 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
       LEFT JOIN lookup_value lv2 on(lv2.value_key=ci.item_status AND lv2.value_language = 'it_IT' AND lv2.value_class = 'ITEMSTATUS')
       LEFT JOIN lookup_value lv3 on(lv3.value_key=ci.loan_class AND lv3.value_language = 'it_IT' AND lv3.value_class = 'LOANCLASS')
 
+      LEFT JOIN stats.codici_lingua_esemplari cle ON (cle.label = cc.secondo and cc.primo = 'RN')
+      
    LEFT JOIN LATERAL
      (SELECT lam.link_type, au.authority_id, regexp_replace(au.class_code, E'\\s|\\t', '', 'g') as class_code
        FROM l_authority_manifestation AS lam
