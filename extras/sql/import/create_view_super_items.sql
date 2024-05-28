@@ -14,10 +14,14 @@ case when ci.reprint != '' then ci.reprint end as reprint,
 
 case when ci.reprint ~ E'^\\d{4}' then substr(ci.reprint,1,4)::integer end as reprint_year,
 
-case when ci.reprint ~ E'^\\d{4}' and substr(ci.reprint,1,4)::integer > cm.edition_date then
- substr(ci.reprint,1,4)::integer else
+case
+ when ci.reprint ~ E'^\\d{4}' and substr(ci.reprint,1,4)::integer > cm.edition_date then substr(ci.reprint,1,4)::integer
+ when cm.manifestation_id is null then coalesce(date_part('year', ci.inventory_date), date_part('year', ci.date_created))
+ else
  case
-   when cm.edition_date is not null then cm.edition_date
+   -- when cm.edition_date is not null then cm.edition_date
+   -- when cm.edition_date::text ~ E'^\\d{4}' then cm.edition_date::integer
+   when cm.edition_date >= 1000 then cm.edition_date
     else case when ci.reprint ~ E'^\\d{4}' then substr(ci.reprint,1,4)::integer end end
 end as print_year,
 
@@ -66,18 +70,40 @@ then true else false end as consultazione,
 
 case
   when lc1 is null then null
+  when cm.manifestation_id is null then 'fc'
+  when ci.item_media = 'Q' then 'DVD'
+  when ci.item_media = 'A' or cc.colloc_stringa ~ '^MCD' then 'CD'
+  -- vhs
+  when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
   when cc.colloc_stringa ~ (E'^RN|^R\\.N|^N|^CCNC|^CCPT') then 'N'
+  when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'N'
+  when ci.section = 'CAA' then 'CAA'
   when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
     then substr(cc.colloc_stringa,1,3)::char(3)
+
+  when ci.home_library_id not in (2,3) and cc.primo in ('R','P','C') and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,3,3)::char(3)
+
+  when ci.home_library_id not in (2,3) and cc.primo in ('PC','RC') and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,4,3)::char(3)
+
   when cdd.class_code is not null then substr(cdd.class_code,1,3)::char(3)
   when upclass.up_class_code is not null then substr(upclass.up_class_code,1,3)::char(3)
   else 'nc'
 end as dw3,
 
-case -- per statcol
+
+case
+  when ci.item_media IN ('A','E','G','L','M','N','Q','R','T') OR cc.colloc_stringa ~ (E'DVD') then 'Multimedia'
+  else 'Volumi'
+end as xxx,
+
+
+case -- per statcol_old (vecchia versione)
   when cm.bib_type='i02' then 'CDi02'
   when cm.bib_type='j02' then 'CDj02'
-  when ci.item_media = 'A' then 'Audiovisivi'
+  when ci.item_media = 'A' then 'CD'
+  when ci.section = 'CAA' then 'CAA'
   when ci.item_media = 'T' then 'Libri parlati'
   when ci.item_media = 'Q' then 'DVD'
   else
@@ -85,6 +111,7 @@ case -- per statcol
     when cc.primo not in ('RN','R','RC') then
       case
         when cc.primo IN ('CCNC','N') then 'Narrativa'
+-- dorina bct wood then 'Narrativa'
         when cc.primo = 'NG' then 'Narrativa NG'
  	when cc.primo = 'NF' then 'Narrativa NF'
  	when cc.primo = 'NR' then 'Narrativa NR'
@@ -124,6 +151,69 @@ case -- per statcol
       else 'R_NonClassif'
     end
   end
+end as statcol_old,
+
+case -- per statcol
+  when ci.item_media = 'A' or cc.colloc_stringa ~ '^MCD' then 'CD'
+  when ci.section = 'CAA' then 'CAA'
+  when ci.item_media = 'T' then 'Libri parlati'
+  when ci.item_media = 'Q' then 'DVD'
+  -- item media R= VHS o inizia per V. o VP.
+  when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
+  when cc.secondo = 'Tattili' then cc.secondo
+  when cc.colloc_stringa ~ '^NF' then 'Narrativa NF'
+  when cc.colloc_stringa ~ '^NG' then 'Narrativa NG'
+  when cc.colloc_stringa ~ '^NR' then 'Narrativa NR'
+  when cc.colloc_stringa ~ (E'^N|^CCNC|^CCPT') then 'Narrativa'
+
+  when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
+
+  when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
+  when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
+
+
+  when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+  when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
+
+  when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,1,1)::char(3) || '00'
+
+-- proposta es. C.035 oppure P.150
+  when ci.home_library_id not in (2,3) and cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,3,1)::char(3) || '00'
+
+--proposta es PC.560.DIR
+  when ci.home_library_id not in (2,3) and cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,4,1)::char(3) || '00'
+
+ -- fine proposta
+
+  when ci.home_library_id not in (2,3) and cc.primo = 'R' and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+    then 'R.' || substr(cc.colloc_stringa,3,1)::char(3) || '00'
+
+  when ci.home_library_id not in (2,3) and cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+    then 'R.' || substr(cc.colloc_stringa,4,1)::char(3) || '00'
+
+  when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+       and occ.primo = 'R' and cdd.class_code IS NULL
+            then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
+
+  when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+       and occ.primo = 'R'
+            then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
+
+--  when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+--  when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+
+
+  when cc.primo = 'R' and cdd.class_code IS NULL
+       then cc.primo || '.' || substr(cc.secondo,1,1) || '00'
+
+  when cc.primo = 'R' and cdd.class_code IS NOT NULL
+     then cc.primo || '.' || substr(cdd.class_code,1,1) || '00'
+
+  else 'NonClassif'
+
 end as statcol,
 
    cc.colloc_stringa as colloc_stringa, ci.collocation as colloc_clavis, occ.colloc_stringa as coll_rag, occ.home_library_id as coll_rag_library_id,
@@ -138,22 +228,23 @@ end as statcol,
    ci.owner_library_id,lc2.label as owner_library,
    u.unimarc_105,
    case when
-     ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.') ) )
+     ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
         OR
      ( (ci.owner_library_id=2 and ci.inventory_serie_id='RAG') )
-        OR      ( u.unimarc_105 = 'r' AND NOT cc.colloc_stringa ~ (E'^N\\.|^NF\\.|^NG\\.'))
+--        OR      ( u.unimarc_105 = 'r' AND NOT cc.colloc_stringa ~ (E'^N\\.|^NF\\.|^NG\\.'))
      then 'ragazzi'
      else 'adulti'
    end as pubblico,
 
    case
      when ci.item_media IN ('A', 'Q') then NULL
-     when cc.colloc_stringa ~ (E'^Cons\\.|^RC\\.|^RC ') then NULL
+     when cc.colloc_stringa ~ (E'^Cons\\.') then NULL
      else
       case
        when (ci.section in ('RN','CCNC','N','NG')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
         then 'narrativa'
-        else 'saggistica'
+       when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
+      else 'saggistica'
      end
    end as genere,
 
@@ -235,6 +326,8 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
             ON(clavis_library_id=oci.home_library_id)
 	 WHERE oci.manifestation_id = cm.manifestation_id and oci.home_library_id!=ci.home_library_id
 	    AND oci.item_status != 'E'
+	    -- includere: B,F,G,K,R,S,V,Y
+	    -- Valutare se includere S
 	    AND oci.item_id != ci.item_id) as otlib on true
 
 
