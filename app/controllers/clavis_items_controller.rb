@@ -677,8 +677,8 @@ vloc.loc_name,vloc.id as location_id,vloc.bib_section_id,l.value_label as item_m
     redirect_to clavis_items_path
   end
 
-  def fifty_years
-    @clavis_items=ClavisItem.fifty_years(params)
+  def seventy_years
+    @clavis_items=ClavisItem.seventy_years(params)
   end
 
   def controllo_valori_inventariali
