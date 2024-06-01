@@ -25,7 +25,13 @@
   ["CaricaReport", "params[:controller]=='sbct_titles' and params[:action]=='upload'", "current_user.role?('AcquisitionManager')", "upload_sbct_titles_path"],
   ["Crea scorciatoia", "params[:controller]=='sbct_presets' and params[:action]=='create'", "current_user.role?('AcquisitionManager')", "new_sbct_preset_path(path:request.original_url)"],
   ["Scorciatoie", "params[:controller]=='sbct_presets'", "current_user.role?('AcquisitionLibrarian')", "sbct_presets_path"],
- ]
+  ]
+  if !user_session[:tinybox].nil?
+  (
+    nsf = params[:nosearchform].blank? ? true : nil
+    h <<  ["Tinybox (<span id='tinybox_cnt'>#{user_session[:tinybox].size}</span>)","params[:controller]=='sbct_titles' and params[:action]=='tinybox'", "can? :index, SbctTitle", "sbct_titles_path(nosearchform:nsf,tinybox:true, check_boxes:'S')"]
+  )
+  end
 %>
 <%=
   res = []
@@ -41,31 +47,11 @@
   content_tag(:div, res.join(' ').html_safe)
 %>
 
-<!--
-<%= content_tag(:h5, link_to("Vedi i titoli non associati a una <i>data libri</i> (fuori lista)".html_safe, sbct_titles_path(nolist:true))) %>
--->
-
-
-<% content_tag(:h5, "Riepilogo dati in archivio - ultimo aggiornamento da programma CR: #{File.mtime('/home/seb/Dropbox/cr_acquisti')}") %>
-<!--
-<ul>
-<%= content_tag(:li, link_to("#{SbctList.count} liste", sbct_lists_path)) %>
-<%= content_tag(:li, "#{SbctTitle.count} titoli") %>
-<%= content_tag(:li, link_to("#{SbctItem.count} copie", sbct_items_path)) %>
-</ul>
-
-<pre style="font-size:12px; background-color:white">
-Pro-memoria importazione dati:
-time (cd /home/ror/clavisbct && /usr/local/bin/rails runner -e development "SbctTitle.import_mdb('/home/seb/Dropbox/cr_acquisti')")
-time (cd /home/ror/clavisbct && rake cr_acquisti_import)
-time (cd /home/ror/clavisbct && rake cr_invoices_import)
--->
-<!-- time (cd /home/ror/clavisbct && rake cr_assegna_mic) -->
-<!--
-all:
-time (cd /home/ror/clavisbct && sh extras/acquisti_import_all.sh)
-</pre>
--->
-
+<%= javascript_tag type: 'application/javascript' do -%>
+    if (jQuery('#tinybox_cnt').text() == '0') {
+	jQuery("a:contains('Tinybox')").hide();
+    }
+<% end -%>
+	   
 <% content_tag(:h6, "PAC - Sistema acquisti Centro Rete, in funzione dal 9 settembre 2022") %>
 
