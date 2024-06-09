@@ -180,7 +180,8 @@ end as statcol_old,
 
 case -- per statcol
 
-  -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null                                                                                                                                            
+  -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null
+
   when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
 
   -- Seba 29 maggio 2024 -> inizio
