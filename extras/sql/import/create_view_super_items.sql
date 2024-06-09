@@ -51,7 +51,7 @@ case when
    not cc.colloc_stringa ~ E'^P\\.G\\.'
    and (
     ci.inventory_serie_id = 'PIE'
-    or  cc.primo IN ('P','PC','CCPT')
+    or  cc.primo IN ('P','PC','CCPT','Collina')
     or  ( cc.secondo = 'P' and ci.home_library_id!=3 )
     or  (
           ci.home_library_id = 2 and length(cc.secondo)=1
@@ -63,21 +63,43 @@ then true else false end as piemonte,
 
 case
  when ci.loan_class = 'F'
-     or cc.colloc_stringa ~ (E'^Cons\\.|^C\\.')
+     or cc.colloc_stringa ~ (E'^Cons\\.|^C\\.|^Collina\\.')
      or cc.colloc_stringa ~ (E'^RC|^R\\.C|^RNC|^RN\\.C')
      or (cc.colloc_stringa ~ E'^P\\.C\\.' and ci.home_library_id not in (2,3))
+     or ci.inventory_serie_id in ('SAL', 'CLA')
+
 then true else false end as consultazione,
 
 case
   when lc1 is null then null
   when cm.manifestation_id is null then 'fc'
-  when ci.item_media = 'Q' then 'DVD'
-  when ci.item_media = 'A' or cc.colloc_stringa ~ '^MCD' then 'CD'
-  -- vhs
+  when ci.item_media = 'Q' or cc.primo = 'DVD' then 'DVD'
+  -- Voce Parlata (audiolibri)
+  when cc.colloc_stringa ~ E'^MCD\\.9'  then 'V_Parlata'
+-- Audioregistrazione AR CD/MCD/MC                                                                              
+  when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.') or cc.primo = 'CD'  then 'AR'
+-- tattili
+  when cc.secondo = 'Tattili' then cc.secondo
+-- libri parlati
+  when ci.item_media = 'T' then 'LP'
+-- vhs
   when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
+-- BNV testo in braille
+  when ci.inventory_serie_id = 'BNV' then 'Braille'
+-- fondo SAL e CLA
+  when ci.inventory_serie_id in ('SAL','CLA') then 'Conserv'
+  
   when cc.colloc_stringa ~ (E'^RN|^R\\.N|^N|^CCNC|^CCPT') then 'N'
   when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'N'
   when ci.section = 'CAA' then 'CAA'
+
+-- Lorusso e Cotugno sezione SERA.ARA
+  when ci.section = 'SERA.ARA' then 'SERA'
+-- Primo elemento = collina
+  when cc.primo = 'Collina'  and substr(cc.colloc_stringa,9,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,9,3)::char(3)
+
+
   when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
     then substr(cc.colloc_stringa,1,3)::char(3)
 
@@ -86,6 +108,9 @@ case
 
   when ci.home_library_id not in (2,3) and cc.primo in ('PC','RC') and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
     then substr(cc.colloc_stringa,4,3)::char(3)
+-- R.C. che finiscono in dw3 nc
+  when cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,5,3)::char(3)
 
   when cdd.class_code is not null then substr(cdd.class_code,1,3)::char(3)
   when upclass.up_class_code is not null then substr(upclass.up_class_code,1,3)::char(3)
@@ -93,10 +118,10 @@ case
 end as dw3,
 
 
-case
-  when ci.item_media IN ('A','E','G','L','M','N','Q','R','T') OR cc.colloc_stringa ~ (E'DVD') then 'Multimedia'
-  else 'Volumi'
-end as xxx,
+--case
+--  when ci.item_media IN ('A','E','G','L','M','N','Q','R','T') OR cc.colloc_stringa ~ (E'DVD') then 'Multimedia'
+--  else 'Volumi'
+--end as xxx,
 
 
 case -- per statcol_old (vecchia versione)
@@ -154,13 +179,35 @@ case -- per statcol_old (vecchia versione)
 end as statcol_old,
 
 case -- per statcol
-  when ci.item_media = 'A' or cc.colloc_stringa ~ '^MCD' then 'CD'
+
+  -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null                                                                                                                                            
+  when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
+
+  -- Seba 29 maggio 2024 -> inizio
+  when ci.home_library_id in (2,3) and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+  when ci.home_library_id in (2,3) and upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+  -- Seba 29 maggio 2024 <- fine
+
+  -- Voce parlata
+  when cc.colloc_stringa ~ E'^MCD\\.9'  then 'Voce Parlata'
+
+  when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.')  or cc.primo = 'CD' then 'Audioregistrazione'
   when ci.section = 'CAA' then 'CAA'
   when ci.item_media = 'T' then 'Libri parlati'
-  when ci.item_media = 'Q' then 'DVD'
+  when ci.item_media = 'Q' or cc.primo= 'DVD' then 'DVD'
   -- item media R= VHS o inizia per V. o VP.
   when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
   when cc.secondo = 'Tattili' then cc.secondo
+ -- testo in braille
+  when ci.inventory_serie_id = 'BNV' then 'Braille'
+ -- fondo SAL e CLA
+  when ci.inventory_serie_id in ('SAL','CLA') then 'Conservazione'
+  -- Lorusso e cotugno sezione SERA.ARA
+  when ci.section = 'SERA.ARA' and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+  -- Primo Elemento Collocazione = Collina
+  when cc.primo = 'Collina' and substr(cc.colloc_stringa,9,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,9,1)::char(3) || '00'
+
   when cc.colloc_stringa ~ '^NF' then 'Narrativa NF'
   when cc.colloc_stringa ~ '^NG' then 'Narrativa NG'
   when cc.colloc_stringa ~ '^NR' then 'Narrativa NR'
@@ -184,9 +231,14 @@ case -- per statcol
   when ci.home_library_id not in (2,3) and cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
     then substr(cc.colloc_stringa,3,1)::char(3) || '00'
 
---proposta es PC.560.DIR
+--proposta es PC.560.DIR 
   when ci.home_library_id not in (2,3) and cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
     then substr(cc.colloc_stringa,4,1)::char(3) || '00'
+
+--proposta es P.C.560.DIR
+  when ci.home_library_id not in (2,3) and cc.primo = 'P.C.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+    then substr(cc.colloc_stringa,5,1)::char(3) || '00'
+
 
  -- fine proposta
 
@@ -195,6 +247,11 @@ case -- per statcol
 
   when ci.home_library_id not in (2,3) and cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
     then 'R.' || substr(cc.colloc_stringa,4,1)::char(3) || '00'
+
+-- R.C.035 che deve andare in R.000                                                                                                                                                             
+  when ci.home_library_id not in (2,3) and cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+    then 'R.' || substr(cc.colloc_stringa,5,1)::char(3) || '00'
+
 
   when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
        and occ.primo = 'R' and cdd.class_code IS NULL
@@ -238,17 +295,32 @@ end as statcol,
      else 'adulti'
    end as pubblico,
 
-   case
-     when ci.item_media IN ('A', 'Q') then NULL
-     when cc.colloc_stringa ~ (E'^Cons\\.') then NULL
-     else
-      case
-       when (ci.section in ('RN','CCNC','N','NG')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
-        then 'narrativa'
-       when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
-      else 'saggistica'
-     end
-   end as genere,
+
+case
+     when ci.item_media IN ('A','E','G','L','M','N','Q','R','T') OR cc.colloc_stringa ~ (E'DVD') then 'Multimedia'
+     when (ci.section in ('RN','CCNC','N','NG')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
+        then 'Volumi Narrativa'
+     when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Volumi Narrativa'
+
+   else 'Volumi Saggistica'
+ end as xxx,
+
+
+  case
+-- multimedia
+    when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.')  or cc.primo = 'CD' then 'multimedia'
+    when cc.colloc_stringa ~ E'^MCD\\.9'  then 'multimedia'
+    when ci.item_media = 'T' then 'multimedia'
+    when ci.item_media = 'Q' or cc.primo= 'DVD' then 'multimedia'
+    when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'multimedia'
+
+    when (ci.section in ('RN','CCNC','N','NG','NR','NF','CCPT')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
+        then 'vol_narrativa'
+    when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'vol_narrativa'
+
+    else 'vol_saggistica'
+     
+  end as genere,
 
 /*
 test:
