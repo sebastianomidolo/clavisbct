@@ -140,7 +140,7 @@ case -- per statcol_old (vecchia versione)
         when cc.primo = 'NG' then 'Narrativa NG'
  	when cc.primo = 'NF' then 'Narrativa NF'
  	when cc.primo = 'NR' then 'Narrativa NR'
-        when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r') then
+        when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r') then
           case
             when occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
             when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
@@ -192,7 +192,7 @@ case -- per statcol
       -- a titolo di esempio (non so se si vada così nell'analitico):
       when ci.home_library_id = 3 and (cc.colloc_stringa ~ E'^907\\.C\\.' OR cc.colloc_stringa ~ E'^L\\.B\\.')
                          then 'libretti_ballo'
-      when ci.home_library_id = 3 and (u11.unimarc_105='i' OR cc.colloc_stringa ~ E'^L\\.O\\.')
+      when ci.home_library_id = 3 and (uni105.u105_11 = 'i' OR cc.colloc_stringa ~ E'^L\\.O\\.')
                          then 'libretti'
       else '2,3 non assegnati'
     end
@@ -259,11 +259,11 @@ case -- per statcol
     when ci.home_library_id not in (2,3) and cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
       then 'R.' || substr(cc.colloc_stringa,5,1)::char(3) || '00'
 
-    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r')
        and occ.primo = 'R' and cdd.class_code IS NULL
            then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
 
-    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r')
          and occ.primo = 'R'
               then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
 
@@ -291,16 +291,26 @@ end as statcol,
    ci.home_library_id,
    lc1.label home_library,
    ci.owner_library_id,lc2.label as owner_library,
-   u.unimarc_105,
-   u11.unimarc_105 as unimarc_105_11,
-   case when
-     ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
-        OR
-     ( (ci.owner_library_id=2 and ci.inventory_serie_id='RAG') )
---        OR      ( u.unimarc_105 = 'r' AND NOT cc.colloc_stringa ~ (E'^N\\.|^NF\\.|^NG\\.'))
-     then 'ragazzi'
-     else 'adulti'
-   end as pubblico,
+   case when uni105.u105_4  != '' then uni105.u105_4 end as u105_4,
+   case when uni105.u105_11 != '' then uni105.u105_11 end as u105_11,
+
+  case
+    when ci.home_library_id in(2,3) then
+      case
+        when ci.inventory_serie_id = 'RAG' then 'ragazzi' -- NB serie RAG è solo Centrale (non serve filtro per biblioteca)
+	when uni105.u105_4 = 'r' then 'ragazzi'
+	-- aggiungere casistica centrale libri per ragazzi
+        else 'adulti'
+      end
+    else -- Tutte le non 2,3
+      case when
+        ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
+          OR
+        ( (ci.owner_library_id=2 and ci.inventory_serie_id='RAG') )
+        then 'ragazzi'
+      else 'adulti'
+    end
+ end as pubblico,
 
 
 case
@@ -356,8 +366,7 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
     
       LEFT JOIN collocazioni AS  cc ON(cc.item_id=ci.item_id)
       LEFT JOIN manifestation AS cm ON(cm.manifestation_id=ci.manifestation_id and cm.bib_level='m')
-      LEFT JOIN uni105_4 u ON(u.manifestation_id=cm.manifestation_id)
-      LEFT JOIN uni105_11 u11 ON(u11.manifestation_id=cm.manifestation_id)  -- Vedi http://unimarc-it.wikidot.com/105 sottocampo 11
+      LEFT JOIN uni105 ON(uni105.manifestation_id=cm.manifestation_id)  -- Vedi http://unimarc-it.wikidot.com/105 sottocampi 4 e 11
 
       LEFT JOIN lookup_value lv1 on(lv1.value_key=ci.item_media  AND lv1.value_language = 'it_IT' AND lv1.value_class = 'ITEMMEDIATYPE')
       LEFT JOIN lookup_value lv2 on(lv2.value_key=ci.item_status AND lv2.value_language = 'it_IT' AND lv2.value_class = 'ITEMSTATUS')
