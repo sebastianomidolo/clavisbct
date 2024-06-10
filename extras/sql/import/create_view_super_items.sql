@@ -182,13 +182,22 @@ case -- per statcol
 
   -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null
 
-  when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
+  when ci.home_library_id in(2,3) then
+    case
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
+      when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+      when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+      -- [segue tutta la casistica per 2 e 3]
+      -- a titolo di esempio (non so se si vada così nell'analitico):
+      when ci.home_library_id = 3 and (cc.colloc_stringa ~ E'^907\\.C\\.' OR cc.colloc_stringa ~ E'^L\\.B\\.')
+                         then 'libretti_ballo'
+      when ci.home_library_id = 3 and (u11.unimarc_105='i' OR cc.colloc_stringa ~ E'^L\\.O\\.')
+                         then 'libretti'
+      else '2,3 non assegnati'
+    end
 
-  -- Seba 29 maggio 2024 -> inizio
-  when ci.home_library_id in (2,3) and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-  when ci.home_library_id in (2,3) and upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
-  -- Seba 29 maggio 2024 <- fine
-
+  else -- tutte le NON 2,3 (ricordarsi di indentare tutto il blocco seguente)
+  case
   -- Voce parlata
   when cc.colloc_stringa ~ E'^MCD\\.9'  then 'Voce Parlata'
 
@@ -273,6 +282,7 @@ case -- per statcol
      then cc.primo || '.' || substr(cdd.class_code,1,1) || '00'
 
   else 'NonClassif'
+  end
 
 end as statcol,
 
@@ -287,6 +297,7 @@ end as statcol,
    lc1.label home_library,
    ci.owner_library_id,lc2.label as owner_library,
    u.unimarc_105,
+   u11.unimarc_105 as unimarc_105_11,
    case when
      ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
         OR
@@ -351,6 +362,7 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
       LEFT JOIN collocazioni AS  cc ON(cc.item_id=ci.item_id)
       LEFT JOIN manifestation AS cm ON(cm.manifestation_id=ci.manifestation_id and cm.bib_level='m')
       LEFT JOIN uni105_4 u ON(u.manifestation_id=cm.manifestation_id)
+      LEFT JOIN uni105_11 u11 ON(u11.manifestation_id=cm.manifestation_id)  -- Vedi http://unimarc-it.wikidot.com/105 sottocampo 11
 
       LEFT JOIN lookup_value lv1 on(lv1.value_key=ci.item_media  AND lv1.value_language = 'it_IT' AND lv1.value_class = 'ITEMMEDIATYPE')
       LEFT JOIN lookup_value lv2 on(lv2.value_key=ci.item_status AND lv2.value_language = 'it_IT' AND lv2.value_class = 'ITEMSTATUS')
