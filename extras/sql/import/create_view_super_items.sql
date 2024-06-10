@@ -183,6 +183,7 @@ case -- per statcol
   -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null
 
   when ci.home_library_id in(2,3) then
+
     case
       when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
       when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
@@ -196,92 +197,86 @@ case -- per statcol
       else '2,3 non assegnati'
     end
 
-  else -- tutte le NON 2,3 (ricordarsi di indentare tutto il blocco seguente)
-  case
-  -- Voce parlata
-  when cc.colloc_stringa ~ E'^MCD\\.9'  then 'Voce Parlata'
+  else -- tutte le NON 2,3
+    case
+    -- Voce parlata
+    when cc.colloc_stringa ~ E'^MCD\\.9'  then 'Voce Parlata'
 
-  when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.')  or cc.primo = 'CD' then 'Audioregistrazione'
-  when ci.section = 'CAA' then 'CAA'
-  when ci.item_media = 'T' then 'Libri parlati'
-  when ci.item_media = 'Q' or cc.primo= 'DVD' then 'DVD'
-  -- item media R= VHS o inizia per V. o VP.
-  when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
-  when cc.secondo = 'Tattili' then cc.secondo
- -- testo in braille
-  when ci.inventory_serie_id = 'BNV' then 'Braille'
- -- fondo SAL e CLA
-  when ci.inventory_serie_id in ('SAL','CLA') then 'Conservazione'
-  -- Lorusso e cotugno sezione SERA.ARA
-  when ci.section = 'SERA.ARA' and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-  -- Primo Elemento Collocazione = Collina
-  when cc.primo = 'Collina' and substr(cc.colloc_stringa,9,3) ~ E'^\\d{3}$'
-    then substr(cc.colloc_stringa,9,1)::char(3) || '00'
+    when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.')  or cc.primo = 'CD' then 'Audioregistrazione'
+    when ci.section = 'CAA' then 'CAA'
+    when ci.item_media = 'T' then 'Libri parlati'
+    when ci.item_media = 'Q' or cc.primo= 'DVD' then 'DVD'
+    -- item media R= VHS o inizia per V. o VP.
+    when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
+    when cc.secondo = 'Tattili' then cc.secondo
+    -- testo in braille
+    when ci.inventory_serie_id = 'BNV' then 'Braille'
+    -- fondo SAL e CLA
+    when ci.inventory_serie_id in ('SAL','CLA') then 'Conservazione'
+    -- Lorusso e cotugno sezione SERA.ARA
+    when ci.section = 'SERA.ARA' and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+    -- Primo Elemento Collocazione = Collina
+    when cc.primo = 'Collina' and substr(cc.colloc_stringa,9,3) ~ E'^\\d{3}$'
+      then substr(cc.colloc_stringa,9,1)::char(3) || '00'
 
-  when cc.colloc_stringa ~ '^NF' then 'Narrativa NF'
-  when cc.colloc_stringa ~ '^NG' then 'Narrativa NG'
-  when cc.colloc_stringa ~ '^NR' then 'Narrativa NR'
-  when cc.colloc_stringa ~ (E'^N|^CCNC|^CCPT') then 'Narrativa'
+    when cc.colloc_stringa ~ '^NF' then 'Narrativa NF'
+    when cc.colloc_stringa ~ '^NG' then 'Narrativa NG'
+    when cc.colloc_stringa ~ '^NR' then 'Narrativa NR'
+    when cc.colloc_stringa ~ (E'^N|^CCNC|^CCPT') then 'Narrativa'
 
-  when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
+    when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
 
-  when cle.label is not null then cc.primo || '.' || cc.terzo
+    when cle.label is not null then cc.primo || '.' || cc.terzo
 
-  -- when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
-  when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
+    -- when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
+    when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
 
+    when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+    when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
 
-  when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
-  when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
+    when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
+      then substr(cc.colloc_stringa,1,1)::char(3) || '00'
 
-  when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
-    then substr(cc.colloc_stringa,1,1)::char(3) || '00'
+    -- proposta es. C.035 oppure P.150
+    when ci.home_library_id not in (2,3) and cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+      then substr(cc.colloc_stringa,3,1)::char(3) || '00'
+    --proposta es PC.560.DIR 
+    when ci.home_library_id not in (2,3) and cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+      then substr(cc.colloc_stringa,4,1)::char(3) || '00'
 
--- proposta es. C.035 oppure P.150
-  when ci.home_library_id not in (2,3) and cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
-    then substr(cc.colloc_stringa,3,1)::char(3) || '00'
-
---proposta es PC.560.DIR 
-  when ci.home_library_id not in (2,3) and cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
-    then substr(cc.colloc_stringa,4,1)::char(3) || '00'
-
---proposta es P.C.560.DIR
-  when ci.home_library_id not in (2,3) and cc.primo = 'P.C.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
-    then substr(cc.colloc_stringa,5,1)::char(3) || '00'
-
-
+    --proposta es P.C.560.DIR
+    when ci.home_library_id not in (2,3) and cc.primo = 'P.C.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+      then substr(cc.colloc_stringa,5,1)::char(3) || '00'
  -- fine proposta
 
-  when ci.home_library_id not in (2,3) and cc.primo = 'R' and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
-    then 'R.' || substr(cc.colloc_stringa,3,1)::char(3) || '00'
+    when ci.home_library_id not in (2,3) and cc.primo = 'R' and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+      then 'R.' || substr(cc.colloc_stringa,3,1)::char(3) || '00'
 
-  when ci.home_library_id not in (2,3) and cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
-    then 'R.' || substr(cc.colloc_stringa,4,1)::char(3) || '00'
+    when ci.home_library_id not in (2,3) and cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+      then 'R.' || substr(cc.colloc_stringa,4,1)::char(3) || '00'
 
--- R.C.035 che deve andare in R.000                                                                                                                                                             
-  when ci.home_library_id not in (2,3) and cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
-    then 'R.' || substr(cc.colloc_stringa,5,1)::char(3) || '00'
+    -- R.C.035 che deve andare in R.000
+    when ci.home_library_id not in (2,3) and cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+      then 'R.' || substr(cc.colloc_stringa,5,1)::char(3) || '00'
 
-
-  when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
        and occ.primo = 'R' and cdd.class_code IS NULL
-            then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
+           then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
 
-  when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
-       and occ.primo = 'R'
-            then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
+    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR u.unimarc_105 = 'r')
+         and occ.primo = 'R'
+              then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
 
---  when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
---  when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+    --  when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+    --  when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
 
+    when cc.primo = 'R' and cdd.class_code IS NULL
+         then cc.primo || '.' || substr(cc.secondo,1,1) || '00'
 
-  when cc.primo = 'R' and cdd.class_code IS NULL
-       then cc.primo || '.' || substr(cc.secondo,1,1) || '00'
+    when cc.primo = 'R' and cdd.class_code IS NOT NULL
+       then cc.primo || '.' || substr(cdd.class_code,1,1) || '00'
 
-  when cc.primo = 'R' and cdd.class_code IS NOT NULL
-     then cc.primo || '.' || substr(cdd.class_code,1,1) || '00'
-
-  else 'NonClassif'
+    else 'NonClassif'
   end
 
 end as statcol,
