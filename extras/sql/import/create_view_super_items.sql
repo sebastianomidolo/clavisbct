@@ -67,7 +67,7 @@ case
      or cc.colloc_stringa ~ (E'^RC|^R\\.C|^RNC|^RN\\.C')
      or (cc.colloc_stringa ~ E'^P\\.C\\.' and ci.home_library_id not in (2,3))
      or ci.inventory_serie_id in ('SAL', 'CLA')
-
+     
 then true else false end as consultazione,
 
 case
@@ -88,7 +88,7 @@ case
   when ci.inventory_serie_id = 'BNV' then 'Braille'
 -- fondo SAL e CLA
   when ci.inventory_serie_id in ('SAL','CLA') then 'Conserv'
-  
+             
   when cc.colloc_stringa ~ (E'^RN|^R\\.N|^N|^CCNC|^CCPT') then 'N'
   when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'N'
   when ci.section = 'CAA' then 'CAA'
@@ -118,74 +118,20 @@ case
 end as dw3,
 
 
---case
---  when ci.item_media IN ('A','E','G','L','M','N','Q','R','T') OR cc.colloc_stringa ~ (E'DVD') then 'Multimedia'
---  else 'Volumi'
---end as xxx,
-
-
-case -- per statcol_old (vecchia versione)
-  when cm.bib_type='i02' then 'CDi02'
-  when cm.bib_type='j02' then 'CDj02'
-  when ci.item_media = 'A' then 'CD'
-  when ci.section = 'CAA' then 'CAA'
-  when ci.item_media = 'T' then 'Libri parlati'
-  when ci.item_media = 'Q' then 'DVD'
-  else
-  case
-    when cc.primo not in ('RN','R','RC') then
-      case
-        when cc.primo IN ('CCNC','N') then 'Narrativa'
--- dorina bct wood then 'Narrativa'
-        when cc.primo = 'NG' then 'Narrativa NG'
- 	when cc.primo = 'NF' then 'Narrativa NF'
- 	when cc.primo = 'NR' then 'Narrativa NR'
-        when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r') then
-          case
-            when occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
-            when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
-            when occ.primo = 'R' then
-              case
-                when cdd.class_code IS NULL then
-	          occ.primo || '.' || substr(occ.secondo,1,1) || '00'
-                else
-                  occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
-              end
-	    else 'rag_check'
-	  end
-        when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-        else
-	case
-	  when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
-	  else 'A_NonClassif'
-	end
-      end
-    else -- potenzialmente ragazzi
-    case
-      when cc.secondo = 'Tattili' then cc.secondo
-      when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
-      when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
-      when cc.primo = 'RC' then 'Tipo_RC'
-      when cc.primo = 'R' AND cc.secondo='C' then 'Tipo_R.C.'
-      when cc.primo = 'R' then
-        case
-	   when cdd.class_code IS NULL then
-	     cc.primo || '.' || substr(cc.secondo,1,1) || '00'
-	   else cc.primo || '.' || substr(cdd.class_code,1,1) || '00'
-	end
-      else 'R_NonClassif'
-    end
-  end
-end as statcol_old,
-
 case -- per statcol
-
-  -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null
 
   when ci.home_library_id in(2,3) then
 
     case
-      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
+      -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null 
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG'
+         and occ.primo = 'R' and cdd.class_code IS NULL
+                         then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
+
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG'
+         and occ.primo = 'R' and cdd.class_code IS NOT NULL
+                         then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
+
       when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
       when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
       -- [segue tutta la casistica per 2 e 3]
@@ -231,46 +177,34 @@ case -- per statcol
     -- when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
     when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
 
-    when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
-    when ci.home_library_id in (2,3) and occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
+    when occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+    when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
 
-    when ci.home_library_id not in (2,3) and substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
+    when substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
       then substr(cc.colloc_stringa,1,1)::char(3) || '00'
 
-    -- proposta es. C.035 oppure P.150
-    when ci.home_library_id not in (2,3) and cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+    -- es. C.035 oppure P.150
+    when cc.primo in ('C','P')  and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
       then substr(cc.colloc_stringa,3,1)::char(3) || '00'
-    --proposta es PC.560.DIR 
-    when ci.home_library_id not in (2,3) and cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+    -- es PC.560.DIR 
+    when cc.primo = 'PC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
       then substr(cc.colloc_stringa,4,1)::char(3) || '00'
 
-    --proposta es P.C.560.DIR
-    when ci.home_library_id not in (2,3) and cc.primo = 'P.C.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+    -- es P.C.560.DIR
+    when cc.primo = 'P.C.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
       then substr(cc.colloc_stringa,5,1)::char(3) || '00'
- -- fine proposta
-
-    when ci.home_library_id not in (2,3) and cc.primo = 'R' and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
+ 
+    when cc.primo = 'R' and substr(cc.colloc_stringa,3,3) ~ E'^\\d{3}$'
       then 'R.' || substr(cc.colloc_stringa,3,1)::char(3) || '00'
 
-    when ci.home_library_id not in (2,3) and cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
+    when cc.primo = 'RC' and substr(cc.colloc_stringa,4,3) ~ E'^\\d{3}$'
       then 'R.' || substr(cc.colloc_stringa,4,1)::char(3) || '00'
 
     -- R.C.035 che deve andare in R.000
-    when ci.home_library_id not in (2,3) and cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+    when cc.colloc_stringa ~ E'^R\\.C\\.' and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
       then 'R.' || substr(cc.colloc_stringa,5,1)::char(3) || '00'
 
-    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r')
-       and occ.primo = 'R' and cdd.class_code IS NULL
-           then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
-
-    when ci.owner_library_id=2 and (ci.inventory_serie_id='RAG' OR uni105.u105_4 = 'r')
-         and occ.primo = 'R'
-              then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
-
-    --  when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-    --  when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
-
-    when cc.primo = 'R' and cdd.class_code IS NULL
+     when cc.primo = 'R' and cdd.class_code IS NULL
          then cc.primo || '.' || substr(cc.secondo,1,1) || '00'
 
     when cc.primo = 'R' and cdd.class_code IS NOT NULL
@@ -298,15 +232,13 @@ end as statcol,
     when ci.home_library_id in(2,3) then
       case
         when ci.inventory_serie_id = 'RAG' then 'ragazzi' -- NB serie RAG è solo Centrale (non serve filtro per biblioteca)
-	when uni105.u105_4 = 'r' then 'ragazzi'
+	when ci.home_library_id = '3' and uni105.u105_4 = 'r' then 'ragazzi'
 	-- aggiungere casistica centrale libri per ragazzi
         else 'adulti'
       end
     else -- Tutte le non 2,3
       case when
         ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
-          OR
-        ( (ci.owner_library_id=2 and ci.inventory_serie_id='RAG') )
         then 'ragazzi'
       else 'adulti'
     end
