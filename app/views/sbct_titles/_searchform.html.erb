@@ -14,31 +14,34 @@
     <%= hidden_field_tag('order_id', params[:order_id]) %>
     <%= hidden_field_tag('supplier_id', params[:supplier_id]) %>
     <%= hidden_field_tag('id_lista', params[:id_lista]) %>
+    <%= hidden_field_tag('tinybox', params[:tinybox]) %>
     <%= hidden_field_tag('original_filename', params[:original_filename]) %>
 
    <%=
      if @sbct_titles.class==WillPaginate::Collection
        if @sbct_titles.total_entries==0
-         lnk=link_to('<b>Inserimento</b>'.html_safe, new_sbct_title_path("sbct_title[titolo]":@sbct_title.titolo), class:'btn btn-warning') if can? :new, SbctTitle
+         lnk=link_to('<b>Inserimento</b>'.html_safe, new_sbct_title_path("sbct_title[titolo]":@sbct_title.titolo), class:'btn btn-warning') if can? :new, SbctTitle and params[:tinybox].blank?
          extranote=flash[:notice].blank? ? '' : "<br/>#{flash[:notice]}<br/>"
-         extranote<<" (attenzione: la ricerca è limitata alla lista corrente)" if !params[:id_lista].blank?
-         hint = "Nessun titolo trovato#{lnk}#{extranote}".html_safe
+         extranote<<"(attenzione: la ricerca è limitata alla lista corrente)" if !params[:id_lista].blank?
+         extranote<<"(ricerca limitata a tinybox)" if !params[:tinybox].blank?
+         hint = "<br/>Nessun titolo trovato#{lnk}<br/><span class='mx-auto label label-info'>#{extranote}</span>".html_safe
        else
-         hint = link_to("Trovati #{@sbct_titles.total_entries} titoli", '#listatitoli', class:'btn btn-success');
+         extranote = params[:tinybox].blank? ? '' : ' in tinybox'
+         hint = link_to("Trovati #{@sbct_titles.total_entries} titoli#{extranote}", '#listatitoli', class:'btn btn-success');
          if !@sbct_list.nil?
            # hint << link_to("<b>Inserisci in ordine</b>".html_safe, do_order_sbct_list_path(@sbct_list,params), class:'btn btn-warning') if can? :manage, SbctList and !@sbct_list.budget(1).nil? and current_user.email=='seba'
          end
 	 if !@current_order.nil?
            hint << link_to("<b>Inserisci nell'ordine in preparazione #{@current_order.id}</b>".html_safe, prepare_sbct_order_path(@current_order,params), class:'btn btn-warning') if can? :manage, SbctOrder
          end
-		   if current_user.role?('AcquisitionManager')
+		   if current_user.role?(['AcquisitionManager','AcquisitionStaffMemberNO'])
                            hint << link_to('[analisi liste]', "/pac?fmt=analisi_liste", class:'label label-success')
 			   hint << link_to('[analisi reparti]', "/pac?fmt=analisi_reparti", class:'label label-success')
                            hint << link_to('[biblioteche]', "/pac?fmt=analisi_biblioteche", class:'label label-success')
                            hint << link_to('[autoseleziona copie]', "/pac?fmt=autoseleziona_copie", class:'label label-success')
                            # hint << link_to('[modifica]', "/pac?fmt=mass_edit", class:'label label-success', title:'modifica titoli')
                            hint << link_to('[manutenzione lista]', "/pac?fmt=manutenzione_lista", class:'label label-success', title:'manutenzione lista') if !params[:id_lista].blank?
-                           hint << link_to('[assegna a budget]', "/pac?fmt=budget_assign", class:'label label-success', title:'non funziona ancora')
+			   # hint << link_to('[assegna a budget]', "/pac?fmt=budget_assign", class:'label label-success', title:'non funziona ancora')
 		   end
        end
 		   hint << link_to("Cerca in Opac Bct", "https://bct.comperio.it/opac/search/lst?q=#{@sbct_title.titolo.gsub(' ', '+')}", target:'_opacbct', class:'btn btn-success') if !@sbct_title.titolo.blank?
@@ -62,24 +65,10 @@
 
       <% if params[:selection_mode].blank? %>
 
-      <!--
-         Tipologia: <%= select_tag(:tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
-			params[:tipo_titolo]), :onchange=>'inviaform();', include_blank:true) %>
--->
-
      <%= f.association :clavis_libraries, collection: SbctTitle.libraries_select, hint: nil,
 	 as:'select', include_blank:true, label: 'Biblioteca', :input_html => {:onchange => "inviaform()"}  %>
 
 
-     <!--
-     <%= check_box_tag('con_richieste_lettori', 'S', params[:con_richieste_lettori], onchange:'inviaform()') %>
-     <%= label_tag(:con_richieste_lettori, 'Con richieste lettori') %>
-<br/>
-     <%= check_box_tag('pproposal', 'S', params[:pproposal], onchange:'inviaform()') %>
-     <%= label_tag(:pproposal, 'con proposte utenti') %>
-     <br/>
-     -->
-     
      <%= render partial:'sbct_titles/commons', locals: {f: f} %>
      <%= render partial:'sbct_titles/order' %>
      
@@ -107,7 +96,7 @@
   <div class="form-actions">
     <%= f.button :submit, value: 'Cerca' , class:'btn btn-success',style:'color:#0a0a0a' %>
     <% content_tag(:span, "Pulisci" , class:'btn btn-error', onclick:"$('#sbct_title_titolo').val('')") %>
-    <%= link_current_params('[scarica CSV]', sbct_titles_path(format:'csv'), params)%>
+    <% link_current_params('[scarica CSV]', sbct_titles_path(format:'csv'), params)%>
   </div>
 <% end %>
 

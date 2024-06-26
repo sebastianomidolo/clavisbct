@@ -9,6 +9,7 @@ class SbctTitlesController < ApplicationController
   respond_to :html
 
   def homepage
+    user_session[:tinybox] = [] if user_session[:tinybox].nil?
     @pagetitle="PAC - HomePage"
     @sbct_title = SbctTitle.new(params[:sbct_title])
     if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian')
@@ -19,7 +20,7 @@ class SbctTitlesController < ApplicationController
         user_session[:current_library] = current_user.clavis_librarian.default_library_id
       end
     end
-    if (current_user.role?('AcquisitionManager') or current_user.email=='opeseba') and !params[:fmt].blank?
+    if (current_user.role?(['AcquisitionManager','AcquisitionStaffMember'])) and !params[:fmt].blank?
       hfmt = [
         'analisi_biblioteche',
         'analisi_liste',
@@ -135,8 +136,24 @@ class SbctTitlesController < ApplicationController
     @sbct_title.destroy
     redirect_to sbct_titles_path
   end
-  
+
   def index
+    user_session[:tinybox] = [] if user_session[:tinybox].nil?
+    if params[:tinybox]=='empty'
+      user_session[:tinybox] = []
+      redirect_to '/pac' and return
+    end
+    
+    if params[:tinybox]=='unlink_lists'
+      @sbct_title_ids = user_session[:tinybox]
+    end
+    
+    if !params[:tinybox].blank?
+      tinybox_ids = user_session[:tinybox]
+    else
+      tinybox_ids = nil
+    end
+
     if params[:id_lista].blank?
       @pagetitle="PAC - HomePage "
     else
@@ -144,8 +161,13 @@ class SbctTitlesController < ApplicationController
     end
     @current_order = SbctOrder.find(user_session[:current_order]) if !user_session[:current_order].nil?
 
+    if params[:check_boxes]!='N'
+      @sbct_item = SbctItem.new
+      @sbct_item.js_code = :switch_title
+    end
+    
     per_page = params[:per_page].blank? ? 200 : params[:per_page]
-    @sql,@sbct_title,@sbct_list,@sbct_budgets,@sbct_budget=SbctTitle.sql_for_tutti(params,current_user)
+    @sql,@sbct_title,@sbct_list,@sbct_budgets,@sbct_budget=SbctTitle.sql_for_tutti(params,current_user,tinybox_ids)
     if params[:group_by].blank?
       if params[:items_per_libraries].blank?
         @sbct_titles = SbctTitle.paginate_by_sql(@sql, page:params[:page], per_page:per_page)
@@ -181,7 +203,7 @@ class SbctTitlesController < ApplicationController
             flash[:notice] = title
           end
         end
-        if @sbct_titles.size==1
+        if @sbct_titles.size==1 and tinybox_ids.nil?
           title=SbctTitle.find(@sbct_titles[0].id)
           if params[:clavis_manifestation_id].to_i > 0 and title.manifestation_id.blank?
             title.manifestation_id=params[:clavis_manifestation_id].to_i
@@ -198,9 +220,9 @@ class SbctTitlesController < ApplicationController
         require 'csv'
         @sbct_titles = SbctTitle.find_by_sql(@sql)
         csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
-          csv << ['autore','titolo','editore','collana','prezzo','isbn']
+          csv << ['autore','titolo','editore','collana','prezzo','isbn','anno']
           @sbct_titles.each do |r|
-            csv << [r.autore,r.titolo,r.editore,r.collana,r.prezzo,r.isbn]
+            csv << [r.autore,r.titolo,r.editore,r.collana,r.prezzo,r.isbn,r.anno]
           end
         end
         send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=text.csv"
@@ -339,6 +361,42 @@ class SbctTitlesController < ApplicationController
     @user = SbctUser.find(params[:user_id])
   end
 
+  def toggle_tinybox_items
+    ids = params[:title_ids]
+    tb_ids = user_session[:tinybox]
+    added = Array.new
+    removed = Array.new
+    if params[:op]=='attiva'
+      ids.split(',').each do |e|
+        id = e.to_i
+        user_session[:tinybox] << id
+        added << id
+      end
+    else
+      ids.split(',').each do |e|
+        id = e.to_i
+        user_session[:tinybox].delete(id);
+        removed << id
+      end
+    end
+    user_session[:tinybox] = user_session[:tinybox].uniq
+    render json:{added:added, removed:removed, tinybox_ids_cnt:user_session[:tinybox].size}
+  end
+
+  def add_or_remove_from_tinybox
+    id = params[:id].to_i
+    user_session[:tinybox] = [] if user_session[:tinybox].nil?
+    if request.method == 'POST'
+      operation = 'add'
+      user_session[:tinybox] << id
+      user_session[:tinybox] = user_session[:tinybox].uniq
+    else
+      operation = 'rm'
+      user_session[:tinybox].delete(id)
+    end
+    render json:{tinybox_ids_cnt:user_session[:tinybox].size,id_titolo:id,op:operation}
+  end
+  
   def add_items_to_order
     budget = SbctBudget.find(user_session[:current_budget])
     order = SbctOrder.find(user_session[:current_order])

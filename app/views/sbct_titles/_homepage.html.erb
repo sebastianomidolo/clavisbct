@@ -26,12 +26,12 @@
   ["Crea scorciatoia", "params[:controller]=='sbct_presets' and params[:action]=='create'", "current_user.role?('AcquisitionManager')", "new_sbct_preset_path(path:request.original_url)"],
   ["Scorciatoie", "params[:controller]=='sbct_presets'", "current_user.role?('AcquisitionLibrarian')", "sbct_presets_path"],
   ]
-  if !user_session[:tinybox].nil?
+
   (
     nsf = params[:nosearchform].blank? ? true : nil
     h <<  ["Tinybox (<span id='tinybox_cnt'>#{user_session[:tinybox].size}</span>)","params[:controller]=='sbct_titles' and params[:action]=='tinybox'", "can? :index, SbctTitle", "sbct_titles_path(nosearchform:nsf,tinybox:true, check_boxes:'S')"]
   )
-  end
+
 %>
 <%=
   res = []

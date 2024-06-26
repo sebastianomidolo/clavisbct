@@ -36,8 +36,27 @@ Titolo inserito da <%= select_tag(:created_by, options_for_select(SbctTitle.crea
 <%= check_box_tag('reserv', 'S', params[:reserv], onchange:'inviaform()') %>
 <%= label_tag(:reserv, 'Prenotazioni') %>
 
-<%= check_box_tag('copie_clavis', 'S', params[:copie_clavis], onchange:'inviaform()') %>
-<%= label_tag(:copie_clavis, 'Con conteggio copie Clavis') %>
+<% if ['seba','ronconi'].include?(current_user.email) %>
+
+
+    <%= hidden_field_tag('copie_clavis', 'S') %>
+    <%= hidden_field_tag('check_boxes', 'S') %>
+
+    <% check_box_tag('check_boxes', 'S', params[:check_boxes]) %>
+    <% label_tag(:check_boxes, "Includi box di spunta", title:'Permette di selezionare titoli dai risultati della ricerca') %>
+
+
+    
+<% else %>
+
+
+    <%= hidden_field_tag('copie_clavis', 'S') %>
+    <%= hidden_field_tag('check_boxes', 'S') %>
+
+    <% check_box_tag('copie_clavis', 'S', params[:copie_clavis], onchange:'inviaform()') %>
+    <% label_tag(:copie_clavis, 'Con conteggio copie Clavis') %>
+
+<% end %>
 
 <%= check_box_tag('ean_dupl', 'S', params[:ean_dupl], onchange:'inviaform()') %>
 <%= label_tag(:ean_dupl, 'Ean duplicati') %>
@@ -57,12 +76,8 @@ Titolo inserito da <%= select_tag(:created_by, options_for_select(SbctTitle.crea
 
 <br/>
 
-
-
-
 <% check_box_tag('nocovers', 'S', params[:nocovers], onchange:'inviaform()') %>
 <% label_tag(:nocovers, 'Senza copertine') %>
-
 
  <%= select_tag(:copie, options_for_select(
    [

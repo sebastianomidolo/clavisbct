@@ -1,4 +1,7 @@
-<% %>
+<% if !@sbct_item.nil? and @sbct_item.js_code == :switch_title %>
+<%= javascript_include_tag('/assets/switch_titles.js') %>
+<% end %>
+
 
 <% %>
 <% if params[:dataonly]=='true' %>
@@ -17,14 +20,28 @@
 
  <% content_tag(:pre, @sql) %>
 
+ <% if params[:req] == 'chlist' %>
+   <%= content_tag(:div, sbct_lists_mass_assign(current_user)) %>
+ <% end %>
 
+ <% if params[:tinybox] == 'unlink_lists' %>
+   <%= content_tag(:div, sbct_lists_mass_remove_titles(@sbct_title_ids,current_user)) %>
+ <% end %>
+
+ 
  <% if !@sbct_titles.nil? and @sbct_titles.total_entries>0 %>
  <%=
    infotext = " (budget #{@sbct_budget.label})" if !@sbct_budget.nil?
-   content_tag(:h4, "#{@sbct_titles.total_entries} titoli#{infotext}")
+    chlist_lnk = ''
+   if !params[:tinybox].blank? and !params[:nosearchform].blank?
+     chlist_lnk = link_to('[inserisci in liste]'.html_safe, sbct_titles_path(req:'chlist',check_boxes:'S',nosearchform:true,tinybox:true), class:'label label-success', title:'Inserisci/rimuovi in blocco i titoli' )
+     chlist_lnk << link_to('[svuota tinybox]'.html_safe, sbct_titles_path(tinybox:'empty'), class:'label label-success', title:'Togli tutti i titoli da tinybox' )
+     chlist_lnk << link_to('[elimina da liste]'.html_safe, sbct_titles_path(tinybox:'unlink_lists',nosearchform:true), class:'label label-warning', title:'Togli tutti i titoli da tinybox' )
+   end
+   content_tag(:h4, "#{@sbct_titles.total_entries} titoli#{infotext} #{chlist_lnk}".html_safe)
    %>
   <a name='listatitoli'></a>
-  <%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
+  <%= will_paginate @sbct_titles, params: { nosearchform: true }, renderer: BootstrapPagination::Rails %>
   <%= content_tag(:div, sbct_titles_list(@sbct_titles,current_user.clavis_libraries_sigle)) if !@sbct_budgets.nil? %>
  <% else %>
  <% end %>

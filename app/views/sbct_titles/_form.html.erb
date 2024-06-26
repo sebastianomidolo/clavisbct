@@ -42,13 +42,6 @@
     Target lettura: <%= select_tag('sbct_title[target_lettura]', options_for_select(SbctTitle.options_for_select(:target_lettura),
 			@sbct_title.target_lettura), include_blank:true) %>
     
-    <!--
-    <br/>Tipologia: <%= select_tag(:tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
-			params[:tipo_titolo]), include_blank:false) %>
-
-     <% f.association :clavis_libraries, collection: SbctTitle.libraries_select, hint: nil,
-	 as:'select', include_blank:true, label: 'Biblioteca'   %>
-   -->
 
   </div>
 
