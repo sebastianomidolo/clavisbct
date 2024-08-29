@@ -1,18 +1,28 @@
 # coding: utf-8
 class ClavisPatronsController < ApplicationController
   # layout 'talking_books'
+  layout 'csir'
 
-  load_and_authorize_resource only: [:wrong_contacts,:show,:mancato_ritiro,:loans_analysisx]
+  load_and_authorize_resource only: [:wrong_contacts,:show,:mancato_ritiro,:loans_analysis, :duplicates, :nppnc]
   respond_to :html
 
   def index
+    @current_library = current_user.clavis_default_library
     if !params[:barcode].blank?
       barcode=params[:barcode].strip
       if barcode.to_i>0
+        p_id = barcode.to_i
+        searchfield=nil
         @patron = ClavisPatron.find(barcode) if ClavisPatron.exists?(barcode)
       else
-        @patron = ClavisPatron.find_by_barcode(barcode.upcase)
+        p_id = barcode.upcase
+        searchfield='barcode'
+        @patron = ClavisPatron.find_by_barcode(p_id)
       end
+    end
+    if @patron.nil?
+      u=ClavisPatron.mydiscovery_user(p_id,searchfield)
+      @patron = ClavisPatron.insert_or_update_patron(u) if !u.nil?
     end
     if @patron.nil?
       redirect_to:'closed_stack_item_requests'
@@ -52,7 +62,8 @@ class ClavisPatronsController < ApplicationController
     soap_auth=false
     p=nil
     if ClavisPatron.mydiscovery_authorized?(user,pwd)
-      p=ClavisPatron.find_by_opac_username(user.downcase)
+      # p=ClavisPatron.find_by_opac_username(user.downcase)
+      p = ClavisPatron.find_by_sql("SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(user)})").first
       soap_auth=true
     end
     if p.nil? and soap_auth==false
@@ -115,7 +126,9 @@ class ClavisPatronsController < ApplicationController
   def show
     headers['Access-Control-Allow-Origin'] = "*"
     @patron=ClavisPatron.find(params[:id])
-    @pagetitle="Richieste a magazzino #{@patron.lastname}"
+    @current_library = current_user.clavis_default_library
+
+    @pagetitle="Richieste a magazzino - #{@current_library.to_label} - #{@patron.lastname}"
     @da_clavis = params[:da_clavis].blank? ? false : true
     respond_to do |format|
       format.html { render layout:'csir' }
@@ -125,6 +138,7 @@ class ClavisPatronsController < ApplicationController
 
   def csir_insert
     @patron=ClavisPatron.find(params[:id])
+    @current_library = current_user.clavis_default_library
 
     serieinv=params[:serieinv].strip.upcase
     serie,inv=serieinv.split('-')
@@ -143,13 +157,22 @@ class ClavisPatronsController < ApplicationController
       # Eventuale esemplare ricollocato:
       new_item = ClavisItem.trova_item_ricollocato(item)
       item = new_item if !new_item.nil?
-      if item.home_library_id == 2
+      if item.home_library_id == @current_library.id
         # render text:"qui item #{item.id}" and return
-        item.item_loan_status_update
-        x=ClosedStackItemRequest.create(patron_id:@patron.id,item_id:item.id,dng_session_id:0,request_time:Time.now,created_by:current_user.id)
-        flash[:notice]="Inserita richiesta per esemplare #{item.to_label}"
+        begin
+          item.item_loan_status_update
+        rescue
+          flash[:notice]=" [Topografico]"
+        end
+        if item.richiedibile?
+          ClosedStackItemRequest.create(patron_id:@patron.id,item_id:item.id,dng_session_id:0,request_time:Time.now,created_by:current_user.id)
+          flash[:notice]="Inserita richiesta per esemplare #{item.id} #{item.to_label}#{flash[:notice]}"
+        else
+          txt = item.in_deposito_esterno? ? ' in deposito esterno' : "loan_status =  #{item.loan_status}"
+          flash[:notice]=" Richiesta non inserita: #{txt}"
+        end
       else
-        flash[:notice]="Esemplare con id #{item.id} non inserito perché è della biblioteca con id #{item.home_library_id}"
+        flash[:notice]="Esemplare con id #{item.id} non inserito (biblioteca #{item.home_library_id} - sei collegato come biblioteca #{@current_library.id}"
       end
     end
     render layout:'csir'
@@ -157,8 +180,10 @@ class ClavisPatronsController < ApplicationController
 
   def purchase_proposals_count
     headers['Access-Control-Allow-Origin'] = "*"
+    
     opac_username=params[:opac_username]
-    @patron=ClavisPatron.find_by_opac_username(opac_username.downcase)
+    #@patron=ClavisPatron.find_by_opac_username(opac_username.downcase)
+    @patron=ClavisPatron.find_by_sql("SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(opac_username)})").first
     render text:"not found" and return if @patron.nil?
     h = Hash.new
     h[:count] = @patron.purchase_proposals_count('1 year')
@@ -167,6 +192,32 @@ class ClavisPatronsController < ApplicationController
       format.html { render text:"json_only"}
       format.json {
         render json:h.to_json
+      }
+    end
+  end
+
+  # nppnc : Notifiche Pronti al Prestito Non Confermate
+  def nppnc
+    @records = ClavisPatron.notifiche_pronti_al_prestito_non_confermate(current_user.clavis_libraries_ids,params)
+  end
+
+  def cf
+    headers['Access-Control-Allow-Origin'] = "*"
+    respond_to do |format|
+      format.html { render text:"json_only"}
+      format.json {
+        begin
+          p = ClavisPatron.find(params[:id])
+          p.allinea_da_clavis
+          cf=p.codice_fiscale
+          status='ok'
+          error_message=''
+        rescue
+          cf = ''
+          status='error'
+          error_message="#{$!}"
+        end
+        render json:{cf:cf,status:status,error_message:error_message}
       }
     end
   end

@@ -4,11 +4,24 @@
   end
 %>
 
-<%= content_tag(:h4, "Informazioni sul budget \"#{@sbct_budget.label}\" - importo: #{number_to_currency(@sbct_budget.total_amount)}") %>
+
+<%= content_tag(:h4, "Informazioni sul budget \"#{@sbct_budget.label}\" - importo: #{number_to_currency(@sbct_budget.total_amount)} - sconto #{@sbct_budget.discount.to_f}%") %>
 
 <%= content_tag(:h4, "Reparto associato: #{@sbct_budget.reparto}") if !@sbct_budget.reparto.blank? %>
 
 <%= content_tag(:p, link_to("(vedi questo budget in Clavis)", ClavisBudget.clavis_url(@sbct_budget.clavis_budget_id))) %>
+
+<% if SbctTitle.libraries_select(current_user).size > 0 %>
+
+<%= form_tag(sbct_budget_path, :method=>:get) do %>
+
+Biblioteca: <%=
+              opt = SbctTitle.libraries_select(current_user)
+	      select_tag(:library_id, options_for_select(opt,
+	      params[:library_id]), :onchange=>'submit();', include_blank:false,  prompt:'Scegliere una biblioteca')
+%>
+ <% end %>
+<% end %>
 
 <%=
   if @sbct_budget.clavis_budget.library_id!=1
@@ -17,6 +30,9 @@
  %>
 
 <%= content_tag(:div, sbct_budget_report(@sbct_budget)) %>
+
+<%= content_tag(:div, sbct_budget_report(@sbct_budget, params[:library_id])) if !params[:library_id].blank? %>
+
 
 <% if @sbct_budget.sbct_supplier.nil? %>
  <% content_tag(:div, sbct_budget_suppliers_list(@sbct_budget)) %>
@@ -39,6 +55,10 @@
 <%= content_tag(:span, link_to('Vedi Copie', sbct_items_path("sbct_item[budget_id]":@sbct_budget), class:'btn btn-warning')) %>
 <%= content_tag(:span, link_to('Vedi Titoli', sbct_titles_path(budget_id:@sbct_budget.id), class:'btn btn-warning')) %>
 
+<%= content_tag(:span, link_to('Sgancia le copie Selezionate da questo budget chiuso', release_sbct_budget_path(@sbct_budget), method: :post, data: { confirm: "Confermi di voler sganciare le copie selezionate dal budget #{@sbct_budget.to_label}?" }, class:'btn btn-warning')) if can? :manage, @sbct_budget and @sbct_budget.locked? %>
+
+
+
 <%= content_tag(:span, link_to('Elimina budget (non ha copie collegate)', @sbct_budget, method: :delete, data: { confirm: "Confermi eliminazione del budget?" }, class:'btn btn-warning')) if @sbct_budget.sbct_items_count==0 and can? :manage, @sbct_budget %>
 
 
@@ -49,16 +69,13 @@
 %>
 </pre>
 
-<%= content_tag(:div, sbct_budget_show(@sbct_budget)) %>
-
+<% content_tag(:div, sbct_budget_show(@sbct_budget)) %>
 
 <% if @sbct_budget.sbct_supplier.nil? %>
 <%= content_tag(:h4, "Distribuzione del budget per fornitore") %>
 <%= content_tag(:div, sbct_suppliers_per_budget(@sbct_budget)) %>
 <% end %>
 
-<% content_tag(:h4, "Liste d'acquisto associate a questo budget") %>
-<% content_tag(:div, sbct_liste_per_budget(@sbct_budget)) %>
 
 <!-- Non usato: content_tag(:div, sbct_items_per_libraries({budget_ids:@sbct_budget.id,arrivati_o_ordinati:true})) -->
 
@@ -68,6 +85,8 @@
 
 <!--
 Scelti da Sedi (order_status O, A, S)
-content_tag(:div, sbct_items_per_libraries({budget_ids:@sbct_budget.id,qb:true}))
+<%= content_tag(:div, sbct_items_per_libraries({budget_ids:@sbct_budget.id,qb:true})) %>
 -->
+
+
 

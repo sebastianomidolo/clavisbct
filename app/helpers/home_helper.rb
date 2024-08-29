@@ -94,6 +94,7 @@ ci.issue_arrival_date_expected as previsto
       end
       cnt+=1
 
+      opac_link=ClavisManifestation.clavis_url(r['manifestation_id'],:opac)
       if current_user.nil?
         lnkclavis = title
       else
@@ -103,7 +104,7 @@ ci.issue_arrival_date_expected as previsto
       url_link = link_to(nota.html_safe, r['url'].gsub('&amp;','&'))
       res << content_tag(:tr, content_tag(:td, content_tag(:b, "#{cnt}.")) +
                               content_tag(:td, "#{lnkclavis}<br/>#{url_link}".html_safe) +
-                              content_tag(:td, r['bid']) +
+                              content_tag(:td, link_to(r['bid'], opac_link)) +
                               content_tag(:td, content_tag(:b, r['unimarc_tag'])) +
                               content_tag(:td, r['librarian_id']))
     end

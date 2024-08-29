@@ -1,0 +1,10 @@
+<%= content_tag(:h4, "Fattura <b>#{@serial_invoice.to_label}</b>".html_safe) %>
+
+
+<%= content_tag(:h4, "Totale fattura secondo Clavis: #{number_to_currency(@serial_invoice.total_amount)}") %>
+
+<%= @sommaimp = @serial_invoice.serial_subscriptions.sum(:prezzo)
+    content_tag(:h4, "Attenzione: la somma degli importi differisce dal Totale fattura: <b>#{number_to_currency(@sommaimp)}</b> (differenza: <em>#{number_to_currency(@sommaimp-@serial_invoice.total_amount)}</em>)".html_safe) if @sommaimp!=@serial_invoice.total_amount %>
+<%= content_tag(:p, "Note: #{@serial_invoice.notes}") if !@serial_invoice.notes.blank? %>
+
+<%= serial_titles_invoice_list(@serial_invoice) %>

@@ -1,0 +1,42 @@
+<%= flash[:notice] %>
+
+<%= content_tag(:h3, @bio_iconografico_namespace.title) %>
+<%= link_to("Modifica", edit_bio_iconografico_namespace_path, class:'btn btn-success') %>
+
+<br/>
+<% if !@bio_iconografico_namespace.descr.blank? %>
+Descrizione:
+<%= content_tag(:div, @bio_iconografico_namespace.descr) %>
+<% end %>
+
+<%= link_to("Accesso in modifica", bio_iconografico_cards_path(namespace:@bio_iconografico_namespace), class:'btn btn-success') %>
+
+<% if @bio_iconografico_namespace.published %>
+ <%= link_to("Accesso pubblico", bctcards_path(namespace:@bio_iconografico_namespace), class:'btn btn-info') %>
+<% else %>
+ (non pubblicato) 
+<% end %>
+
+<%=
+  if params[:info]=='true'
+   params[:namespace]=@bio_iconografico_namespace.label
+   render 'bio_iconografico_cards/info'
+  else
+   link_to("Spazio occupato", info_bio_iconografico_namespace_path, class:'btn btn-success')
+  end
+%>
+
+<br/>
+<hr/>
+Utenti
+
+<%= content_tag(:div, bio_iconografico_users(@bio_iconografico_namespace)) %>
+
+
+<%=
+  if params[:add_user].nil?
+   link_to("Aggiungi utente", bio_iconografico_namespace_path(add_user:true), class:'btn btn-success')
+  else
+   render 'add_user'
+  end
+%>

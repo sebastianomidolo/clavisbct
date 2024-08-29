@@ -4,11 +4,8 @@
   <%= hidden_field_tag('old', params[:old]) %>
 
   <div class="form-inputs">
-   <% if params[:old] == 'true' or !params[:id_tipo_titolo].blank? %>
-   Tipologia delle liste importate dal sistema acquisti Centro Rete pre-PAC:
-    <%= select_tag(:id_tipo_titolo, options_for_select(SbctTipoTitolo.options_for_select,
-                params[:id_tipo_titolo]), :onchange=>'submit();', include_blank:true) %>
-   <% end %>
+
+
   </div>
 
   <div class="form-actions">

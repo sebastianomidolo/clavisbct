@@ -1,6 +1,6 @@
 <%=
 res=[];
-ClosedStackItemRequest.patrons(false,false).each do |r|
+ClosedStackItemRequest.patrons(false,false,true,@current_library.id).each do |r|
   res << r['patron_id']
 end
 res.join(' ')

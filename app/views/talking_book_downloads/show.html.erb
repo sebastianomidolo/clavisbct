@@ -1,0 +1,12 @@
+
+<%=
+  tb = @talking_book_download.talking_book
+  if tb
+  content_tag(:div, tb_download_title_info(tb))
+  else
+   "Richiesta http errata"
+  end
+%>
+
+<%= content_tag(:div, tb_download_show(@talking_book_download)) %>
+

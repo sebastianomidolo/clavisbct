@@ -1,10 +1,42 @@
-<%= content_tag(:h4, "Evento: #{@sbct_event.to_label}") %>
+<%= content_tag(:h6, "Evento: #{@sbct_event.to_label} - creato da: #{@sbct_event.creator.clavis_librarian.to_shortlabel}") %>
+
+<%= content_tag(:span, "Note: #{@sbct_event.description}") if !@sbct_event.description.blank? %>
+<br/>
+<%= content_tag(:span, "Inizio: <b>#{@sbct_event.event_start}</b>".html_safe) if !@sbct_event.event_start.blank? %>
+<%= content_tag(:span, "Fine: <b>#{@sbct_event.event_end}</b>".html_safe) if !@sbct_event.event_end.blank? %>
+
+
 <%=
-  link_to("Modifica", edit_sbct_event_path(@sbct_event), class:'btn btn-warning') if can? :edit,SbctEvent
+  @sbct_title = SbctTitle.new(params[:sbct_title])
+  render :partial => 'title_search'
 %>
 
+<%= content_tag(:div, sbct_events_list(@sbct_events)) if @sbct_events.size>0 %>
 
 
-<%= content_tag(:div, sbct_titles_list(@sbct_titles, '')) %>
+<% if can? :edit,SbctEvent and ([@sbct_event.created_by,@sbct_event.updated_by].include?(current_user.id) or current_user.role?(['AcquisitionManager','AcquisitionStaffMember'])) %>
 
 
+<%= link_to("Modifica evento", edit_sbct_event_path(@sbct_event), class:'btn btn-warning') %>
+
+
+<div>
+<table class='table'>
+  <tr>
+    <td class:'col-md-4'>
+      <%= button_to("Convalida tutte", validate_all_sbct_event_path(@sbct_event), title:'Convalida tutte le richieste non ancora convalidate', data: { confirm: 'Confermi convalida?' }, class:'btn btn-info') if current_user.role?(['AcquisitionManager','AcquisitionStaffMember']) %>
+    </td>
+    <td class:'col-md-4'>
+      <%= button_to("Chiudi tutte", close_all_sbct_event_path(@sbct_event), data: { confirm: 'Confermi la chiusura?' }, class:'btn btn-info') if current_user.role?('AcquisitionManager') %>
+    </td>
+    <td class:'col-md-4'>
+      <%= button_to("(Ri)apri tutte", open_all_sbct_event_path(@sbct_event), data: { confirm: 'Confermi la chiusura?' }, class:'btn btn-info') if current_user.role?('AcquisitionManager') %>
+    </td>
+  </tr>
+</table>
+</div>
+
+<%= link_to('Cancella questo evento', @sbct_event, method: :delete, data: { confirm: 'Are you sure?' }, class:'btn btn-warning') if @sbct_event.sbct_l_event_titles.size==0 %>
+<% end %>
+
+<%= content_tag(:div, sbct_titles_list(@sbct_titles, '')) if @sbct_titles.size>0 %>

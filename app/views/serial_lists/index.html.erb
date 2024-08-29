@@ -20,6 +20,8 @@
 	end
     %>
     <%= content_tag(:td, (l.locked? ? 'chiusa' : 'aperta')) %>
+    <%= content_tag(:td, l.id) %>
+    <%= content_tag(:td, l.permissions) %>
     <%= content_tag(:td, l.year) %>
     <%= content_tag(:td, link_to('Elimina', l, method: :delete, data: { confirm: 'Are you sure?' })) if l.count.to_i==0 %>
 

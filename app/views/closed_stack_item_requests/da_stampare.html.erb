@@ -1,5 +1,5 @@
-Richieste da stampare
+<%= content_tag(:p, "Richieste da stampare per #{@current_library.to_label}") %>
 <%=
-  content_tag(:div, closed_stack_item_requests_da_stampare)
+  content_tag(:div, closed_stack_item_requests_da_stampare(@current_library.id))
 %>
 

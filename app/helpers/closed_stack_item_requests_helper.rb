@@ -1,6 +1,8 @@
 module ClosedStackItemRequestsHelper
 
   def closed_stack_item_requests_list(dng_session,target_div)
+    # Per il momento (marzo 2024) funziona solo per la Civica Centrale
+    current_library_id = 2
     res = []
     heading = content_tag(:tr, content_tag(:th, '', class:'col-md-1') +
                                content_tag(:th, "<b>Collocazione</b>".html_safe, class:'col-md-1') +
@@ -13,7 +15,7 @@ module ClosedStackItemRequestsHelper
 
     patron=ClavisPatron.find(dng_session.patron_id)
     # patron=ClavisPatron.find(77244)
-    patron.closed_stack_item_requests.each do |ir|
+    patron.closed_stack_item_requests(current_library_id).each do |ir|
       item=ClavisItem.find(ir.item_id)
       title=link_to(item.title[0..50], ClavisManifestation.clavis_url(item.manifestation_id, :opac))
 
@@ -28,10 +30,10 @@ module ClosedStackItemRequestsHelper
                               content_tag(:td, closed_stack_item_requests_ora(ir.confirm_time)) +
                               content_tag(:td, closed_stack_item_requests_ora(ir.print_time)))
     end
-    return 'Non ci sono richieste a magazzino' if res == []
+    return 'Al momento non sono presenti tue richieste al banco prestiti della Biblioteca Civica Centrale' if res == []
     res.unshift(heading)
 
-    ticket=patron.csir_tickets.join(', ')
+    ticket=patron.csir_tickets(2).join(', ')
     ticket = " - Numero di chiamata: #{content_tag(:b, ticket)}" if !ticket.blank?
 
     content_tag(:h3, %Q{Richieste a magazzino#{ticket}}.html_safe) +
@@ -62,6 +64,9 @@ module ClosedStackItemRequestsHelper
     print_request=false
     archived_request=false
     records.each do |r|
+      if current_user.email=='seba'
+        # return r.inspect
+      end
       confirm_request = true if r.daily_counter.nil?
       archived_request = true if r.archived==true
       # confirm_time = r.confirm_time.nil? ? '' : r.confirm_time.in_time_zone('Europe/Rome').strftime('%d-%m-%Y %H:%M')
@@ -75,10 +80,19 @@ module ClosedStackItemRequestsHelper
         lnk = link_to("[#{txt}]", "https://#{request.host_with_port}#{csir_archive_closed_stack_item_request_path(r.id, format:'js')}", remote:true, method: :get)
       end
       lnk = '' if da_clavis
+      if r.topografico_non_in_clavis_id.to_i > 0
+        (
+          titolo=r['title'][0..30]
+          opac_link = link_to("#{titolo} (non presente in Clavis, da inserire come fuori catalogo)", "https://sbct.comperio.it/index.php?page=Catalog.ItemInsertPage&topografico_non_in_clavis=#{r.topografico_non_in_clavis_id}")
+          opac_link = "#{titolo} (non presente in Clavis, da inserire come fuori catalogo con un semi-automatismo ancora da implementare)"
+        )
+      else
+        opac_link = link_to(r['title'][0..30], ClavisManifestation.clavis_url(r.manifestation_id,:opac))
+      end
       res << content_tag(:tr, content_tag(:td, lnk) +
                               content_tag(:td, r.piano) +
                               content_tag(:td, "<b>#{r.collocazione}</b>".html_safe) +
-                              content_tag(:td, r['title'][0..20]) +
+                              content_tag(:td, opac_link) +
                               content_tag(:td, r.serieinv) +
                               content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%H:%M')) +
                               content_tag(:td, confirm_time) +
@@ -126,7 +140,8 @@ module ClosedStackItemRequestsHelper
       heading << quando
     end
 
-    sql=%Q{select piano,count(*) from closed_stack_item_requests ir join clavis.centrale_locations cl using(item_id)
+    sql=%Q{select vloc.loc_name as piano,count(*) from closed_stack_item_requests ir join clavis.collocazioni cc using(item_id)
+           join public.view_locations vloc on (vloc.id=cc.location_id)
          where confirm_time #{confirm_condition} #{cond} group by piano order by count(*) desc}
     q=ActiveRecord::Base.connection.execute(sql).to_a
     res=[]
@@ -164,25 +179,25 @@ module ClosedStackItemRequestsHelper
     end
   end
 
-  def closed_stack_item_requests_patrons_index
+  def closed_stack_item_requests_patrons_index(library_id=nil)
     res = []
     res << content_tag(:h4, "Richieste di oggi (prossimo numero di ticket: <b>#{DailyCounter.last.id}</b>)".html_safe)
 
-    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false))
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(true,false,true,library_id))
     (res << content_tag(:h4, "Da Confermare [solo in presenza di chi ha fatto le richieste]"); res << t) if !t.blank?
 
-    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false))
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,false,true,library_id))
     (res << content_tag(:h4, "Confermate, da stampare"); res << t;  res << content_tag(:h4, link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(format:'html')))) if !t.blank?
 
-    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true))
+    t = closed_stack_item_requests_patrons(ClosedStackItemRequest.patrons(false,true,true,library_id))
     (res << content_tag(:h4, "Richieste stampate"); res << t) if !t.blank?
     res.join.html_safe
   end
 
-  def closed_stack_item_requests_da_stampare
+  def closed_stack_item_requests_da_stampare(library_id)
     res = []
 
-    ClosedStackItemRequest.patrons(false,false).each do |r|
+    ClosedStackItemRequest.patrons(false,false,true,library_id).each do |r|
       lnk = link_to("<b>#{r['barcode']}</b>".html_safe, ClavisPatron.clavis_url(r['patron_id'],:newloan), target:'_blank')
       txt = "<b>[Stampa #{r['count']} richieste a magazzino]</b>"
       prt = link_to(txt.html_safe, print_closed_stack_item_requests_path(patron_id:r['patron_id']), title:"Stampa richieste per singolo utente")
@@ -190,7 +205,7 @@ module ClosedStackItemRequestsHelper
                               content_tag(:td, lnk, class:'col-md-1') +
                               content_tag(:td, prt))
     end
-    ClosedStackItemRequest.patrons(false,true).each do |r|
+    ClosedStackItemRequest.patrons(false,true,true,library_id).each do |r|
       lnk = link_to("<b>#{r['barcode']}</b>".html_safe, ClavisPatron.clavis_url(r['patron_id'],:newloan), target:'_blank')
       txt = "<b>[Ristampa #{r['count']} richieste a magazzino]</b>"
       prt = link_to(txt.html_safe, print_closed_stack_item_requests_path(patron_id:r['patron_id'],reprint:true), title:"Ristampa richieste per singolo utente")
@@ -216,21 +231,23 @@ module ClosedStackItemRequestsHelper
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
 
-  def closed_stack_item_requests_oggi
+  def closed_stack_item_requests_oggi(library_id=nil)
     res=[]
     cnt=0
-    ClosedStackItemRequest.oggi.each do |r|
+    ClosedStackItemRequest.oggi(library_id).each do |r|
       cnt+=1
       # ClavisItem.find(r.item_id).item_loan_status_update
       lnk1 = link_to("#{r.name} <b>#{r.lastname}</b>".html_safe, clavis_patron_path(r.patron_id), target:'_blank')
       itemlnk = link_to(r.title, ClavisItem.clavis_url(r.item_id))
+      # coll_link=r.collocazione
+      coll_link = link_to(r.collocazione, clavis_item_path(r.item_id), target:'_new')
       res << content_tag(:tr, content_tag(:td, cnt, class:'col-md-1') +
                               content_tag(:td, r.request_time.in_time_zone('Europe/Rome').strftime('%H:%M'), class:'col-md-1') +
                               content_tag(:td, "<b>#{r.piano}</b>".html_safe, class:'col-md-2') +
-                              content_tag(:td, "<b>#{r.collocazione}</b>".html_safe, class:'col-md-1') +
+                              content_tag(:td, "<b>#{coll_link}</b>".html_safe, class:'col-md-1', title:"'#{r.date_updated}'") +
                               content_tag(:td, itemlnk, class:'col-md-4') +
                               content_tag(:td, lnk1, class:'col-md-1') +
-                              content_tag(:td, r.loan_status, class:'col-md-2'))
+                              content_tag(:td, "#{r.loan_status_label}".html_safe, class:'col-md-2'))
     end
     content_tag(:table, res.join.html_safe, class:'table text-success')
   end
@@ -272,25 +289,75 @@ module ClosedStackItemRequestsHelper
   def csir_breadcrumbs
     # return params.inspect
     links=[]
-    links << link_to('Richieste a magazzino (simulazione attiva, non sono richieste reali)', closed_stack_item_requests_path) if params[:action]!='duplicates'
-    if params[:controller]=='talking_books' and ['index','show','edit','check'].include?(params[:action])
-      links << link_to('Catalogo dei libri parlati', talking_books_path)
-    end
-    if params[:controller]=='talking_books' and ['check_duplicates','digitalizzati_non_presenti','opac_edit_intro','stats'].include?(params[:action])
-      links << link_to('Catalogo dei libri parlati', talking_books_path)
-      links << link_to('Admin', check_talking_books_path)
-    end
-
-
-    if params[:controller]=='talking_book_readers' and ['check','index','edit','new','show'].include?(params[:action])
-      links << link_to('Catalogo dei libri parlati', talking_books_path)
-      links << link_to('Admin', check_talking_books_path)
-      if !params[:id].blank?
-        links << link_to('Volontari', talking_book_readers_path)
+    # st = ClosedStackItemRequest.status
+    # st = st=='on' ? 'attivo' : 'disattivo'
+    # links << link_to("Richieste a magazzino (#{st})", closed_stack_item_requests_path) if params[:action]!='duplicates'
+    if params[:controller]=='closed_stack_item_requests'
+      mylib = 'Civica Centrale'
+      mylib = current_user.clavis_default_library.to_label if !current_user.nil?
+      links << link_to("Richieste a magazzino", closed_stack_item_requests_path, title:"Biblioteca #{mylib}")
+      if params[:action]=='search' and !@patron.nil?
+        links << link_to(@patron.barcode, clavis_patron_path(@patron))
       end
     end
- 
+    if params[:controller]=='clavis_patrons' and ['show','csir_insert'].include?(params[:action])
+      links << link_to("Richieste a magazzino", closed_stack_item_requests_path)
+    end
+
+    if params[:controller]=='roles'
+      links << link_to("Ruoli", roles_path)
+      links << link_to(@role.name, role_path(@role)) if !@role.nil?
+    end
+    if params[:action]=='prenotazioni_da_opac'
+      links = []
+      links << "Attiva o disattiva le prenotazioni da opac"
+    end
+
+    if params[:controller]=='service_docs'
+      links << link_to("Servizi", services_path)
+      links << link_to("Documentazione", service_docs_path)
+      if !@service.nil?
+        links << link_to("Docs per #{@service.to_label}", service_docs_path(service_id:@service))
+      else
+
+      end
+      # return params.inspect
+    end
+
+    if params[:controller]=='services'
+      links << link_to("Servizi", services_path)
+      if !params[:parent_id].nil?
+        @service=Service.find(params[:parent_id])
+      end
+      if !@service.nil? and !@service.id.nil?
+        loop_list = @service.parent
+        t1 = []
+        while !loop_list.nil?
+          t1 << link_to(loop_list.name, service_path(loop_list))
+          loop_list = loop_list.parent
+        end
+        t1.reverse.each do |e|
+          links << e
+        end
+        links << link_to(@service.name, service_path(@service))
+      end
+    end
+    if params[:controller]=='users' and ['show','edit'].include?(params[:action])
+      links << link_to("SbctUsers", users_path(order:'email'))
+    end
+
+    
     %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
   end
 
+  def csir_on_off
+    status = ClosedStackItemRequest.status
+    if status == 'off'
+      link_to(content_tag(:span, 'Attiva', class:'btn btn-warning'), onoff_closed_stack_item_requests_path, method:'post')
+    else
+      link_to(content_tag(:span, 'Disattiva', class:'btn btn-success'), onoff_closed_stack_item_requests_path, method:'delete')
+    end
+  end
+
+  
 end

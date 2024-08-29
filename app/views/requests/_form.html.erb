@@ -1,0 +1,22 @@
+<%= simple_form_for(@request) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.association :clavis_library, collection:SbctTitle.libraries_select(current_user) %>
+
+    <%= f.input :patron_id, as:'hidden'%>
+    <%= f.input :utente, label:'Utente (barcode o nome e cognome)' %>
+    <%= f.input :collocazione, label:'Collocazione' %>
+    <%= f.input :inventario, label:'Inventario' %>
+    <%= f.input :titolo, label:'Titolo Esemplare' %>
+    <%= f.input :description, label:'Descrizione' %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value:'Salva modifiche', class:'btn btn-warning' %>
+  </div>
+<% end %>
+
+
+

@@ -94,6 +94,62 @@ class ClavisManifestation < ActiveRecord::Base
     template.sub('__NUMERO__',numero=bid[3..9])
   end
 
+  def set_sbam_only
+    return nil if self.bid.nil? or self.bid.strip.size!=10
+    self.bid.strip!
+    # puts "Assumo che il bid #{self.bid} sia solo in sbam e non in BCT"
+    sql = "INSERT INTO public.bumbam_sbam_only(bid) VALUES ('#{self.bid}') ON CONFLICT DO NOTHING;"
+    self.connection.execute(sql)
+  end
+
+  def sbam_opac_url(check_sbam=true)
+    return nil if not ['SBN','SBNBCT'].include?(self.bid_source)
+    if self.id.nil?
+      puts "non è una clavis_manifestation reale"
+    else
+      mid=self.sbam_manifestation_id
+    end
+    if mid.nil? and check_sbam==true
+      puts "bid #{self.bid}"
+      if self.connection.execute("select true from bumbam_notfound where bid = '#{self.bid}'").num_tuples==0
+        uri = URI("https://www.sbam.to.it/opac/detail/view/bid:#{self.bid}")
+        puts "checking #{uri}"
+        res = Net::HTTP.get_response(uri)
+        if res.is_a?(Net::HTTPSuccess)
+          puts "ok #{uri.to_s} - size: #{res.body.size}"
+          doc = Nokogiri::HTML(res.body)
+          href = doc.search('a[class="cover"]').first['href']
+          if !href.nil?
+            puts "ok href: #{href}"
+            sbam_mid = href.split(':').last.to_i
+            puts "manifestation_id di sbam: #{sbam_mid}"
+            sql = "INSERT INTO public.bumbam(sba_mid,bct_mid) VALUES (#{sbam_mid},#{self.id}) ON CONFLICT DO NOTHING;"
+            self.connection.execute(sql)
+            puts sql
+            mid = sbam_mid
+          else
+            puts "sbam_opac_url: non trovato manifestation_id in sbam"
+          end
+        else
+          puts "#{res} ( #{uri.to_s} )"
+          fd=File.open('/home/seb/sbam_opac_url.log', 'a')
+          fd.write("#{Time.now} non in sbam: #{self.bid} - bct manifestation_id: #{self.id}\n")
+          sql = "INSERT INTO public.bumbam_notfound(bid) VALUES ('#{self.bid}') ON CONFLICT DO NOTHING;"
+          self.connection.execute(sql)
+          fd.close
+        end
+      else
+        return nil
+      end
+    end
+    mid.nil? ? nil : "https://www.sbam.to.it/opac/detail/view/sbam:catalog:#{mid}"
+  end
+
+  def sbam_manifestation_id
+    r=self.connection.execute("select sba_mid from public.bumbam where bct_mid=#{self.id}").first
+    r.nil? ? nil : r['sba_mid'].to_i
+  end
+  
   def form_richiesta_a_magazzino(opac_username,library_id)
     # return 'Civica Centrale: per richiedere il materiale bisogna autenticarsi con le proprie credenziali' if opac_username.blank?
     return '' if opac_username.blank?
@@ -116,8 +172,10 @@ class ClavisManifestation < ActiveRecord::Base
     return '' if !req_ok
     sql=%Q{SELECT "#{self.connection.quote(self.title)}" as title}
     uri << "entry.#{form_entries[:title]}=#{URI::encode(self.title)}"
-    p=ClavisPatron.find_by_opac_username(opac_username)
-    puts p.id
+    # p=ClavisPatron.find_by_opac_username(opac_username)
+    p=ClavisPatron.find_by_sql("SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(opac_username)})").first
+    puts "p.id: #{p.id}"
+    
     return uri if p.nil?
     email=phone=''
     self.connection.execute("SELECT * FROM clavis.contact WHERE patron_id=#{p.id}").each do |r|
@@ -245,7 +303,7 @@ class ClavisManifestation < ActiveRecord::Base
         # Non esiste una copertina caricata come allegato, provo con EAN/ISBN
         ['EAN','ISBNISSN'].each do |nt|
           number=self.send(nt)
-          uri="https://covers.comperio.it/calderone/viewmongofile.php?ean=#{number}" and break if !number.blank?
+          uri="https://covers.biblioteche.cloud/covers/#{number}" and break if !number.blank?
         end
       else
         uri="https://sbct.comperio.it/index.php?file=lcover&id=#{self.id}"
@@ -345,6 +403,26 @@ class ClavisManifestation < ActiveRecord::Base
 
   def kardex_adabas_issues_count
     ClavisManifestation.connection.execute("SELECT count(*) from kardex_adabas where bid='#{self.bid}'")[0]['count'].to_i
+  end
+
+  def sp_item_redir
+    sp_items = SpItem.find_all_by_manifestation_id(self.id)
+    return nil if sp_items.first.nil?
+    sp_item=sp_items.first
+    bib = sp_item.sp_bibliography
+    return nil if not sp_item.in_opac?
+    path = "https://clavisbct.comperio.it/spl/#{self.id}?n=#{sp_items.size}&sp_bibliography_id=#{bib.id}&sp_item_id=#{sp_item.id}"
+    sp_section = sp_item.sp_section
+    if sp_section.nil?
+      the_label = bib.to_label
+    else
+      the_label = "#{bib.to_label}. #{sp_section.to_label}"
+    end
+    if bib.orig_id.nil?
+      %Q{Titolo presente in <a href="#{path}" title="" target="_new">#{the_label}</a>}
+    else
+      %Q{Titolo presente nella bibliografia <a href="#{path}" title="" target="_new">#{the_label}</a>}
+    end
   end
 
   def sp_item_ids_with_d_objects
@@ -525,6 +603,7 @@ class ClavisManifestation < ActiveRecord::Base
   end
 
   # http://www.germane-software.com/software/rexml/docs/tutorial.html
+  # 2024: https://github.com/ruby/rexml
   def export_to_metaopac
     # puts "export_to_metaopac: #{self.id}"
     rec=Document.new "<record/>"
@@ -619,6 +698,32 @@ class ClavisManifestation < ActiveRecord::Base
     rec
   end
 
+  def to_unimarc
+    puts "to_unimarc: #{self.id}"
+    puts self.unimarc
+    rec=Document.new "<r/>"
+    # rec.root.attributes['id']=self.id
+    # rec.root.attributes['cod_polo']='BCT'
+    rec.root.attributes['data']=Time.now
+    rec.root.attributes['biblevel']=self.bib_level
+    rec.root.attributes['date_updated']=self.date_updated
+
+    e=Element.new('d200')
+    #e.add_attribute('i1', '1')
+    #e.add_attribute('i2', ' ')
+    e.add_attributes({'i1'=>'1','i2'=>' '})
+    e1=Element.new('sa')
+    e1.add_text(self.title)
+    e.add_element(e1)
+    rec.root.add_element e
+    puts e.to_s
+    xmlstring = %Q{<?xml version="1.0"?>#{rec.to_s}}
+    puts xmlstring
+    xmlstring
+  end
+
+
+  
   def talking_book
     sql=%Q{select tb.* from clavis.manifestation cm join clavis.item ci using(manifestation_id)
      join libroparlato.catalogo tb on(tb.n=replace(ci.collocation,'CD ','')) where ci.section='LP'
@@ -664,7 +769,7 @@ class ClavisManifestation < ActiveRecord::Base
     res=[]
     unixml=REXML::Document.new(self.unimarc.sub(%Q{<?xml version=\"1.0\"?>},''))
     elements=unixml.first.elements
-    titolo=elements['d200/sa'].text
+    titolo=elements['d200/sa'].text if !elements['d200/sa'].nil?
     luogo=elements['d210/sa'].text if !elements['d210/sa'].nil?
     editore=elements['d210/sc'].text if !elements['d210/sc'].nil?
     anno=elements['d210/sd'].text if !elements['d210/sd'].nil?
@@ -675,10 +780,16 @@ class ClavisManifestation < ActiveRecord::Base
 
     # Collazione
     coll=''
+
     # Pagine:
-    coll << elements['d215/sa'].text if !elements['d215/sa'].blank?
+    # puts "pagine: #{elements['d215/sa'].class}"
+    begin
+      coll << elements['d215/sa'].text if !elements['d215/sa'].blank?
+    rescue
+    end
     # Illustrazioni:
     coll << " : #{elements['d215/sc'].text}" if !elements['d215/sc'].blank?
+
     # Misura:
     # coll << " ; #{elements['d215/sd'].text.sub(/\.$/,'')}" if !elements['d215/sd'].blank?
     coll << " ; #{elements['d215/sd'].text}" if !elements['d215/sd'].blank?
@@ -748,6 +859,15 @@ class ClavisManifestation < ActiveRecord::Base
        join containers c on(cit.container_id=c.id) join clavis.library cl on(cl.library_id=c.library_id)
        where ci.manifestation_id=#{self.id} ORDER BY cit.row_number,cit.item_title}
     ClavisManifestation.find_by_sql(sql)
+  end
+
+  def biblioteche_abbonate
+    sql = %Q{select trim(cl.shortlabel) as biblioteca,cl.library_id from public.serial_titles st
+        join public.serial_lists sl on(sl.id=st.serial_list_id)
+        join public.serial_subscriptions ss on (ss.serial_title_id=st.id)
+        join clavis.library cl using(library_id)
+          where st.manifestation_id = #{self.id} and st.sospeso is false and sl.is_public order by cl.shortlabel}
+    self.connection.execute(sql).to_a
   end
 
   # Vale solo per i periodici Civica centrale con collocazione "Per", esempio "Per.15"
@@ -882,7 +1002,7 @@ class ClavisManifestation < ActiveRecord::Base
     "#{host}/index.php?page=Acquisition.SubscriptionViewPage&id=#{id}"
   end
 
-  def self.bib_level
+  def ClavisManifestation.bib_level
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
        where value_language = 'it_IT' and value_class='LIVBIBL' order by value_key}
     self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
@@ -959,11 +1079,16 @@ GROUP BY
   end
 
   def ClavisManifestation.piurichiesti
-    sql=%Q{select cm.*,pr.*,t.id_titolo as acquisti_id_titolo from clavis.piurichiesti pr join clavis.manifestation cm using(manifestation_id)
+    sql=%Q{select cm.*,pr.*,t.id_titolo as acquisti_id_titolo,t.reparto,t.sottoreparto from clavis.piurichiesti pr join clavis.manifestation cm using(manifestation_id)
             left join sbct_acquisti.titoli t using(manifestation_id)
         where pr.reqnum > pr.available_items order by pr.percentuale_di_soddisfazione;
     }
     self.find_by_sql(sql)
+  end
+
+  def ClavisManifestation.sbam_only?(bid)
+    sql = "select bid from public.bumbam_sbam_only where bid = #{self.connection.quote(bid)}"
+    self.connection.execute(sql).ntuples==1
   end
 
   private

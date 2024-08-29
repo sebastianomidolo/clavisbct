@@ -150,6 +150,9 @@ ALTER TABLE clavis.collocazioni add primary key(item_id);
 CREATE INDEX collocazioni_idx ON clavis.collocazioni(collocazione);
 CREATE INDEX collocazioni_sort_text_idx ON clavis.collocazioni(sort_text);
 CREATE INDEX collocazioni_location_id_ndx ON clavis.collocazioni(location_id);
+create index collocazioni_primo_ndx on clavis.collocazioni (primo);
+create index clavis_loan_item_id_ndx on clavis.loan(item_id);
+create index clavis_loan_manifestation_id_ndx on clavis.loan(manifestation_id);
 
 \i extras/sql/trigger_clavis_item.sql
 

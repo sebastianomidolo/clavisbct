@@ -1,0 +1,19 @@
+<%= simple_form_for(@sbct_l_event_title) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= hidden_field_tag :validating_now, 't' %>
+    <%= f.input :numcopie, label:'Numero di copie richieste' %>
+    <%= f.input :event_id, as:'hidden' %>
+    <%= f.input :id_titolo, as:'hidden' %>
+    <%= f.input :validated, as:'boolean', label:'Convalidata' %>
+    <%= f.input :response_note, as:'string', label:'Note di chi convalida o non convalida la proposta' %>
+    <%= f.input :closed, as:'boolean', label:'Chiudi la richiesta anche se non risultano selezionate tutte le copie richieste' %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

@@ -2,10 +2,11 @@ module ExtraCardsHelper
   def extra_cards_shortlist(records)
     res=[]
     records.each do |r|
-      lnk=link_to(r.collocazione, extra_card_path(r))
-      res << content_tag(:tr, content_tag(:td, lnk) +
+      lnk1=link_to(r.collocazione, "/clavis_items?clavis_item%5Bcollocation%5D=#{r.collocazione}&order=collocation")
+      lnk2=link_to(r.titolo, extra_card_path(r))
+      res << content_tag(:tr, content_tag(:td, lnk1) +
                               content_tag(:td, r.serieinv, style:'white-space:nowrap') +
-                              content_tag(:td, r.titolo) +
+                              content_tag(:td, lnk2) +
                               content_tag(:td, r.note_interne))
     end
     content_tag(:table, res.join.html_safe, class:'table')

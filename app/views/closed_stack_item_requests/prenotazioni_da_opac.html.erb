@@ -1,0 +1,21 @@
+<%= content_tag(:h4, "Controllo attivazione/disattivazione delle prenotazioni da Opac") %>
+
+
+<%= form_tag(prenotazioni_da_opac_closed_stack_item_requests_path, method:'post') do %>
+
+<% if @stato=='off' %>
+<%= content_tag(:h4, "Attenzione, attualmente il servizio è disattivato") %>
+<%= content_tag(:h4, "Messaggio: #{@infomsg}") %>
+<%= hidden_field_tag(:richiesta_attivazione, true) %>
+<%= submit_tag('Riattiva il servizio') %>
+<% end %>
+
+<% if @stato=='on' %>
+<%= hidden_field_tag(:richiesta_attivazione, false) %>
+<%= submit_tag('Disattiva il servizio') %>
+<br/>
+Messaggio (obbligatorio): <%= text_field_tag(:infomsg, @infomsg, size: 100, style:%Q{border: 2px solid #0039f5; padding-left:10px !important}) %>
+<% end %>
+
+<% end %>
+

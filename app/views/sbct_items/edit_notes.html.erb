@@ -1,0 +1,22 @@
+<%= content_tag(:h5, link_to("Vedi titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
+
+<%= content_tag(:h4, "Copia per #{@sbct_item.clavis_library.siglabct} - #{@sbct_item.clavis_library.shortlabel}") %>
+
+<%= simple_form_for(@sbct_item) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+ 
+    <%= f.input :id_titolo, as: 'hidden' %>
+
+    <%= f.input :note_interne, as: 'string', label:'Note interne (non vengono comunicate al fornitore)' %>
+
+    <%= f.association :sbct_budget, label:'Budget', collection:SbctBudget.label_select(params,current_user) %>
+    
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+

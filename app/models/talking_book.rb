@@ -171,7 +171,7 @@ class TalkingBook < ActiveRecord::Base
            INSERT INTO import_libroparlato_colloc(collocation,position,d_object_id)
        (SELECT '#{collocazione}',row_number() over(order by win_sortfilename(o.name)), o.id
          from d_objects_folders f join d_objects o on(o.d_objects_folder_id=f.id)
-           where f.name ~ '^#{newdestfolder}');}
+           where f.name LIKE '#{newdestfolder}%');}
     puts sql
 
     ActiveRecord::Base.connection.execute(sql)
@@ -224,7 +224,7 @@ class TalkingBook < ActiveRecord::Base
     tempdir=Dir.mktmpdir('make_audio_zip', File.join(Rails.root.to_s, 'tmp'))
     storage_dir=DigitalObjects.digital_objects_mount_point
     title=cm.title.strip
-    d_objects=cm.d_objects
+    d_objects=cm.d_objects(nil, "a.attachment_category_id='D'")
     cnt=0
     d_objects.each do |o|
       FileUtils.cp(File.join(storage_dir, o.filename), tempdir)

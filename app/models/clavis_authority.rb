@@ -3,6 +3,11 @@ class ClavisAuthority < ActiveRecord::Base
 
   belongs_to :clavis_authority, :foreign_key=>:parent_id
   has_many :bncf_terms, primary_key:'full_text', foreign_key:'term'
+  attr_accessible :full_text
+
+  def to_label
+    "#{authority_type} - #{full_text} - #{self.id}"
+  end
 
   def letterebct_person
     sql=%Q{select p.* from clavis.authority ca join letterebct.people p on(ca.full_text=p.denominazione) where ca.authority_type='P' and ca.full_text=#{self.connection.quote(self.full_text)}}
@@ -25,6 +30,32 @@ class ClavisAuthority < ActiveRecord::Base
     ClavisAuthority.clavis_url(self.id,mode)
   end
 
+  def dividi_soggetto
+    s1,s2 = self.full_text.split('|')
+    return nil if s2.nil?
+    # return [s1,s2]
+    r1 = ClavisAuthority.find_or_create_by_full_text(s1)
+    r2 = ClavisAuthority.find_or_create_by_full_text(s2)
+    # [s1.strip,s2.strip]
+    # [r1.full_text.strip,r2.full_text.strip]
+    [r1.id,r2.id]
+  end
+
+  def l_authorities(direction)
+    invers = direction=='up' ? 'down' : 'up'
+    sql = %Q{select l.link_type,a.* from clavis.l_authority l join clavis.authority a on (a.authority_id=l.authority_id_#{invers})
+            where l.authority_id_#{direction}=#{self.id};}
+    puts sql
+    ClavisAuthority.find_by_sql(sql)
+  end
+
+  def l_manifestations
+    sql = %Q{select cm.* from clavis.manifestation cm join clavis.l_authority_manifestation l using(manifestation_id)
+            where l.authority_id=#{self.id};}
+    ClavisManifestation.find_by_sql(sql)
+  end
+
+  
   def ClavisAuthority.clavis_url(id,mode=:show)
     config = Rails.configuration.database_configuration
     host=config[Rails.env]['clavis_host']

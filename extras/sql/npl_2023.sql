@@ -46,15 +46,15 @@ create temp table npl_iscrittibimbi as
   and date_created <= (select patron_date_created_less_or_equal from npl_config);
 
 
-select count(*) as "Numero totale di libri RN01-RN06" 
+select count(*) as "Numero totale di libri RN01-RN05" 
   from clavis.item ci join npl_libraries l on(l.library_id=ci.home_library_id)
- where section='RN' and (collocation ~ '^0[12346]')
+ where section='RN' and (collocation ~ '^0[12345]')
     and item_status in('B','F','G','K','R','S','V','X','Y');
 
-select count(*) as "Numero di libri RN01-RN06 acquisiti", inventory_date_from as "dal", inventory_date_to as "al"
+select count(*) as "Numero di libri RN01-RN05 acquisiti", inventory_date_from as "dal", inventory_date_to as "al"
   from clavis.item ci join npl_libraries l on(l.library_id=ci.home_library_id)
     left join npl_config on(true)
- where section='RN' and (collocation ~ '^0[12346]')
+ where section='RN' and (collocation ~ '^0[12345]')
     and item_status in('B','F','G','K','R','S','V','X','Y')
     and inventory_date between inventory_date_from and inventory_date_to
     group by inventory_date_from,inventory_date_to;

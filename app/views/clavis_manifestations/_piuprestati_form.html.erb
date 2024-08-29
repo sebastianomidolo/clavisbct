@@ -1,0 +1,8 @@
+
+<%= simple_form_for(@clavis_manifestation, :url=>piuprestati_clavis_manifestations_path,
+         :method=>'get', :html => {:class => 'form-horizontal', role: 'form' }) do |f| %>
+<%= f.input :prestito_inizio_periodo, as: 'date', label:'Inizio del periodo di prestito'  %>
+<%= f.input :prestito_fine_periodo, as: 'date', label:'Fine del periodo di prestito'  %>
+<%= f.input :prestito_max_titoli, as: 'integer', label:'Numero massimo di titoli da elencare' %>
+<%= f.submit 'Avvia ricerca', :class=>'btn btn-info' %>
+<% end %>

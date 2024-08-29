@@ -1,4 +1,20 @@
+<%= link_to("Modifica proposta d'acquisto (in ClavisBct)", edit_clavis_purchase_proposal_path) %>
+
+<%= content_tag(:p, @clavis_purchase_proposal.to_label) %>
+
+<% if @clavis_purchase_proposal.sbct_title_id.nil? %>
+ <% if @clavis_purchase_proposal.clavis_manifestation.nil? %>
+  (non presente né in Pac né in Clavis)
+ <% else %>
+  <% @clavis_purchase_proposal.insert_into_pac %>
+  (non presente in Pac, ma presente in Clavis)
+ <% end %>
+<% else %>
+ <%= link_to("Vedi scheda in Pac", sbct_title_path(@clavis_purchase_proposal.sbct_title_id), class:'btn btn-warning') %>
+<% end %>
+
 <%= content_tag(:div, clavis_purchase_proposal_show(@clavis_purchase_proposal)) %>
 
-<%= link_to("Torna alla pagina di ricerca Proposte d'acquisto", clavis_purchase_proposals_path) %>
+<%= content_tag(:pre, "select * from purchase_proposal where proposal_id=#{@clavis_purchase_proposal.id};") %>
+
 

@@ -1,0 +1,7 @@
+<%= simple_form_for(@sp_bibliography, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+  <%= f.input :library_id, collection: ClavisLibrary.library_select(''), hint: 'Biblioteca di riferimento', include_blank: true, label: false, :onchange=>'submit();', input_html: {:onchange=>'submit();'} if user_signed_in? %>
+  <div class="form-actions"><%= f.button :submit, :value=>'Cerca' %></div>
+
+<% end %>
+

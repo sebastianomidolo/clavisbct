@@ -102,7 +102,8 @@ class WorkStation < ActiveRecord::Base
     puts "scrivo in: #{fname}"
     fd=File.open(fname,'w')
     fd.write("#{tag}\n")
-    fd.write("# Biblioteca #{self.clavis_library.label} - #{self.location}\n\n")
+    fd.write("# Biblioteca #{self.clavis_library.label} - #{self.location}\n")
+    fd.write("# Timestamp ultima scrittura file: #{Time.now}\n\n")
     
     fd.write("hostname=#{self.hostname}\n")
     fd.write("kiosk_config=#{self.remote_url}\n")

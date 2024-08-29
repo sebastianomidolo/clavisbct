@@ -1,0 +1,62 @@
+% Procedura scarto - contesto R
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=32mm, right=20mm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[headings]{fancyhdr}
+
+\usepackage{supertabular}
+
+\renewcommand{\headrulewidth}{0pt}
+
+
+\hoffset=-20mm
+\voffset=0mm
+\textwidth=184mm
+\textheight=26cm
+
+
+\pagestyle{fancy}
+
+
+<%= "\\fancyhead[L]{#{inputdata.nome_biblioteca}}" %>
+<%= "\\fancyhead[R]{Stampa: #{Time.now.to_date}}" %>
+
+\tablehead{%
+\hline
+Statcol & Scartabili & Items totali & Note \\
+\hline
+}
+
+\tabletail{%
+\hline
+}
+
+\def\arraystretch{1.5}
+
+\begin{document}
+
+\begin{center}
+\begin{supertabular}{|l|r|r|p{5cm}|}
+\hline
+
+<%
+ res=[]
+
+ tot=0
+ sca=0
+ inputdata.each do |e|
+   tot += e.conta_items_per_statcol.to_i
+   sca += e.scartabili.to_i
+   res << "#{e.statcol} & #{e.scartabili} & #{e.conta_items_per_statcol} & \\\\ \\hline"
+ end
+ res <<  "\\hline Totali & #{sca} & #{tot} & \\\\ \\hline"
+
+%>
+
+<%= res.join("\n") %>
+
+\end{supertabular}
+\end{center}
+\end{document}

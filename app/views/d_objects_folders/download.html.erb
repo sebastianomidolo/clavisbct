@@ -1,0 +1,8 @@
+
+<%= content_tag(:h3, "Cartella #{@d_objects_folder.name}") %>
+
+<% res=@d_objects_folder.download %>
+<ul>
+<%= content_tag(:li, link_to('Archivio copertine', res[:tarfile])) %>
+<%= content_tag(:li, link_to('SQL inserts per Clavis', res[:sql_inserts])) %>
+</ul>

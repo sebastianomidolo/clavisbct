@@ -1,4 +1,5 @@
 # coding: utf-8
+# coding: utf-8
 class SerialTitle < ActiveRecord::Base
   attr_accessible :title, :manifestation_id, :sortkey, :estero, :sospeso, :updated_by, :prezzo_stimato, :note, :note_fornitore, :serial_list_id
 
@@ -6,6 +7,7 @@ class SerialTitle < ActiveRecord::Base
   belongs_to :serial_invoice
 
   has_many :serial_subscriptions
+  has_many :serial_reminders
 
   # validates :title, presence: true
   validates_uniqueness_of :title, scope: :serial_list_id
@@ -18,6 +20,13 @@ class SerialTitle < ActiveRecord::Base
 
   def clavis_manifestation
     self.manifestation_id.nil? ? nil : ClavisManifestation.find(self.manifestation_id)
+  end
+
+  def title_details(library_id=nil)
+    library = library_id.nil? ? '' : "AND libraries::integer=#{library_id.to_i}"
+    sql = "select * from serial_details where id=#{self.id} #{library}"
+    puts sql
+    SerialTitle.find_by_sql(sql).first
   end
 
   def get_manifestation_id
@@ -73,7 +82,7 @@ class SerialTitle < ActiveRecord::Base
     fd.write(sql)
     fd.close
 
-    puts sql
+    # puts sql
     ClavisLibrary.find_by_sql(sql)
   end
   
@@ -130,13 +139,15 @@ class SerialTitle < ActiveRecord::Base
     cond << "sospeso=#{self.connection.quote(params[:sospeso])}" if !params[:sospeso].blank?
     cond << "estero=#{self.connection.quote(params[:estero])}" if !params[:estero].blank?
 
+    cond << "st.title ~* #{self.connection.quote(params[:qs])}" if !params[:qs].blank?
+
     if params[:library_id].to_i==-1
       cond = cond==[] ? '' : " AND #{cond.join(' AND ')}"
       sql=%Q{select st.title,st.id,st.prezzo_stimato,st.prezzo_stimato as prezzo_totale_stimato,st.note,st.note_fornitore,
         '[vai a acquisizioni]' as library_names,0 as tot_copie, 0 as numero_copie, '' as issue_arrival_date,
              '' as frequency_label, null as manifestation_id, '' as publisher, '' as invoice_ids
            from #{SerialTitle.table_name} st left join #{SerialSubscription.table_name} ss
-                  on(st.id=ss.serial_title_id) where st.serial_list_id=#{params[:serial_list_id]}
+                  on(st.id=ss.serial_title_id) where st.serial_list_id=#{params[:serial_list_id].to_i}
            and ss is null #{cond} order by st.sortkey, lower(st.title);}
     else
       if !params[:library_id].blank?
@@ -172,7 +183,14 @@ select i.manifestation_id,i.item_id,i.issue_year,i.issue_number,
       end
       with_cond << "tipo_fornitura=#{self.connection.quote(params[:tipo_fornitura])}" if !params[:tipo_fornitura].blank?
       # with_cond << "s.serial_invoice_id is null" if !params[:invoice_id].blank?
-      cond << "serial_frequency_of_issue(cm.unimarc::xml) =   #{self.connection.quote(params[:frequency])}" if !params[:frequency].blank?
+
+      if !params[:frequency].blank?
+        if params[:items_details]=='t'
+          cond << "frequency_code = #{self.connection.quote(params[:frequency])}"
+        else
+          cond << "serial_frequency_of_issue(cm.unimarc::xml) = #{self.connection.quote(params[:frequency])}"
+        end
+      end
 
       invoice_select = invoice_join = invoice_group = ''
       if !params[:invoice_id].blank?
@@ -211,7 +229,7 @@ select i.manifestation_id,i.item_id,i.issue_year,i.issue_number,
        from serial_titles         t
         join serial_subscriptions s on (s.serial_title_id=t.id)
             join serial_libraries l on (l.clavis_library_id=s.library_id and l.serial_list_id=t.serial_list_id)
-       where t.serial_list_id=#{params[:serial_list_id]} #{with_cond} group by t.id
+       where t.serial_list_id=#{params[:serial_list_id].to_i} #{with_cond} group by t.id
      )
     select st.serial_list_id,st.id,cm.manifestation_id,st.title,cm.publisher,
             st.prezzo_stimato*abb.tot_copie as prezzo_totale_stimato,st.prezzo_stimato,
@@ -227,13 +245,19 @@ select i.manifestation_id,i.item_id,i.issue_year,i.issue_number,
 	    left join clavis.unimarc_codes freq
         on(freq.code_value::char=serial_frequency_of_issue(cm.unimarc::xml)
              and freq.language='it_IT' and freq.field_number = 110 and freq.pos=1)
-         where st.serial_list_id=#{params[:serial_list_id]}
+         where st.serial_list_id=#{params[:serial_list_id].to_i}
           #{cond}
 	group by st.id,cm.manifestation_id,abb.tot_copie,abb.libraries,abb.library_names,abb.numero_copie,
 	       #{invoice_group}freq.label
             order by st.sortkey, lower(st.title);\n}
     end
 
+    # raise "params: #{params.inspect}"
+    if params[:items_details]=='t'
+      sql = "SELECT * FROM public.serial_details st where st.serial_list_id=#{params[:serial_list_id].to_i} #{cond}"
+    end
+      
+    
     fd=File.open("/home/seb/serial_title_trova.sql", "w")
     fd.write(sql)
     fd.close

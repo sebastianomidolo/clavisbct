@@ -1,0 +1,19 @@
+<%= content_tag(:h4, "Dettagli fornitura per #{@serial_subscription.clavis_library.to_label}") %>
+
+
+<%=
+ if @serial_subscription.numero_copie>0
+  render partial:'form' if !@serial_subscription.serial_title.serial_list.locked? 
+ else
+  content_tag(:h4, "Sottoscrizione non attiva")
+ end
+%>
+
+<%= content_tag(:div, serial_invoices_shortlist(@serial_subscription.serial_invoices)) %>
+<%= content_tag(:div, @serial_subscription.id) %>
+
+
+
+<%= content_tag(:div, serial_titles_issues_report(@serial_title.title_details)) if current_user.email=='seba' %>
+
+

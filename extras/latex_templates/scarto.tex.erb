@@ -1,64 +1,35 @@
 % Lista di items per estrazione da scaffali per lo scarto
-
 \documentclass[a4paper,10pt]{article}
+% \documentclass[a4paper,10pt]{report}
 
 \usepackage[a4paper, top=20mm, bottom=10mm, left=32mm, right=20mm]{geometry}
-
-\usepackage{fancyhdr}
-\setlength{\headheight}{1pt}
-\pagestyle{fancy}
-
-
-\textwidth=20cm
-
-% \usepackage[utf8]{inputenc}
+% \usepackage[a4paper]{geometry}
 \usepackage[utf8x]{inputenc}
-
-% \usepackage{multicol}
-
-\linespread{1.3}
-
-\hoffset=-22mm
-% \voffset=-28mm
-
-
-\textheight=28cm
+\usepackage[headings]{fancyhdr}
 
 \usepackage{supertabular}
-
+% \usepackage{array}
 
 \renewcommand{\headrulewidth}{0pt}
+
+
+\hoffset=-20mm
+\voffset=0mm
+\textwidth=184mm
+\textheight=26cm
+
+
 \pagestyle{fancy}
 
-<%= "\\chead{#{inputdata.titolo_elenco} --- Stampa: #{Time.now.to_date}}" %>
 
-\lfoot{}
-\cfoot{}
-\rfoot{}
-
-\rhead{Prova \LaTeX}
-\rfoot{Prova \LaTeX}
+<%= "\\fancyhead[L]{#{inputdata.titolo_elenco}}" %>
+<%= "\\fancyhead[R]{Stampa: #{Time.now.to_date}}" %>
 
 
 
 \begin{document}
 
-% \pagestyle{empty}
 
-% \head{x}
-
-%\tablehead{\hline}
-%\tabletail{\hline}
-
-\tablefirsthead{%
-\hline
-\multicolumn{1}{|c|}{\#} &
-\multicolumn{1}{l|}{Collocazione} &
-Titolo &
-Serie-Inv &
-Anno &
-Prestiti\\
-\hline}
 
 \tablehead{%
 \multicolumn{6}{l}{\small\sl (\ldots continua dalla pagina precedente)}\\
@@ -72,6 +43,7 @@ Prestiti\\
 \hline}
 
 \tabletail{%
+\hline
 \multicolumn{6}{r}{\small\sl continua\ldots}
 }
 
@@ -79,25 +51,61 @@ Prestiti\\
 
 
 
-\begin{supertabular}{|r|l|l|l|l|l|}
-
 
 <%
  res=[]	
  cnt=1
- compact = inputdata.length > 60 ? true : false
+
+ prec_classe=''
  inputdata.each do |e|
+   regola = %Q{#{e.dr_classe.split('-').uniq.join(' -- ')} (#{e.dr_descrizione})}
+   if e.dr_classe != prec_classe
+     res << "\\end{supertabular}" if !prec_classe.blank?
+
+     res << %Q{
+\\tablefirsthead{%
+\\hline
+\\multicolumn{6}{|l|}{\\large\\sl #{regola}}\\\\
+\\hline
+\\multicolumn{1}{|c|}{\\#} &
+\\multicolumn{1}{l|}{Collocazione} &
+Titolo &
+Serie-Inv &
+Anno &
+Prestiti\\\\
+\\hline}
+}
+
+   res << %Q{
+\\tablehead{%
+\\hline
+\\multicolumn{6}{|c|}{\\large\\sl (continuazione dalla pagina precedente della Tabella per classe #{e.dr_classe.split('-').uniq.join('---')})}\\\\
+\\hline
+
+\\# & Collocazione & Titolo & Serie-Inv & Anno & Prestiti \\\\
+
+\\hline}
+}
+     res << "\\newline\\vspace*{5mm}\\newline" if !prec_classe.blank?
+     res << "\\begin{supertabular}{|c|p{30mm}|p{8.5cm}|p{2cm}|p{1cm}|p{1cm}|}"
+
+   end
+   prec_classe = e.dr_classe
    ultimo_prestito = e.ultimo_prestito.blank? ? '' : " (#{e.ultimo_prestito[0..3]})"
    prestiti = e.prestiti.to_i == 0 ? 'nessuno' : "#{e.prestiti}#{ultimo_prestito}"
    e['title'].gsub!("&", '\\\&')
    e['title'].gsub!("%", '\\\%')
-   res << "#{cnt} & {\\Large #{e.collocazione[0..16]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} & #{e.print_year} & #{prestiti} \\\\"
+   res << "#{cnt} & {\\large #{e.colloc_stringa[0..16]}} & #{e['title'][0..45]} & #{e.inventory_serie_id}-#{e.inventory_number} & #{e.print_year} & #{prestiti} \\\\"
    cnt+=1
  end
+ res << "\\end{supertabular}" if !prec_classe.blank?
  #  res << "\\markboth{uno}{due}"
 %>
+
+
+
 <%= res.join("\n") %>
 
-\end{supertabular}
+
 
 \end{document}

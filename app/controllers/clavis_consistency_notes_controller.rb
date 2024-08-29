@@ -38,6 +38,7 @@ join clavis.manifestation cm using(manifestation_id)
           #{cond}
           group by cn.consistency_note_id,cn.collocation,cn.text_note,trim(cm.title),cm.manifestation_id,url_sbn.url
            order by cn.collocazione_per,replace(lower(cn.collocation),'bct.','')}
+
     @clavis_consistency_notes=ClavisConsistencyNote.paginate_by_sql(sql,:page=>params[:page], :per_page=>100)
   end
 

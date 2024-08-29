@@ -1,4 +1,8 @@
-<%= render :partial=>'searchform' %>
+<% render :partial=>'searchform' %>
+
+
+<%= link_to('cerca nei metadati ', d_objects_path, class:'btn btn-info') %>
+<%= link_to('area personale ', d_objects_folder_path(0), class:'btn btn-info') %>
 
 <% content_tag(:pre, @sql) %>
 

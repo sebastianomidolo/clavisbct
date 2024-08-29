@@ -32,8 +32,8 @@ class ClavisPatron < ActiveRecord::Base
     # dng.log_session_id
   end
 
-  def csir_tickets(archived=false)
-    ClosedStackItemRequest.list(self.id,pending=false,printed=nil,today=true,archived=archived,reprint=nil).collect{|x| x.daily_counter}.uniq.sort
+  def csir_tickets(library_id,archived=false)
+    ClosedStackItemRequest.list(self.id,library_id,pending=false,printed=nil,today=true,archived=archived,reprint=nil).collect{|x| x.daily_counter}.uniq.sort
   end
 
   def appellativo
@@ -69,7 +69,7 @@ class ClavisPatron < ActiveRecord::Base
         :city_name     => self.birth_city.strip
       )
     rescue
-      raise "Errore calcolo codice fiscale per #{self.to_label} #{$!}"
+      raise "Errore calcolo CF #{$!}"
     end
   end
 
@@ -158,8 +158,8 @@ class ClavisPatron < ActiveRecord::Base
     puts sql
     ClosedStackItemRequest.find_by_sql(sql)
   end
-  def closed_stack_item_requests
-    ClosedStackItemRequest.list(self.patron_id,nil,nil,true,false,nil,'request_time ASC')
+  def closed_stack_item_requests(library_id)
+    ClosedStackItemRequest.list(self.patron_id,library_id,nil,nil,true,false,nil,'request_time ASC')
   end
 
   def closed_stack_item_request_pdf(dng_session)
@@ -217,7 +217,6 @@ create temp table #{temptable} as
     r
   end
 
-
   # Conta le proposte di acquisto escluse quelle annullate dall'utente
   # Se "since" è nil, conta le proposte dall'inizio dell'anno corrente,
   # altrimenti le conta dall'intervallo espresso dal parametro since, esempio "1 year", "6 months", "45 days" etc.
@@ -228,7 +227,36 @@ create temp table #{temptable} as
     else
       interval = " AND proposal_date between now() - interval '#{since}' and now()"
     end
-    self.purchase_proposals.where("status IN ('A','B','C','E' )#{interval}").count
+    sql = %Q{select count(*) from clavis.purchase_proposal where patron_id=#{self.id} #{interval} and status IN ('A','B','C','E' );}
+    # puts sql
+    self.connection.execute(sql).first['count'].to_i
+    # self.purchase_proposals.where("status IN ('A','B','C','E' )#{interval}").count
+  end
+
+  def sql_for_update_date_updated_field
+    %Q{update patron set date_updated =
+         (select event_date from changelog where object_class='Patron' and object_id = #{self.id}
+           and event_date is not null order by event_date desc limit 1)
+         where patron_id=#{self.id};}
+    %Q{with t1 as (select object_id as patron_id,event_date as last_updated from changelog where object_class='Patron'
+                and object_id = #{self.id} and event_date is not null order by event_date desc limit 1)
+           select t1.patron_id,t1.last_updated,p.date_updated from t1 join patron p using(patron_id);}
+    %Q{begin;
+      with t1 as (select object_id as patron_id,event_date as last_updated from changelog where object_class='Patron'
+                  and object_id = #{self.id} and event_date is not null order by event_date desc limit 1)
+      update patron inner join t1 ON t1.patron_id=patron.patron_id
+      SET patron.date_updated = t1.last_updated
+      where t1.last_updated > patron.date_updated;
+      select date_updated from patron where patron_id=#{self.id};
+      rollback;}
+    %Q{begin;
+      with t1 as (select object_id as patron_id,event_date as last_updated from changelog where object_class='Patron'
+                  and object_id = #{self.id} and event_date is not null order by event_date desc limit 1)
+      update patron inner join t1 ON t1.patron_id=patron.patron_id
+      SET patron.date_updated = t1.last_updated, patron.modified_by=1
+      where t1.last_updated > patron.date_updated;
+      select date_updated from patron where patron_id=#{self.id};
+rollback;}
   end
 
   def clavis_url(mode=:view)
@@ -297,8 +325,8 @@ create temp table #{temptable} as
     "test"
   end
 
-  def ClavisPatron.insert_new_patron(soap_response)
-    puts "Inserisco nuovo utente da risposta ottenuta da chiamata soap - #{soap_response.class}"
+  def ClavisPatron.insert_or_update_patron(soap_response)
+    # puts "Inserisco o aggiorno utente da risposta ottenuta da chiamata soap - #{soap_response.class}"
     h = Hash.new
     soap_response.each do |e|
       next if e.class!=Hash
@@ -314,7 +342,7 @@ create temp table #{temptable} as
       fld=e[:key].underscore
       val=e[:value]
       next if val.blank? or val.class==Hash
-      puts "#{e.inspect} - val class : #{val.class}"
+      # puts "#{e.inspect} - val class : #{val.class}"
       attrib[fld]=val
     end
     # n => new patron
@@ -344,14 +372,21 @@ create temp table #{temptable} as
     end
   end
 
+  def allinea_da_clavis
+    soap_response=ClavisPatron.mydiscovery_user(self.id)
+    ClavisPatron.insert_or_update_patron(soap_response)
+  end
+
   def ClavisPatron.mydiscovery_authorized?(username,password)
     client = SoapClient::get_wsdl('user')
     r = client.call(:login_user, message: {username:username,password:password})
     r.body[:login_user_response][:return]
   end
 
-  def ClavisPatron.mydiscovery_user(username)
-    searchfield=username.class == Fixnum ? 'id' : 'username'
+  def ClavisPatron.mydiscovery_user(username,searchfield=nil)
+    if searchfield.nil?
+      searchfield=username.class == Fixnum ? 'id' : 'username'
+    end
     client = SoapClient::get_wsdl('user')
     r = client.call(:get_user_data, message: {search:username,searchfield:searchfield})
     return nil if r.body[:get_user_data_response][:return].nil?
@@ -360,23 +395,139 @@ create temp table #{temptable} as
 
   def ClavisPatron.allinea_da_clavis
     puts "patron last id: #{self.last.id}"
+    cnt = 0
     while true
+      cnt += 1
       u=self.mydiscovery_user(self.last.id + 1)
       break if u.nil?
-      p=self.insert_new_patron(u)
+      if cnt > 10
+        puts "ClavisPatron.allinea_da_clavis dice: superato il contatore degli allineamenti da ClavisPatron: #{cnt}"
+        break
+      end
+      p=self.insert_or_update_patron(u)
       puts "inserito #{p.id} - #{p.to_label}"
     end
   end
 
   def ClavisPatron.find_duplicates(params)
-    sql = %Q{select upper(lastname) as lastname,upper(name) as name,upper(birth_city) as birth_city,birth_date,
-             array_to_string(array_agg(patron_id order by patron_id),',') as patron_ids,
-             array_to_string(array_agg(opac_username order by patron_id), ',') as opac_usernames,count(*)
-            from clavis.patron group by lastname,name,birth_city,birth_date  having count(*) > 1
-            order by count(*) desc, lastname,name}
-    # self.find_by_sql(sql)
+    if params[:library_id]=='-1'
+      cond = ''
+    else
+      cond = params[:library_id].blank? ? 'where false' : "WHERE split_part(libraries, ',', 2)::integer=#{params[:library_id].to_i}"
+    end
+
+    sql=%Q{with t1 as
+(
+select upper(p.lastname) as lastname,upper(p.name) as name,upper(p.birth_city) as birth_city,birth_date,
+             array_to_string(array_agg(p.patron_id order by p.date_created),',') as patron_ids,
+	     array_to_string(array_agg(p.date_created order by p.date_created),',') as creation_dates,
+             array_to_string(array_agg(p.created_by order by p.date_created),',') as creators,
+             array_to_string(array_agg(cl.username order by p.date_created),',') as creators_usernames,
+             array_to_string(array_agg(p.barcode order by p.date_created), ',') as barcodes,
+             array_to_string(array_agg(p.registration_library_id order by p.date_created), ',') as libraries,
+             array_to_string(array_agg(p.opac_username order by p.date_created), ',') as opac_usernames,count(*)
+            from clavis.patron p join clavis.librarian cl on (cl.librarian_id=p.created_by)
+	    group by p.lastname,p.name,p.birth_city,p.birth_date  having count(*) > 1
+)
+select t1.lastname,t1.patron_ids,
+  split_part(patron_ids, ',', 1)::integer as primo_iscritto_id,
+  split_part(patron_ids, ',', 2)::integer as ultimo_iscritto_id,
+  split_part(creation_dates, ',', 1)::timestamp as primo_data_iscrizione,
+  split_part(creation_dates, ',', 2)::timestamp as ultimo_data_iscrizione,
+  split_part(creators_usernames, ',', 1) as primo_iscrivente,
+  split_part(creators_usernames, ',', 2) as ultimo_iscrivente,
+  split_part(opac_usernames, ',', 1) as primo_username,	
+  split_part(opac_usernames, ',', 2) as ultimo_username,
+  split_part(libraries, ',', 1) as primo_library,	
+  split_part(libraries, ',', 2) as ultimo_library,
+  split_part(barcodes, ',', 1) as primo_barcode,
+  case when split_part(barcodes, ',', 2) = '' then 'missing barcode' else split_part(barcodes, ',', 2) end as ultimo_barcode 
+ from t1 #{cond} order by ultimo_data_iscrizione desc}
+
+         fd = File.open("/home/seb/utenti_duplicati.sql", "w")
+         fd.write(sql)
+         fd.close
+
     self.paginate_by_sql(sql, per_page:50, page:params[:page])
   end
 
+  def ClavisPatron.notifiche_pronti_al_prestito_non_confermate(library_ids,params)
+    intervallo = params[:interval].blank? ? '1 week' : params[:interval]
+    cond = []
+    if (intervallo =~ /^from (.*)/) == 0
+      cond << "a.action_date >= #{ClavisPatron.connection.quote($1)} "
+    else
+      cond << "a.action_date > now() - interval '#{intervallo}'"
+    end
+
+    if library_ids.size > 0 
+      cond << "a.library_id in (#{library_ids.join(',')})"
+      cond << "a.library_id = #{params[:library_id].to_i}" if !params[:library_id].blank?
+    else
+      cond << "false"
+    end
+    cond = cond.join(' AND ')
+    sql = %Q{select n.n_state as state,
+       array_to_string(array_agg(ct.contact_type order by ct.contact_id), ',') as contact_types,
+       array_to_string(array_agg(ct.contact_pref order by ct.contact_id), ',') as contact_prefs,	
+    case when x.last_state is null then 'Nessuna notifica inviata' else x.last_state end as last_state,
+n.n_channel,n.notification_channel,x.notes,a.item_id,
+ substr(ci.title,1,30) as item_title,a.action_date,
+ x.last_channel,n.object_id as patron_id,cp.barcode,n.delivery_date,
+    n.notification_id,x.notification_id as last_notification_id,
+    a.library_id as action_library_id
+
+FROM clavis.last_item_actions a
+   left join clavis.view_notifications n
+     on (n.object_id=a.patron_id and n.notification_class='F' and n.date_created >= a.action_date
+        and n.notification_state != 'C')
+
+  LEFT JOIN LATERAL (
+    select 
+--    case when n_state is null then 'Non presente' else n_state end as last_state,
+      n_state as last_state,
+      case when notification_state != 'C' then notes else '' end as notes,
+notification_id,notification_state,n_channel as last_channel from clavis.view_notifications
+       where object_id=n.object_id
+        and date_created>n.date_created
+        and notification_class='F'
+	order by notification_id limit 1
+  ) as x on true
+  join clavis.patron cp on(cp.patron_id=n.object_id)
+  left join clavis.contact ct on(ct.patron_id=cp.patron_id)
+  join clavis.item ci on(ci.item_id=a.item_id)
+
+ where 
+ ci.loan_status='F' and
+a.action_type='I' and a.patron_id is not null
+   and (x is null or x.last_state!='C')
+   and #{cond}
+   group by state,x.last_state,n.n_channel,n.notification_channel,x.notes,a.item_id,
+   ci.title,a.action_date,x.last_channel,n.object_id,cp.barcode,n.delivery_date,n.notification_id,x.notification_id,
+   cp.patron_id,action_library_id
+-- order by cp.patron_id,n.notification_id
+order by action_library_id,cp.patron_id,n.notification_id}
+    # puts sql
+    #fd = File.open("/home/seb/notifiche_non_confermate.sql", "w")
+    #fd.write(sql)
+    #fd.close
+    self.connection.execute(sql).to_a
+  end
+
+  
+  def ClavisPatron.sql_per_schiacciamento(new,old)
+    #sql = %Q{BEGIN;UPDATE patron set opac_secret = (select opac_secret   from patron where patron_id=#{new}),
+    #          opac_username = (select opac_username from patron where patron_id=#{new})
+    #   WHERE patron_id=#{old};ROLLBACK;}
+    sql = %Q{BEGIN;
+UPDATE patron
+ set opac_secret = (select opac_secret   from (select opac_secret   from patron where patron_id=#{new}) t1),
+   opac_username = (select opac_username from (select opac_username from patron where patron_id=#{new}) t2)
+  WHERE patron_id=#{old};
+ROLLBACK; -- Vedi dettagli qui: https://dev.mysql.com/doc/refman/8.0/en/update.html}
+    #puts "vecchio: #{old}"
+    #puts "nuovo: #{new}"
+    sql
+  end
 
 end

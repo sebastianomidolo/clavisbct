@@ -1,0 +1,9 @@
+<%= content_tag(:h4, "Ubicazioni per #{@clavis_library.label}") %>
+
+<% if @managed_library %>
+ <%= link_to('<b>Inserisci nuova ubicazione</b>'.html_safe, new_bib_section_path(library_id:@clavis_library.id), class:'btn btn-warning') if can? :manage, BibSection %>
+ <%= content_tag(:div, bib_sections_list(@bib_sections)) %>
+<% else %>
+  <%= content_tag(:div, bib_sections_list_readonly(@bib_sections)) %>
+<% end %>
+

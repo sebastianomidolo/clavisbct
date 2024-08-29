@@ -1,0 +1,23 @@
+
+<%= simple_form_for(@bio_iconografico_namespace) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%=
+      @bio_iconografico_namespace.label.blank? ? (f.input :label, label:'Nome univoco',hint:"massimo 8 caratteri, tutto minuscolo") : (f.input :label, as:'hidden')
+     %>
+    <%= f.input :title, label:'Nome repertorio' %>
+    <%= f.input :published, as:'boolean', label:'Pubblicato' %>
+    <%= f.input :descr, as:'text', label:'Descrizione', input_html: {rows: 6, cols: 80} %>
+    <%= f.input :baseurl, label:'Url pagina approfondimento sul sito' %>
+
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+
+

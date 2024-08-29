@@ -1,0 +1,8 @@
+<% content_tag(:h5, "Redir page for #{@cm.id} che ha #{@sp_items.size} items") %>
+
+<%= content_tag(:div, sp_redir_page(@sp_items)) %>
+<%= content_tag(:div, sp_item_show(@sp_items.first)) %>
+
+<%= @sp_item = @sp_items.first
+    content_tag(:div, "sp_item: #{@sp_item.in_opac?}")    %>
+

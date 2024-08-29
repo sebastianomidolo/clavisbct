@@ -1,0 +1,17 @@
+<%= content_tag(:h4, "Sollecito numero #{@serial_reminder.id} per #{@serial_title.title}") %>
+
+<%= content_tag(:b, @serial_reminder.label) %>
+<%= content_tag(:p, @serial_reminder.description) %>
+
+<% if @serial_reminder.reminder_date.nil? %>
+  <%= "Sollecito preparato il #{@serial_reminder.date_created} <b>non ancora inviato</b>".html_safe %>
+<% else %>
+  <%= link_to("Marca come NON inviato", edit_serial_reminder_path(@serial_reminder,unset_reminder_date:true), method: :get, data: { confirm: "Cambia stato del sollecito in NON INVIATO?" }, class:'btn btn-warning') if can? :edit, SerialReminder %>  
+<% end %>
+<br/>
+
+<%= link_to("Modifica sollecito", edit_serial_reminder_path(@serial_reminder), class:'btn btn-warning') if can? :edit, SerialReminder %>
+
+<%= link_to("Elimina sollecito", @serial_reminder, method: :delete, data: { confirm: "Confermi eliminazione del sollecito?" }, class:'btn btn-warning') if can? :destroy, SerialReminder %>
+
+

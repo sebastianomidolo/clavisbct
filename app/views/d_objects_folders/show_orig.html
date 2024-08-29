@@ -1,0 +1,80 @@
+<%= content_tag(:h3, d_objects_folder_split(@d_objects_folder)) %>
+<%= content_tag(:p, @d_objects_folder.readme.html_safe) if !@d_objects_folder.readme.nil? %>
+
+<%= numfiles=@d_objects_folder.files_caricati_oggi
+    content_tag(:p, "Files caricati oggi: #{numfiles}") if numfiles>0
+%>
+
+<%=
+  if @d_objects_folder.pdf_disabled=='true'
+   dupfiles=@d_objects_folder.manifestation_ids_duplicati
+   content_tag(:div, d_objects_folder_manifestation_ids_list(dupfiles), {class:'text-warning'}) if dupfiles!=[]
+  end
+%>
+
+<%= content_tag(:h4, d_objects_folder_browse(@d_objects_folder)) %>
+
+<%= content_tag(:p, @d_objects_folder.x_ti.html_safe) if !@d_objects_folder.x_ti.nil? %>
+
+
+<% if !@d_objects_folder.x_mid.blank? %>
+  <% cm=ClavisManifestation.find(@d_objects_folder.x_mid) %>
+  <p>Titolo in Clavis: <%= link_to(cm.title,ClavisManifestation.clavis_url(cm.id,:show)) %></p>
+<% else %>
+<%= r=Regexp.new "L\.O\.(\\d+)(\\D*)"
+    m=@d_objects_folder.name.match r
+    if !m.nil?
+       colloc="L.O.#{m[1]}"
+       clavis_item=ClavisItem.find_by_home_library_id_and_collocation(3, colloc)
+       if !clavis_item.nil?
+        lnk=link_to(clavis_item.title, clavis_item.clavis_url)
+        content_tag(:p, "Trovato in Clavis: #{lnk}<br/>Andare in <b>Modifica metadati</b> e inserire manifestation_id: <b>#{clavis_item.manifestation_id}</b>".html_safe)
+       end
+      end
+    %>
+<% end %>
+
+<%=
+  if @d_objects_folder.pdf_disabled=='true'
+   refcount = params[:refcount].blank? ? 3 : params[:refcount].to_i
+   d_objects_folder_references(@d_objects_folder, refcount)
+  end
+%>
+
+ <%= d_objects_folder_pdf_info(@d_objects_folder) if @d_objects_folder.pdf_disabled!='true' %>
+
+<% if @d_objects_folder.dir.size>0 %>
+  <%= content_tag(:div, 'Cartelle:') %>
+  <%= content_tag(:div, d_objects_folder_dir(@d_objects_folder)) %>
+<% end %>
+
+<%= content_tag(:div, d_objects_folder_show_cover_image(@d_objects_folder)) %>
+
+<% if @d_objects_folder.writable_by?(current_user) %>
+<%= content_tag(:span, link_to('[Impostazioni PDF]', set_pdf_params_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0 and @d_objects_folder.pdf_disabled!='true') %>
+<%= content_tag(:span, link_to('[Modifica]', edit_d_objects_folder_path(@d_objects_folder))) if (can? :edit, DObjectsFolder) %>
+<%= content_tag(:span, link_to('[Rinomina files]', filenames_d_objects_folder_path(@d_objects_folder.id))) %>
+<%= content_tag(:span, link_to('[Carica file in questa cartella]', upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
+<%= content_tag(:span, link_to('[Crea cartella]', makedir_d_objects_folder_path(@d_objects_folder.id))) if can? :makedir, DObjectsFolder %>
+<% end %>
+
+<% if current_user.email=='seba' %>
+<%= content_tag(:span, link_to('[Download folder]', download_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0) %>
+<% end %>
+
+<%= will_paginate @d_objects, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:h3, "Trovati #{@d_objects.total_entries} files") if @d_objects.total_entries>0 %>
+
+<%= d_objects_view(@d_objects) %>
+
+ <% if @d_objects_folder.writable_by?(current_user) %>
+   <% if @d_objects.size==0 and @d_objects_folder.dir.size==0 %>
+     <%= content_tag(:span, link_to("[Elimina cartella vuota]", @d_objects_folder, method: :delete, data: {confirm: 'Confermi cancellazione della cartella?'})) if can? :destroy, DObjectsFolder %>
+   <% end %>
+   <% if @d_objects.size>0 and @d_objects_folder.deletable_by?(current_user) %>
+     <%= content_tag(:span, link_to("[Elimina tutti i files presenti nella cartella]", delete_contents_d_objects_folder_path, method: :delete, data: {confirm: 'Confermi cancellazione di tutti i files presenti nella cartella?'})) if can? :destroy, DObjectsFolder %>
+   <% end %>
+ <% end %>
+
+<%= link_to("Scheda libro parlato #{@d_objects_folder.talking_book.n}", edit_talking_book_path(@d_objects_folder.talking_book)) if !@d_objects_folder.talking_book.nil? %>

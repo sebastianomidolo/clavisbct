@@ -21,58 +21,70 @@ class ClosedStackItemRequest < ActiveRecord::Base
     dc
   end
 
-  def ClosedStackItemRequest.oggi
+  def ClosedStackItemRequest.oggi(library_id=nil)
+    cond = library_id.nil? ? '' : "AND ci.home_library_id=#{library_id.to_i}"
     sql=%Q{
-select ir.id, regexp_replace(cl.piano,'^0. ','') as
-       piano,cc.collocazione,cp.lastname,cp.name,cp.patron_id,ir.daily_counter,
+select ir.id, vloc.loc_name as piano,cc.collocazione,cp.lastname,cp.name,cp.patron_id,ir.daily_counter,
        ir.request_time, substr(ci.title,1,40) as title,
        ci.inventory_serie_id || '-' || ci. inventory_number as
-       serieinv, ci.item_id, lc.value_label as loan_status
+       serieinv, ci.item_id, lc.value_label as loan_status_label, ci.loan_status, ci.barcode, ci.date_updated
        from closed_stack_item_requests ir
          join clavis.patron cp using(patron_id)
 	 join clavis.item ci using(item_id)
 	 join clavis.lookup_value lc on(lc.value_key=ci.loan_status AND
           value_language = 'it_IT' AND value_class = 'LOANSTATUS')
 	 left join clavis.collocazioni cc using(item_id)
-         left join clavis.centrale_locations cl using(item_id)
-       where request_time > CURRENT_DATE order by ir.id desc;}
-    puts sql
+         left join public.view_locations vloc on(vloc.id=cc.location_id)
+       where request_time > CURRENT_DATE #{cond} order by ir.id desc;}
+    # fd=File.open("/home/seb/sql_for_ClosedStackItemRequest_oggi.sql", "w")
+    # fd.write(sql)
+    # fd.close
     ClosedStackItemRequest.find_by_sql(sql)
   end
 
-  def ClosedStackItemRequest.richieste_magazzino(patron_id=nil,reprint=false,archived=false,order=:per_piano)
+  def ClosedStackItemRequest.richieste_magazzino(patron_id=nil,library_id=nil,reprint=false,archived=false,order=:per_piano)
     wherepatron = patron_id.nil? ? '' : "AND ir.patron_id=#{patron_id}"
     and_condition = reprint==true ? "not archived" : "not printed"
-    order = order == :per_piano ? 'cl.piano desc,espandi_collocazione(cc.collocazione)' : 'espandi_collocazione(cc.collocazione)'
-    sql=%Q{select ir.id, regexp_replace(cl.piano,'^0. ','') as piano,cc.collocazione,cp.lastname,cp.patron_id,ir.daily_counter,
+    and_condition << " and ci.home_library_id=#{library_id.to_i}" if !library_id.nil?
+    order = order == :per_piano ? 'piano desc,espandi_collocazione(cc.collocazione)' : 'espandi_collocazione(cc.collocazione)'
+    sql=%Q{select ir.id, vloc.loc_name as piano,cc.collocazione,cp.lastname,cp.patron_id,ir.daily_counter,
          ci.title, ci.inventory_serie_id || '-' || ci. inventory_number as serieinv
        from closed_stack_item_requests ir 
          join clavis.patron cp using(patron_id)
          join clavis.item ci using(item_id)
-           left join clavis.collocazioni cc using(item_id) left join clavis.centrale_locations cl using(item_id)
+           left join clavis.collocazioni cc using(item_id) left join public.view_locations vloc on(vloc.id=cc.location_id)
           where true and daily_counter is not null and #{and_condition} #{wherepatron}
 	      and request_time > CURRENT_DATE order by #{order}}
     self.connection.execute(sql).to_a
   end
 
-  def ClosedStackItemRequest.list(patron_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false,order=:per_piano)
+  def ClosedStackItemRequest.list(patron_id=nil,library_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false,order=:per_piano)
     if order.class==String
       order = order
     else
-      order = order == :per_piano ? 'cl.piano desc,espandi_collocazione(cl.collocazione)' : 'espandi_collocazione(cl.collocazione)'
+      order = order == :per_piano ? 'piano desc,espandi_collocazione(cc.collocazione)' : 'espandi_collocazione(cc.collocazione)'
     end
-    sql=%Q{select ir.*,ci.title,regexp_replace(cl.piano,'^0. ','') as piano,cl.collocazione,cp.lastname, 
-            ci.inventory_serie_id || '-' || ci. inventory_number as serieinv
+    sql=%Q{select ir.*,ci.manifestation_id,ci.title,vloc.loc_name as piano,cc.collocazione,cp.lastname, 
+            ci.inventory_serie_id || '-' || ci. inventory_number as serieinv,
+          ci.custom_field3 as topografico_non_in_clavis_id
        from closed_stack_item_requests ir join clavis.item ci using(item_id)
         join clavis.patron cp on(cp.patron_id=ir.patron_id)
-        join clavis.centrale_locations cl using(item_id) where
-           #{self.sql_and_conditions_for_list(patron_id,pending,printed,today,archived,reprint)} order by #{order}}
+        join clavis.collocazioni cc using(item_id)
+        left join public.view_locations vloc on(vloc.id=cc.location_id)
+        where
+           #{self.sql_and_conditions_for_list(patron_id,library_id,pending,printed,today,archived,reprint)} order by #{order};\n}
+
+    #fd=File.open("/home/seb/sql_for_closed_stack_item_request_list.sql", "w")
+    #fd.write(sql)
+    #fd.close
+
     ClosedStackItemRequest.find_by_sql(sql)
   end
 
-  def ClosedStackItemRequest.sql_and_conditions_for_list(patron_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false)
+  def ClosedStackItemRequest.sql_and_conditions_for_list(patron_id=nil,library_id=nil,pending=true,printed=false,today=true,archived=false,reprint=false)
     cond = []
     cond << (patron_id.blank? ? 'true' : "cp.patron_id=#{self.connection.quote(patron_id)}")
+    cond << "ci.home_library_id=#{library_id.to_i}" if !library_id.nil?
     cond << (pending ? 'daily_counter is null' : 'daily_counter is not null') if !pending.nil?
     if archived==false
       if reprint == false
@@ -93,11 +105,13 @@ select ir.id, regexp_replace(cl.piano,'^0. ','') as
     self.connection.execute(sql)
   end
 
-  def ClosedStackItemRequest.list_pdf(records,patron_id=nil,reprint=false)
+  def ClosedStackItemRequest.list_pdf(records,patron_id=nil,library_id=nil,reprint=false)
     inputdata=[]
     inputdata << [records]
     inputdata << patron_id
+    inputdata << library_id
     inputdata << reprint
+    # raise "here #{inputdata[2]}"
     lp=LatexPrint::PDF.new('closed_stack_items_request', inputdata, false)
     lp.makepdf
   end
@@ -129,16 +143,24 @@ select ir.id, regexp_replace(cl.piano,'^0. ','') as
     self.paginate_by_sql(sql, :per_page=>200, :page=>params[:page])
   end
 
-  def ClosedStackItemRequest.patrons(pending=:true,printed=:false,today=:true)
+  def ClosedStackItemRequest.patrons(pending=:true,printed=:false,today=:true,library_id=nil)
     cond = []
     cond << 'request_time > CURRENT_DATE' if today
     cond << "printed is #{printed}"
     cond << "daily_counter is #{(pending == true ? 'null' : 'not null')}"
+    cond << "ci.home_library_id = #{library_id.to_i}" if !library_id.nil?
     cond = cond.size==0 ? '' : "WHERE #{cond.join(' AND ')}"
-    self.connection.execute(%Q{select cp.name,cp.lastname,patron_id,barcode,count(*)
+    sql = %Q{select cp.name,cp.lastname,cp.patron_id,cp.barcode,count(*)
       from closed_stack_item_requests r join clavis.patron cp using(patron_id)
+          join clavis.item ci using(item_id)
        #{cond}
-       group by cp.name,cp.lastname,patron_id,barcode order by lower(cp.lastname),lower(cp.name)}).to_a
+       group by cp.name,cp.lastname,cp.patron_id,cp.barcode order by lower(cp.lastname),lower(cp.name)}
+
+    #fd=File.open("/home/seb/sql_for_ClosedStackItemRequest.patrons.sql", "a")
+    #fd.write(sql)
+    #fd.close
+
+    self.connection.execute(sql).to_a
   end
 
   def ClosedStackItemRequest.random_insert
@@ -153,4 +175,25 @@ select ir.id, regexp_replace(cl.piano,'^0. ','') as
        'BCTA' AND section ~ 'BCT' and manifestation_id != 0 and
        item_status='F' and item_media='F' and opac_visible = 1 order by random() limit #{num_items})}
   end
+
+  def ClosedStackItemRequest.status(newstatus=nil,user=nil)
+    cfg = Rails.configuration.database_configuration
+    semaphore_filename = cfg[Rails.env]['csir_onoff']
+    semaphore_filename
+    if !File.exists?(semaphore_filename)
+      File.write(semaphore_filename, 'on')
+    end
+    if newstatus.nil?
+      newstatus=File.read(semaphore_filename)
+    else
+      File.write(semaphore_filename, newstatus)
+      if !user.nil?
+        fd=File.open(cfg[Rails.env]['csir_onoff_log'], 'a')
+        fd.write("#{Time.now} #{newstatus} #{user.email}\n")
+        fd.close
+      end
+    end
+    newstatus
+  end
+
 end

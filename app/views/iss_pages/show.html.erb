@@ -1,4 +1,4 @@
-<%= content_tag(:h2, link_to(@iss_page.to_label,iss_article_path(@iss_page.article))) %>
+<%= content_tag(:h4, link_to(@iss_page.to_label,iss_article_path(@iss_page.article))) %>
 
 <%=
   content_tag(:p, link_to("[edit]", edit_iss_page_path)) if can?(:manage, IssPage)

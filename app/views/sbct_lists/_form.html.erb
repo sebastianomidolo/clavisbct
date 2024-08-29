@@ -58,7 +58,9 @@
       %>
     <%= f.association :sbct_user, collection:SbctUser.user_select(), label:'Proprietario della lista:' %>
     
-    <%= f.input :update_rules, as:'text', input_html: {rows: 3, cols: 80} %>
+    <%= f.input :days_before_autorm, label:'Numero di giorni di permanenza in lista', hint:'Significato: dopo il numero di giorni indicato, i titoli verranno automaticamente rimossi dalla lista, usare quindi con cautela' %>
+
+    <%= f.input :pubbl_age_limit, label:'Numero di giorni dalla data di pubblicazione', hint:'Per esempio: indicando 365, i titoli con data di pubblicazione maggiore di un anno verranno rimossi automaticamente' %>
     
 
   </div>

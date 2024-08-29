@@ -3,9 +3,8 @@ class SbctList < ActiveRecord::Base
 
   self.table_name='sbct_acquisti.liste'
 
-  attr_accessible :id_tipo_titolo, :label, :budget_label, :locked, :parent_id, :default_list, :owner_id, :hidden, :allow_uploads, :library_id, :protected,
-                  :from_clavis_shelf_id, :update_rules
-  before_save :check_record
+  attr_accessible :label, :budget_label, :locked, :parent_id, :default_list, :owner_id, :hidden, :allow_uploads, :library_id, :protected,
+                  :from_clavis_shelf_id, :days_before_autorm, :pubbl_age_limit
 
   has_and_belongs_to_many(:sbct_titles, join_table:'sbct_acquisti.l_titoli_liste',
                           :foreign_key=>'id_lista',
@@ -15,22 +14,16 @@ class SbctList < ActiveRecord::Base
   belongs_to :sbct_user, foreign_key:'owner_id'
   belongs_to :clavis_library, foreign_key:'library_id'
   validates :label, presence: true
-  attr_accessor :from_clavis_shelf_id
+  before_save :check_record
+  attr_accessor :from_clavis_shelf_id, :import_from_list_id
 
   def to_label
-    if self.label.blank?
-      "#{self.data_libri} #{self.label} tipo #{self.id_tipo_titolo}"
-    else
-      "#{self.label} (#{self.locked? ? 'chiusa' : 'aperta'})"
-      self.label
-    end
+    self.label
   end
 
-  def auto_insert
-    return if self.update_rules.blank?
-    d = self.update_rules.gsub(/\n|\r/, '').split(';')
-    sql = "INSERT INTO sbct_acquisti.l_titoli_liste(id_lista, id_titolo) (select #{self.id},#{d[0]} FROM #{d[1]} WHERE #{d[2]}) ON CONFLICT DO NOTHING;"
-    self.connection.execute(sql)
+  def check_record
+    self.days_before_autorm = nil if self.days_before_autorm == 0
+    self.pubbl_age_limit = nil if self.pubbl_age_limit == 0
   end
 
   def owner_to_label
@@ -42,12 +35,8 @@ class SbctList < ActiveRecord::Base
     self.owner_id==user_id
   end
 
-  def check_record
-
-    
-  end
-  
   def ricalcola_prezzi_con_sconto
+    raise 'ricalcola_prezzi_con_sconto - non usata'
     sql = %Q{
 with t1 as (select cp.id_copia,t.prezzo as prezzo_titolo,cp.prezzo as prezzo_copia,	
          case when cs.discount is null then 0 else cs.discount end as sconto
@@ -135,7 +124,7 @@ UPDATE sbct_acquisti.copie c set prezzo = t1.prezzo_titolo - (t1.sconto*t1.prezz
        -- and cp.supplier_id is null
 )
             UPDATE sbct_acquisti.copie c set supplier_id = t1.new_supplier_id from t1 where t1.id_copia = c.id_copia;}
-    puts sql
+    # puts sql
     self.connection.execute(sql)
   end
 
@@ -153,6 +142,14 @@ UPDATE sbct_acquisti.copie c set prezzo = t1.prezzo_titolo - (t1.sconto*t1.prezz
 
   def remove_all_titles
     self.connection.execute "DELETE FROM sbct_acquisti.l_titoli_liste Where id_lista IN (#{self.descendants_ids})"
+  end
+
+  def remove_titles(title_ids,user)
+    return if title_ids.nil? or title_ids.size == 0
+    ids = title_ids.collect {|i| i.to_i}
+    sql = %Q{DELETE FROM sbct_acquisti.l_titoli_liste WHERE id_lista = #{self.id}
+              and id_titolo in (#{ids.join(', ')})}
+    self.connection.execute(sql)
   end
 
   def budget(library_id)
@@ -223,8 +220,10 @@ UPDATE sbct_acquisti.copie c set prezzo = t1.prezzo_titolo - (t1.sconto*t1.prezz
 }
   end
 
-  def conta_titoli
-    self.connection.execute("SELECT count(id_titolo) FROM sbct_acquisti.l_titoli_liste WHERE id_lista in (#{self.descendants_ids})").first['count'].to_i
+  def conta_titoli(mode)
+    mode='distinct ' if mode==:distinct
+    mode='' if mode==:all
+    self.connection.execute("SELECT count(#{mode}id_titolo) FROM sbct_acquisti.l_titoli_liste WHERE id_lista in (#{self.descendants_ids})").first['count'].to_i
   end
 
   def valore_titoli
@@ -266,22 +265,39 @@ LEFT  JOIN sbct_acquisti.liste a ON d.parent_id = a.id_lista
  }
   end
 
-  def descendants_index(current_user=nil)
-    SbctList.find_by_sql(self.sql_for_descendants_index(current_user))
+  def descendants_index(current_user=nil,title_ids=[])
+    SbctList.find_by_sql(self.sql_for_descendants_index(current_user,title_ids))
   end
 
-  def sql_for_descendants_index(current_user=nil)
+  def sql_for_descendants_index(current_user=nil, title_ids=[])
     cond = []
     cond << "l.root_id=#{self.id}"
-    # cond << "(not hidden or owner_id=#{current_user.id})" if !current_user.nil? and current_user.email!='seba'
     cond << "(not hidden or owner_id=#{current_user.id})" if !current_user.nil?
+
+    if title_ids != []
+      cond << "t.id_titolo in (#{title_ids.join(',')})"
+    end
+
     cond = cond.join(' and ')
-    %Q{select id_lista,level,label,count(t.id_titolo) from public.pac_lists l
+    r=%Q{select l.id_lista,l.level,l.label,l.hidden,l.order_sequence,count(t.id_titolo) from public.pac_lists l
       left join sbct_acquisti.l_titoli_liste t using(id_lista) where #{cond}
-       and l.id_lista!=l.root_id group by l.id_lista,l.level,l.label,l.order_sequence order by l.order_sequence;
+       and l.id_lista!=l.root_id group by l.id_lista,l.level,l.label,l.hidden,l.order_sequence order by l.order_sequence;
     }
+    r=%Q{select l.id_lista,l.level,l.label,l.hidden,l.order_sequence,count(t.id_titolo)
+    from public.pac_lists l
+   left join sbct_acquisti.l_titoli_liste t using(id_lista)
+    where #{cond}
+     and l.id_lista!=l.root_id
+     group by l.id_lista,l.level,l.label,l.hidden,l.order_sequence
+ order by l.order_sequence;
+    }
+
+    fd=File.open("/home/seb/sbct_sql_for_descendants_index.sql", "w")
+    fd.write(r)
+    fd.close
+    r
   end
-  
+
   def load_data_from_excel(sourcefile, current_user, ean='')
     require 'open3'
     cmd = %Q{LANG='en_US.UTF-8' Rscript --vanilla /home/ror/clavisbct/extras/R/carica_excel.r "#{sourcefile}"}
@@ -450,19 +466,33 @@ COMMIT;
     self.connection.execute(sql)
   end
 
-  def importa_da_liste(lists)
-    sql = sql_for_importa_da_liste(lists)
-    return if sql.nil?
+  def importa_da_lista(list,user)
+    sql = %Q{INSERT INTO sbct_acquisti.l_titoli_liste (id_titolo, id_lista, date_created, created_by, imported_from, imported_by)
+          (select id_titolo,#{self.id},date_created,created_by,#{list.id},#{user.id}
+            FROM sbct_acquisti.l_titoli_liste WHERE id_lista = #{list.id})
+      on conflict(id_titolo,id_lista) DO NOTHING;}
+    # puts sql
     self.connection.execute(sql)
   end
 
-  def sql_for_importa_da_liste(lists)
-    ids = lists.collect{|r| r.id}
-    ids.delete(self.id)
-    return nil if ids.size==0
-    %Q{INSERT INTO sbct_acquisti.l_titoli_liste (id_titolo, id_lista)
-          (select id_titolo,#{self.id} from sbct_acquisti.l_titoli_liste
-        WHERE id_lista IN (#{ids.join(',')})) on conflict(id_titolo,id_lista) DO NOTHING;}
+  def autoremove_titles
+    return 0 if self.days_before_autorm.nil? or self.days_before_autorm==0
+    t1 = self.sbct_titles.count
+    days = self.days_before_autorm
+    sql = "delete from #{SbctLTitleList.table_name} WHERE id_lista=#{self.id} and date_created < now() - interval '#{days} days';"
+    puts sql
+    self.connection.execute(sql)
+    t2 = self.sbct_titles.count
+    return t1-t2
+  end
+
+  def insert_title_ids(ids,user)
+    return if ids.size==0
+    sql = %Q{INSERT INTO sbct_acquisti.l_titoli_liste (id_titolo, id_lista, created_by)
+          (select id_titolo,#{self.id},#{user.id}
+            FROM sbct_acquisti.titoli WHERE id_titolo IN(#{ids.join(',')}))
+      on conflict(id_titolo,id_lista) DO NOTHING;}
+    self.connection.execute(sql)
   end
 
   def totale_ordine(budget_id=nil)
@@ -501,21 +531,21 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
   end
 
   def assign_user_session(user,current_session)
-    puts "In assign_user_session: #{self.id}"
+    # puts "In assign_user_session: #{self.id}"
     if self.owner_id==user.id and !self.locked
       return self.id
     end
 
     if user.role?('AcquisitionLibrarian')
-      puts "Sei un AcquisitionLibrarian: #{user.id}"
+      # puts "Sei un AcquisitionLibrarian: #{user.id}"
       user.sbct_lists.each do |l|
-        puts "esamino la lista #{l.inspect}"
+        # puts "esamino la lista #{l.inspect}"
         if self.owner_id == user.id or (!self.parent_id.nil? and self.parent.owner_id==user.id)
-          puts "ok è accessibile: #{self.id}"
+          # puts "ok è accessibile: #{self.id}"
           return self.id
         end
       end
-      puts "Sei un AcquisitionLibrarian e non hai accesso in scrittura a questa lista #{self.id}"
+      # puts "Sei un AcquisitionLibrarian e non hai accesso in scrittura a questa lista #{self.id}"
       return current_session
     end
     if !self.owner_id.nil?
@@ -528,38 +558,21 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
   
   def SbctList.toc(params={})
     cond=[]
-    if !params[:old].blank?
-      if !params[:id_tipo_titolo].blank?
-        cond << "l.id_tipo_titolo = #{self.connection.quote(params[:id_tipo_titolo])}"
-      else
-        cond << "l.id_tipo_titolo is not null"
-      end
-    else
-      cond << "l.id_tipo_titolo is null"
-      cond << "not l.locked" if params[:locked]=='false'
-      cond << "l.locked" if params[:locked]=='true'
-      cond << "l.parent_id is null"
-    end
+    cond << "not l.locked" if params[:locked]=='false'
+    cond << "l.locked" if params[:locked]=='true'
+    cond << "l.parent_id is null"
 
     cond = cond == [] ? '' : "WHERE #{cond.join(' AND ')}"
     
-    sql = %Q{select 
-              case when l.data_libri is null then null else l.data_libri end as data_libri,l.hidden,
- l.parent_id,pl.label as parent_list_label,l.label,l.budget_label,l.owner_id,l.id_lista,l.id_tipo_titolo,tp.tipo_titolo,l.locked,count(tl) as cnt
+    sql = %Q{select l.hidden,
+ l.parent_id,pl.label as parent_list_label,l.label,l.budget_label,l.owner_id,l.id_lista,l.locked,count(tl) as cnt
  from sbct_acquisti.liste l
   left join sbct_acquisti.l_titoli_liste tl using(id_lista)
   left join sbct_acquisti.titoli t using(id_titolo)
-  left join sbct_acquisti.tipi_titolo tp on(tp.id_tipo_titolo=l.id_tipo_titolo)
   left join sbct_acquisti.liste pl on (pl.id_lista=l.parent_id)
   #{cond}
- group by pl.label,l.data_libri,l.id_lista,l.id_tipo_titolo,tp.tipo_titolo order by l.label,l.data_libri desc, tp.tipo_titolo}
+ group by pl.label,l.id_lista order by l.label}
 
-
-
-    fd = File.open("/home/seb/sql_for_lists.sql", "w")
-    fd.write(sql)
-    fd.close
-    
     if params=={}
       self.connection.execute(sql).to_a
     else
@@ -568,13 +581,11 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
   end
 
   def SbctList.label_select(parent_id)
-    sql=%Q{select id_lista as key,case when label isnull then data_libri::varchar else label end as label from sbct_acquisti.liste where id_lista=#{parent_id.to_i}}
+    sql=%Q{select id_lista as key,label from sbct_acquisti.liste where id_lista=#{parent_id.to_i}}
     i = self.connection.execute(sql).to_a.first
     first_line = [i['label'],i['key']]
-    # collect {|i| 
-    # return first_line
-    # sql=%Q{select id_lista as key,label from sbct_acquisti.liste where label is not null order by label}
-    sql=%Q{select id_lista as key,case when label isnull then data_libri::varchar else label end as label
+
+    sql=%Q{select id_lista as key,label
              from sbct_acquisti.liste where parent_id=#{parent_id.to_i} order by label}
     res = self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
     res.insert(0,first_line)
@@ -591,6 +602,39 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
     t
   end
 
+  def SbctList.lastins(params,user=nil)
+    cond = params[:username].blank? ? '' : "and l.username=#{self.connection.quote(params[:username])}"
+    if params[:id_lista].to_i > 0
+      cond << " and tl.id_lista=#{params[:id_lista].to_i}"
+    end
+    order_by = "tl.date_created desc"
+    case params[:order]
+    when 'gl'
+      order_by = "vin.gg_in_lista desc"
+    when 'gp'
+      order_by = "vin.gg_da_pubblicazione desc nulls last"
+    end
+        
+    sql = %Q{select tl.id_lista as tl_id_lista,liste.days_before_autorm,liste.pubbl_age_limit,
+    pl.root_id,pl.id_lista as pl_id_lista,
+    pl.level,l.username,l.name || ' ' || l.lastname as librarian,
+tl.id_titolo,tl.date_created,tl.created_by, pl.order_sequence, t.titolo ,t.autore,t.collana,t.note,
+   t.datapubblicazione,vin.gg_in_lista,vin.gg_da_pubblicazione
+  from sbct_acquisti.l_titoli_liste tl
+      join public.pac_lists pl using(id_lista)
+      join sbct_acquisti.liste liste using(id_lista)
+      join sbct_acquisti.titoli t using(id_titolo)
+      left join public.users u on (u.id=tl.created_by)
+      left join clavis.librarian l on (l.username=u.email)
+      left join sbct_acquisti.view_in_liste vin on(vin.id_titolo=t.id_titolo and vin.id_lista=tl.id_lista)
+  where tl.date_created is not null and pl.hidden is false #{cond}
+  and pl.level = 0 order by #{order_by}}
+    fd=File.open("/home/seb/sbct_list_lastins.sql", "w")
+    fd.write(sql)
+    fd.close
+    SbctTitle.paginate_by_sql(sql, page:params[:page], per_page:300)
+  end
+  
   def SbctList.clavis_label_select
     self.connection.execute(SbctList.sql_for_clavis_label_select).collect {|i| [i['budget_title'],i['budget_title']]}
   end
@@ -615,4 +659,12 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
     self.connection.execute(sql).collect {|i| [i['label'],i['id_lista']]}    
   end
 
+  def SbctList.autoremove_titles
+    SbctList.where("days_before_autorm is not null").each do |l|
+      i = l.autoremove_titles
+      puts "autorm lista #{l.to_label} - id #{l.id} : #{i} titoli rimossi"
+    end
+    true
+  end
+  
 end

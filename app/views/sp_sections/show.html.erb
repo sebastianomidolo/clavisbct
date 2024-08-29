@@ -34,5 +34,6 @@
        data: { confirm: 'Confermi eliminazione delle sezione?' }) if can?(:destroy,@sp_section) %>
 
 <%= link_to 'Stampa in PDF', sp_section_path(@sp_section,format:'pdf') if user_signed_in? %>
+<% link_to 'PDF copertine', sp_section_path(@sp_section,format:'pdf',formato:'copertine') if user_signed_in? %>
 
 <%= content_tag(:div, sp_items_list_items(items)) if items.size>0 %>

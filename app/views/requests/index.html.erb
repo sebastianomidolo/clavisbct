@@ -1,0 +1,41 @@
+<%= content_tag(:h2, "Richieste di consultazione (da Deposito Esterno)") %>
+
+<%= link_to("Stampa Elenco (non ancora)", requests_path(format:'pdf'), class:'btn btn-success') %>
+
+
+<table>
+
+  <tr>
+    <th>Collocazione</th>   
+    <th>Inventario</th>
+    <th>Titolo</th>
+    <th>Descrizione</th>
+    <th>Data Richiesta</th>
+    <th>ID Utente</th>
+    <th></th>
+    <th></th>
+  </tr>
+
+  <% @requests.each do |r| %>
+  <tr>
+    <td><%= r.collocazione %></td>
+    <td><%= r.inventario %></td>
+    <td><%= r.titolo %></td>
+    <td><%= r.description %></td>
+    <td><%= r.request_date %></td>
+    <td><%= r.utente %></td>
+    <td><%= link_to 'Show', r %></td>
+    <td><%= link_to 'Edit', edit_request_path(r) %></td>
+    <td><%= link_to 'Destroy', r, method: :delete, data: { confirm: 'Sei sicuro?' } %></td>
+  </tr>
+<% end %>
+
+</table>
+
+<br />
+
+<%=
+  # patron_id = params[:patron_id].blank? ? 8959 : params[:patron_id].to_i
+  library_id = params[:library_id].blank? ? 2 : params[:library_id].to_i
+  link_to 'Inserimento nuova richiesta', new_request_path(library_id:library_id)
+%>

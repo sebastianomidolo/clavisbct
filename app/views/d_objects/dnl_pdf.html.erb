@@ -1,0 +1,7 @@
+<%= content_tag(:p, @d_object.inspect) %>
+
+<%= content_tag(:h4, link_to(@d_object.filename, dnl_d_object_path(@d_object, format:@d_object.mime_format))) %>
+
+<%= content_tag(:pre, dnl_d_object_path(@d_object, format:@d_object.mime_format)) %>
+
+<%= content_tag(:div, d_object_show(@d_object)) %>

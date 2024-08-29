@@ -3,12 +3,15 @@ include DigitalObjects
 
 class DObjectsFolder < ActiveRecord::Base
   attr_accessible :readme, :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :basename, :name, :access_right_id
+  attr_accessor :owner_id
+  attr_accessor :virtual_d_objects, :personal_folder_id
+
   after_save :set_clavis_manifestation_attachments, :derived_symlinks, :set_d_objects_access_right_id
   # after_save :derived_symlinks
   before_save :check_filesystem
   before_destroy :reset_sequence
   # has_many :d_objects, order:'lower(name)'
-  has_many :d_objects, order:'naturalsort(lower(name))'
+  has_many :d_objects, order:'naturalsort(lower(name)) asc'
   has_one :talking_book
   belongs_to :access_right
   before_destroy do |record|
@@ -115,6 +118,7 @@ class DObjectsFolder < ActiveRecord::Base
   end
 
   def writable_by?(user)
+    return true if self.id==0
     sql=%Q{#{self.sql_conditions_for_user(user)} AND mode in('rw','rd')}
     res=self.connection.execute(sql).to_a.first
     res.nil? ? false : true
@@ -151,6 +155,18 @@ class DObjectsFolder < ActiveRecord::Base
     self.connection.execute(sql)
   end
 
+  def enable_user(user)
+    # puts "da enable_user #{user.id} per folder #{self.id} con nome #{self.name}"
+    self.set_permission(user,'ro')
+  end
+
+  def enable_user_by_folder_name(user)
+    # puts "da enable_user_by_folder_name #{user.id} per folder #{self.id} con nome #{self.name}"
+    sql=%Q{INSERT INTO d_objects_folders_users (user_id,pattern,mode) VALUES(#{user.id},#{self.connection.quote(name)},'ro') on conflict do nothing;}
+    self.connection.execute(sql)
+  end
+
+  
   def makedir(foldername)
     foldername.strip!
     foldername.gsub!(/[^-\p{Alnum}]/, ' ')
@@ -213,10 +229,14 @@ class DObjectsFolder < ActiveRecord::Base
 
   def derived_pdf_filename(seqnum=nil)
     config = Rails.configuration.database_configuration
-    if seqnum.nil?
-      "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s)}.pdf"
+    if self.id==0
+      %Q{#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', "pf_#{self.personal_folder_id}")}.pdf}
     else
-      "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s + '-' + seqnum.to_s)}.pdf"
+      if seqnum.nil?
+        "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s)}.pdf"
+      else
+        "#{File.join(config[Rails.env]["digital_objects_cache"], 'derived', self.id.to_s + '-' + seqnum.to_s)}.pdf"
+      end
     end
   end
 
@@ -244,8 +264,13 @@ class DObjectsFolder < ActiveRecord::Base
     "#{File.join(config[Rails.env]["digital_objects_cache"], 'restricted', self.id.to_s)}.pdf"
   end
 
-  def gfx_objects
-    objs=self.d_objects.collect do |o|
+  def gfx_objects(object_ids=[])
+    skip = object_ids.size == 0 ? false : true
+    o_ids=object_ids.collect {|x| x.to_i}
+    object_list = self.id==0 ? self.virtual_d_objects : self.d_objects
+    objs=object_list.collect do |o|
+      next if skip and !o_ids.include?(o.id)
+      # puts "o: #{o.id}"
       mtype=o.mime_type.blank? ? '' : o.mime_type.split(';').first
       o if ['image/jpeg', 'image/tiff', 'image/png', 'application/pdf'].include?(mtype)
     end
@@ -262,20 +287,47 @@ class DObjectsFolder < ActiveRecord::Base
     puts "automake_pdf: max_per_page #{max_per_page}"
   end
 
+  # Aggiunta numero pagine agli oggetti contenuti, se non già presenti
+  def add_tag_x_pp(start_page=1)
+    cnt = start_page
+    self.gfx_objects.each do |o|
+      if o.x_pp.nil?
+        puts "#{o.id} file: #{o.name} - x_pp: #{o.x_pp} class #{o.x_pp.class} -  assegno #{cnt}"
+        o.x_pp = cnt.to_s
+        o.save
+      else
+        cnt = o.x_pp.to_i
+      end
+      cnt += 1
+    end
+    nil
+  end
+
+  def remove_tag_x_pp(start_page=1)
+    self.gfx_objects.each do |o|
+      o.x_pp = nil
+      o.save
+    end
+    nil
+  end
+
+
+  
   def to_pdf(params={})
+    # raise "da DObjectsFolder#to_pdf params: #{params.inspect}"
     params=self.pdf_params if params.size==0
     h=Hash.new
     params.each do |k,v|
       h[k.to_sym]=v if k.class==String
     end
-    pages=self.gfx_objects
+    pages=self.gfx_objects(params[:object_ids])
     puts pages.size
     puts "pdf_params: #{self.pdf_params}"
     page_ranges=self.pdf_params['pages']
     if !page_ranges.blank?
       puts "page_ranges: #{page_ranges}"
       cnt=0
-      images=self.gfx_objects
+      images=self.gfx_objects([:object_ids])
       page_ranges.split(',').each do |p|
         cnt+=1
         from,to=p.split('-')
@@ -285,7 +337,7 @@ class DObjectsFolder < ActiveRecord::Base
         DObject.to_pdf(images[from..to],self.derived_pdf_filename(cnt), params.merge(h))
       end
     else
-      DObject.to_pdf(self.gfx_objects,self.derived_pdf_filename, params.merge(h))
+      DObject.to_pdf(self.gfx_objects(params[:object_ids]),self.derived_pdf_filename, params.merge(h))
     end
   end
 
@@ -368,7 +420,7 @@ class DObjectsFolder < ActiveRecord::Base
       sql << "INSERT INTO manifestations_d_objects_folders (d_objects_folder_id, manifestation_id)
                    VALUES (#{self.id}, #{f_mid}) on conflict(d_objects_folder_id) DO NOTHING;"
     end
-    # puts sql.join("\n")
+    puts sql.join("\n")
     DObjectsFolder.connection.execute(sql.join("\n"))
     nil
   end
@@ -528,6 +580,20 @@ class DObjectsFolder < ActiveRecord::Base
     retval
   end
 
+  def DObjectsFolder.virtual(user, object_ids)
+    f = self.new
+    f.name = "Cartella personale di #{user.email}"
+    f.id=0
+    f.owner_id = user.id
+    # f.virtual_d_objects = DObject.find(object_ids)
+    f.virtual_d_objects = DObject.find(DObjectsFolder.virtual_d_objects_sort(object_ids))
+    f.pdf_disabled='false'
+    f.access_right_id=0
+    pf=DObjectsPersonalFolder.find_by_owner_id(user.id)
+    f.personal_folder_id=pf.id
+    f
+  end
+  
   # Non usata, è una prova del 18 dicembre 2019
   def DObjectsFolder.estrai_collocazione(start,string)
     r=Regexp.new "#{start}(\\d+)(\\D*)"
@@ -547,6 +613,27 @@ class DObjectsFolder < ActiveRecord::Base
     new=self.connection.quote(new)
     sql=%Q{UPDATE #{self.table_name} set name = regexp_replace(name, #{old}, #{new}) WHERE name ~ #{old}}
     self.connection.execute(sql)
+  end
+
+  def DObjectsFolder.virtual_d_objects_sort(ids)
+    string_input=false
+    if ids.class==String
+      string_input=true
+      ids = ids.split(',').collect {|r| r.to_i}
+    end
+    return [] if ids.size==0
+    sql = %Q{select o.id from public.d_objects o join public.d_objects_folders f 
+       on(f.id=o.d_objects_folder_id) where o.id in(#{ids.join(', ')}) 
+       order by naturalsort(f.name),naturalsort(o.name);}
+    sql = %Q{select o.id,f.name,o.name from public.d_objects o join public.d_objects_folders f 
+         on(f.id=o.d_objects_folder_id) where o.id in(#{ids.join(', ')}) 
+       order by naturalsort(f.name),naturalsort(o.name);}
+    puts sql
+    res = self.connection.execute(sql).collect {|i| i['id'].to_i}
+    if string_input == true
+      ids = res.join(',')
+    end
+    ids
   end
 
   def DObjectsFolder.import_folders(sourcedir, destdir)

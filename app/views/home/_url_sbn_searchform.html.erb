@@ -1,0 +1,10 @@
+<%= simple_form_for(@clavis_manifestation, url:'/er') do |f| %>
+<%= f.input :title, hint: 'parole nel titolo oppure nota alla url', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+<%= f.input :bid, hint: 'BID', as: 'string', label: false, placeholder: 'BID' %>
+<%= f.input :bib_level, collection: ClavisManifestation.bib_level, hint: 'Livello bibliografico', include_blank: true, label: false %>
+
+Tag unimarc <%= select_tag(:unimarc_tag, options_for_select(['300','856'], params[:unimarc_tag]), multiple:false, include_blank:true) %>
+
+
+<br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
+<% end %>

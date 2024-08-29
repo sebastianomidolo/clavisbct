@@ -8,7 +8,7 @@ class SbctTitle < ActiveRecord::Base
   after_save :update_purchase_proposals
   after_save :log_changes
   
-  attr_accessible :id_titolo, :manifestation_id, :titolo, :autore, :editore, :collana, :prezzo, :utente, :id_tipo_titolo, :isbn, :wrk, :def, :clavis_library_ids, :sbct_list_ids, :ean, :target_lettura, :reparto, :sottoreparto, :created_by, :note, :target_lettura, :anno, :crold_notes, :age, :keywords
+  attr_accessible :id_titolo, :manifestation_id, :titolo, :autore, :editore, :collana, :prezzo, :utente, :isbn, :wrk, :def, :clavis_library_ids, :sbct_list_ids, :ean, :target_lettura, :reparto, :sottoreparto, :created_by, :note, :target_lettura, :anno, :crold_notes, :age, :keywords
 
   attr_accessor :current_user
 
@@ -18,7 +18,6 @@ class SbctTitle < ActiveRecord::Base
   # datains: età in giorni della data di inserimento in tabella titoli rispetto a oggi
   attr_accessor :fornitore, :age, :datains, :inliste, :budget
 
-  belongs_to :sbct_tipo_titolo, :foreign_key=>'id_tipo_titolo'
   belongs_to :clavis_manifestation, foreign_key:'manifestation_id'
   has_and_belongs_to_many(:sbct_lists, join_table:'sbct_acquisti.l_titoli_liste',
                           :foreign_key=>'id_titolo',
@@ -140,6 +139,17 @@ class SbctTitle < ActiveRecord::Base
     SbctItem.find_by_sql(sql)
   end
 
+  # Per siglebib accetta sia il formato "A B C" sia "A,B,C"
+  def copie_con_note_interne_e_siglabib_in(siglebib)
+    sigle = siglebib.gsub(' ', ',')
+    v = sigle.split(',').collect {|i| "'#{i}'"}.join(',')
+    sql = %Q{select distinct note_interne from sbct_acquisti.library_codes lc, sbct_acquisti.copie cp
+           where cp.note_interne is not null and cp.id_titolo=#{self.id} and lc.clavis_library_id = cp.library_id
+           and lc.label in (#{v})}
+    r=self.connection.execute(sql)
+    r.ntuples == 0 ? [] : r.to_a.collect {|i| i['note_interne']}
+  end
+
   def clavis_purchase_proposals
     sql = %Q{select cpp.*, lv.value_label as stato_proposta,cp.barcode as patron_barcode,cl.library_id, lc.label as preferred_library
       FROM clavis.purchase_proposal cpp join sbct_acquisti.l_clavis_purchase_proposals_titles ppt using(proposal_id)
@@ -195,11 +205,6 @@ class SbctTitle < ActiveRecord::Base
 
   def sbct_titles
     SbctTitle.find_by_sql("select * from sbct_acquisti.titoli where parent_id = #{self.id} order by naturalsort(trim(titolo))") 
-  end
-
-  def tipo_titolo_to_label
-    return nil if self.id_tipo_titolo.nil?
-    self.connection.execute("select tipo_titolo as t from sbct_acquisti.tipi_titolo where id_tipo_titolo='#{self.id_tipo_titolo}'").first['t']
   end
 
   # Non usata, fa riferimento a una tabella nel db cr_acquisti che non è più in uso da settembre 2022
@@ -698,13 +703,8 @@ order by siglabct;}
     self.connection.execute("update sbct_acquisti.titoli set anno=date_part('year',datapubblicazione) where datapubblicazione is not null and anno is null #{cond}")
   end
 
-  def SbctTitle.sql_for_tutti(params,current_user=nil)
+  def SbctTitle.sql_for_tutti(params,current_user=nil,sbct_titles_ids=nil)
     execsql=false
-
-    #if current_user.id==1
-    #  puts params[:sbct_event]
-    #  return
-    #end
 
     sql_comment=[]
     if params[:sbct_title].blank?
@@ -805,15 +805,24 @@ order by siglabct;}
       cond << "suppl.supplier_name ~* #{sbct_title.connection.quote(sbct_title.fornitore)}"
     end
     
-    cond << "l.id_tipo_titolo = '#{params[:tipo_titolo]}'" if !params[:tipo_titolo].blank?
     # cond << "tl.id_lista = '#{params[:id_lista]}'" if !params[:id_lista].blank?
     # cond << "#{params[:created_or_updated_by]} in (t.created_by,t.updated_by)" if !params[:created_or_updated_by].blank?
     cond << "#{params[:created_by]} = t.created_by" if !params[:created_by].blank?
 
     cond << "t.ean in(select ean from sbct_acquisti.titoli where ean is not null group by ean having count(ean)>1)" if !params[:ean_dupl].blank?
-    
-    if sbct_title.age.to_i > 0
-      cond << "t.datapubblicazione between now() - interval '#{sbct_title.age.to_i} days' and now()"
+
+
+    if !sbct_title.age.blank?
+      if sbct_title.age[0] == '>'
+        (v=sbct_title.age.sub('>','')
+         cond << "t.datapubblicazione < now() - interval '#{v.to_i} days'"
+        )
+      end
+      if sbct_title.age.to_i > 0 or sbct_title.age[0] == '<'
+        (v=sbct_title.age.sub('<','')
+         cond << "t.datapubblicazione between now() - interval '#{v.to_i} days' and now()"
+        )
+      end
     end
 
     if sbct_title.datains.to_i > 0
@@ -1029,6 +1038,10 @@ order by siglabct;}
       join_dnotes = "JOIN sbct_acquisti.report_logistico rlog on (rlog.id_titolo=t.id_titolo)"
       delivery_date,delivery_note = params[:dnoteid].split('|')
       cond << "rlog.datainviomerce=#{self.connection.quote(delivery_date)} AND rlog.numerobollaconsegna=#{delivery_note.to_i}"
+    end
+
+    if !sbct_titles_ids.nil? and sbct_titles_ids.size > 0
+      cond << "t.id_titolo in (#{sbct_titles_ids.join(',')})"
     end
     
     cond = cond.join(" AND ")

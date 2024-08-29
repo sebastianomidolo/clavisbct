@@ -1,0 +1,15 @@
+Collegamento con ruoli di ClavisBct
+
+<%= simple_form_for(@service) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= f.association :roles, collection:Role.where('id!=1').order('name'), include_blank: true, input_html:{multiple:true, size:Role.count} %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>

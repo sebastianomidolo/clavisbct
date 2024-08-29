@@ -3,12 +3,21 @@ class ClavisLibrary < ActiveRecord::Base
   self.table_name='clavis.library'
   self.primary_key = 'library_id'
 
+  attr_accessible :library_id
+
   has_many :owned_items, class_name: 'ClavisItem', foreign_key: 'owner_library_id'
   has_many :ordini, foreign_key: 'library_id'
   has_many :timetables, class_name: 'ClavisLibraryTimetable', foreign_key: 'library_id'
   has_many :containers, foreign_key: 'library_id'
   has_many :sbct_items, foreign_key: 'library_id'
+  has_many :bib_sections, foreign_key: 'library_id'
 
+
+  has_and_belongs_to_many(:sbct_l_budget_libraries,join_table:'sbct_acquisti.l_budgets_libraries',
+                          :foreign_key=>'clavis_library_id',
+                          :association_foreign_key=>[:budget_id, :clavis_library_id])
+  has_many :sbct_budgets, :through=>:sbct_l_budget_libraries
+  
   def to_label
     self.label[0..40]
   end
@@ -25,6 +34,12 @@ class ClavisLibrary < ActiveRecord::Base
     self.timetables.where("timetable_day>='#{date.strftime('%F')}'").limit(7).order('timetable_day')
   end
 
+  def collocation_sections_select(filter=nil)
+    cond = filter.nil? ? '' : "AND value_key ~ #{self.connection.quote(filter)}"
+    sql=%Q{select value_key as key,value_label as label from clavis.library_value where value_library_id=#{self.id} #{cond}}
+    self.connection.execute(sql).collect {|i| [i['label'],i['key']]}
+  end
+  
   def inventory_serie_select
     sql=%Q{select inventory_serie_id as key,description as d
               from clavis.inventory_serie where library_id = #{self.id} order by inventory_serie_id;}
@@ -81,6 +96,7 @@ class ClavisLibrary < ActiveRecord::Base
       h[r['label'].strip.downcase.to_sym] = r['clavis_library_id'].to_i
     end
     return h
+    # Segure vecchio codice non utilizzato:
     {
       a:10,
       b:11,
@@ -112,12 +128,4 @@ class ClavisLibrary < ActiveRecord::Base
     }
   end
 
-#  def ClavisLibrary.siglebct
-#    {
-#      mar:8,
-#    }
-#  end
-
-
-  
 end

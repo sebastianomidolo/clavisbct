@@ -1,0 +1,23 @@
+<%
+  ghost_item = @sp_item.dup; ghost_item.collciv=nil
+%>
+<%= simple_form_for(@sp_item) do |f| %>
+  <%= f.error_notification %>
+  
+  <div class="form-inputs">
+    <%= f.input :bibliography_id, as: 'hidden' %>
+    <%= f.input :section_number, collection:@sp_bibliography.section_select %>
+    <%= f.input :manifestation_id %>
+    <%= f.input :sbn_bid %>
+    <%= f.input :mainentry %>
+    <%= f.input :bibdescr, label:'Descrizione bibliografica', input_html: {rows: 6, cols: 80} %>
+    <%= f.input :sortkey, label:'Chiave di ordinamento', input_html: {rows: 1, cols: 80} %>
+    <%= f.input :note, label:'Note', input_html: {rows: 6, cols: 80} %>
+    <%= f.input :collciv, label:"Collocazione ( in Clavis: #{ghost_item.collocazioni} )" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %>
+    <%= link_to('Annulla modifiche', @sp_item) %>
+  </div>
+<% end %>

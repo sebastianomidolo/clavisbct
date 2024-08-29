@@ -1,6 +1,5 @@
+<%= content_tag(:h4, "Totale utenti ClavisBct: #{User.count}") %>
 
-<% @users.each do |u| %>
+<%= link_to 'Inserimento utente', new_user_path %>
 
-<%= content_tag(:div, "#{u.email}-#{u.id} #{u.roles.collect {|r| r.name + r.id.to_s}.join(',')}") %>
-
-<% end %>
+<%= content_tag(:div, users_list(@users)) %>

@@ -1,0 +1,21 @@
+<%= simple_form_for(@sp_section) do |f| %>
+  <%= f.error_notification %>
+  <div class="form-inputs">
+    <%= f.input :bibliography_id, as: 'hidden' %>
+    <%= f.input :parent, collection:@sp_bibliography.section_select, label:'Sezione madre' %>
+    <%= f.input :number, as: 'hidden' %>
+    <%= f.input :title, label:'Titolo della sezione' %>
+    <%= f.input :homepage, label:'Homepage specifica della sezione (formato "linktext | URL")' %>
+    <%= f.input :description, input_html: {rows: 6, cols: 80} %>
+    <%= f.input :status, collection:SpSection.status_select, include_blank:false if @sp_section.clavis_patron_id.nil? %>
+    <%= f.input :sortkey, label:'Chiave di ordinamento della sezione (facoltativa)' %>
+    <%= f.input :clavis_shelf_id, collection:ClavisShelf.shelf_select(@sp_bibliography.library_id) if @sp_section.sp_bibliography.orig_id.nil? %>
+    <%= f.input :clavis_patron_id, label:'Id utente' if @sp_section.sp_bibliography.orig_id.nil? %>
+    <%= f.association :location, collection:Location.options_for_select(@sp_bibliography.library_id) %>
+    
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %>
+  </div>
+<% end %>

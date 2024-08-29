@@ -5,12 +5,18 @@
   "Numero totale di proposte inserite#{specif}: #{@clavis_purchase_proposals.total_entries}"
 %>
 
-<%= "<br/>Proposte inserite nel corso degli ultimi 12 mesi: #{@clavis_patron.purchase_proposals_count('1 year')}".html_safe if !@clavis_patron.nil? %>
+
+<%=
+  "<br/>Proposte inserite nel corso degli ultimi 12 mesi: #{@clavis_patron.purchase_proposals_count('1 year')}".html_safe if !@clavis_patron.nil?
+ %>
+
 
 <%= will_paginate @clavis_purchase_proposals, renderer: BootstrapPagination::Rails %>
 
 <%= clavis_purchase_proposals_list(@clavis_purchase_proposals) %>
 
+<%= will_paginate @clavis_purchase_proposals, renderer: BootstrapPagination::Rails %>
 
+<br/>
 <%= "L'utente #{@clavis_patron.barcode}-#{@clavis_patron.to_label} (data iscrizione: #{@clavis_patron.date_created.to_date} ; data aggiornamento: #{@clavis_patron.date_updated.to_date}) ha ancora la password di default! (la data di nascita)" if !@clavis_patron.nil? and @clavis_patron.default_password? %>
 

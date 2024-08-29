@@ -1,3 +1,4 @@
+# coding: utf-8
 # -*- mode: ruby;-*-
 
 # Esempio. In development:
@@ -8,6 +9,8 @@
 desc 'Importazione bibliografie da SenzaParola'
 
 task :senza_parola => :environment do
+  puts "Importazione bibliografie da SenzaParola - Non usare, altrimenti viene cancellato il lavoro già presente"
+  exit
   # SpBibliography.sync_all(1)
   sql=%Q{
     BEGIN;
@@ -18,7 +21,7 @@ task :senza_parola => :environment do
     ROLLBACK;
   }
   puts sql
-  SpBibliography.sync_all
+  # SpBibliography.sync_all
 
   sql=%Q{
      UPDATE sp.sp_items i set manifestation_id=m.manifestation_id from clavis.manifestation m

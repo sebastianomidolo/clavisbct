@@ -1,6 +1,8 @@
 <%= content_tag(:h3, link_to('Topografico non in Clavis', extra_cards_path)) %>
 
-<%= render :partial => 'searchform' if can? :search, ExtraCard %>
+<!-- render :partial => 'searchform' if can? :search, ExtraCard -->
+
+<%= render :partial => 'searchform' %>
 
 <%= content_tag(:b, "Trovati #{@extra_cards.total_entries} items") %>
 <%= will_paginate @extra_cards, renderer: BootstrapPagination::Rails %>

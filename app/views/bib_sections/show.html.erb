@@ -1,0 +1,7 @@
+<%= content_tag(:h4, "Ubicazione: #{@bib_section.name}") %>
+
+<%= content_tag(:b, (@bib_section.external==true ? 'Esterno' : 'Interno' ) ) %>
+
+<%= content_tag(:p, "Ospita #{@bib_section.locations.size} locations (gruppi di collocazioni)") %>
+
+<%= content_tag(:div, locations_list(@locations)) %>

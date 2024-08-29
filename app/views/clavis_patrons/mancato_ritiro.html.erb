@@ -1,0 +1,14 @@
+<%
+  sql=%Q{select cp.lastname || ', ' || cp.name as patron,ia.patron_id,count(*)
+  from clavis.item_action ia join clavis.patron cp using(patron_id)
+    where date_part('year', action_date)='2021' and action_type = 'Z' and patron_id!=0
+  group by patron,ia.patron_id having count(*)>3 order by count(*) desc, patron}
+%>
+
+<h3>Utenti con più di tre prestiti annullati per mancato ritiro nel 2021</h3>
+in ordine decrescente di numero di prestiti annullati
+
+<%=
+  records=ClavisPatron.connection.execute(sql).to_a
+  content_tag(:div, clavis_patron_mancato_ritiro(records))
+%>

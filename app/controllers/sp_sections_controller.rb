@@ -27,11 +27,37 @@ class SpSectionsController < ApplicationController
         render :layout=>params[:layout] if !params[:layout].blank?
       }
       format.pdf {
+        # https://clavisbct.comperio.it/sp_sections/243,13.pdf?formato=copertine
         filename="#{@sp_bibliography.title}.pdf"
-        lp=LatexPrint::PDF.new('sp_bibliography', [@sp_bibliography,@sp_section])
-        send_data(lp.makepdf,
-                  :filename=>filename,:disposition=>'inline',
-                  :type=>'application/pdf')
+        if params[:formato]=='copertine'
+          # Di fatto non viene usato - 12 marzo 2024
+          (
+            prms = Hash.new
+            prms[:metadata] = Hash.new
+            prms[:nologo]=true
+            prms[:with_watermark]=true
+            prms[:force]=true
+            objs=[]
+            cnt = 0
+            @sp_section.sp_items.each do |i|
+              next if i.manifestation_id.nil?
+              cnt += 1
+              obj = ClavisManifestation.find(i.manifestation_id).clavis_cover_cached
+              # obj = DObject.find(441)
+              objs << obj
+              prms[:metadata][obj.id] = [i.manifestation_id,i.bibdescr,i.collciv]
+              break if cnt > 5
+            end
+            # raise "metadata: #{prms[:metadata]}"
+            f=DObject.to_pdf(objs,filename,prms);nil
+            send_file(f, :filename=>filename, :type=>'application/pdf', :disposition => 'inline')
+          )
+        else
+          lp=LatexPrint::PDF.new('sp_bibliography', [@sp_bibliography,@sp_section])
+          send_data(lp.makepdf,
+                    :filename=>filename,:disposition=>'inline',
+                    :type=>'application/pdf')
+        end
       }
     end
   end

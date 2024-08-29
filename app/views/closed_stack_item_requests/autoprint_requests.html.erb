@@ -1,10 +1,20 @@
  <pre>
-   Nota: il server di stampa è un normale PC collocato al terzo piano, ufficio applicazioni informatiche.
-   Esegue una richiesta di stampa ogni minuto e, se ci sono richieste a magazzino pendenti, le invia alla
-   stampante situata al secondo piano. Se nell'elenco che segue non appaiono richieste recenti,
-   vuol dire che il server di stampa non sta funzionando. Potrebbe essersi spento, e in tal caso
-   bisogna riaccenderlo, oppure potrebbe essersi bloccato e va riavviato.
-   Ci potrebbero anche essere problemi di rete o cose peggiori...
+   Il server di stampa è una macchina linux che al momento si trova al Centro Rete in via Frejus.
+   La macchina controlla a intervalli di 60 secondi se ci sono richieste a magazzino confermate
+   e se ce ne sono le invia alla stampante situata al secondo piano.
+   Se nell'elenco che segue non appaiono richieste recenti,
+   vuol dire che il server di stampa non sta funzionando.
+   Se invece la stampante non fa uscire le richieste stampato o si mette a stampare
+   foglietti con caratteri illeggibili bisogna annullare la stampa corrente.
+
+   Comandi per la stampante:
+     cupsenable richieste-a-magazzino
+     lpstat -p richieste-a-magazzino
+     lpstat -W completed
+     lpq -P richieste-a-magazzino
+  Indirizzo stampante:
+     ipp://CPR049999.ad.comune.torino.it:631/ipp/print
+     ping CPR049999.ad.comune.torino.it
 </pre>
 
 <%= content_tag(:pre, closed_stack_item_requests_autoprint_requests(@all)) %>
@@ -17,3 +27,7 @@
     content_tag(:span, link_to('[vedi ultime richieste]', autoprint_requests_closed_stack_item_requests_path), style:'font-size:90%')
   end
 %>
+
+<%=
+  content_tag(:span, link_to('[statistiche]', stats_closed_stack_item_requests_path),class:'btn btn-success')
+ %>

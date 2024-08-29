@@ -1,0 +1,25 @@
+<%= content_tag(:h4, "Dettagli fornitura per #{@serial_subscription.clavis_library.to_label}") %>
+
+<div>
+  <%= content_tag(:pre, "Note: #{@serial_subscription.note}") %>
+  <%= content_tag(:h4, "Numero copie: #{@serial_subscription.numero_copie}") %>
+</div>
+
+Eventuali fatture per questo titolo saranno mostrate qui di seguito
+
+<%= simple_form_for(@serial_subscription, method:'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+<%= hidden_field_tag('serial_title_id', @serial_title.id) %>
+
+  
+<%=
+  select_tag(:ok_library_id, options_for_select(@serial_subscription.library_select,
+   params[:ok_library_id]), :onchange=>'submit();')
+%>
+
+<% end %>
+
+
+<%= content_tag(:div, serial_invoices_shortlist(@serial_subscription.serial_invoices)) %>
+<%= content_tag(:div, @serial_subscription.id) %>
+

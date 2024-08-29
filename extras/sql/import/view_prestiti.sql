@@ -27,17 +27,6 @@ FROM
        ON(cl.loan_status=ls.value_key AND value_class ~ 'LOANSTATUS' AND value_language='it_IT')
 WHERE cl.loan_status!='H';
 
-/*
-SELECT collocazione,title,espandi_collocazione(collocazione)
-from view_prestiti
-  WHERE
-  owner_library_id=2
-    and loan_date_begin='2013-02-20'
-   and loan_date_end isnull
-  order by section, espandi_collocazione(collocazione),
-   specification, sequence1, sequence2;
-*/
-
 CREATE OR REPLACE VIEW view_prestiti_sciutti AS
 SELECT
  l.loan_id,
@@ -60,23 +49,6 @@ SELECT
  left join patron p on(l.patron_id=p.patron_id);
  
 	  
-
-/*
-\o /home/storage/preesistente/static/sara.csv
-\copy (SELECT * FROM sara WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
-\o
-\o /home/storage/preesistente/static/sara_include_non_prestati.csv
-\copy (SELECT * FROM sara2 WHERE anno_pubblicazione between 2012 and 2022 ORDER BY anno_pubblicazione) TO stdout csv header
-\o
-
-Esempio di query che limita la ricerca alle biblioteche BCT con siglabib (le "nostre"):
-select * from tobi_loan l join sara2 s on (s.manifestation_id=l.loan_mid) 
-  join sbct_acquisti.library_codes lc on (lc.clavis_library_id=l.item_owner_library_id);
-
--- eventualmente limitare a: class_code is not null and bib_level='m'
-
-*/
-  
 
 
 /*

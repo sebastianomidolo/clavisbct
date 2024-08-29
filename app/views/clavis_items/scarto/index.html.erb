@@ -1,0 +1,25 @@
+<h3>Pagina principale dello scarto</h3>
+
+<%= render :partial => 'clavis_items/scarto/form' %>
+
+
+<%= link_to(content_tag(:b, "Scarica Barcodes in CSV", class:'btn btn-primary'), scarto_clavis_items_path(params.merge(format:'csv')), target:'_blank') if @contesto=='L' %>
+
+<%= link_to(content_tag(:b, "Stampa report in PDF", class:'btn btn-warning'), scarto_clavis_items_path(params.merge(format:'pdf')), target:'_blank') if !@contesto.nil? %>
+<%= link_to("Criteri per lo scarto", discard_rules_path) if can? :index, DiscardRule %>
+
+
+<%= content_tag(:pre, @info) if !@info.blank? %>
+  
+
+<% content_tag(:pre, "contesto #{@contesto}") %>
+<% content_tag(:pre, @sql) %>
+
+<% content_tag(:pre, params.inspect) %>
+
+<% content_tag(:pre, params.size) %>
+
+
+<%= content_tag(:div, clavis_items_scarto_riepilogo(@records)) if @contesto=='R' %>
+<%= content_tag(:div, clavis_items_scarto_schema(@records)) if @contesto=='S' %>
+<%= content_tag(:div, clavis_items_scarto_lista(@records)) if @contesto=='L' %>

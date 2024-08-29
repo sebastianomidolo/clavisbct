@@ -3,7 +3,7 @@ include TextSearchUtils
 
 class ClavisItemsController < ApplicationController
   before_filter :authenticate_user!, only: 'showxxx'
-  load_and_authorize_resource only: [:index,:ricollocazioni]
+  load_and_authorize_resource only: [:index,:ricollocazioni,:scarto]
 
   def index
     if !params[:home_library_id].blank?
@@ -701,6 +701,63 @@ vloc.loc_name,vloc.id as location_id,vloc.bib_section_id,l.value_label as item_m
 
   def cerca_fuoricatalogo
     render text:'ok', layout: 'bctsite'
+  end
+
+  def scarto
+    if params[:pubblico]=='all' and params[:genere]=='all'
+      @contesto = 'S'
+    else
+      @contesto = params[:show_titles].blank? ? 'R' : 'L'
+    end
+    @contesto = nil if params.size < 3 # Cioè: siamo nella home page dello scarto
+
+    if ['2','3','bct'].include? params[:library_id]
+      @info = "Attenzione, per Centrale e Musicale ancora lavori in corso"
+      @contesto = nil
+    end
+
+    
+    if !@contesto.nil?
+      @sql = ClavisItem.sql_per_scarto(params,@contesto)
+      @records = ClavisItem.find_by_sql(@sql)
+    end
+
+    
+    respond_to do |format|
+      format.html {
+        render 'clavis_items/scarto/index', layout:'scarto'
+      }
+      format.pdf {
+        # heading = params[:heading].blank? ? "Elenco libri a magazzino" : params[:heading]
+        case params[:library_id]
+        when 'decentrate'
+          library = 'Decentrate'
+        when 'bct'
+          library = 'Tutte le BCT'
+        else
+          library = ClavisLibrary.find(params[:library_id]).to_label
+        end
+        @records.define_singleton_method(:nome_biblioteca) do
+          library
+        end
+
+        pdf_template="procedura_scarto_#{@contesto}"
+        filename="pdf_scarto.pdf"
+        lp=LatexPrint::PDF.new(pdf_template, @records, false)
+        send_data(lp.makepdf,
+                  :filename=>filename,:disposition=>'inline',
+                  :type=>'application/pdf')
+      }
+      format.csv  {
+        require 'csv'
+        csv_string = CSV.generate do |csv|
+          @records.each do |r|
+            csv << [r.barcode]
+          end
+        end
+        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=barcodes.csv"
+      }
+    end
   end
 
   private

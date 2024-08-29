@@ -2,4 +2,12 @@
 
 
 
-<%= link_to('Modifica utente', edit_user_path(@user)) %>
+<%= link_to('Modifica utente', edit_user_path(@user), class:'btn btn-info') %>
+
+
+<br/>
+Ruoli attuali:
+<%=
+  @sbct_user = @user
+  content_tag(:div, user_roles(@sbct_user, read_only=true))
+%>

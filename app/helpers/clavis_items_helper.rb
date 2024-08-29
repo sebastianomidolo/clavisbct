@@ -53,7 +53,131 @@ module ClavisItemsHelper
     res=content_tag(:table, res.join.html_safe)
   end
 
+  def clavis_items_scarto_riepilogo(items)
+    res=[]
+    scartabili=0
+    totale=0
+    lnk = Hash.new
+    lnk['show_titles']='y'
+    params.each_pair do |k,v|
+      next if ['action','controller','utf8','commit'].include?(k)
+      lnk[k]=v
+    end
 
+    items.each do |i|
+      scartabili += i.scartabili.to_i
+      totale += i.conta_items_per_statcol.to_i
+      res << content_tag(:tr, content_tag(:td, "Statcol: #{link_to(i.statcol,scarto_clavis_items_path(lnk.merge({statcol:i.statcol})))}".html_safe) +
+                              content_tag(:td, "Numero items da scartare: #{i.scartabili}") +
+                              content_tag(:td, "Items totali: #{i.conta_items_per_statcol}"), class:'success')
+    end
+
+    res << content_tag(:tr, content_tag(:td, '') +
+                            content_tag(:td, "TOTALE items da scartare: #{scartabili}") +
+                            content_tag(:td, "Items totali: #{totale}"), class:'success')
+    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
+  end
+
+  def clavis_items_scarto_lista(items)
+    res=[]
+    prec_classe = ''
+    scartabili=0
+    totale=0
+    lnk = Hash.new
+    lnk['show_titles']='y'
+    params.each_pair do |k,v|
+      next if ['action','controller','utf8','commit'].include?(k)
+      lnk[k]=v
+    end
+
+    items.each do |i|
+      if i.classe != prec_classe
+        res << content_tag(:tr, content_tag(:td, 'classe') +
+                                content_tag(:td, 'descrizione', {colspan:2}) +
+                                content_tag(:td, 'anno pubblicazione', {colspan:2}) +
+                                content_tag(:td, 'anni da ultimo prestito', {colspan:3}) +
+                                content_tag(:td, 'SMUSI', {colspan:3}), class:'success')
+        anno_edizione = i.anno_edizione == '0' ? '[non applicabile]' : i.anno_edizione
+        anni_da_ultimo_prestito = i.anni_da_ultimo_prestito == '0' ? '[non applicabile]' : i.anni_da_ultimo_prestito
+        res << content_tag(:tr, content_tag(:td, i.classe) +
+                                content_tag(:td, i.descrizione, {colspan:2}) +
+                                content_tag(:td, anno_edizione, {colspan:2}) +
+                                content_tag(:td, anni_da_ultimo_prestito, {colspan:3}) +
+                                content_tag(:td, i.smusi, {colspan:3}), class:'success')
+
+
+        res << content_tag(:tr, content_tag(:td, 'media') +
+                                content_tag(:td, 'collocazione') +
+                                content_tag(:td, 'titolo') +
+                                content_tag(:td, 'barcode') +
+                                content_tag(:td, 'inventario') +
+                                content_tag(:td, 'anno_ediz') +
+                                content_tag(:td, 'ultimo_prest') +
+                                content_tag(:td, 'num_prestiti') +
+                                content_tag(:td, 'copia_unica') +
+                                content_tag(:td, 'num_altre_bib') + 
+                                content_tag(:td, 'altre_bib'), class:'warning')
+         
+        
+        # res << content_tag(:tr, content_tag(:td, header, colspan:8), class:'success')
+      end
+      prec_classe = i.classe
+      res << content_tag(:tr, content_tag(:td, i.media) +
+                              content_tag(:td, i.colloc_stringa) +
+                              content_tag(:td, i.titolo) +
+                              content_tag(:td, i.barcode) +
+                              content_tag(:td, i.inventory_number) +
+                              content_tag(:td, i.anno_ediz) +
+                              content_tag(:td, i.ultimo_prest) +
+                              content_tag(:td, i.num_prestiti) +
+                              content_tag(:td, i.copia_unica) +
+                              content_tag(:td, i.other_library_count) +
+                              content_tag(:td, i.other_library_labels))
+        
+    end
+
+    res << content_tag(:tr, content_tag(:td, ''))
+         #                   content_tag(:td, "TOTALE items da scartare: #{scartabili}") +
+         #                   content_tag(:td, "Items totali: #{totale}"), class:'success')
+    
+    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
+        
+  end
+
+  def clavis_items_scarto_schema(items)
+    res=[]
+    scartabili=0
+    totale=0
+    lnk = Hash.new
+    lnk['show_titles']='y'
+    params.each_pair do |k,v|
+      next if ['action','controller','utf8','commit'].include?(k)
+      lnk[k]=v
+    end
+    res << content_tag(:tr, content_tag(:td, "Pubblico", class:'col-md-1') +
+                            content_tag(:td, "Formato", class:'col-md-2') +
+                            content_tag(:td, "Scartabili", class:'col-md-1', align:'right') +
+                            content_tag(:td, "Totale", class:'col-md-1', align:'right') +
+                            content_tag(:td, "", class:'col-md-7'), class:'success')
+    items.each do |r|
+      if r.formato.blank?
+        pubblico = ''
+        formato = r.pubblico.blank? ? '<b>Totale generale</b>': "<b>Totale #{r.pubblico}</b>"
+        totale = r.totale
+      else
+        pubblico = r.pubblico
+        formato = r.formato
+        totale = r.totale
+      end
+      res << content_tag(:tr, content_tag(:td, pubblico) +
+                              content_tag(:td, formato.html_safe) +
+                              content_tag(:td, r.scartabili, align:'right') +
+                              content_tag(:td, totale, align:'right') +
+                              content_tag(:td, ''))
+    end
+    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
+  end
+  
   def clavis_items_row(record)
     edit_in_place=false
     coll=record.collocazione
@@ -102,7 +226,7 @@ module ClavisItemsHelper
                          class:'btn btn-default',
                          skip_blur:false,
                          html_attrs:{size:extra_card.collocazione.size,style:'display: block'})
-      stringa_titolo+="<br/>#{extra_card.note_interne}".html_safe if !extra_card.note_interne.blank?
+      stringa_titolo+="#{extra_card.note_interne}".html_safe if !extra_card.note_interne.blank?
     else
       stringa_titolo=lnk.html_safe + "<br/>#{r.issue_description}".html_safe
     end
@@ -152,6 +276,7 @@ module ClavisItemsHelper
                           method: :delete, data: { confirm: "Confermi cancellazione? (#{current_user.email})" })
           mlnk << link_to('[duplica]'.html_safe, record_duplicate_extra_card_path(r.custom_field3), remote:true,
                           method: :post)
+          mlnk << link_to('[DBMUSICALE]'.html_safe, clavis_item_path(r)) if r.home_library_id==3
         else
           mlnk = 'TOPOGRAFICO'
         end
@@ -190,7 +315,6 @@ module ClavisItemsHelper
           covers << " Possibile copertina corrispondente a ISBN " + link_to("<b>#{r.isbnissn}</b>".html_safe , "https://covers.biblioteche.cloud/covers/#{r.isbnissn}") if !r.isbnissn.blank? and r.isbnissn!=r.ean
           lnk << covers.join('<br/>').html_safe if covers.size>0
         end
-
         mlnk=r.manifestation_id==0 ? media.html_safe : link_to(media.html_safe,clavis_manifestation_path(r.manifestation_id, target_id: "item_#{r.id}"), :title=>"manifestation_id #{r.manifestation_id}", remote: true)
       end
       container_link = r.label.nil? ? '' : link_to(r.label, containers_path(:label=>r.label), target:'_blank') + "<br/>item_id:#{r.id}".html_safe
@@ -215,6 +339,7 @@ module ClavisItemsHelper
       classe = r.owner_library_id==-3 ? 'success' : ''
 
       if edit_in_place
+        extra_card.collocazione = '[senza collocazione]' if extra_card.collocazione.blank?
         stringa_titolo=lnk.html_safe
         stringa_titolo=best_in_place(extra_card, :titolo, ok_button:'Salva', cancel_button:'Annulla modifiche',
                                      ok_button_class:'btn btn-success',
@@ -238,14 +363,11 @@ module ClavisItemsHelper
       end
 
       coll << "</br>RICOLLOCATO".html_safe if r.owner_library_id==-3
-      # coll << "</br>#{r.piano}".html_safe if !r.piano.nil?
       coll << "</br>#{link_to(r.loc_name, location_path(r.location_id))}".html_safe if !r.loc_name.nil?
       coll << "</br><em>#{r.requests_count} #{r.requests_count=='1' ? 'prenotazione' : 'prenotazioni' }</em>".html_safe if r.respond_to?('requests_count')
 
       coll << "</br>#{r.loan_alert_note}".html_safe if !r.loan_alert_note.blank? and !params[:loan_alert_note].blank?
       
-      # cover_column = params[:cover_images]=='t' ? content_tag(:td, image_tag("https://sbct.comperio.it/index.php?file=#{r.cover_id}", :size=>'100x125')) : ''
-      # cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag("https://covers.comperio.it/calderone/viewmongofile.php?ean=", :size=>'100x125')) : ''
       cover_column = params[:view_covers]=='S' ? content_tag(:td, image_tag(dnl_d_object_path(1, format:'jpeg', manifestation_id:r.manifestation_id,size:'200x'))) : ''
       serieinvcolumn = r.acquisition_year.nil? ? r.inventario : "#{r.inventario}<br/>acquis.#{r.acquisition_year}".html_safe
       res << content_tag(:tr, cover_column.html_safe + content_tag(:td, coll.html_safe, id: "item_#{r.id}") +
@@ -255,6 +377,7 @@ module ClavisItemsHelper
                               content_tag(:td, container_link),
                          {:data_view=>r.view,:class=>classe})
     end
+
     if can? :manage, Container and !@clavis_item.current_container.nil?
       clink=link_to(@clavis_item.current_container, containers_path(:label=>@clavis_item.current_container), target:'_blank')
       res << content_tag(:div, "Trovati #{records.total_entries} esemplari".html_safe, class: 'panel-heading')
@@ -630,7 +753,7 @@ module ClavisItemsHelper
 
     res = []
     res << content_tag(:tr, content_tag(:td, 'Anno prestito', class:'col-md-2') +
-                            content_tag(:td, 'Numero prestiti', class:'col-md-10'), class:'success')
+                            content_tag(:td, 'Numero prestiti BCT', class:'col-md-10'), class:'success')
     ClavisItem.find_by_sql(sql).each do |r|
       res << content_tag(:tr, content_tag(:td, r.anno_prestito) +
                               content_tag(:td, r.numero_prestiti))
@@ -638,6 +761,36 @@ module ClavisItemsHelper
     content_tag(:table, res.join.html_safe, class:'table')
   end
 
+  def op_loans_report_with_titles(with_sql)
+    sql = %Q{#{with_sql}
+     select si.item_id,
+      case when si.home_library is null then 'non-BTC, id: ' || si.home_library_id::varchar else si.home_library end as siglabib,si.title,si.prestiti,
+      case when si.manifestation_id is not null then si.prestiti_totale end as prestiti_totale,
+      case when si.manifestation_id is not null then false else true end as fc
+       from ci join import.super_items si using(item_id) where si.prestiti > 0
+      order by prestiti desc, prestiti_totale desc, si.title limit 100;}
+    res = []
+    cnt = cnt_a = 0
+    
+    res << content_tag(:tr, content_tag(:td, 'Titoli più prestati', class:'col-md-6') +
+                            content_tag(:td, 'Biblioteca', class:'col-md-2') +
+                            content_tag(:td, 'Prestiti', class:'col-md-1') +
+                            content_tag(:td, 'Prestiti (sistema - incluse non BCT)', class:'col-md-3'), class:'success')
+    ClavisItem.find_by_sql(sql).each do |r|
+      cnt += r.prestiti.to_i
+      cnt_a += r.prestiti_totale.to_i
+      lastcol = r.fc=='t' ? 'fuori catalogo' : r.prestiti_totale
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, ClavisItem.clavis_url(r.item_id), target:'_new')) +
+                              content_tag(:td, r.siglabib) +                              
+                              content_tag(:td, r.prestiti) +
+                              content_tag(:td, lastcol))
+    end
+    # res << content_tag(:tr, content_tag(:td, '') + content_tag(:td, cnt) + content_tag(:td, cnt_a), class:'success')
+
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  
   def op_classif(with_sql)
     sql = %Q{#{with_sql}
 select substr(trim(ci.manifestation_dewey), 1,1) || 'xx'  as classif,count(*)
@@ -802,4 +955,25 @@ dev.off()
     h.collect {|i| hfmt << [i['label'],i['label']]}
     select_tag(:op, options_for_select(hfmt, params[:op]), prompt: 'Scegli operazione', onchange: 'submit()')
   end
+
+  def scarto_breadcrumbs
+    # return params.inspect
+    links=[]
+
+    msg = ''
+    case @contesto
+    when 'R'
+      msg = 'Riepilogo generale'
+    when 'L'
+      msg = 'Elenco esemplari scartabili'
+    when 'S'
+      msg = 'Schema Riepilogativo'
+    end
+    links << link_to('Home page scarto', scarto_clavis_items_path, {title:'Home page scarto'})
+    links << msg if !@contesto.nil?
+
+    %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
+  end
+
+  
 end

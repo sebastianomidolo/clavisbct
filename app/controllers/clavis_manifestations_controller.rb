@@ -1,6 +1,9 @@
+# coding: utf-8
 class ClavisManifestationsController < ApplicationController
   include LatexPrint
   include REXML
+  before_filter :authenticate_user!, except: [:containers, :sbn_iccu_opac_redir, :attachments, :sbn_opac_redir]
+  # load_and_authorize_resource
 
   layout 'navbar'
 
@@ -8,7 +11,7 @@ class ClavisManifestationsController < ApplicationController
   end
 
   def bid_duplicati
-    sql=%Q{select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid}
+    sql=%Q{select bid_source,bid,count(*) from clavis.manifestation where bid notnull and bid_source notnull group by bid_source,bid having count(*)>1 order by bid_source,bid;}
     @records=ActiveRecord::Base.connection.execute(sql)
   end
 
@@ -76,13 +79,26 @@ class ClavisManifestationsController < ApplicationController
         cond=condtext.join(" AND ")
         logger.info(cond)
         order = "modified_by, bid"
+        order = "last_sbn_sync desc, bid"
       end
+      order = "last_sbn_sync, bid" if params[:order]=='lss'
+
       @clavis_manifestations=ClavisManifestation.paginate(:conditions=>cond,
                                                           :page=>params[:page],
-                                                          :order=>order)
+                                                          :order=>order,
+                                                          :per_page=>200)
     else
       @clavis_manifestations=ClavisManifestation.paginate_by_sql('select * from clavis.digitalizzati order by lower(title)', :page=>params[:page])
     end
+  end
+
+  # Questa procedura è stata lasciata incompiuta per mancanza di tempo - 23 luglio 2024
+  # Avrebbe dovuto permettere una sincronizzazione in tempo reale da Clavis e ClavisBct
+  # a partire dalla pagina Clavis di visualizzazione della notizia
+  # Vedi la funzione JS check_manifestation_record in "estensione_clavisbct.js"
+  def sync
+    id=params[:id]
+    render text:"per manifestation_id #{id}"
   end
 
   def kardex
@@ -152,15 +168,39 @@ class ClavisManifestationsController < ApplicationController
   end
 
   def sbn_opac_redir
-    cm=ClavisManifestation.find_by_bid(params[:id])
+    headers['Access-Control-Allow-Origin'] = "*"
+    bid = params[:id]
+    cm=ClavisManifestation.find_by_bid(bid)
+    redir_url = status = nil
     if cm.nil?
-      render :text=>"BID #{params[:id]} non trovato"
+      redir_url = "https://www.sbam.to.it/opac/detail/view/bid:#{bid}"
+      fd=File.open('/home/seb/sbam_only.log', 'a')
+      if ClavisManifestation.sbam_only?(bid)
+        status = "sbam_only"
+        fd.write("#{Time.now} solo sbam: #{bid} (già controllato precedentemente)\n")
+      else
+        status = "sbam_only (nuova entry)"
+        ClavisManifestation.new(bid:params[:id]).set_sbam_only
+        fd.write("#{Time.now} solo sbam: #{bid} (new)\n")
+      end
+      fd.close
+    # Decomentare la linea seguente per attivare la redirezione per i bid sbam only
+    status = 'ok'
     else
-      redirect_to cm.clavis_url(:opac)
+      status = 'ok'
+      redir_url = cm.clavis_url(:opac)
     end
+    respond_to do |format|
+      format.json { render :json => {
+                             bid: bid,
+                             status: status,
+                             redir_url: redir_url
+                           }}
+    end
+
   end
 
-  # http://clavisbct.comperio.it/clavis_manifestations/BCT0025576/sbn_iccu_opac_redir
+  # https://clavisbct.comperio.it/clavis_manifestations/BCT0025576/sbn_iccu_opac_redir
   def sbn_iccu_opac_redir
     cm=ClavisManifestation.find_by_bid(params[:id])
     if cm.nil? or cm.iccu_opac_url.nil?
@@ -170,6 +210,10 @@ class ClavisManifestationsController < ApplicationController
     redirect_to cm.iccu_opac_url
   end
 
+  def bumbam
+    @pagetitle='Titoli presenti in bct e sbam'
+    @cm = ClavisManifestation.paginate_by_sql("select * from public.bumbam b join clavis.manifestation cm on(cm.manifestation_id = b.bct_mid) order by b.created_at desc", page:params[:page])
+  end
 
   def libriparlati_con_audio
     @records=Attachment.libriparlati(params[:colloc])
@@ -218,6 +262,8 @@ class ClavisManifestationsController < ApplicationController
       # Per i periodici, verifico se questo titoli ha i requisiti per essere
       # richiesto a magazzino in civica centrale (o in deposito decentrato)
       @form_richiesta = @cm.form_richiesta_a_magazzino(params['opac_username'],2)
+      # Vedo se ci sono abbonamenti di periodici correnti (funzione creata il 14 febbraio 2024)
+      @abbonamenti = @cm.biblioteche_abbonate
     end
     respond_to do |format|
       format.html

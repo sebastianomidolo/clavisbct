@@ -57,11 +57,9 @@ class SbctItemsController < ApplicationController
     @sbct_order = @sbct_item.sbct_order
     @current_order = SbctOrder.find(user_session[:current_order]) if !user_session[:current_order].nil?  
 
+    # if current_user.role?('AcquisitionLibrarian') and !@sbct_suppliers=@sbct_item.sbct_budget.nil?
     if current_user.role?('AcquisitionLibrarian')
-      @sbct_suppliers=@sbct_item.sbct_budget.sbct_suppliers
-      # @sbct_suppliers = SbctSupplier.available_suppliers_2(@sbct_item)
-      # render text:'dbg' and return
-      render 'assign_to_other_supplier'
+      render 'edit_notes'
     end
   end
 

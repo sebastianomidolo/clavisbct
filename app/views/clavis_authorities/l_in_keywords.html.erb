@@ -1,0 +1,28 @@
+# coding: utf-8
+<!-- https://clavisbct.comperio.it/clavis_authorities?authority_type=L&in_subjects=true -->
+<!-- Soggetti contenenti errate specificazioni di luogo (cioè: che utilizzano il tipo di authority "L" invece di "G") -->
+
+
+<h4>Intestazioni di tipo "L" utilizzate impropriamente al posto di quelle di tipo "G" e/o "A"</h2>
+
+<%
+
+   sql=%Q{select ca.full_text as heading, ca.authority_id as a_id, count(*)
+     from clavis.l_authority_manifestation la join clavis.authority ca using(authority_id) where ca.authority_type='L'
+       and la.link_type=619
+     group by heading,a_id order by heading;}
+%>
+
+<%= content_tag(:pre, sql) %>
+
+
+<table class="table">
+<% ActiveRecord::Base.connection.execute(sql).to_a.each do |r| %>
+<%=
+   lnk_a=link_to(r['heading'], ClavisAuthority.clavis_url(r['a_id'],:edit),target:'_blank')
+   content_tag(:tr, content_tag(:td, lnk_a, class:'col-md-2') + content_tag(:td, r['count']))
+%>
+<% end %>
+
+</table>
+   

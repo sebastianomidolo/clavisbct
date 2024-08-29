@@ -240,4 +240,7 @@ create index last_item_actions_action_type_idx on clavis.last_item_actions(actio
 create index last_item_actions_action_patron_id_idx on clavis.last_item_actions(patron_id);
 
 
+create index lookup_value_class_ndx on clavis.lookup_value (value_class);
+create index lookup_value_language_ndx on clavis.lookup_value (value_language);
+
 -- REFRESH MATERIALIZED VIEW dobjects;

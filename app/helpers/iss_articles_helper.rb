@@ -3,9 +3,7 @@ module IssArticlesHelper
   def iss_journals_index(records)
     res=[]
     records.each do |r|
-      opac_link = r.id == 23 ? '' : link_to("Scheda su Opac BCT", "https://bctwww.comperio.it/sbn?#{r.bid}", target:'_blank')
-      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))) +
-                              content_tag(:td, opac_link))
+      res << content_tag(:tr, content_tag(:td, link_to(r.title, iss_journal_path(r))))
     end
     content_tag(:table, res.join.html_safe, class:'table')
   end
@@ -44,9 +42,9 @@ module IssArticlesHelper
     issue=record.issue
     journal=issue.journal
     res << content_tag(:tr, content_tag(:td, 'Titolo') + content_tag(:td, link_to(record.title,iss_article_path(record,format:'pdf')),
-                                                                     style:'font-size: 150%'))
+                                                                     style:'font-size: 100%'))
     res << content_tag(:tr, content_tag(:td, 'Rivista') + content_tag(:td, link_to(journal.title,iss_journal_path(journal)),
-                                                                      style:'font-size: 150%'))
+                                                                      style:'font-size: 100%'))
     res << content_tag(:tr, content_tag(:td, 'Fascicolo') + content_tag(:td, iss_issue_show(issue)))
     res << content_tag(:tr, content_tag(:td, 'Pagine') + content_tag(:td, record.pages.size))
     res << content_tag(:tr, content_tag(:td, '') + content_tag(:td, iss_pages_list(record.pages)))

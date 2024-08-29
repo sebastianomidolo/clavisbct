@@ -1,0 +1,27 @@
+<%=
+  if @clavis_patrons.total_entries > 0
+content_tag(:h4, "#{@clavis_patrons.total_entries} utenti Clavis con probabili duplicazioni, da verificare (cognome, nome, luogo e data di nascita coincidono)".html_safe)
+else
+
+end
+%>
+
+<%= form_tag('duplicates', :method=>:get) do %>
+
+Biblioteca: <%=
+              opt = SbctTitle.libraries_select(current_user)
+	      opt << ['Tutte', -1]
+	      select_tag(:library_id, options_for_select(opt,
+	      params[:library_id]), :onchange=>'submit();', include_blank:false,  prompt:'Scegliere una biblioteca')
+%>
+<% end %>
+
+
+
+
+<%= will_paginate @clavis_patrons, renderer: BootstrapPagination::Rails %>
+
+
+<%= content_tag(:div, clavis_patrons_duplicates(@clavis_patrons)) %>
+
+

@@ -37,21 +37,22 @@ class SpItemsController < ApplicationController
     @pagetitle=@sp_item.sp_section.nil? ? @h2_title : @sp_item.sp_section.title
 
     @d_object = DObject.find(params[:d_object]) if !params[:d_object].blank?
+
     @page = params[:page]
     render :layout=>params[:layout] if !params[:layout].blank?
   end
 
   def redir
-    @cm = ClavisManifestation.find(params[:manifestation_id])
-    @sp_items = SpItem.find_all_by_manifestation_id(params[:manifestation_id])
-    @sp_bibliography = SpBibliography.new
-    # render text:@sp_items.size and return
-    # sp_item_ids = cm.sp_item_ids_with_d_objects
-    # NB: sp_item_ids è un array, gli ids potrebbero essere più di uno
-    # al momento considero solo il primo
-    #sp_item = sp_item_ids.first
-    #render text:'resource not available' and return if sp_item.nil?
-    #redirect_to sp_item_path(sp_item)
+    render text:'no way' and return if params[:manifestation_id].to_i==0
+    @cm = ClavisManifestation.find(params[:manifestation_id].to_i)
+    @sp_item = SpItem.find(params[:sp_item_id])
+    if @sp_item.manifestation_id != @cm.id
+      render text:'err redir' and return
+    end
+    fd = File.open("/home/seb/redir_spl.log", 'a')
+    fd.write("#{Time.now} : manifestation_id #{@cm.id} sp_item_id #{@sp_item.id} #{DngSession.format_client_ip(request)}\n");
+    fd.close
+    redirect_to sp_item_path(@sp_item)
   end
 
   def info

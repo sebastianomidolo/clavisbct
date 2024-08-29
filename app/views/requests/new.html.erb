@@ -1,0 +1,12 @@
+<%=
+  if @patron_id.nil?
+    content_tag(:h2, "Inserimento richiesta")
+  else
+    content_tag(:h2, "Inserimento richiesta per utente #{@request.clavis_patron.to_label}")
+  end
+%>
+<%= content_tag(:h2, "Biblioteca #{@request.clavis_library.siglabct}") %>
+
+<%= render 'form' %>
+
+<%= link_to 'Back', requests_path %>

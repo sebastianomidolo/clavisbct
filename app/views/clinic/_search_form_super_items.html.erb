@@ -1,0 +1,92 @@
+<%= form_tag('/clinic/stats/patrimonio', :method=>:get) do %>
+
+Biblioteca: <%=
+ opt1 = [ ['Tutte le BCT', 'bct'], ['Tutte tranne le BCT', 'non_bct'] ]
+ opt2 = Clinic.libraries_select
+ # opt << ['Tutte', -1]
+ opt = opt1 + opt2
+ select_tag(:library_id, options_for_select(opt,
+ params[:library_id]), :onchange=>'submit();', include_blank:false)
+%>
+<br/>Item status
+<%=
+  opt = ClavisItem.item_status;opt.reject! {|s| s.include?('E')}
+  opt.reject! {|s| s.include?('NP')}
+  opt.append(["FKVY", "FKVY"])
+  opt.append(["NON FKVY", "!FKVY"])
+  opt.append(["CDHNOPW", "CDHNOPW"])
+  opt.append(["NON CDHNOPW", "!CDHNOPW"])
+  select_tag(:item_status, options_for_select(opt, params[:item_status]), :onchange=>'submit();', include_blank: true)
+%>
+
+Item media
+<%= select_tag(:item_media, options_for_select(ClavisItem.item_media, params[:item_media]), :onchange=>'submit();', include_blank: true) %>
+
+<br/>Prestabilità
+<%=
+  opt = ClavisItem.loan_class
+  opt.insert(3, ['Prestabile + Prestito locale', 'BC'])
+  select_tag(:loan_class, options_for_select(opt, params[:loan_class]), :onchange=>'submit();', include_blank: true)
+%>
+<br/>Tipo materiale
+<%= select_tag(:bib_type_first, options_for_select(Clinic.ogg_bibl_select, params[:bib_type_first]), :onchange=>'submit();', include_blank: true) %>
+
+<%= select_tag(:bib_type, options_for_select(Clinic.ogg_bibl_select(params[:bib_type_first]), params[:bib_type]), :onchange=>'submit();', include_blank: true) if !params[:bib_type_first].blank? %>
+
+<%= select_tag(:u100_pubblico, options_for_select(Clinic.u100_pubblico_select, params[:u100_pubblico]), :onchange=>'submit();', prompt:'Target lettura...') %>
+
+<br/>
+<%= select_tag(:genere, options_for_select(Clinic.genere_select, params[:genere]), :onchange=>'submit();', prompt:'Tipologia...') %>
+<%= select_tag(:pubblico, options_for_select(Clinic.pubblico_select, params[:pubblico]), :onchange=>'submit();', prompt:'Pubblico...') %>
+<%= select_tag(:onlyfc, options_for_select(Clinic.onlyfc_select, params[:onlyfc]), :onchange=>'submit();', prompt:'Catalogo/Fuori catalogo...') %>
+<%= select_tag(:loans, options_for_select(Clinic.loans_select, params[:loans]), :onchange=>'submit();', prompt:'Prestiti...') %>
+
+<%= select_tag(:other_libraries, options_for_select(Clinic.other_libraries_select, params[:other_libraries]), :onchange=>'submit();', prompt:'Altre biblioteche...') %>
+
+<br/>
+<%= check_box_tag('piemonte', 'S', params[:piemonte]) %>
+<%= label_tag(:piemonte, 'Piemonte') %>
+
+<%= check_box_tag('statcol_error', 't', params[:statcol_error]) %>
+<%= label_tag(:statcol_error, 'Con errori collocazione') %>
+
+<!--
+<br/>Pubblicati fino a <%= text_field_tag(:edition_age, params[:edition_age]) %> anni fa
+-->
+
+<br/>Acquisisto da anno a anno: <%= text_field_tag(:year, params[:year]) %> (esempi: 2022 ; 2021- ; -2023 ; 2018-2023)
+
+<br/><%= select_tag(:statcol, options_for_select(StatCol.stacols_select, params[:statcol]), :onchange=>'submit();', prompt:'Scelgli StatCol...') %>
+
+
+
+
+
+<!-- (esempi: "^R\." ; "^RN\." etc) -->
+
+<!--  if params[:library_id].to_i > 0 and !params[:genere].blank? and !params[:pubblico].blank? -->
+
+
+<%= check_box_tag('smusi', 'S', params[:smusi]) %>
+<%= label_tag(:smusi, 'Ipoteticamente scartabili', title:'Attenzione, non utilizzare per effettuare gli scarti') %>
+
+<!-- IdRegolaScarto: text_field_tag(:dr_id, params[:dr_id]) -->
+
+
+
+<% if ['seba','dorcol'].include?(current_user.email) %>
+<br/>
+<%= check_box_tag('show_sql', 'S', params[:show_sql]) %>
+<%= label_tag(:show_sql, 'Mostra SQL') %>
+<% end %>
+
+
+<br/><%= submit_tag('Cerca') %>
+<%= link_current_params('[scarica barcodes]', "/clinic/stats/patrimonio.csv?#{params.to_query}") if !params[:smusi].blank? %>
+<%= link_current_params('[PDF]', "/clinic/stats/patrimonio.pdf?#{params.to_query}") if !params[:smusi].blank? %>
+
+
+
+
+<% end %>
+

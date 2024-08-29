@@ -1,0 +1,23 @@
+# coding: utf-8
+<%= content_tag(:h4, "#{@records.size} notifiche pronti al prestito non confermate") %>
+
+<%= form_tag('nppnc', :method=>:get) do %>
+
+Filtra per data: <%= select_tag(:interval, options_for_select(
+		     [
+                        ['Ultimi 3 giorni','3 days'],
+                        ['Ultima settimana','1 week'],
+		        ['Ultime 2 settimane','2 weeks'],
+		        ['Ultime 4 settimane','4 weeks'],
+		        ['Dal 1 novembre 2023','from 2023-11-01'],
+		        ['Dal 1 ottobre 2023','from 2023-10-01'],
+		     ],
+		params[:interval]), :onchange=>'submit();', include_blank:false) %>
+
+Biblioteca: <%= select_tag(:library_id, options_for_select(SbctTitle.libraries_select(current_user),
+		params[:library_id]), :onchange=>'submit();', include_blank:true) %>
+<% end %>
+
+
+<%= clavis_patron_notifiche_pronti_al_prestito_non_confermate(@records) %>
+

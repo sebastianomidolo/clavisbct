@@ -329,7 +329,7 @@ class ClavisItem < ActiveRecord::Base
     r
   end
 
-  def self.item_status(include_null:nil)
+  def self.item_status
     sql=%Q{select value_label as label,value_key as key from clavis.lookup_value lv
   where value_language = 'it_IT' and value_class='ITEMSTATUS' order by value_key}
     a = self.connection.execute(sql).collect {|i| ["#{i['key']} - #{i['label']}",i['key']]}
@@ -458,12 +458,12 @@ class ClavisItem < ActiveRecord::Base
                                         :order=>order_by)
   end
 
-  def ClavisItem.fifty_years(params)
+  def ClavisItem.seventy_years(params)
     library_id = params[:owner_library_id].blank? ? 2 : params[:owner_library_id].to_i
     sql=%Q{SELECT ci.reprint,ci.barcode,ci.manifestation_id,ci.item_id,cm.edition_date,ci.volume_text, substr(ci.title, 1, 80) as title
  FROM clavis.item ci join clavis.manifestation cm using(manifestation_id)
  WHERE
-  edition_date between 1500 and date_part('year', now())-50 and loan_class='B' and
+  edition_date between 1500 and date_part('year', now())-70 and loan_class='B' and
      ci.owner_library_id=#{library_id}
    and ci.item_media='F' and 
 -- not
@@ -719,6 +719,103 @@ select manifestation_id,title,item_id,inventory_date,created_by,inventory_value,
     self.connection.execute(sql).to_a
   end
 
+  def ClavisItem.sql_per_scarto(p,contesto)
+    cond = []
+
+    case p[:library_id]
+    when 'bct'
+      cond << "si.home_library is not null"
+    when 'decentrate'
+      cond << "si.home_library is not null and si.home_library_id not in (2,3)"
+    else
+      cond << "si.home_library_id = #{p[:library_id].to_i}"      
+    end
+    
+    cond << ( (p[:tipo_ricerca] == 'catalogo') ? "si.manifestation_id is not null" : "si.manifestation_id is null")
+
+    if p[:pubblico] != 'all'
+      cond << "si.pubblico = #{self.connection.quote(p[:pubblico])}"
+    end
+
+    if p[:genere] != 'all'
+      cond << "si.genere = #{self.connection.quote(p[:genere])}"
+    end
+
+    if !p[:statcol].blank?
+      cond << "si.statcol = #{self.connection.quote(p[:statcol])}"
+    end
+
+    if cond==[]
+      cond = ''
+    else
+      cond = "WHERE #{cond.join(' AND ')}"
+    end
+
+    if contesto=='S'
+      sql = %Q{
+        -- contesto S
+select si.pubblico, si.genere as formato, count(dr.item_id) as scartabili,
+    count(si.item_id) as totale
+from import.super_items si left join import.discardable_items as dr on(dr.item_id=si.item_id)
+       #{cond}
+group by rollup(1,2)
+order by 1,2
+      }
+
+    end
+    if contesto=='R'
+      sql = %Q{
+-- Riepilogo statcols - contesto R
+select distinct si.statcol,
+count(si.statcol) over(partition by si.statcol) as conta_items_per_statcol,
+count(dr.item_id) over(partition by (si.statcol)) as scartabili
+
+from import.super_items si left join import.discardable_items as dr using(item_id)
+	#{cond}
+order by si.statcol;
+      }
+    end
+    if contesto=='L'
+      sql = %Q{
+-- Lista titoli - contesto L
+select dr.classe as classe, 
+dr.descrizione as descrizione,
+dr.edition_age as anno_edizione, 
+dr.anni_da_ultimo_prestito as anni_da_ultimo_prestito,
+si.statcol,si.dw3,
+dr.smusi as smusi,
+si.item_media_label as media, 
+si.section,
+si.colloc_stringa, 
+substr(si.title,1,20) as titolo, 
+si.barcode as barcode, 
+si.inventory_number,si.inventory_serie_id,
+si.print_year as anno_ediz, 
+si.ultimo_prestito as ultimo_prest, 
+si.prestiti as num_prestiti, 
+case when si.other_library_count = 0 then true else false end as copia_unica, si.other_library_count,
+   array_to_string(si.other_library_labels,', ') as other_library_labels,
+
+count(si.statcol) over(partition by si.statcol) as conta_items_per_statcol,
+count(*) over() as totale_items_biblioteca,
+count(dr.item_id) over(partition by (si.statcol)) as scartabili
+
+
+from import.super_items si 
+
+   join import.discardable_items as dr using(item_id)
+	#{cond}
+order by si.statcol,si.colloc_stringa;
+      }
+    end
+
+    fd=File.open("/home/seb/prova_scarto.sql", "w")
+    fd.write(sql)
+    fd.close
+
+    sql
+  end
+  
   def ClavisItem.rest_get_item_status(barcode)
     config = Rails.configuration.database_configuration
     require 'net/http'

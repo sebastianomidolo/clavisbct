@@ -126,17 +126,21 @@ module SbctItemsHelper
     res=[]
     totale=0.0
     ncopie=0
+    # res << content_tag(:tr, content_tag(:td, 'Sigla', class:'col-md-1') +
+    #                         content_tag(:td, 'Numero copie', class:'col-md-1') +
+    #                         content_tag(:td, 'Spesi', class:'col-md-1') +
+    #                         content_tag(:td, 'Ancora disponibili', class:'col-md-2') +
+    #                         content_tag(:td, 'Totale assegnato', class:'col-md-7'), class:'success')
     res << content_tag(:tr, content_tag(:td, 'Sigla', class:'col-md-1') +
-                            content_tag(:td, 'Spesi', class:'col-md-1') +
-                            content_tag(:td, 'Percent spesi', class:'col-md-1') +
                             content_tag(:td, 'Numero copie', class:'col-md-1') +
-                            content_tag(:td, 'Disponibili', class:'col-md-1'), class:'success')
+                            content_tag(:td, 'Spesi', class:'col-md-10'), class:'success')
+
     cnt = 0
     records.each do |r|
       cnt += 1
       ncopie += r.numero_copie.to_i
       totale += r.assegnati.to_f
-      qb_select = r.qb.blank? ? '' : 'S'
+      qb_select = r.qb.blank? ? 'N' : 'S'
       budget_id = params[:budget_ids].blank? ? '' : params[:budget_ids]
       if r.qb.blank?
         classe = 'success'
@@ -147,16 +151,18 @@ module SbctItemsHelper
         row_title = "Scelti dalla biblioteca #{r.siglabct}"
       end
       biblioteca = %Q{#{link_to(r.siglabct, sbct_titles_path("sbct_title[clavis_library_ids]":r.library_id,supplier_id:params[:supplier_id],order_id:params[:order_id],budget_id:budget_id,order_status:params[:order_status],qb_select:qb_select,numcopie:params[:numcopie]), class:"btn btn-#{classe}")}}.html_safe
-    # biblioteca = r.siglabct
+
       row_class = r.ancora_disp.to_f < 0 ? 'danger' : ''
-      disponibili = percentuale_spesi = 'da calcolare'
-      # percentuale_spesi = r.attributes
       disponibili = number_to_currency(r.ancora_disp)
-      res << content_tag(:tr, content_tag(:td, biblioteca) +
-                              content_tag(:td, number_to_currency(r.spesi)) +
-                              content_tag(:td, percentuale_spesi) +
-                              content_tag(:td, r.numero_copie) +
-                              content_tag(:td, disponibili), class:row_class, title:row_title)
+      # res << content_tag(:tr, content_tag(:td, biblioteca, title:row_title) +
+      #                         content_tag(:td, r.numero_copie, title:'Numero copie') +
+      #                         content_tag(:td, number_to_currency(r.spesi), title:'Spesi') +
+      #                         content_tag(:td, disponibili, title:'Ancora disponibili') +
+      #                         content_tag(:td, number_to_currency(r.assegnati), title:'Totale assegnato'), class:row_class)
+      res << content_tag(:tr, content_tag(:td, biblioteca, title:row_title) +
+                              content_tag(:td, r.numero_copie, title:'Numero copie') +
+                              content_tag(:td, number_to_currency(r.spesi), title:'Spesi'), class:row_class)
+
     end
     return '' if cnt==0
     "#{heading} #{content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')}".html_safe
@@ -307,8 +313,7 @@ module SbctItemsHelper
         begin
           rbudget[[r.siglabiblioteca,r.qb]] -= r.prezzo_scontato
         rescue
-          
-          return "Errore qui: #{$!} per r.prezzo_scontato #{r.prezzo_scontato} --- id_titolo #{r.id_titolo} id_copia #{r.id_copia} #{rbudget[[r.siglabiblioteca,r.qb]].class}"
+          return "Errore cercando di eseguire rbudget[[r.siglabiblioteca,r.qb]] -= r.prezzo_scontato:<br/> #{$!} per r.prezzo_scontato #{r.prezzo_scontato} --- id_titolo #{r.id_titolo} id_copia #{r.id_copia} #{rbudget[[r.siglabiblioteca,r.qb]].class}<br/>r.prezzo_scontato=#{r.prezzo_scontato}<br/>#{r.siglabiblioteca} - qb: #{r.qb}".html_safe
         end
       end
       siglabib = r.siglabiblioteca

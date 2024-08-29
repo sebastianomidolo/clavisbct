@@ -1,0 +1,12 @@
+Lista delle azioni qui
+
+
+<%= content_tag(:p, "Azioni: #{@clinic_actions.count}") %>
+
+<%= content_tag(:div, clinic_actions_list(@clinic_actions) ) %>
+
+
+
+<%=
+  link_to("<b>Inserisci azione</b>".html_safe, nuova_clinic_actions_path, class:'btn btn-warning')  if can? :manage, ClinicAction
+%>

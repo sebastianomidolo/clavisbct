@@ -13,21 +13,23 @@
 <% end -%>
 
 <% if !bct_letters_datazione(@bct_letter).nil? %>
- <tr><th>Data</th><td><%= bct_letters_datazione(@bct_letter)-%></td></tr>
+ <tr><th>Data cronica</th><td><%= bct_letters_datazione(@bct_letter)-%></td></tr>
 <% end %>
 
 <% if !@bct_letter.placefrom.nil? -%>
 <tr>
-  <th>Scritta a</th>
+  <th>Data topica</th>
   <td class="luogo"><%= @bct_letter.placefrom.denominazione -%></td>
 </tr>
 <% end -%>
 
 <% if !@bct_letter.placeto.nil? -%>
+<!--
 <tr>
  <th>Ricevuta a</th>
  <td class="luogo"><%= @bct_letter.placeto.denominazione -%></td>
 </tr>
+-->
 <% end -%>
 
 <!-- Verificare se e come inserire la "Tipologia" della lettera (il concetto non mi è chiaro) -->
@@ -39,10 +41,10 @@
                       type: :textarea, class: :button,
                       skip_blur:false)
 %>
-   <tr><th>Argomento</th><td><%= bip %></td></tr>
+   <tr><th>Oggetto</th><td><%= bip %></td></tr>
 <% else %>
  <% if @bct_letter.argomento!=nil -%>
-  <tr><th>Argomento</th><td><b><%= "#{@bct_letter.argomento}"-%></b></td></tr>
+  <tr><th>Oggetto</th><td><b><%= "#{@bct_letter.argomento}"-%></b></td></tr>
  <% end %>
 <% end %>
 
@@ -75,6 +77,7 @@
 
 <tr><th></th><td><%= link_to("link a questa scheda", bct_letter_path(@bct_letter), {:title=>'permalink',:class=>'permalink'})-%></td></tr>
 
+<!--
 <% if can? :update, BctLetter %>
 <% 
     bip=best_in_place(@bct_letter, :descrizione_fisica, ok_button:'Salva', cancel_button:'Annulla modifiche',
@@ -84,3 +87,4 @@
 %>
   <tr><th>Descrizione fisica</th><td><%= bip %></td></tr>
 <% end %>
+-->

@@ -1,0 +1,33 @@
+
+<%= form_tag('/clavis_items/scarto', :method=>:get) do %>
+
+
+Biblioteca: <%=
+  opt1 = [ ['Tutte le BCT', 'bct'], ['Solo decentrate', 'decentrate'] ]
+# opt2 = Clinic.libraries_select
+  opt2 = SbctTitle.libraries_select(current_user)
+ opt = opt1 + opt2
+ select_tag(:library_id, options_for_select(opt,
+ params[:library_id]), include_blank:false)
+%>
+
+<br/>
+
+<%= select_tag(:tipo_ricerca, options_for_select( [ ['Catalogo','catalogo'], ['Fuori catalogo','fc'] ],
+    params[:tipo_ricerca])) %>
+
+<br/>
+<%= select_tag(:pubblico, options_for_select( [ ['Tutti','all'], ['Adulti','adulti'], ['Ragazzi','ragazzi'] ], params[:pubblico]), include_blank:false) %>
+
+<br/>
+<%= select_tag(:genere, options_for_select( [ ['Tutti', 'all'], ['Volumi Narrativa','vol_narrativa'], ['Volumi Saggistica','vol_saggistica'], ['Multimedia','multimedia'] ], params[:genere])) %>
+
+<br/>
+<%= submit_tag('Cerca', class:'btn btn-success') %>
+
+<% end %>
+
+
+<br/>
+
+

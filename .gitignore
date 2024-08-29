@@ -33,3 +33,7 @@ public/dvd_*
 
 
 .sass-cache/
+
+extras/soap_client.rb
+tar_cmdline.sh
+tar_exclude.txt

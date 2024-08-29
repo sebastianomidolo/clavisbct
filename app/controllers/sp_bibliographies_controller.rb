@@ -42,9 +42,18 @@ class SpBibliographiesController < ApplicationController
     
     @not_admin_user=false
     if user_signed_in?
-      cond = cond.join(" AND ")
       if can? :manage, SpBibliography
-        # @sp_bibliographies = SpBibliography.paginate(:page=>params[:page], per_page:500, :order=>'title')
+        @status = nil
+        if params[:status] == 'AC'
+          cond << "status in ('A','C')"
+          @status = 'Pubblicate'
+        end
+        if params[:status] == 'N'
+          cond << "status = 'N'"
+          @status = 'Nuove'
+        end
+        @status = "Tutte" if @status.nil?
+        cond = cond.join(" AND ")
         @sp_bibliographies = SpBibliography.paginate(:conditions=>cond, :page=>params[:page], :per_page=>500, :order=>'sp_bibliographies.id desc')
       else
         @sp_bibliographies = current_user.sp_bibliographies.paginate(:page=>params[:page], per_page:50)

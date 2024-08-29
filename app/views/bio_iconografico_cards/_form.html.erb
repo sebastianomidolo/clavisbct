@@ -9,14 +9,14 @@
      txtvar.gsub!('&gt;', ">")
      txtvar.gsub!('&lt;', "<")
      %>
-  <%= text_field_tag 'bio_iconografico_card[intestazione]', txtvar, size:80 %>
+  Intestazione <%= text_field_tag 'bio_iconografico_card[intestazione]', txtvar, size:80 %>
   <% f.input :intestazione, as: 'string', input_html: {size: 40} %>
   <%= f.input :namespace, as: 'hidden' %>
 
-  <% if can? :manage, BioIconograficoCard %>
+  <% if can? :numera, BioIconograficoCard %>
   <%= f.input :lettera, collection: BioIconograficoCard.lettere, include_blank: false, label: false %>
   <% end %>
-  <%= f.input :numero, as: 'integer', label:false, autofocus: true %>
+  <%= f.input :numero, as: 'integer', label:'numero scheda', autofocus: true %>
 
   <br/><p>BID SBN: <%= f.input :bid, label:false %></p>
 

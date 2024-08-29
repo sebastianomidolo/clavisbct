@@ -1,0 +1,56 @@
+
+<%= content_tag(:h4, @service.to_label) %>
+
+<%= content_tag(:pre, @service.description.html_safe) if !@service.description.nil? %>
+
+<% if can? :edit, Service %>
+<%= link_to("Modifica", edit_service_path(@service), class:'btn btn-warning') %>
+<%= link_to("Collega ruoli in ClavisBct".html_safe, roles_service_path, class:'btn btn-warning') if !@service.is_top? and can? :manage, Service%>
+<%= link_to("Documentazione".html_safe, service_docs_path(service_id:@service), class:'btn btn-warning') %>
+<%= link_to("Aggiungi oggetto digitale".html_safe, d_objects_service_path(@service), class:'btn btn-warning') if can? :manage, Service %>
+<% end %>
+
+<%= content_tag(:span, link_to('Elimina scheda', @service, method: :delete, data: { confirm: "Confermi eliminazione?" }, class:'btn btn-warning')) if @service.descendants_index.size == 0 and can? :destroy, @service %>
+
+
+<br/>
+<% if @service.descendants_index.size > 0 %>
+<%= content_tag(:span, "Servizi contenuti") %>
+<%= content_tag(:div, services_descendants_index(@service)) %>
+<% else %>
+
+<br/>
+<% end %>
+
+<%=
+  if can? :new, Service
+    link_to("<b>Nuova scheda servizio in #{@service.to_label} </b>".html_safe, new_service_path(parent_id:@service.id), class:'btn btn-warning')
+  end
+%>
+
+<%= content_tag(:div, @service.url.nil? ? '' : link_to(@service.url, @service.url))%>
+
+
+
+<% if @service.roles.size>0 and can? :manage, Service %>
+
+<br/>
+Ruoli:
+<%= content_tag(:div, service_roles(@service)) %>
+<% end %>
+
+
+
+<%= content_tag(:div, service_attachments(@service,params)) %>
+
+<%=
+  if @service_docs.size > 0
+   content_tag(:div, service_docs_list(@service_docs,@service))
+ else
+  # "(documentazione non presente)"
+ end
+%>
+
+<br/>
+
+

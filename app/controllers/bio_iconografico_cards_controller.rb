@@ -2,6 +2,7 @@ class BioIconograficoCardsController < ApplicationController
   layout 'bio_iconografico'
   before_filter :set_bio_iconografico_card, only: [:show, :edit, :update, :destroy]
   before_filter :authenticate_user!, only: [:edit,:update,:upload,:numera,:index,:destroy]
+  before_filter :check_namespace, only: [:edit,:update,:upload,:numera,:index,:destroy,:show]
   load_and_authorize_resource
 
 
@@ -9,6 +10,9 @@ class BioIconograficoCardsController < ApplicationController
 
   def index
     # params[:namespace] = BioIconograficoCard.default_namespace(current_user) if params[:namespace].blank?
+    if @bio_iconografico_namespace.nil?
+      render text:'namespace errato',layout:true and return if params[:namespace].blank? or !BioIconograficoNamespace.exists?(params[:namespace])
+    end
     if params[:lettera].blank?
       @show_searchbox = true
       if params[:bio_iconografico_card].blank?
@@ -25,7 +29,7 @@ class BioIconograficoCardsController < ApplicationController
       end
       namespace=@bio_iconografico_card.namespace
     end
-    params[:namespace]=namespace if params[:namespace].blank?
+    params[:namespace]=@bio_iconografico_namespace.label
     @bio_iconografico_cards=BioIconograficoCard.list(params,@bio_iconografico_card)
   end
 
@@ -41,10 +45,6 @@ class BioIconograficoCardsController < ApplicationController
     else
       @bio_iconografico_card = BioIconograficoCard.new
     end
-  end
-
-  def info
-    params[:namespace] = BioIconograficoCard.default_namespace if params[:namespace].blank?
   end
 
   def numera
@@ -109,5 +109,26 @@ class BioIconograficoCardsController < ApplicationController
       @bio_iconografico_card = BioIconograficoCard.find(params[:id])
       params[:lettera]=@bio_iconografico_card.lettera
     end
-
+    def check_namespace
+      # render text:'x' and return
+      if @bio_iconografico_card.nil?
+        @bio_iconografico_card=BioIconograficoCard.new
+        if params[:namespace].blank?
+          if params['bio_iconografico_card'].blank?
+            render text:"Scegli un repertorio",layout:true and return
+          else
+            @bio_iconografico_card.namespace=params['bio_iconografico_card']['namespace']
+          end
+        else
+          @bio_iconografico_card.namespace=params['namespace']
+        end
+      end
+      if BioIconograficoNamespace.exists?(@bio_iconografico_card.namespace)
+        @bio_iconografico_namespace = BioIconograficoNamespace.find(@bio_iconografico_card.namespace)
+      else
+      end
+      if !current_user.bio_iconografico_namespaces.include?(@bio_iconografico_namespace)
+        render text:'namespace non accessibile',layout:true and return
+      end
+    end
 end

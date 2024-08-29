@@ -138,6 +138,7 @@ module SpBibliographiesHelper
 
   def sp_bibliographies_breadcrumbs
     # return params.inspect
+    # return @sp_bibliography.homepage
     # return @sp_section.homepage
     links=[]
     if user_signed_in?
@@ -147,17 +148,21 @@ module SpBibliographiesHelper
         links << link_to('Bibliografie', 'https://bct.comune.torino.it/bibliografie')
         links << link_to('Elenco', sp_bibliographies_path)
       else
-        if @sp_section.homepage.blank?
-          if @sp_bibliography.homepage.blank?
-            linktext = ''
-            # return linktext
-          else
-            linktext,url = @sp_bibliography.homepage.split(' | ')
-          end
+        if @sp_section.blank?
+          linktext,url = @sp_bibliography.homepage.split(' | ')
         else
-          linktext,url = @sp_section.homepage.split(' | ')
+          if @sp_section.homepage.blank?
+            if @sp_bibliography.homepage.blank?
+              linktext = ''
+            # return linktext
+            else
+              linktext,url = @sp_bibliography.homepage.split(' | ')
+            end
+          else
+            linktext,url = @sp_section.homepage.split(' | ')
+          end
         end
-        links << link_to(linktext,url) if ! linktext.blank?
+        links << link_to(linktext,url) if !linktext.blank?
       end
     end
     if params[:controller]=='sp_bibliographies' and ['show','edit'].include?(params[:action])
@@ -175,7 +180,11 @@ module SpBibliographiesHelper
       if user_signed_in?
         links << link_to(@sp_bibliography.title, sp_bibliography_path(@sp_bibliography.id))
       else
-        links << link_to(@sp_bibliography.title, sp_bibliography_path(@sp_bibliography.id)) if @sp_section.homepage.blank?
+        if @sp_section.blank?
+          links << link_to(@sp_bibliography.title, sp_bibliography_path(@sp_bibliography.id))
+        else
+          links << link_to(@sp_bibliography.title, sp_bibliography_path(@sp_bibliography.id)) if @sp_section.homepage.blank?
+        end
       end
       if !@sp_section.nil? and !@sp_section.number.nil?
         section=@sp_section

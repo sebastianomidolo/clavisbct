@@ -1,60 +1,7 @@
-<%= form_tag('/clinic/stats/patrimonio', :method=>:get) do %>
-
-Biblioteca: <%=
- opt = Clinic.libraries_select
- opt << ['Tutte', -1]
- select_tag(:library, options_for_select(opt,
- params[:library]), :onchange=>'submit();', include_blank:false,  prompt:'Scegliere una biblioteca')
-%>
-<br/>Item status
-<%= select_tag(:item_status, options_for_select(ClavisItem.item_status, params[:item_status]), :onchange=>'submit();', include_blank: true) %>
-
-<br/>Item media
-<%= select_tag(:item_media, options_for_select(ClavisItem.item_media, params[:item_media]), :onchange=>'submit();', include_blank: true) %>
-
-
-<br/>Loan class
-<%= select_tag(:loan_class, options_for_select(ClavisItem.loan_class, params[:loan_class]), :onchange=>'submit();', include_blank: true) %>
-
-
-
-<br/>Solo fuori catalogo <%= radio_button_tag(:onlyfc, true, params[:onlyfc]=='true') %>
-Escludi fuori catalogo <%= radio_button_tag(:onlyfc, false, params[:onlyfc]=='false') %>
-Topografico <%= radio_button_tag(:onlyfc, 'topogr', params[:onlyfc]=='topogr') %>
-Tutti <%= radio_button_tag(:onlyfc, '', params[:onlyfc]=='') %>
-
-
-<br/>Adulti <%= radio_button_tag(:pubblico, 'a', params[:pubblico]=='a') %>
-Ragazzi     <%= radio_button_tag(:pubblico, 'r', params[:pubblico]=='r') %>
-Tutti <%= radio_button_tag(:pubblico, '', params[:pubblico]=='') %>
-
-
-
-<br/>Narrativa <%= radio_button_tag(:genere, 'n', params[:genere]=='n') %>
-Saggistica     <%= radio_button_tag(:genere, 's', params[:genere]=='s') %>
-Senza genere   <%= radio_button_tag(:genere, 'na', params[:genere]=='na') %>
-Tutti <%= radio_button_tag(:genere, '', params[:genere]=='') %>
-
-
-<br/>Da anno a anno: <%= text_field_tag(:year, params[:year]) %> (esempi: 2022 ; 2021- ; -2023 ; 2018-2023)
-
-<br/>StatCol: <%= text_field_tag(:statcol, params[:statcol]) %> (esempi: "^R\." ; "^RN\." etc)
-
-<br/>Prestati almeno una volta <%= radio_button_tag(:loans, 'y', params[:loans]=='y') %>
-Mai prestati    <%= radio_button_tag(:loans, 'n', params[:loans]=='n') %>
-Tutti <%= radio_button_tag(:loans, '', params[:loans]=='') %>
-
-
-<%= check_box_tag('smusi', 'S', params[:smusi]) %>
-<%= label_tag(:smusi, 'Scarto') %>
-
-<br/><%= submit_tag('Cerca') %>
-<% end %>
-
-
+<%= render partial:'search_form_super_items' %>
 
 <%= content_tag(:h4, "Riepilogo #{@records.size} statcols") %>
-<%= content_tag(:pre, @sql) %>
+<%= content_tag(:pre, @sql) if params[:show_sql] %>
 
 <%= content_tag(:div, clinic_riepilogo_patrimonio(@records)) %>
 

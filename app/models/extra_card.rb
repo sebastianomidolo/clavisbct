@@ -2,8 +2,9 @@
 class ExtraCard < ActiveRecord::Base
   attr_accessible :titolo, :collocazione, :inventory_serie_id, :inventory_number, :deleted,\
                   :home_library_id, :note_interne, :login, :mancante, :created_at, :created_by, :updated_by,\
-                  :updated_at
-                                                                                                  
+                  :updated_at, :musicale
+
+  attr_accessor :musicale
   self.table_name='topografico_non_in_clavis'
 
   belongs_to :created_by, class_name: 'User', foreign_key: :created_by

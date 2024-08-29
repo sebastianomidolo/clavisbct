@@ -22,9 +22,20 @@
 
 <%= javascript_tag("jQuery('#qs').select().focus()") %>
 
-<%= content_tag(:h3, "Trovati #{@talking_books.total_entries} titoli") %>
-
-
+<%=
+    if @talking_books_manager
+      content_tag(:h3, "#{@talking_books.total_entries} titoli (ordinati per ultimo inserimento)")
+    else
+      if params[:qs].blank?
+        if params[:type]=='novita'
+        else
+        end
+    content_tag(:h3, "#{@talking_books.total_entries} titoli ordinati per ultimo inserimento")
+      else
+    content_tag(:h3, "Trovati #{@talking_books.total_entries} titoli (ordinati per autore/titolo)")
+      end
+    end
+%>
 
 <hr/>
 <%= if @talking_books_manager

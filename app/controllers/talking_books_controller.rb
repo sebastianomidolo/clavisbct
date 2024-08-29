@@ -5,7 +5,7 @@ class TalkingBooksController < ApplicationController
 
   before_filter :set_talking_book, only: [:show, :edit, :update, :destroy]
   # load_and_authorize_resource only: [:edit,:check,:check_duplicates,:digitalizzati_non_presenti,:new,:create,:update,:destroy]
-  load_and_authorize_resource except: [:index,:show,:download_mp3]
+  load_and_authorize_resource except: [:index,:show,:download_mp3,:prenota]
 
   respond_to :html
 
@@ -82,7 +82,14 @@ class TalkingBooksController < ApplicationController
       order = 'id desc'
     else
       if params[:qs].blank?
-        order='id desc'
+        if params[:type]=='novita'
+          order='id desc'
+        else
+          order='chiave,ordine'
+          order='id desc'
+          # order = 'digitalizzato desc'
+          order = 'digitalizzato desc nulls last, id desc'
+        end
       else
         order='chiave,ordine'
       end
@@ -130,7 +137,9 @@ class TalkingBooksController < ApplicationController
      group by tb.id
     order by #{order}}
           end
-          
+
+          # render text:sql and return
+
           @talking_books = TalkingBook.paginate_by_sql(sql, page:params[:page])
         end
         render :index, layout:'talking_books' if @talking_books_manager
@@ -145,15 +154,21 @@ class TalkingBooksController < ApplicationController
 
       format.csv {
         require 'csv'
+        cond << "titolo != ''"
         cond = cond.join(" AND ")
-        @records = TalkingBook.find(:all,:conditions=>cond, :order=>order)
-        csv_string = CSV.generate do |csv|
+        @records = TalkingBook.find(:all,:conditions=>cond, :order=>"chiave, ordine")
+        csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
+          csv << ["Chiave", "Ordine", "Autore", "Responsabilità", "Titolo", "Numero CD", "Collocazione", "Numero cassette",
+                  "Data digitalizzazione", "RecordID", "Abstract", "Data collocazione", "ManifestationId"]
           @records.each do |r|
-            barcode = r.clavis_item.nil? ? "da controllare" : r.clavis_item.barcode
-            csv << [barcode,r.n,r.digitalizzato]
+            # barcode = r.clavis_item.nil? ? "da controllare" : r.clavis_item.barcode
+            barcode = ''
+            csv << [r.chiave,r.ordine,r.intestatio,r.respons,r.titolo.strip,r.cd,r.n,r.cassette,
+                    r.digitalizzato,r.id,r.abstract,r.data_collocazione,r.manifestation_id]
           end
         end
-        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=libriparlati_scaricabili.csv"
+        # send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=libriparlati_scaricabili.csv"
+        send_data csv_string, type: Mime::CSV, disposition: "attachment; filename=talking_books.csv"
       }
 
       format.pdf {
@@ -179,6 +194,19 @@ class TalkingBooksController < ApplicationController
     # render layout:'navbar'
   end
 
+  def make_zip
+    @talking_book.create_or_replace_audio_zip
+    # make_audio_zip
+    redirect_to edit_talking_book_path
+  end
+
+  def delete_zip
+    if File.exists?(@talking_book.zip_filepath)
+      File.delete(@talking_book.zip_filepath)
+    end
+    redirect_to edit_talking_book_path
+  end
+  
   def new
     @talking_book = TalkingBook.new
     render layout:'navbar'
@@ -212,6 +240,15 @@ class TalkingBooksController < ApplicationController
   def build_pdf
     require 'open3'
     @stdout,@stderr,@status=TalkingBook.build_pdf_catalogs
+  end
+
+  def prenota
+    ack=DngSession.access_control_key(params,request)
+    if ack!=params[:ac]
+      render :text=>"error - params: #{params} - request: #{request}", :content_type=>'text/plain'
+      return
+    end
+    render text:"prenotare #{params}"
   end
 
   def download_mp3

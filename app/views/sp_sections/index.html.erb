@@ -1,0 +1,5 @@
+<%= content_tag(:div, "Sezioni totali: #{@sp_sections.count}") %>
+<%= (link_to 'Nuova sezione...', new_sp_section_path(bibliography_id:@sp_bibliography.id)) if can?(:create,SpSection) %>
+
+<%= content_tag(:div, sp_section_list_sections(@sp_sections)) %>
+

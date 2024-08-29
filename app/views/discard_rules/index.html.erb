@@ -1,0 +1,16 @@
+<%= form_tag('/discard_rules', :method=>:get) do %>
+Scegli: <%=
+ opt = [ ['Adulti', 'adulti'], ['Ragazzi', 'ragazzi'] ]
+ select_tag(:pubblico, options_for_select(opt,
+ params[:pubblico]), :onchange=>'submit();', include_blank:true)
+%>
+<% end %>
+
+
+<%= content_tag(:div, discard_rules_list(@discard_rules) ) %>
+
+
+
+<%=
+  link_to("<b>Inserisci regola</b>".html_safe, new_discard_rule_path, class:'btn btn-warning')  if can? :new, DiscardRule
+%>

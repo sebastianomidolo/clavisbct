@@ -1,0 +1,23 @@
+
+
+<%= simple_form_for(@sbct_event, :method=>'get', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.association :sbct_event_type, hint: nil,
+	as:'select', include_blank:true, label: 'Tipo di evento', :input_html => {:onchange => "submit()"}
+    %>
+
+    Stato delle richieste: <%= select_tag(:rstatus, options_for_select(SbctLEventTitle.status_select,
+	params[:rstatus]), :onchange=>'submit();', include_blank:true) %>
+
+    <br/>
+    <%= check_box_tag('myevents', 'S', params[:myevents], onchange:'submit()') %>
+    <%= label_tag(:myevents, "Solo i miei eventi") %>
+  </div>
+
+  <div class="form-actions">
+    Cerca negli eventi: <%= text_field(:sbct_event, :title_words) %>
+    <%= f.button :submit, value: 'Cerca' , class:'btn btn-success'%>
+  </div>
+<% end %>

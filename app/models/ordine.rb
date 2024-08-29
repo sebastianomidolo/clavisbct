@@ -1,3 +1,7 @@
+# coding: utf-8
+# NB questa classe (Ordine) non è utilizzata. Era stata creata per operazioni di importazione dati dagli archivi periodici in formato txt
+# formato in uso dal 2005 al 2020  (vedi /home/midolo/ProgettiCivica/Periodici su biblio)
+
 class Ordine < ActiveRecord::Base
   self.table_name='serials_admin_table'
   attr_accessible :titolo, :library_id, :ordanno, :numero_fattura, :issue_status, :anno_fornitura

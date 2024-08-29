@@ -8,11 +8,23 @@ class HomeController < ApplicationController
   def index
     @pagetitle="ClavisBCT"
     @msg=Time.now
+
+
     # authenticate_user!
 
-    if !current_user.nil? and current_user.email=='seba'
+    if !current_user.nil?
+      if SbctTitle.user_roles(current_user).include?('AcquisitionSupplier')
+        redirect_to sbct_invoices_path
+      end
+      user_session[:current_order]=nil
+      # user_session[:current_budget]=nil
+      user_session[:events_mode]=nil
+      # user_session[:current_list]=nil
+    end
+    
+    if !current_user.nil? and ['dorcol'].include?(current_user.email)
       fd=File.open(File.join(Rails.root.to_s, 'tmp', 'my_ip.txt'), 'w')
-      fd.write "# seba ip:\nsshd: #{request.remote_addr}\n"
+      fd.write "# dorcol ip:\nsshd: #{request.remote_addr}\n"
       fd.close
     end
     if !current_user.nil? and current_user.email=='sebix'
@@ -39,9 +51,6 @@ class HomeController < ApplicationController
     res = [ip:ip, datetime: Time.now, target: params[:target], query_string: params[:qs]]
     XhrRequest.create(target:params[:target],timestamp:Time.now,ip:ip,qs:params[:qs])
     render text: res.to_s
-  end
-
-  def periodici_musicale_in_ritardo
   end
 
   def test

@@ -18,8 +18,12 @@ class SbctBudgetsController < ApplicationController
 
   def show
     @sbct_budget=SbctBudget.find(params[:id])
-    if current_user.role?(['AcquisitionManager','AcquisitionStaffMember','AcquisitionLibrarian'])
-      user_session[:current_budget]=@sbct_budget.id if @sbct_budget.locked==false
+    if SbctTitle.libraries_select(current_user).size > 0
+      if current_user.role?(['AcquisitionManager','AcquisitionStaffMember','AcquisitionLibrarian'])
+        user_session[:current_budget]=@sbct_budget.id if @sbct_budget.locked==false
+      end
+    else
+      user_session[:current_budget]=nil
     end
     @pagetitle=@sbct_budget.to_label
   end
@@ -79,6 +83,12 @@ class SbctBudgetsController < ApplicationController
     redirect_to sbct_suppliers_path
   end
 
+  def release
+    if request.method == 'POST'
+      @sbct_budget.release_budget
+      render :action => "show"
+    end
+  end
   # Nuova procedura 2023
   def suppliers_assign
     if request.method == 'POST'

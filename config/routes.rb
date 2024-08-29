@@ -3,9 +3,6 @@ Clavisbct::Application.routes.draw do
 
   resources :requests
 
-  resources :stats
-
-
   resources :manoscritti
   resources :serial_titles do
     member do
@@ -48,7 +45,13 @@ Clavisbct::Application.routes.draw do
   resources :bio_iconografico_topics
 
   resources :discard_rules
-  
+
+  resources :clinic_actions, only: [:index, :show, :edit, :update, :create, :destroy] do
+    collection do
+      get 'nuova'
+    end
+  end
+
   resources :clavis_purchase_proposals do
     collection do
       get 'sql_shelf_update'
@@ -243,6 +246,8 @@ Clavisbct::Application.routes.draw do
     member do
       get 'download_mp3'
       get 'prenota'
+      get 'delete_zip'
+      get 'make_zip'
     end
     collection do
       get 'opac_edit_intro'
@@ -341,6 +346,7 @@ Clavisbct::Application.routes.draw do
       get 'sbn_iccu_opac_redir'
       get 'check_adabas_kardex'
       get 'containers'
+      get 'sync'
     end
     collection do
       get 'shortlist'
@@ -368,11 +374,12 @@ Clavisbct::Application.routes.draw do
       get 'collocazioni'
       get 'ricollocazioni'
       post 'closed_stack_item_request'
-      get 'fifty_years'
+      get 'seventy_years'
       get 'controllo_valori_inventariali'
       get 'clear_user_data'
       get 'find_by_home_library_id_and_manifestation_ids'
       get 'senza_copertina'
+      get 'scarto'
     end
   end
 
@@ -430,6 +437,8 @@ Clavisbct::Application.routes.draw do
       get 'csir_status'
       post 'onoff'
       delete 'onoff'
+      get    'prenotazioni_da_opac'
+      post   'prenotazioni_da_opac'
     end
   end
 
@@ -449,9 +458,12 @@ Clavisbct::Application.routes.draw do
       get 'clavis_sql_items_insert'
       get 'insert_item'
       get 'add_items_to_order'
+      post 'add_or_remove_from_tinybox'
+      delete 'add_or_remove_from_tinybox'
       delete 'move_items_to_other_title'
     end
     collection do
+      post 'toggle_tinybox_items'
       get 'piurichiesti'
       get 'view_users'
       get 'add_user'
@@ -494,12 +506,19 @@ Clavisbct::Application.routes.draw do
     end
     member do
       get 'man'
+      get 'import'
+      post 'import'
       post 'remove_all_titles'
       post 'remove_titles'
+      post 'mass_assign_titles'
+      post 'mass_remove_titles'
       get 'do_order'
       get 'budget_assign'
       delete 'delete_old_uploads'
       delete 'delete_future_titles'
+      post 'title'
+      delete 'title'
+      get 'title'
     end
   end
 
@@ -541,11 +560,18 @@ Clavisbct::Application.routes.draw do
     end
   end
 
-  resources :sbct_events
+  resources :sbct_events do
+    member do
+      post 'validate_all'
+      post 'close_all'
+      post 'open_all'
+    end
+  end
 
   resources :sbct_event_types
 
-  resources :sbct_l_event_titles
+  resources :sbct_l_event_titles, only: [:edit,:show,:create,:update,:destroy]
+
   resources :sbct_l_budget_libraries, only: [:index,:edit,:create,:update,:destroy,:new] do
     collection do
       get 'add_library'
@@ -575,8 +601,6 @@ Clavisbct::Application.routes.draw do
   match '/pac' => 'sbct_titles#homepage'
 
   match '/repertoribct' => 'bio_iconografico_namespaces#index'
-
-  match '/pmr' => 'home#periodici_musicale_in_ritardo'
 
   match '/cipes' => 'cipes_cedo_records#index'
 

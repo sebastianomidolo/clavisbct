@@ -3,6 +3,8 @@
 
   <%= hidden_field_tag('serial_list_id', params[:serial_list_id]) %>
 
+  Filtra titolo <%= text_field_tag('qs', params[:qs]) %>
+  
   <%= if @serial_list.onelib
        hidden_field_tag('library_id', @serial_list.serial_libraries.first.clavis_library_id)
       else
@@ -11,7 +13,7 @@
       end
   %>
 
-  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select(current_user),
+<br/>  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select(current_user),
 		params[:tipo_fornitura]), :onchange=>'submit();', include_blank:true) %>
 
   
@@ -19,7 +21,7 @@
       options_for_select([['Corrente','f'],['Sospesa o cessata','t']],
 		params[:sospeso]), :onchange=>'submit();', include_blank:true) %>
 
-    Lotto <%= select_tag(:estero,
+<br/>    Lotto <%= select_tag(:estero,
       options_for_select([['Italiani','f'],['Stranieri','t']],
 		params[:estero]), :onchange=>'submit();', include_blank:true) %>
 
@@ -30,12 +32,13 @@
  
   
   <% if params[:library_id].to_i > 0 %>
+   <br/>
    <%= check_box_tag('items_details', 't', (params[:items_details]=='t' ? true : false), :onchange=>'submit()') %>
-   <%= label_tag(:items_details, 'Ultimi esemplari') %>
+   <%= label_tag(:items_details, 'Ultimi esemplari ricevuti') %>
 
     <% if @serial_list.serial_invoices.size > 0 %>
     <br/>
-    <%= lnkinv = params[:invoice_id].to_i > 0 ? link_current_params('Vedi fattura',edit_serial_invoice_path(params[:invoice_id]),params) : 'Fattura'
+    <%= lnkinv = params[:invoice_id].to_i > 0 ? (link_current_params('Vedi fattura',edit_serial_invoice_path(params[:invoice_id]),params) if can? :edit, SerialInvoice) : 'Fattura'
 	lnkinv
     %>
     <%= select_tag(:invoice_id,
@@ -44,7 +47,7 @@
      <% end %>
    <% end %>
    <% f.input :title, hint: nil, as: 'string', label: false, placeholder: 'parte del titolo' %>
-  <br/><%= link_current_params 'Inserimento nuovo titolo...', new_serial_title_path, params %>
+  <br/><%= link_current_params('Inserimento nuovo titolo...', new_serial_title_path, params) if can? :new, SerialTitle %>
   <%=
     if params[:library_id]=='-1'
       library_id = @serial_list.onelib? ? @serial_list.clavis_library_id : ''

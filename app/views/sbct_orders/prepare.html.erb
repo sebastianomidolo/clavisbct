@@ -16,6 +16,7 @@
   if @sbct_order.budget_id.nil?
     content_tag(:div, sbct_items_multibudget_order_list(@sbct_order,@sbct_items))
   else
+
     content_tag(:div, sbct_items_order_list(@sbct_order,@sbct_items))
   end
   %>

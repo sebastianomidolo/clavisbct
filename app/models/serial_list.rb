@@ -5,6 +5,9 @@ class SerialList < ActiveRecord::Base
 
   has_many :serial_titles
   has_many :serial_users
+  has_and_belongs_to_many(:users, join_table:'public.serial_users',
+                          :foreign_key=>'serial_list_id',
+                          :association_foreign_key=>'user_id')
   has_many :serial_libraries
   has_many :serial_invoices
   has_many :clavis_invoices, :through=>:serial_invoices
@@ -27,6 +30,13 @@ class SerialList < ActiveRecord::Base
   def clavis_library_id
     return nil if !self.onelib
     self.library.clavis_library_id
+  end
+
+  def subscriptions_report
+    sql = %Q{select s.tipo_fornitura,count(s) from serial_lists l join serial_titles t on(t.serial_list_id=l.id)
+          join serial_subscriptions s on(s.serial_title_id=t.id)
+      where l.id=#{self.id} group by s.tipo_fornitura order by s.tipo_fornitura;}
+    self.connection.execute(sql).to_a
   end
 
   def serial_invoices_report
@@ -141,11 +151,19 @@ order by invoice_date;
   end
 
   def subscription_select(current_user=nil)
-    if current_user.nil?
-      [['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
-    else
-      [['Da decidere', 'i'],['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
+    #if current_user.nil?
+    #  [['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
+    #else
+    #  [['Da decidere (i)', 'i'],['Edicola (g)','g'],['Abbonamento (a)','a'],['Dono (d)','d'],['Ordine monografia (m)','m']]
+    #end
+    # Dal 22 luglio 2024 prendo i dati dalla nuova tabella serial_subscription_types
+    sql=%Q{select tipo_fornitura as key, descr as label from public.serial_subscription_types order by label}
+    res = []
+    self.connection.execute(sql).to_a.each do |r|
+      label = "#{r['label']}"
+      res << [label,r['key']]
     end
+    res
   end
 
   def clone_from_list(sourcelist_id)
@@ -183,6 +201,9 @@ order by invoice_date;
     sql = %Q{select sum(prezzo_stimato*numero_copie)::numeric
           FROM serial_titles st JOIN serial_subscriptions ss ON(ss.serial_title_id=st.id)
             WHERE st.serial_list_id=#{self.id} #{cond}}
+    #fd=File.open("/home/seb/sum_prezzo_stimato.sql", "w")
+    #fd.write(sql)
+    #fd.close
     res=self.connection.execute(sql).to_a.first['sum']
     res.nil? ? 0 : res
   end
@@ -225,12 +246,18 @@ order by invoice_date;
   end
 
   def SerialList.lista(params={},user=nil)
-    innerjoin = user.nil? ? '' : "join #{SerialUser.table_name} su on(su.user_id=#{user.id} and su.serial_list_id=sl.id)"
-    sql=%Q{select sl.id,sl.title,sl.year,sl.note,sl.locked,sl.onelib,count(st.id)
+    if user.nil?
+      innerjoin = ""
+      sel = "NULL as permissions"
+    else
+      innerjoin = "join #{SerialUser.table_name} su on(su.user_id=#{user.id} and su.serial_list_id=sl.id)"
+      sel = "su.permissions"
+    end
+    sql=%Q{select sl.id,sl.title,sl.year,sl.note,sl.locked,sl.onelib,#{sel},count(st.id)
             FROM #{self.table_name} sl left join #{SerialTitle.table_name} st on(st.serial_list_id=sl.id)
             #{innerjoin}
-            group by sl.id,sl.title,sl.year,sl.note,sl.locked order by sl.id desc}
-    puts sql
+            group by sl.id,sl.title,sl.year,sl.note,sl.locked,permissions order by sl.id desc}
+    # puts sql
     self.find_by_sql(sql)
   end
 
@@ -240,12 +267,12 @@ order by invoice_date;
   end
 
   
-  def self.subscription_types
-    {
-      a:'Abbonamento',
-      g:'Edicola',
-      i:'Da decidere',
-      d:'Dono',
-    }
+  def SerialList.subscription_types
+    sql=%Q{select tipo_fornitura as key, descr as label from public.serial_subscription_types order by label}
+    res = {}
+    self.connection.execute(sql).to_a.each do |r|
+      res[r['key'].to_sym]=r['label']
+    end
+    res
   end
 end

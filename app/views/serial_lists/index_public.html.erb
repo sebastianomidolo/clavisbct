@@ -1,0 +1,19 @@
+<table class='table table-bordered table-condensed table-striped'>
+  <% @serial_lists.each do |l| %>
+  <tr>
+    <%=
+      note = l.note.blank? ? '' : "<br/>Note: <em>#{l.note}</em>".html_safe
+      if l.onelib
+          # content_tag(:td, link_to(l.title, serial_titles_path(serial_list_id:l,sospeso:'f',library_id:l.clavis_library_id)))
+          content_tag(:td, link_to(l.title, serial_titles_path(serial_list_id:l)))
+      else
+          # content_tag(:td, link_to(l.title, serial_titles_path(serial_list_id:l,sospeso:'f',library_id:2,tipo_fornitura:'g')))
+          content_tag(:td, link_to(l.title, serial_titles_path(serial_list_id:l)))
+      end
+    %>
+    
+  </tr>
+  <% end %>
+</table>
+
+

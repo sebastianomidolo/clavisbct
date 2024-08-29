@@ -4,7 +4,7 @@ class SbctListsController < ApplicationController
   layout 'sbct'
 
   before_filter :authenticate_user!
-  load_and_authorize_resource except: [:new, :create, :destroy, :edit, :update, :man, :delete_future_titles, :remove_all_titles]
+  load_and_authorize_resource except: [:new, :import, :create, :destroy, :edit, :update, :man, :delete_future_titles, :remove_all_titles, :lastins]
   respond_to :html
 
   def index
@@ -14,14 +14,18 @@ class SbctListsController < ApplicationController
     # params[:current_user_id] = current_user.id
     @sbct_lists = SbctList.toc(params)
     if current_user.role?('AcquisitionLibrarian')
-      sbct_user = SbctUser.find(current_user.id)
-      if sbct_user.sbct_lists.size==0
-        sbct_user.create_private_list
+      if !current_user.clavis_default_library.nil?
+        sbct_user = SbctUser.find(current_user.id)
+        if sbct_user.sbct_lists.size==0
+          # Disabilito la creazione automatica di una lista di default per utenti AcquisitionLibrarian che non ne abbiano nessuna
+          # sbct_user.create_private_list
+        end
       end
     end
     if params[:current_title_id].to_i > 0
       # render text:'cambio lista attiva...' and return
     end
+    
     # user_session[:current_list]=nil
   end
 
@@ -107,12 +111,14 @@ class SbctListsController < ApplicationController
           @sbct_list.load_data_from_excel(target_filename, current_user, ean)
           at_file = "/home/seb/at_load_file_user_#{current_user.email}.txt"
           fd = File.open(at_file,"w")
-          # Questa parte in realtà non serve:
+          # Questa parte in realtà non serve...
           fd.write("# Generato da SbctList#upload - id_lista: #{@sbct_list.id} - filename: #{target_filename} #{infotit} - ean #{ean}\n\n")
           fd.write("LANG='en_US.UTF-8'\n")
           fd.write(%Q{/usr/local/bin/rails runner -e development "u=User.find(#{current_user.id});l=SbctList.find(#{@sbct_list.id});l.load_data_from_excel(%Q{#{target_filename}},u,'#{ean}')"\n});
           fd.close
-          #... infatti il cmd non viene invocato...
+          #... infatti il cmd non viene invocato... - però non cancellarla perché la tecnica è interessante e potrebbe tornare utile in futuro
+          # Può tornare utile anche per debug, infatti si può eseguire da terminale nella home di clavisbct:
+          #      sh /home/seb/at_load_file_user_seba.txt
           # cmd = "at -f #{at_file} now + 1 minute"
           # Kernel.system(cmd)
         rescue
@@ -144,6 +150,20 @@ class SbctListsController < ApplicationController
     end
     @sbct_list.remove_all_titles
     redirect_to man_sbct_list_path
+  end
+
+  def remove_titles
+    @sbct_list = SbctList.find(params[:id])
+    if can? :new, @sbct_list, current_user
+    else
+      render text:'non autorizzato', layout:true and return
+    end
+    begin
+      @sbct_list.remove_titles(params[:title_ids])
+    rescue
+      render text:"Errore da sbct_list.remove_titles: #{$!}" and return
+    end
+    redirect_to "/pac?fmt=manutenzione_lista"
   end
 
   def delete_old_uploads
@@ -190,6 +210,16 @@ class SbctListsController < ApplicationController
     end
   end
 
+  def mass_assign_titles
+    @sbct_list.insert_title_ids(user_session[:tinybox], current_user)
+    redirect_to @sbct_list
+  end
+
+  def mass_remove_titles
+    @sbct_list.remove_titles(params[:title_ids].split(','), current_user)
+    redirect_to @sbct_list
+  end
+  
   def budget_assign
     @sbct_list = SbctList.find(params[:id])
     @sql = @sbct_list.budget_assign
@@ -219,6 +249,23 @@ class SbctListsController < ApplicationController
     end
   end
 
+  # Importa titoli da altre liste
+  def import
+    @sbct_list = SbctList.find(params[:id])
+    if can? :new, @sbct_list, current_user
+    else
+      render text:'non autorizzato', layout:true and return
+    end
+    @import_list = SbctList.find(params[:import_from_list_id]) if !params[:import_from_list_id].blank?
+
+    if request.method=="POST"
+      @sbct_list.importa_da_lista(@import_list,current_user)
+      redirect_to @sbct_list
+    end
+
+  end
+
+  
   def assegna_budget_alle_copie_di_questa_lista
   end
 
@@ -241,6 +288,32 @@ class SbctListsController < ApplicationController
       # render text:"<pre>#{@sql}</pre>" and return
       @sbct_items = SbctItem.paginate_by_sql(@sql, per_page:10000, page:params[:page])
       @prezzo_totale = SbctItem.somma_prezzo(@sbct_items)
+    end
+  end
+
+  def lastins
+    @sbct_titles = SbctList.lastins(params,current_user)
+  end
+
+  # Aggiunge o rimuove dalla lista il titolo che viene passato come parametro in params[:id_titolo]
+  def title
+    # @sbct_list = SbctList.find(params[:id])
+    @sbct_title = SbctTitle.find(params[:id_titolo])
+    respond_to do |format|
+      format.html {
+        render text:"in sbct_list_controller azione_'title': lista #{@sbct_list.id} aggiungo titolo con id #{@sbct_title.id}"
+        # render text:"request: #{request.inspect}"
+      }
+      format.js {
+        if request.method=="POST"
+          @sbct_title.add_to_sbct_list(@sbct_list.id, current_user.id)
+        end
+        if request.method=="DELETE"
+          @sbct_title.remove_from_sbct_list(@sbct_list)
+        end
+        @html_element_id = "#list_#{@sbct_list.id}"
+        @liste_attuali=@sbct_title.sbct_lists.collect {|i| i.id}
+      }
     end
   end
 

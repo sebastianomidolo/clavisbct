@@ -114,7 +114,7 @@ task :find_missing_values => :environment do
       return "#{section}.#{collocation} (#{k.min}-#{k.max})#{msg}\n"
     end
 
-    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCT20','BCT21','BCT22','BCTA'].each do |s|
+    ['SERA.ARA','BCT09','BCT10','BCT11','BCT12','BCT13','BCT14','BCT15','BCT16','BCT17','BCT18','BCT19','BCT20','BCT21','BCT22','BCT23','BCT24','BCTA'].each do |s|
       outfile="/usr/local/www/html/mn/00_#{s}_missing_numbers.txt"
       puts outfile
       File.delete(outfile) if File.exists?(outfile)
@@ -145,7 +145,7 @@ task :find_missing_values => :environment do
   end
   trova_salti_dvd
   
-  # trova_numeri.call('01',2,280000)
+  # trova_numeri.call('SAL',27,1)
   # exit
   
   missing_numbers
@@ -178,7 +178,7 @@ task :find_missing_values => :environment do
   trova_numeri.call('D',3,1)
   # trova_numeri.call('M',3,1) ; 
 
-  # http://bctdoc.comperio.it/issues/240
+  # https://bctdoc.comperio.it/issues/240
   # trova_numeri.call('M',3,54800)
   # Aumento il range dei numeri da verificare: parto da 50001
   trova_numeri.call('M',3,50001)
@@ -213,7 +213,8 @@ task :find_missing_values => :environment do
   trova_numeri.call('TM',19,280000)
   trova_numeri.call('TN',20,280000)
 
-  trova_numeri.call('FA',21,1)
+  # commentata riga successiva perche' serie inventariale FA attribuita a Ferrante Aporti 
+  # trova_numeri.call('FA',21,1)
   trova_numeri.call('TO',21,280000)
   trova_numeri.call('FEM',21,1)
 
@@ -234,7 +235,11 @@ task :find_missing_values => :environment do
   # trova_numeri.call('TG',27,280000)
   trova_numeri.call('TV',27,280000)
 
+  trova_numeri.call('SAL',27,1)
+
   # trova_numeri.call('CI',28,1) ; # rimosso il 17 giugno 2013
+
+  trova_numeri.call('CI',28,8800) ; # riattivato 30 aprile 2024 su segnalazione di Daniela Lavarda
 
   trova_numeri.call('TZ',29,280000)
   #trova_numeri.call('NVNA',29,1)
@@ -275,7 +280,9 @@ task :find_missing_values => :environment do
   # Unicredit
   trova_numeri.call('UC',1125,1)
 
-
+  # Ferrante Aporti
+  trova_numeri.call('FA',1350,1)
+  
   # Trova bid duplicati (18 ottobre 2016: spostato in ClavisManifestationsController#bid_duplicati)
   # cmd=%Q{/usr/bin/psql -H -o /usr/local/www/html/mn/00_bid_duplicati.html -q -d clavisbct_development informhop --command "select bid,count(*) from clavis.manifestation where bid notnull group by bid having count(*)>1 order by bid;"}
   # puts cmd

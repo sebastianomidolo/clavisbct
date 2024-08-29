@@ -11,6 +11,7 @@ module SpSectionsHelper
   def sp_section_list_sections(sections)
     res=[]
     sections.each do |s|
+      title = s.title.blank? ? '[senza titolo]' : s.title
       nsked=s.sp_items.size
       if nsked==0
         ski=''
@@ -18,7 +19,8 @@ module SpSectionsHelper
         if current_user.nil?
           ski=content_tag(:span, " (#{s.sp_items.size} #{nsked==1 ? 'scheda' : 'schede'})")
         else
-          ski=content_tag(:span, " (#{s.sp_items.size} #{nsked==1 ? 'scheda' : 'schede'}, #{s.status_label})")
+          # ski=content_tag(:span, " (#{s.sp_items.size} #{nsked==1 ? 'scheda' : 'schede'}, #{s.status_label})")
+          ski=content_tag(:span, " (#{nsked} #{nsked==1 ? 'scheda' : 'schede'}, #{s.status_label})")
         end
       end
       if s.sp_sections==[]
@@ -28,7 +30,7 @@ module SpSectionsHelper
       end
       res << content_tag(:li,
                          content_tag(:span,
-                                     link_to("#{s.title}",
+                                     link_to("#{title}",
                                              build_link(sp_section_path(s)))) + ski + sublist)
     end
     res.size==0 ? '' : content_tag(:ul, res.join("\n").html_safe, style:'font-size: 120%')

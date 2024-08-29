@@ -2,12 +2,7 @@
 <% content_tag(:div, link_to("Una scheda a caso...", build_link('sp_items/random'))) %>
 
 <%=
-  u = User.last
-  u.id
-%>
-
-<%=
-  tit = params[:library_id].blank? ? 'Bibliografie BCT' : "Bibliografie #{ClavisLibrary.find(params[:library_id]).to_label}"
+  tit = params[:library_id].blank? ? "Bibliografie BCT - #{@sp_bibliographies.size}, status: #{@status}" : "Bibliografie #{ClavisLibrary.find(params[:library_id]).to_label}"
   content_tag(:h4, tit)
   %>
 <%= (link_to '[admin]', admin_sp_bibliographies_path) if can?(:manage,SpBibliography) %>

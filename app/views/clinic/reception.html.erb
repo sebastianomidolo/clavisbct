@@ -1,1 +1,12 @@
 <%= content_tag(:div, clinic_reception(@records)) %>
+
+<%= link_to("Criteri per lo scarto", discard_rules_path) if can? :manage, DiscardRule %>
+
+
+<%= link_to("Edit azioni", clinic_actions_path) if can? :manage, ClinicAction %>
+
+
+
+
+
+

@@ -1,13 +1,19 @@
+
+<%= content_tag(:pre, @sql_conditions) if current_user.email=='seba' %>
+<%= content_tag(:pre, @sql_order_by) if current_user.email=='seba' %>
+
 <%= render :partial => 'searchform' if params[:nosearchform].blank? %>
 
 <% content_tag(:div, @sql_conditions, class: 'panel panel-success') if current_user.email=='seba' %>
-<%= content_tag(:div, clavis_items_missing_numbers(@clavis_item.collocation)) %>
+<%= content_tag(:div, clavis_items_missing_numbers(@clavis_item)) %>
 
-<%= content_tag(:div, clavis_items_dup_numbers(@clavis_item.collocation)) %>
+<%= content_tag(:div, clavis_items_dup_numbers(@clavis_item)) %>
 
 <%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
+
 <%= clavis_items_shortlist(@clavis_items) %>
 
 <%= content_tag(:pre, user_session[:sql_itemsearch_conditions]) if current_user.email=='seba' %>
+
 
 

@@ -1,0 +1,86 @@
+<%=
+  lnk = link_to("Vedi tutte le fatture", serial_invoices_path(serial_list_id:@serial_list.id))
+  content_tag(:h4, "<b>#{@serial_invoice.to_label}</b> [#{lnk}]".html_safe) %>
+<%= content_tag(:h4, "Biblioteca: #{ClavisLibrary.find(params[:library_id]).to_label}") %>
+
+<%= simple_form_for(@serial_invoice, url:edit_serial_invoice_path, method:'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+<%= hidden_field_tag('serial_list_id', @serial_invoice.serial_list_id) %>
+<%= hidden_field_tag('invoice_filter_enabled', true) %>
+
+  
+<%= if @serial_list.onelib
+     hidden_field_tag('library_id', @serial_list.serial_libraries.first.clavis_library_id)
+    else
+     select_tag(:library_id, options_for_select(@serial_list.library_select(false),
+       params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();')
+    end
+%>
+<% end %>
+
+<%= content_tag(:h4, "Totale fattura secondo Clavis: #{number_to_currency(@serial_invoice.total_amount)}") %>
+<%= @sommaimp = @serial_invoice.serial_subscriptions.sum(:prezzo)
+    content_tag(:h4, "Attenzione: la somma degli importi differisce dal Totale fattura: <b>#{number_to_currency(@sommaimp)}</b> (differenza: <em>#{number_to_currency(@sommaimp-@serial_invoice.total_amount)}</em>)".html_safe) if @sommaimp!=@serial_invoice.total_amount %>
+<%= content_tag(:p, "Note: #{@serial_invoice.notes}") if !@serial_invoice.notes.blank? %>
+
+<p>
+<%=
+  if params[:invoice_filter_enabled]=='true'
+    link_current_params("<b>Click qui per aggiungere titoli di questa fattura</b>".html_safe, edit_serial_invoice_path,params.merge(invoice_filter_enabled:false))
+  else
+    link_current_params("<b>Click qui per vedere solo i titoli di questa fattura</b>".html_safe, edit_serial_invoice_path,params.merge(invoice_filter_enabled:true))
+  end
+%>
+</p>
+
+<%= simple_form_for(@serial_invoice) do |f| %>
+
+<%= hidden_field_tag('serial_list_id', @serial_list.id) %>
+
+<%=
+  if @serial_list.onelib?
+   hidden_field_tag('library_id', @serial_list.serial_libraries.first.clavis_library_id)
+  else
+   hidden_field_tag('library_id', params[:library_id])
+  end
+%>
+
+<%= hidden_field_tag('hidden_params', params) %>
+
+<div class="form-actions">
+  <%= f.button :submit, value:'Conferma selezione' %>
+</div>
+
+<%=
+  if params[:library_id].blank?
+   serial_titles_invoice_list(@serial_invoice)
+  else
+   serial_titles_invoice_select(@serial_titles,@serial_invoice,params[:library_id])
+  end
+%>
+<div class="form-actions">
+  <%= f.button :submit, value:'Conferma selezione' %>
+</div>
+
+
+<% end %>
+
+<%= content_tag(:h4, "Modifica del totale fattura <b>#{@serial_list.to_label}</b>".html_safe) %>
+
+<%= simple_form_for(@serial_invoice) do |f| %>
+<%= f.error_notification %>
+<%= hidden_field_tag('serial_list_id', @serial_list.id) %>
+<div class="form-inputs">
+  <%= f.input :total_amount, hint: "Totale fattura", label:false %>
+  <%= f.input :notes, label:'Note alla fattura' %>
+</div>
+<div class="form-actions">
+  <%= f.button :submit, value:'Conferma modifica del totale fattura' %>
+</div>
+<% end %>
+
+<% if !@serial_list.onelib? %>
+ <%= content_tag(:h4, "Riepilogo titoli in fattura #{@serial_invoice.to_label} - Id ClavisBct: #{@serial_invoice.id}") %>
+ <%= serial_titles_invoice_list(@serial_invoice) %>
+<% end %>
+ 

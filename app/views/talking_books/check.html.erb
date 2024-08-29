@@ -6,10 +6,11 @@
 
 <%=
    content_tag(:ul,
-   content_tag(:li, link_to('Gestione volontari', talking_book_readers_path)) +
+  content_tag(:li, link_to(content_tag(:span, 'Downloads', class:'label label-success'), talking_book_downloads_path("talking_book_download[method]":"GET"))) +
+  content_tag(:li, link_to('Gestione volontari', talking_book_readers_path)) +
    content_tag(:li, link_to('Digitalizzati ancora da caricare su server', digitalizzati_non_presenti_talking_books_path)) +
    content_tag(:li, link_to('Controllo cartelle duplicate', check_duplicates_talking_books_path)) +
-   content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path, data: { confirm: 'Sicuro sicuro di volerlo fare?' }) + " (richiede qualche minuto) - NB: il file Access catalogo.mdb non viene più utilizzato per determinare la data di aggiornamento}") +
+   content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path, data: { confirm: 'Sicuro sicuro di volerlo fare?' }) + " (richiede qualche minuto)") +
   content_tag(:li, link_to('Dati su acquisizione libro parlato', stats_talking_books_path)) +
   content_tag(:li, link_to('Modifica il testo introduttivo alla maschera di ricerca pubblica', opac_edit_intro_talking_books_path)))
   
@@ -23,3 +24,11 @@
 Fino a aprile/maggio 2020
   content_tag(:li, link_to('Rigenera cataloghi in pdf', build_pdf_talking_books_path, data: { confirm: 'Sicuro sicuro di volerlo fare?' }) + " (richiede qualche minuto) - File catalogo.mdb: #{File.mtime "/home/seb/BCT/wca22014/linux64/LP2mog/catalogo.mdb"}") +
 -->
+
+<ul>
+<li><a href="https://bctwww.comperio.it/ultimi-libri-parlati.pdf">bctwww.comperio.it/ultimi-libri-parlati.pdf</a></li>
+<li><a href="https://bctwww.comperio.it/libri-parlati-scaricabili.pdf">bctwww.comperio.it/libri-parlati-scaricabili.pdf</a></li>
+<li><a href="https://bctwww.comperio.it/libri-parlati-cd.pdf">bctwww.comperio.it/libri-parlati-cd.pdf</a></li>
+<li><a href="https://bctwww.comperio.it/libri-parlati-completo.pdf">bctwww.comperio.it/libri-parlati-completo.pdf</a></li>
+<li><a href="https://clavisbct.comperio.it/talking_books.csv">Scarico in CSV</a></li>
+</ul>

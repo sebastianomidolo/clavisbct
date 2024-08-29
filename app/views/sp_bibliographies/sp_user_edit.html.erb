@@ -1,0 +1,12 @@
+
+<form action="/sp_bibliographies/users">
+  <%= content_tag(:h4, "Bibliografie gestite da #{@user.email}".html_safe) %>
+
+  <%= content_tag(:div, sp_bibliographies_list(@user.sp_bibliographies,@user), style:'margin-top: 2em; margin-left: 0 em') %>
+
+  <%= content_tag(:h4, "Bibliografie non gestite da #{@user.email}".html_safe) %>
+
+  <%= hidden_field_tag('user_id', @user.id) %>
+  <%= content_tag(:div, sp_bibliographies_list(SpBibliography.all(order:'lower(title)')-@user.sp_bibliographies,@user), style:'margin-top: 2em; margin-left: 0 em') %>
+</form>
+

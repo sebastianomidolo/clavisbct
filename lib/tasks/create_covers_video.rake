@@ -13,7 +13,8 @@ def recupera_copertine(workdir,ean_and_ids)
     if File.exists?(outfile)
       next if File.size(outfile)!=0
     end
-    cmd="wget -O #{outfile} http://covers.comperio.it/calderone/viewmongofile.php?ean=#{r['EAN']}"
+    # cmd="wget -O #{outfile} http://covers.comperio.it/calderone/viewmongofile.php?ean=#{r['EAN']}"
+    cmd="wget -O #{outfile} https://covers.biblioteche.cloud/covers/#{r['EAN']}/C/0/P"
     Kernel.system(cmd)
     if File.size(outfile)>185
       cnt+=1

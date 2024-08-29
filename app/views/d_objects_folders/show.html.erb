@@ -14,11 +14,18 @@
 
 <%= content_tag(:h4, d_objects_folder_browse(@d_objects_folder)) %>
 
-<%= content_tag(:p, @d_objects_folder.x_ti.html_safe) if !@d_objects_folder.x_ti.nil? %>
+<%= content_tag(:p, @d_objects_folder.x_ti.html_safe) if !@d_objects_folder.x_ti.blank? %>
 
 
 <% if !@d_objects_folder.x_mid.blank? %>
-  <% cm=ClavisManifestation.find(@d_objects_folder.x_mid) %>
+<%
+  begin
+    cm=ClavisManifestation.find(@d_objects_folder.x_mid)
+  rescue
+    cm = ClavisManifestation.new(title:"#{@d_objects_folder.x_ti} (titolo non ancora presente in ClavisBct)".html_safe)
+    cm.id=@d_objects_folder.x_mid
+  end
+  %>
   <p>Titolo in Clavis: <%= link_to(cm.title,ClavisManifestation.clavis_url(cm.id,:show)) %></p>
 <% else %>
 <%= r=Regexp.new "L\.O\.(\\d+)(\\D*)"
@@ -26,9 +33,12 @@
     if !m.nil?
        colloc="L.O.#{m[1]}"
        clavis_item=ClavisItem.find_by_home_library_id_and_collocation(3, colloc)
-       if !clavis_item.nil?
+    if !clavis_item.nil?
+        @d_objects_folder.x_mid = clavis_item.manifestation_id.to_s if @d_objects_folder.x_mid.blank?
+        @d_objects_folder.save if @d_objects_folder.changed?
         lnk=link_to(clavis_item.title, clavis_item.clavis_url)
-        content_tag(:p, "Trovato in Clavis: #{lnk}<br/>Andare in <b>Modifica metadati</b> e inserire manifestation_id: <b>#{clavis_item.manifestation_id}</b>".html_safe)
+        content_tag(:p, "Trovato in Clavis: #{lnk}</b>".html_safe)
+#     content_tag(:p, clavis_item.title)
        end
       end
     %>
@@ -50,23 +60,43 @@
 
 <%= content_tag(:div, d_objects_folder_show_cover_image(@d_objects_folder)) %>
 
-<% if @d_objects_folder.writable_by?(current_user) %>
-<%= content_tag(:span, link_to('[Impostazioni PDF]', set_pdf_params_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0 and @d_objects_folder.pdf_disabled!='true') %>
+<% if @d_objects_folder.id != 0 and @d_objects_folder.writable_by?(current_user) %>
+<%= content_tag(:span, link_to('[Impostazioni PDF]', set_pdf_params_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0 and @d_objects_folder.pdf_disabled!='true') if can? :makepdf, DObjectsFolder %>
 <%= content_tag(:span, link_to('[Modifica]', edit_d_objects_folder_path(@d_objects_folder))) if (can? :edit, DObjectsFolder) %>
 <%= content_tag(:span, link_to('[Rinomina files]', filenames_d_objects_folder_path(@d_objects_folder.id))) %>
 <%= content_tag(:span, link_to('[Carica file in questa cartella]', upload_d_objects_path(d_objects_folder_id:@d_objects_folder.id))) if can? :upload, DObject %>
 <%= content_tag(:span, link_to('[Crea cartella]', makedir_d_objects_folder_path(@d_objects_folder.id))) if can? :makedir, DObjectsFolder %>
+
+
+<% if can? :manage, DObjectsFolder %>
+  <br/>
+  <%= content_tag(:span, link_to('[Rinumera pagine]', pagenumbers_d_objects_folder_path, method:'POST', data: {confirm: 'Confermi la rinumerazione delle pagine non ancora numerate? (usare con cautela)'})) %>
+  <%= content_tag(:span, link_to('[Elimina la numerazione delle pagine]', pagenumbers_d_objects_folder_path(azzera:true), method:'POST', data: {confirm: 'Confermi eliminazione numeri pagine? (usare con cautela)'})) %>
 <% end %>
 
-<% if current_user.email=='seba' %>
-<%= content_tag(:span, link_to('[Download folder]', download_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0) %>
+ <% if current_user.email=='seba' %>
+  <%= content_tag(:span, link_to('[Download folder]', download_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0) %>
+ <% end %>
+<% else %>
+ <%= content_tag(:span, link_to('[Impostazioni PDF]', set_pdf_params_d_objects_folder_path)) if (@d_objects_folder.gfx_size>0 and @d_objects_folder.pdf_disabled!='true') and current_user.role?('DObjectManager') %>
 <% end %>
+
+
 
 <%= will_paginate @d_objects, renderer: BootstrapPagination::Rails %>
 
-<%= content_tag(:h3, "Trovati #{@d_objects.total_entries} files") if @d_objects.total_entries>0 %>
+<% if @d_objects.total_entries>0 %>
+<%= content_tag(:h3, "Trovati #{@d_objects.total_entries} files") %>
+<%=
+  if params[:view]=='list'
+    link_to("Visualizza immagini", d_objects_folder_path)
+  else
+    link_to("Visualizza lista", d_objects_folder_path(view:'list',per_page:@d_objects.total_entries))
+  end
+%>
+<% end %>
 
-<%= d_objects_view(@d_objects) %>
+<%= d_objects_view(@d_objects,params) %>
 
  <% if @d_objects_folder.writable_by?(current_user) %>
    <% if @d_objects.size==0 and @d_objects_folder.dir.size==0 %>

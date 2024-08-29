@@ -1,0 +1,42 @@
+<%= simple_form_for(@location) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <% if !@clavis_library.nil? %>
+    <%= f.input :library_id, as: 'hidden' %>
+    <%= f.association :bib_section, collection:BibSection.where(library_id:@location.library_id).order(:name), include_blank:false, label:'Ubicazione' %>
+    <% f.input :primo, label:'Scaffale numerico o sezione di collocazione (esclusa BCT)' %>
+    <div class="row">
+      <div class="col-md-6">
+	<%= f.input :primo, label:'Primo elemento della collocazione' %>
+      </div>
+      <div class="col-md-6"><ul>
+	  <%= content_tag(:span, "Sezioni per la biblioteca #{@clavis_library.id}") %>
+	  <% @clavis_library.collocation_sections_select.each do |r| %>
+	  <%= content_tag(:li, "#{r.last} - #{r.first}") %>
+	  <% end %>
+      </ul></div>
+    </div>
+    <%= f.input :secondo %>
+    <%= f.input :terzo %>
+    <%= f.input :sql_filter, label:'Filtro sulla collocazione' %>
+    <%= f.input :locked, label:'Blocca collocazione' %>
+    <% f.input :shelf_id %>
+    <%= f.input :notes, label:'Annotazioni' %>
+    <% else %>
+        <%= f.association :clavis_library, label:'Biblioteca', collection: SbctTitle.libraries_select(current_user), include_blank:false %>
+   <%= @location.bib_section_id=0
+      f.input :bib_section_id, as: 'hidden'
+     %>  
+  <% end %>
+  </div>
+
+  <div class="form-actions">
+    <% if !@clavis_library.nil? %>
+      <%= f.button :submit, value: 'Salva modifiche' %>
+    <% else %>
+      <%= f.button :submit, value: 'Seleziona una biblioteca e crea schema' %>
+    <% end %>
+  </div>
+<% end %>
+

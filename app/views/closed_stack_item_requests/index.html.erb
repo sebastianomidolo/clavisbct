@@ -2,13 +2,19 @@
 <%= form_tag(clavis_patrons_path, method:'get') do %>
 Barcode o id utente: <%= text_field_tag('barcode') %>
 <%= submit_tag 'cerca', :class=>'btn btn-info' %>
-<%= content_tag(:span, link_to('[controlla server di stampa]', autoprint_requests_closed_stack_item_requests_path), style:'font-size:40%') %>
+<%= content_tag(:span, csir_on_off) if can? :onoff, ClosedStackItemRequest %>
+<%= content_tag(:span, link_to('[controlla server di stampa]', autoprint_requests_closed_stack_item_requests_path), style:'font-size:60%') %>
+
+<%= content_tag(:div, clavis_patrons_sync_page) %>
+
+
+ 
 <% end %>
 <%= javascript_tag("jQuery('#barcode').select().focus()") %>
 
 <%=
  if @patron.nil?
-  content_tag(:div, closed_stack_item_requests_patrons_index)
+  content_tag(:div, closed_stack_item_requests_patrons_index(@current_library.id))
   # content_tag(:p, link_to('[Inserisci richieste casuali]', random_insert_closed_stack_item_requests_path))
   else
    content_tag(:div, closed_stack_item_requests_index(@csir, @patron)) +
@@ -16,8 +22,7 @@ Barcode o id utente: <%= text_field_tag('barcode') %>
  end
 %>
 
- <%= content_tag(:h4, "Elenco delle richieste di oggi (dalla più recente)", style:'margin-top: 80px; border-top: dotted; padding: 1em' ) %>
- <%= closed_stack_item_requests_oggi %>
+ <%= content_tag(:h4, "Elenco delle richieste di oggi per #{@current_library.to_label}", style:'margin-top: 80px; border-top: dotted; padding: 1em' ) %>
+ <%= closed_stack_item_requests_oggi(@current_library.id) %>
 
- <hr/>
-
+ 

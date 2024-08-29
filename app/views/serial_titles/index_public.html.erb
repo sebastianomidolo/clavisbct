@@ -1,0 +1,7 @@
+<%= content_tag(:h3, link_to(@serial_list.to_label,serial_list_path(@serial_list))) %>
+
+<%= render :partial => 'searchform_public' %>
+
+<%= content_tag(:h4, "#{@serial_titles.count} titoli".html_safe) %>
+
+<%= serial_titles_list_readonly(@serial_titles) %>

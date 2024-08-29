@@ -4,6 +4,9 @@
 <%= order='s';content_tag(:span, "<b>Ordinamento per scaffale</b> [#{link_to('ordina per piano', list_schema_collocazioni_centrales_path(order:'p'))}]".html_safe) %>
 <% end %>
 
+<%= link_to("Lacune monografie", "https://bctwww.comperio.it/mn/lacune_monografie.txt") %>
+<%= link_to("Lacune opuscoli", "https://bctwww.comperio.it/mn/lacune_opuscoli.txt") %>
+
 
 <%= content_tag(:div, schema_collocazioni_centrale_list(@collocazioni, order)) %>
 

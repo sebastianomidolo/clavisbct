@@ -6,11 +6,15 @@ UPDATE import.patron SET opac_username = lower(opac_username) WHERE opac_enable=
 
 UPDATE import.item SET issue_status = NULL WHERE issue_status NOTNULL AND issue_id ISNULL;
 
+select now() as "Inizio creazione tabella import.uni856";
+
 CREATE TABLE import.uni856 AS
   SELECT manifestation_id,
   (xpath('//d856/su/text()',unimarc::xml))[1]::text AS url,
   (xpath('//d856/sz/text()',unimarc::xml))[1]::text AS nota
 FROM import.manifestation WHERE (xpath('//d856/su/text()',unimarc::xml))[1] NOTNULL;
+
+select now() as "Fine creazione tabella import.uni856";
 
 create table import.url_sbn (manifestation_id integer, url text, nota text, unimarc_tag char(3));
 
@@ -25,8 +29,8 @@ CREATE TABLE import.manifestation_creators AS (SELECT DISTINCT created_by FROM i
 ALTER TABLE import.item ALTER COLUMN inventory_serie_id DROP NOT NULL;
 
 alter table import.item add column openshelf boolean;
-update import.item set openshelf=true where item_id in (select item_id from open_shelf_items);
 
+update import.item set openshelf=true where item_id in (select item_id from public.open_shelf_items);
 update import.item set sequence2=NULL where section = 'BCTA' and sequence2 = '(su prenotazione)';
 update import.item set sequence2=NULL where section = 'BCTA' and sequence2 = '. (su prenotazione)';
 
@@ -50,6 +54,7 @@ update import.item set digitalized = true where manifestation_id in (select atta
    where attachable_type = 'ClavisManifestation');
 
 ALTER TABLE import.item ADD COLUMN acquisition_year integer;
+
 UPDATE import.item SET acquisition_year = ay.year
  FROM public.estremi_registri_inventariali ay WHERE inventory_serie_id='V'
   AND acquisition_year IS NULL AND ABS(inventory_number) BETWEEN range_from AND range_to;
@@ -67,16 +72,6 @@ update import.buchi_dvd set specification = split_part(collocation, '.', 2)::int
 where specification is null and split_part(collocation, '.', 2) ~ '\d';
 delete from import.buchi_dvd where specification is null;
 
--- Creazione temporanea biblioteca Ferrante Aporti per inserimento in ordine periodici 2022-23
--- (biblioteca non ancora presente in Clavis, valutare se inserirla)
-insert into import.library(library_id,library_class,consortia_id,description,label,
-   shortlabel,library_type,library_internal,library_status,ill_code)
-    (select 999999,library_class,consortia_id,'999999 - Biblioteca presso Istituto Ferrante Aporti',
-      '999999 - Ferrante Aporti','FerranteAp',library_type,library_internal,library_status,'nocode'
-       from import.library where library_id=21);
-insert into import.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,13,0,0);
-insert into import.l_library_librarian (library_id,librarian_id,link_role,opac_visible)values (999999,3,0,0);
-
 create temp table import_r1 as (select manifestation_id,count(*) as reqnum from import.item_request
      where manifestation_id!=0 and item_id is null and request_status='A'
       group by manifestation_id);
@@ -90,6 +85,10 @@ create table import.piurichiesti as
 select  *, round((available_items::numeric / reqnum::numeric)*100,2) as percentuale_di_soddisfazione
   from import_r1 join import_i1 using(manifestation_id) where reqnum>available_items;
 
+drop table import_r1;
+drop table import_i1;
+
+
 
 alter table import.purchase_proposal add column sbct_title_id integer;
 alter table import.purchase_proposal ADD CONSTRAINT fk_sbct_titles FOREIGN KEY (sbct_title_id)
@@ -102,7 +101,9 @@ insert into sbct_acquisti.l_clavis_purchase_proposals_titles (id_titolo,proposal
 
 update import.supplier set vat_code=NULL where vat_code='';
 
+select now() as "Inizio creazione last_item_actions e last_notifications";
 create table import.last_item_actions as select * from import.item_action where action_type='I' and date_created > now() - interval '12 months';
 create table import.last_notifications as select * from import.notification where notification_class='F' and date_created > now() - interval '12 months';
 alter table import.last_notifications add primary key(notification_id);
 alter table import.last_item_actions  add primary key(item_action_id);
+select now() as "Fine creazione last_item_actions e last_notifications";

@@ -1,0 +1,11 @@
+<%= content_tag(:h4, "Libri parlati scaricati dagli utenti") %>
+
+
+<%= render :partial => 'searchform' %>
+
+<%= content_tag(:div, "Trovati: #{@downloads.total_entries}") %>
+
+
+<%= will_paginate @downloads, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, tb_downloads_index(@downloads)) %>

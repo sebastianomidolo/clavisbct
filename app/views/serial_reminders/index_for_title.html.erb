@@ -1,0 +1,12 @@
+<%= content_tag(:h4, "Solleciti per #{link_to(@serial_title.title,@serial_title)}".html_safe) %>
+
+<%= content_tag(:h4, "Per #{@clavis_library.to_label}") %>
+
+<%=
+  if can? :new, SerialReminder
+    link_to("<b>Inserisci sollecito</b>".html_safe, new_serial_reminder_path(serial_title_id:@serial_title.id,library_id:@clavis_library.id), class:'btn btn-warning')
+  end
+%>
+
+
+<%= content_tag(:div, serial_titles_issues_report(@serial_title.title_details(@clavis_library.id))) %>

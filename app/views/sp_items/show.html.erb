@@ -1,25 +1,22 @@
 <% if @d_object.nil? %>
-  <%= content_tag(:h4, sp_items_browse(@sp_item)) %>
+  <%= content_tag(:p, sp_items_browse(@sp_item)) %>
   <%= content_tag(:div, sp_item_show(@sp_item)) %>
   <%= (link_to 'Modifica scheda', edit_sp_item_path, :class => "btn btn-default") if can?(:edit,@sp_item) %>
   <%= (link_to 'Elimina scheda', @sp_item, method: :delete, :class => "btn btn-default",
   data: { confirm: 'Confermi eliminazione della scheda?' }) if can?(:destroy,@sp_item) %>
-  <%= content_tag(:h6, "#{@sp_item.permalink}") if !@sp_item.permalink.nil? %>
+  <% content_tag(:h6, "#{@sp_item.permalink}") if !@sp_item.permalink.nil? %>
   <%= content_tag(:div, sp_item_attachments_show(@sp_item,@page)) %>
 <% else %>
   <%= content_tag(:div, sp_item_show_short(@sp_item)) %>
   <%= content_tag(:h4, sp_item_d_objects_browse(@sp_item, @d_object, @page)) %>
   <%=
     n = @d_object.x_ti.blank? ? "/#{@d_object.name}" : ". #{@d_object.x_ti}"
-    txt = "#{@d_object.d_objects_folder.x_ti}#{n}"
+    txt = "#{@d_object.d_objects_folder.x_ti}#{n}".html_safe
     txt << " / pagina #{@page}" if !@page.nil?
-	   content_tag(:p, content_tag(:b, txt))
+	   content_tag(:p, content_tag(:h6, txt))
    %>
   <%=
     imgpath = dnl_d_object_path(@d_object, :format=>'jpeg', :size=>'900x', page:@page)
     content_tag(:span, link_to(image_tag(imgpath), dnl_d_object_path(@d_object, :format=>'jpeg', page:@page)), {style:'display:block;margin-top:22px'})
   %>
 <% end %>
-
-
-

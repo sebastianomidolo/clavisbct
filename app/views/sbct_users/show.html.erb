@@ -22,3 +22,5 @@ Scegliere la biblioteca attiva (tra quelle per le quali si è abilitati in Clavi
   content_tag(:p, "Attuale biblioteca attiva: #{ClavisLibrary.find(id).to_label}")
 %>
 
+Ruoli:
+<%= content_tag(:div, user_roles(@sbct_user, read_only=true)) %>

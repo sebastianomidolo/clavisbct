@@ -1,0 +1,29 @@
+<%=
+  if @service.nil?
+   content_tag(:p, "Documentazione".html_safe)
+  else
+   content_tag(:p, "Documenti relativi al servizio #{link_to(@service.to_label,@service)}".html_safe)
+  end
+  %>
+
+<%= simple_form_for(@service_doc, method:'get') do |f|  %>
+<%= f.input :service_id, as:'hidden' %>
+<%=
+  if @service_doc.service.nil?
+    label = "Tipo di documentazione"
+  else
+  label = "Tipo di documentazione (per il servizio #{@service_doc.service.to_label})"
+  end
+  f.association :service_doc_type, include_blank:true, label:label,input_html:{onchange:"submit()"}
+ %>
+<% end %>
+
+<%= content_tag(:div, service_docs_list(@service_docs,@service)) %>
+
+
+
+<%=
+  if !@service.nil? and can? :new, ServiceDoc
+    link_to("<b>Aggiungi documentazione per #{@service.to_label} </b>".html_safe, new_service_doc_path(service_id:@service.id), class:'btn btn-warning')
+  end
+%>

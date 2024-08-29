@@ -17,12 +17,16 @@ class ExtraCardsController < ApplicationController
     end
 
     cond=[]
+    if @extra_card.musicale=='1'
+      cond << "dbmusicale_id is not null"
+    end
     @extra_cards = ExtraCard.paginate_by_sql("SELECT * FROM topografico_non_in_clavis WHERE false", :page=>1);
     deleted = false
     @attrib.each do |a|
       name,value=a
       case name
       when 'titolo'
+        value.gsub!(/[^\w\s]/, " ")
         ts=ExtraCard.connection.quote_string(value.split.join(' & '))
         cond << "to_tsvector('simple', titolo) @@ to_tsquery('simple', '#{ts}')"
       when 'deleted'
@@ -41,7 +45,15 @@ class ExtraCardsController < ApplicationController
     else
       cond << "deleted is false"
     end
+
+    if params[:musicale]=='1'
+      cond << "home_library_id=3 and collocazione=#{ExtraCard.connection.quote(params[:collocazione])}"
+    end
+
+    
     cond << "false" if cond.size < 2
+
+    
     cond = cond.join(" AND ")
     @sql_conditions=cond
     order_by = cond.blank? ? nil : 'espandi_collocazione(collocazione)'
@@ -67,6 +79,10 @@ class ExtraCardsController < ApplicationController
     @extra_card = ExtraCard.new(params[:extra_card])
     @extra_card.created_by=current_user
     @extra_card.save
+
+    # Provvisorio: andrebbe risolto nel trigger
+    @extra_card.connection.execute("update clavis.item set item_status='F' where item_status is null")
+
     respond_with(@extra_card)
   end
 

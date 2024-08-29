@@ -1,0 +1,22 @@
+
+
+<%= simple_form_for(@clinic_action) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :reparto %>
+    <%= f.input :azione %>
+    <%= f.input :description %>
+    <%= f.input :attivo %>
+    <pre>
+      <%= f.input :sql, input_html: {rows: 10, cols: 120} %>
+    </pre
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+
+

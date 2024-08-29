@@ -1,0 +1,20 @@
+
+<%= simple_form_for(@sp_bibliography) do |f| %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :title, label:'Titolo' %>
+    <%= f.input :subtitle, label:'Sottotitolo' %>
+    <%= f.input :homepage, label:'Homepage (formato "linktext | URL")' %>
+    <%= f.input :status, collection:SpBibliography.status_select %>
+    
+    <%= f.input :library_id, collection: ClavisLibrary.library_select(''), hint: 'Biblioteca di riferimento', include_blank: true, label: false %>
+    
+    <%= f.input :description, label:'Descrizione (LaTeX)', input_html: {rows: 6, cols: 80} %>
+    <%= f.input :html_description, label:'Descrizione (HTML)', input_html: {rows: 6, cols: 80} %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %>
+  </div>
+<% end %>

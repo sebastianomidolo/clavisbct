@@ -4,7 +4,7 @@ class ClavisLibrariansController < ApplicationController
   load_and_authorize_resource
 
   def index
-    @clavis_librarians = ClavisLibrarian.last_login
+    @clavis_librarians = ClavisLibrarian.tutti(params)
   end
 
   def show

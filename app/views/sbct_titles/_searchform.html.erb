@@ -96,7 +96,7 @@
   <div class="form-actions">
     <%= f.button :submit, value: 'Cerca' , class:'btn btn-success',style:'color:#0a0a0a' %>
     <% content_tag(:span, "Pulisci" , class:'btn btn-error', onclick:"$('#sbct_title_titolo').val('')") %>
-    <% link_current_params('[scarica CSV]', sbct_titles_path(format:'csv'), params)%>
+    <%= link_to('[scarica CSV]', sbct_titles_path(params.merge(format:'csv'))) %>
   </div>
 <% end %>
 

@@ -1,0 +1,7 @@
+<%= simple_form_for(@clavis_manifestation, url:'/uni856') do |f| %>
+<%= f.input :title, hint: 'parole nel titolo oppure nota alla url', as: 'string', label: false, placeholder: 'parole nel titolo' %>
+<%= f.input :bid, hint: 'BID', as: 'string', label: false, placeholder: 'BID' %>
+<%= f.input :bib_level, collection: ClavisManifestation.bib_level, hint: 'Livello bibliografico', include_blank: true, label: false %>
+
+<br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
+<% end %>

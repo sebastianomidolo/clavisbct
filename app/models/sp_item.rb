@@ -72,6 +72,38 @@ class SpItem < ActiveRecord::Base
     self.section_number.nil? ? self.sp_bibliography.published? : self.sp_section.published?
   end
 
+  def in_opac?
+    return self.published?
+    
+    sql = %Q{select true from sp.sp_items i
+   join sp.sp_bibliographies b ON(b.id=i.bibliography_id)
+   join clavis.manifestation cm USING(manifestation_id)
+   left join sp.sp_sections s ON(s.bibliography_id=b.id AND s.number=i.section_number)
+   where i.id=#{self.id} and s.status='1' AND b.status IN ('A','C')}
+    
+    sql = %Q{select
+      case when s.status IS NULL then
+          case when b.status IN ('A','C') then
+            true
+               else
+            false
+           end
+        else
+       case when s.status='1' then true else false end
+       end as published
+from sp.sp_items i
+   join sp.sp_bibliographies b ON(b.id=i.bibliography_id)
+   join clavis.manifestation cm USING(manifestation_id)
+   left join sp.sp_sections s
+   ON(s.bibliography_id=b.id AND s.number=i.section_number and s.status='1')
+   where i.id  = #{self.id} AND b.status IN ('A','C')}
+
+    # puts sql
+    res = self.connection.execute(sql)
+    return false if res.ntuples == 0
+    res.first['published']=='f' ? false : true
+  end
+
   def collocazioni
     return self.collciv if !self.collciv.blank?
     return nil if self.manifestation_id.nil?
@@ -86,12 +118,12 @@ class SpItem < ActiveRecord::Base
   end
 
   def permalink
-    return nil if self.manifestation_id.blank?
+    return nil if not self.in_opac?
     "https://clavisbct.comperio.it/spl/#{self.manifestation_id}"
   end
 
   def clavis_manifestation
-    return ClavisManifestation.find(self.manifestation_id) if !self.manifestation_id.blank?
+    return ClavisManifestation.find(self.manifestation_id) if !self.manifestation_id.blank? and ClavisManifestation.exists?(self.manifestation_id)
     sql=nil
     if !self.sbn_bid.blank?
       sql=%Q{SELECT * FROM clavis.manifestation WHERE bid='#{self.sbn_bid}';}

@@ -1,0 +1,30 @@
+<%= content_tag(:h4, @clavis_authority.to_label) %>
+
+
+<%= content_tag(:div, clavis_authority_show(@clavis_authority)) %>
+
+
+Notizie legate a questa authority:
+<%= content_tag(:div, clavis_authority_manifestations(@clavis_authority)) %>
+
+<%=
+  clavis_authority_sql_for_spacchetta(@clavis_authority,params[:au1].to_i,params[:au2].to_i)
+ %>
+
+<%= simple_form_for(@clavis_authority) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    
+    <%= @clavis_authority.full_text = @clavis_authority.full_text.split(' e ').map{|i| i.capitalize}.join('|')
+      f.input :full_text, as: 'string', input_html: {size: 80}, label:'Dividere in due intestazioni separandole con barra verticale:' %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

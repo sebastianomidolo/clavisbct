@@ -1,0 +1,23 @@
+<h1>Listing statistic</h1>
+
+<table>
+  <tr>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @stats.each do |stat| %>
+  <tr>
+    <td><%= stat.id %></td>
+    <td><%= stat.label %></td>
+    <td><%= link_to 'Show', stat %></td>
+    <td><%= link_to 'Modifica', edit_stat_path(stat) %></td>
+    <td><%= link_to 'Destroy', stat, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Stat', new_stat_path %>

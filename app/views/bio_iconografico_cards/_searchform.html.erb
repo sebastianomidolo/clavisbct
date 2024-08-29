@@ -1,5 +1,10 @@
 <%= simple_form_for(@bio_iconografico_card, method:'get') do |f| %>
-  <div class="form-inputs">
+
+<!-- 
+  <%= "search form per namespace #{@bio_iconografico_card.namespace}" %>
+-->
+
+<div class="form-inputs">
    <%= f.input :tags, as: 'hidden' %>
    <%= f.input :namespace, as: 'hidden' %>
    <%= f.input :intestazione, as: 'string', input_html: {size: 40} %>

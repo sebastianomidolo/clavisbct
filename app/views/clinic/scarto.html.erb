@@ -1,5 +1,13 @@
-<%= content_tag(:pre, @sql) %>
+<%= render partial:'search_form_super_items' %>
+
+<%= content_tag(:pre, @sql) if !params[:show_sql].blank? %>
+
+<%= content_tag(:p, "trovati #{@records.total_entries}") %>
+
+<%= will_paginate @records, renderer: BootstrapPagination::Rails %>
+
 
 <%= content_tag(:div, clinic_scarto(@records)) %>
 
 
+<%= will_paginate @records, renderer: BootstrapPagination::Rails %>

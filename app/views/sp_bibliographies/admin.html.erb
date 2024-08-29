@@ -1,0 +1,20 @@
+<!--
+42 | SpBibliographyManager
+43 | SpBibliographyUser
+33 | SpSectionManager
+  -->
+
+<%= content_tag(:h3, 'Pagina di amministrazione delle Bibliografie') %>
+
+<% if can?(:manage,SpBibliography) %>
+
+<ol>
+  <%= content_tag(:li, link_to('Creazione nuova bibliografia', new_sp_bibliography_path)) %>
+  <%= content_tag(:li, link_to('Gestione utenti', users_sp_bibliographies_path)) %>
+</ol>
+<% else %>
+no access
+<% end %>
+
+<br/>
+

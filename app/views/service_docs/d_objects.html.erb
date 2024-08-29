@@ -1,0 +1,29 @@
+<%= content_tag(:h4, @service_doc.to_label) %>
+Oggetti per questa documentazione
+
+<%= content_tag(:div, service_doc_attachments(@service_doc,params)) %>
+
+
+<%
+  ids = @service_doc.attachments.collect {|e| e.d_object_id}
+#  raise "#{ids}"
+  @d_objects=@dopf.elements.collect {|e| e if !ids.include?(e.id)}
+  @d_objects.compact!
+
+   # raise "err #{@d_objects.first.class}"
+#    raise "errore #{att.first.class}"
+   @d_objects=@d_objects.paginate(page:1,per_page:99999)
+%>
+
+<% if @d_objects.total_entries>0 %>
+<%= content_tag(:h4, "Clicka per scegliere l'oggetto da inserire in questa pagina") %>
+<%=
+  if params[:view]=='list'
+    link_to("Visualizza immagini", d_objects_service_doc_path)
+  else
+    link_to("Visualizza lista", d_objects_service_doc_path(view:'list'))
+  end
+%>
+<%= d_objects_view(@d_objects,params.merge({link_action:add_d_object_service_doc_path,link_method:'post'})) %>
+<% end %>
+

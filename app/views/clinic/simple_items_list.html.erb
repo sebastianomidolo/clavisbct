@@ -1,0 +1,11 @@
+<%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:h4, "Trovati #{@clavis_items.total_entries} esemplari") %>
+
+<%= content_tag(:pre, @sql) %>
+
+
+<%= content_tag(:div, clavis_items_simple_list(@clavis_items)) %>
+
+
+<%= will_paginate @clavis_items, renderer: BootstrapPagination::Rails %>

@@ -1,0 +1,15 @@
+<%= image_tag("https://clavisbct.comperio.it/assets/books.png", {width:"80"}) %>
+Pagina per la convalida delle proposte di acquisto libri per attività culturali
+<% image_tag("https://clavisbct.comperio.it/assets/books.png", {width:"80"}) %>
+<%= content_tag(:h4, @sbct_event.to_label) %>
+
+<%= content_tag(:p, "note di #{@requester.email}: <i>#{@sbct_l_event_title.notes}</i>".html_safe) %>
+
+<%= render 'form' %>
+
+
+<pre>
+<%= content_tag(:div, sbct_titles_show_short_title(@sbct_title)) %>
+</pre>
+
+

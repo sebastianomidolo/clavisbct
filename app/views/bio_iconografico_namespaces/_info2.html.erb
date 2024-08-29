@@ -1,0 +1,15 @@
+<%
+  numfiles=@bio_iconografico_namespace.numfiles(params)
+  fsize=@bio_iconografico_namespace.total_filesize(params)
+  # doppi=@bio_iconografico_namespace.doppi
+%>
+
+<%= content_tag(:div, "Totale files: #{numfiles}") %>
+<%= content_tag(:div, "Spazio occupato: #{number_to_human_size(fsize, precision:3)}") %>
+<%= content_tag(:div, "Spazio occupato (bytes): #{fsize}") %>
+
+<%=
+  if numfiles==0
+  link_to("Cancella repertorio (non contiene schede)", @bio_iconografico_namespace, method: :delete, data: { confirm: "Confermi cancellazione del repertorio?" }, class:'btn btn-warning')
+  end
+  %>

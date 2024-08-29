@@ -1,0 +1,15 @@
+<%= content_tag(:h4, "User #{@user.email}") %>
+
+<%=
+if params[:pwdchange].blank?
+  if current_user.role?('SysAdmin')
+    render partial:'form'
+  else
+    # render partial:'form_for_pac_admin'
+    render partial:'form'
+  end
+else
+  render partial:'pwdchange'
+end
+%>
+

@@ -14,9 +14,34 @@
  }
 <% end %>
 
-// alert('VEA0092905');
-// IccuOpacLink('VEA0092905');
+<% if !@abbonamenti.nil? and @abbonamenti.size>0
+abb = []
+@abbonamenti.each do |b|
+  abb << b['biblioteca']
+end
+abb = "Biblioteche abbonate: #{abb.join(', ')}"
+%>
+
+ if (jQuery('#issues').length) {
+  jQuery('#issues').after('<div><%= h abb -%></div>');
+ }
+
+<% end %>
+
+
+<% logo="https://www.sbam.to.it/sites/sbam/assets/Uploads/_resampled/SetRatioSize22092-LOGO-SBAM.png"; url = @cm.sbam_opac_url; if !url.nil? %>
+jQuery('#items').after('<div><b><a href="<%= @cm.iccu_opac_url -%>" title="Vedi sul Catalogo in linea del Sistema Bibliotecario Nazionale" target="_new">Vedi altre biblioteche italiane che potrebbero avere questo libro, sul Catalogo SBN nazionale</a></b></div>');
+jQuery('#items').after('<a href="<%= url -%>" title="Questo titolo esiste anche sul Sistema Bibliotecario Area Metropolitana di Torino" target="_new"><img alt="Vedi in SBAM" src="<%= logo -%>" /></a>');
+<% else %>
 
 <% if !@cm.iccu_opac_url.nil? %>
-jQuery('#items').after('<b><a href="<%= @cm.iccu_opac_url -%>" title="Vedi sul Catalogo in linea del Sistema Bibliotecario Nazionale" target="_new">Vedi altre biblioteche italiane che potrebbero avere questo libro, sul Catalogo SBN nazionale</a></b>');
+jQuery('#items').after('<div><b><a href="<%= @cm.iccu_opac_url -%>" title="Vedi sul Catalogo in linea del Sistema Bibliotecario Nazionale" target="_new">Vedi altre biblioteche italiane che potrebbero avere questo libro, sul Catalogo SBN nazionale</a></b></div>');
+<% end %>
+
+<% end %>
+
+<%
+html = @cm.sp_item_redir
+if !html.nil? %>
+  jQuery('#details').after('<div><%= j html.html_safe -%></div>');
 <% end %>

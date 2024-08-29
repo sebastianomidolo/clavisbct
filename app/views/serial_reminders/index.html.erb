@@ -1,0 +1,22 @@
+
+<% if @serial_list.nil? %>
+ <%= content_tag(:h4, "Solleciti (tutti)".html_safe) %>
+<% else %>
+ <%= content_tag(:h4, "Solleciti per lista <b>#{link_to(@serial_list.title,@serial_list)}</b>".html_safe) %>
+ <%= form_tag('serial_reminders', :method=>:get) do %>
+ <%= hidden_field_tag(:serial_list_id, @serial_list.id) %>
+ <%= select_tag(:filter, options_for_select(
+    [
+    ['Da inviare','D'],
+    ['Inviati','I'],
+    ['Tutti','T'],
+    ], params[:filter]), :onchange=>'submit();', include_blank:false) %>
+ <% end %>
+<% end %>
+<%= content_tag(:div, serial_reminders_list(@serial_reminders)) %>
+
+<% if !@serial_list.nil? and @serial_reminders.size > 0 and params[:filter]=='D' %>
+
+<%= button_to("Contrassegna come inviati #{@serial_reminders.size} solleciti", reminders_send_serial_reminders_path(serial_list_id:@serial_list.id)) %>
+
+<% end %>

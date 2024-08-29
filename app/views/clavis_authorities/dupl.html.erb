@@ -1,0 +1,4 @@
+<%= content_tag(:h3, "#{@authorities.count} intestazioni di tipo <b>#{params[:authority_type]}</b> duplicate".html_safe) %>
+
+<%= content_tag(:div, clavis_authorities_dupl(@authorities)) %>
+

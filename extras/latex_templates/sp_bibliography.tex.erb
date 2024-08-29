@@ -1,0 +1,91 @@
+% Template per generiche "bibliografie", vagamente ispirato a SenzaParola delle BCT
+
+\documentclass[a4paper]{article}
+
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage[utf8x]{inputenc}
+
+\parindent 0pt
+\fancyhead{}
+\fancyfoot{}
+
+% Inizio definizione comandi specifici per schede bibliografiche
+\newcounter{scheda}
+\setcounter{scheda}{1}
+\newcommand{\scheda}{\bigskip{\bf\thescheda.\hspace{2ex}}\addtocounter{scheda}{1}}
+\newcommand{\inizioscheda}{\par\medskip{\bf\thescheda.\hspace{2ex}}\addtocounter{scheda}{1}}
+\renewcommand{\inizioscheda}{\par\bigskip}
+\newcommand{\mainentry}[1]{{\bf #1\par\nopagebreak}}
+\newcommand{\descr}[1]{#1}
+\newcommand{\note}[1]{{\par\nopagebreak\hspace{2ex}{\small\sc #1}}}
+\newcommand{\collciv}[1]{{\par\nopagebreak\hspace{2ex}{\small\sc Collocazione: {\rm #1}}}}
+\newcommand{\colldec}[2]{{\par\nopagebreak\hspace{2ex}{\small\sc Decentrate: {\rm #1} (#2)}}}
+\newcommand{\impronta}[1]{\par\nopagebreak\hspace{2ex}{\small\sc Impronta: \bf #1}}
+% Fine definizione comandi specifici per schede bibliografiche
+
+
+\usepackage[a4paper, top=10mm, bottom=10mm, left=2.5cm, right=1.25in]{geometry}
+
+\setlength{\headheight}{32pt}
+
+\textheight=24cm
+
+\renewcommand{\headrulewidth}{.5pt}
+\pagestyle{fancy}
+
+\newcounter{scheda}
+\setcounter{scheda}{1}
+\newcommand{\scheda}{\bigskip{\bf\thescheda.\hspace{2ex}}\addtocounter{scheda}{1}}
+\newcommand{\inizioscheda}{\par\medskip{\bf\thescheda.\hspace{2ex}}\addtocounter{scheda}{1}}
+\newcommand{\mainentry}[1]{{\bf #1\par\nopagebreak}}
+\newcommand{\descr}[1]{#1}
+\newcommand{\note}[1]{{\par\nopagebreak\hspace{2ex}{\small\sc #1}}}
+\newcommand{\collciv}[1]{{\par\nopagebreak\hspace{2ex}{\small\sc Civica centrale: {\rm #1}}}}
+\newcommand{\colldec}[2]{{\par\nopagebreak\hspace{2ex}{\small\sc Decentrate: {\rm #1} (#2)}}}
+
+<% bibliography = inputdata[0]
+   @section = inputdata[1]
+%>
+
+\cfoot{}
+<%= "\\lfoot{Stampa: #{Time.now.to_date}}" %>
+
+
+
+\rfoot{\thepage}
+
+\begin{document}
+\begin{samepage}
+
+<%= "Bibliografia #{bibliography.id}: {\\em{#{bibliography.to_label}}}" %>
+
+<% bibliography.section_select.each do |s| %>
+
+  <% section = SpSection.find(bibliography.id, s[1])
+     next if @section.class==SpSection and @section != section
+  %>
+    
+  <%= "\\section*{\\centerline {#{section.title}}}" %>
+
+  <% section.sp_items.each do |item| %>
+    \inizioscheda
+    <%= "\\mainentry{#{item.mainentry}}" %>
+    <%=
+       if item.bibdescr.nil?
+         i = '[Senza titolo]'
+       else
+         i = item.bibdescr.gsub("%", '\%')
+       end
+      "\\descr{#{i}}" %>
+    <%=
+    nota = item.note.nil? ? '' : item.note.gsub('<br/>', '\\\\') 
+    "\\par{\\em{#{nota}}}"
+    %>
+    <%= "\\collciv{#{item.collciv}}" %>
+  <% end %>
+
+<% end %>
+
+\end{samepage}
+\end{document}

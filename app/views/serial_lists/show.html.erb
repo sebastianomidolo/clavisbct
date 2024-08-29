@@ -12,7 +12,14 @@
   library_id = @serial_list.onelib? ? @serial_list.clavis_library_id : ''
   content_tag(:div, link_to("#{@serial_list.subscribed_serial_titles_count} titoli acquisiti",
     serial_titles_path(serial_list_id:@serial_list,library_id:library_id)))
-%>
+  %>
+
+<% @serial_title=SerialTitle.new %>
+<%= simple_form_for(@serial_title, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+  <%= hidden_field_tag('serial_list_id', @serial_list.id) %>
+ Cerca titolo <%= text_field_tag('qs', params[:qs]) %>
+<% end %>
+
 <%= cnt=@serial_list.unsubscribed_serial_titles_count
     lnk = cnt==0 ? '' : link_to(' [Cancella titoli non acquisiti]', delete_titles_serial_list_path, method: :delete, data: { confirm: "Confermi cancellazione dei titoli non acquisiti?" }) if !@serial_list.locked? and current_user.email=='seba'
     if cnt==0
@@ -21,28 +28,40 @@
       lnk2 = link_to("#{cnt} titoli non acquisiti", serial_titles_path(serial_list_id:@serial_list,library_id:-1))
       content_tag(:div, "#{lnk2} #{lnk}".html_safe)
     end
-%>
+    %>
+
 
 <%= link_to("Importa titoli da archivio testuale (emacs)", import_serial_list_path) if @serial_list.serial_titles.count == 0 %>
 
 <%= link_to("Fatture", serial_invoices_path(serial_list_id:@serial_list,library_id:library_id)) if @serial_list.invoice_management? %>
 
 <br/>
-<%= link_to("Fornitura per la biblioteca corrente", serial_subscriptions_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) if !@serial_list.locked? %>
+<%= link_to("Solleciti", serial_reminders_path(serial_list_id:@serial_list), class:'btn btn-success') if @serial_list.invoice_management? %>
+
+
+
+<% link_to("Fornitura per la biblioteca corrente", serial_subscriptions_path(serial_list_id:@serial_list.id,library_id:current_user.clavis_librarian.default_library_id)) if !@serial_list.locked? %>
 
 <% if can? :manage, SerialList %>
 <br/>
 <%= link_to("Modifica impostazioni lista", edit_serial_list_path)  %>
 <br/>
 <%= link_to("Duplica la lista", clone_serial_list_path) %>
-<% end %>
-
 
 <br/>
 <%= link_to("Biblioteche di questa lista", serial_libraries_path(serial_list_id:@serial_list.id)) %>
 
+<%= content_tag(:p, "Utenti:#{user_list_of(@serial_list.users)}".html_safe) %>
 
 
+<% end %>
+
+
+
+<!--
+<br/>Nuovo, ottobre 2022:
+<%= content_tag(:pre, @serial_list.subscriptions_report) %>
+-->
 
 <% if !params[:errors].blank? %>
 <%= content_tag(:h4, "Errori di importazione da #{@serial_list.import_file}") %>

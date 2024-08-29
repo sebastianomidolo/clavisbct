@@ -5,7 +5,7 @@
   if @patron_id.blank?
   button_to('Stampa elenco cumulativo per magazzino', print_closed_stack_item_requests_path(format:'pdf'), method:'get')
   else
-  link_to('Stampa elenco per magazzino', print_closed_stack_item_requests_path(patron_id:@patron_id,reprint:@reprint,format:'pdf'), method:'get')
+  link_to('PDF da inviare alla stampante', print_closed_stack_item_requests_path(patron_id:@patron_id,reprint:@reprint,format:'pdf'), class:'btn btn-info', method:'get')
   end  
   %>
 <% else %>
@@ -19,14 +19,14 @@ Non sono presenti richieste da stampare
   res << "<br/><pre>\n</pre>"
   patrons.keys.sort.each do |p|
     patron=ClavisPatron.find(p)
-    ticket=patron.csir_tickets.join(', ')
+    ticket=patron.csir_tickets(@current_library.id).join(', ')
     ticket = "#{content_tag(:b, ticket)}" if !ticket.blank?
-    res << "<h2><b>#{ticket}</b> #{patron.to_label}</h2>"
+    res << "<h3><b>#{ticket}</b> #{patron.to_label}</h3>"
     patrons[p].each do |t|
       coll = t['collocazione'].strip
       space=' ' * (20 - coll.length)
       title = t['title'].strip
-      res << "<br/><b>#{coll}</b>#{space}#{title[0..30]}".html_safe
+      res << "<br/><b>#{coll}</b> [#{t['piano']}] #{space}#{title[0..30]}".html_safe
     end
   end
   res.join.html_safe

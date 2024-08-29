@@ -41,12 +41,13 @@
 <%
   res=[]
   patron_id = inputdata[1]
-  reprint = inputdata[2]
-  records=ClosedStackItemRequest.richieste_magazzino(patron_id, reprint, false, :per_piano)
+  library_id = inputdata[2]
+  reprint = inputdata[3]
+  records=ClosedStackItemRequest.richieste_magazzino(patron_id, library_id, reprint, false, :per_piano)
   patrons = records.group_by {|x| "#{x['patron_id']}"}
   patrons.keys.sort.each do |p|
     patron=ClavisPatron.find(p)
-    ticket=patron.csir_tickets.join(', ')
+    ticket=patron.csir_tickets(library_id).join(', ')
     # res << "\\needspace{#{(patrons[p].size*2.5).to_i+1}\\baselineskip}"
     # res << "\\needspace{10\\baselineskip}"
     # res << "\\centerline{Richieste a magazzino}"
@@ -59,7 +60,10 @@
       title = t['title'].strip
       title.gsub!("&", '\\\&')
       title.gsub!("%", '\\\%')
-      res << "\\Large\\textbf{#{t['collocazione']}} & #{t['piano']} & #{title[0..34]} \\\\"
+      thetitle = title[0..34]
+      thetitle = t['serieinv'] + ' ' + thetitle if !(t['collocazione'] =~ /^CCVT\./).nil?
+      thetitle = thetitle[0..34]
+      res << "\\Large\\textbf{#{t['collocazione']}} & #{t['piano']} & #{thetitle} \\\\"
     end
     res << "\\end{supertabular}"
     # res << "\\bigskip\\hrule\\bigskip"

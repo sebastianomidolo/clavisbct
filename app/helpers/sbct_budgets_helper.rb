@@ -1,12 +1,12 @@
 # coding: utf-8
 module SbctBudgetsHelper
 
-  def sbct_budget_report(budget)
+  def sbct_budget_report(budget, library_id=nil)
+    return sbct_budget_report_library(budget,library_id) if !library_id.nil?
     res = []
-    res << content_tag(:tr, content_tag(:td, 'Stato', class:'col-md-2 text-center') +
-                            content_tag(:td, 'Copie', class:'col-md-1 text-center') +
-                            content_tag(:td, 'Importo', class:'col-md-4 text-center') +
-                            content_tag(:td, '', class:'col-md-7'), class:'success')
+    res << content_tag(:tr, content_tag(:td, 'Stato', class:'col-md-2') +
+                            content_tag(:td, 'Copie', class:'col-md-2') +
+                            content_tag(:td, 'Importo', class:'col-md-8'), class:'success')
     numcopie = 0
     totale = 0.0
     budget.budget_report.each do |r|
@@ -14,23 +14,73 @@ module SbctBudgetsHelper
       totale += r.totale.to_f
       res << content_tag(:tr, content_tag(:td, link_to(r.stato, sbct_items_path("sbct_item[budget_id]":budget.id,
                                                                                 "sbct_item[order_status]":r.order_status), target:'_blank')) +
-                              content_tag(:td, r.numcopie, class:'text-right') +
-                              content_tag(:td, number_to_currency(r.totale), class:'text-right'))
+                              content_tag(:td, r.numcopie) +
+                              content_tag(:td, number_to_currency(r.totale)))
     end
     res << content_tag(:tr, content_tag(:td, "TOTALE") +
-                            content_tag(:td, numcopie, class:'text-right') +
-                            content_tag(:td, number_to_currency(totale), class:'text-right'))
+                            content_tag(:td, numcopie) +
+                            content_tag(:td, number_to_currency(totale)))
     residuo = budget.importo_residuo
     if !residuo.nil?
-      testo = residuo < 0 ? "Vanno ancora selezionati libri per <b>#{number_to_currency(residuo)}</b>".html_safe : "Ancora da spendere (non sono conteggiati i Selezionati) <b>#{number_to_currency(residuo)}</b>".html_safe
-      res << content_tag(:tr, content_tag(:td, '') +
-                              content_tag(:td, '') +
-                              content_tag(:td, testo, class:'text-right'))
+      testo = residuo < 0 ? "Vanno ancora selezionati libri per <b>#{number_to_currency(residuo)}</b>".html_safe : "Ancora da spendere <b>#{number_to_currency(residuo)}</b> (non sono conteggiate le copie in stato \"Selezionato\")".html_safe
+      res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
     end
     
     content_tag(:table, res.join.html_safe, class:'table table-condensed')
   end
 
+  def sbct_budget_report_library(budget, library_id)
+    library=ClavisLibrary.find(library_id)
+    res = []
+    txt = "Copie #{library.siglabct}"
+    res << content_tag(:tr, content_tag(:td, "Per la biblioteca #{library.siglabct} #{library.to_label}", {colspan:3}))
+    res << content_tag(:tr, content_tag(:td, 'Stato', class:'col-md-3') +
+                            content_tag(:td, txt, class:'col-md-2') +
+                            content_tag(:td, 'Importo', class:'col-md-7'), class:'success')
+
+    numcopie = 0
+    totale = importo_biblioteca = quota_biblioteca = 0.0
+    budget.budget_report(library_id).each do |r|
+      importo_biblioteca = r.partial_amount
+      quota_biblioteca = r.subquota_amount
+
+      numcopie += r.numcopie.to_i
+      totale += r.totale.to_f
+      il_totale = number_to_currency(r.totale)
+      if r.qb=='f'
+        stato = "#{r.stato} (ufficio acquisti)"
+      else
+        stato = "#{r.stato} (biblioteca)"
+        if r.stato=='S'
+          if r.totale.to_f > r.subquota_amount.to_f
+            il_totale = "#{number_to_currency(r.totale)} (superata la quota di #{number_to_currency(r.subquota_amount)} selezionabile dalla biblioteca)"
+          else
+            v1 = r.subquota_amount.to_f - r.totale.to_f
+            il_totale = "#{number_to_currency(r.totale)} (#{number_to_currency(v1)} ancora disponibili per la biblioteca)"
+          end
+        end
+      end
+
+      
+      res << content_tag(:tr, content_tag(:td, link_to(stato, sbct_titles_path(order_status:r.order_status, "sbct_title[titolo]":"budget:#{budget.to_label.strip}","sbct_title[clavis_library_ids]":library_id,qb_select:r.qb=='f' ? 'N' : 'S'), target:'_blank')) +
+                              content_tag(:td, r.numcopie) +
+                              content_tag(:td, il_totale))
+    end
+    res << content_tag(:tr, content_tag(:td, "TOTALE") +
+                            content_tag(:td, numcopie) +
+                            content_tag(:td, number_to_currency(totale)))
+
+    if numcopie>0
+      testo = "Importo budget per la biblioteca: #{number_to_currency(importo_biblioteca)}"
+      res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
+      testo = "Quota selezionabile dalla biblioteca: #{number_to_currency(quota_biblioteca)}"
+      res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
+    end
+
+    content_tag(:table, res.join.html_safe, class:'table table-condensed')
+  end
+
+  
   def sbct_budget_suppliers_list(budget)
     res = []
     res << content_tag(:tr, content_tag(:td, 'Fornitore', class:'col-md-2') +
@@ -140,24 +190,6 @@ module SbctBudgetsHelper
     # res << link_to('Vedi i titoli associati a questo budget', sbct_titles_path(budget_id:record.id,selection_mode:'',nocovers:'S'))
     # res << link_to("Copie associate a questo budget", sbct_items_path("sbct_item[budget_id]":record.id), target:'_blank')
     res.join("\n").html_safe
-  end
-
-  def sbct_liste_per_budget(record)
-    res = []
-    res << content_tag(:tr, content_tag(:td, '"Data libri"', class:'col-md-2') +
-                            content_tag(:td, '', class:'col-md-1') +
-                            content_tag(:td, 'Tipo lista', class:'col-md-2') +
-                            content_tag(:td, 'Numero copie', class:'col-md-1'), class:'success')
-
-    record.liste.each do |r|
-      # lnk = link_to(r.data_libri,sbct_titles_path(id_lista:r.id_lista,in_clavis:'',budget_id:record.id), target:'_blank')
-      lnk = link_to(r.data_libri,sbct_titles_path(id_lista:r.id_lista,budget_id:record.id), target:'_blank')
-      res << content_tag(:tr, content_tag(:td, lnk) +
-                              content_tag(:td, r.label) +
-                              content_tag(:td, r.tipo_titolo) +
-                              content_tag(:td, r.numero_copie))
-    end
-    content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
 
   def sbct_budget_libraries(sbct_budget, user=nil)

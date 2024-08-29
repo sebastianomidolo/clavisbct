@@ -1,0 +1,54 @@
+
+
+<%= content_tag(:h4, "Biblioteca #{@clavis_library.to_label}") %>
+<%=
+  begin
+  lnk = clavis_items_path(location:@location.id)
+  # lnk_section = link_to("Vedi tutti gli esemplari di questa ubicazione", clavis_items_path(bib_section:@location.bib_section_id))
+  content_tag(:div, "Ubicazione: #{link_to(@location.bib_section.name,bib_section_path(@location.bib_section))}<br/>Numero stimato dei volumi: <b>#{link_to(@location.items_count,lnk)}</b>".html_safe)
+  rescue
+  "error #{$!}"
+  end
+%>
+
+
+<%= content_tag(:h4, "Elementi della segnatura di collocazione") %>
+<%= content_tag(:div, %Q{1. <span class="label label-success">#{@location.primo}</span>}.html_safe) %>
+<%= content_tag(:div, %Q{2. <span class="label label-info">#{@location.secondo}</span>}.html_safe) %>
+<%= content_tag(:div, %Q{3. <span class="label label-warning">#{@location.terzo}</span>}.html_safe) %>
+<hr/>
+Pattern: <%= content_tag(:span, @location.collocazione_intera.html_safe) %>
+<%= content_tag(:div, "Annotazioni: #{@location.notes}") %>
+
+<%= content_tag(:div, "Filtro: #{@location.sql_filter}") if !@location.sql_filter.blank? %>
+
+
+<% if can? :manage,Location %>
+ <% if @location.locked %>
+ <% content_tag(:div, "Collocazione 'bloccata'") %>
+ <% else %>
+ <% content_tag(:div, "Collocazione 'non bloccata'") %>
+ <% end %>
+
+ <% if @managed_library %>
+  <%= link_to('Modifica', edit_location_path(@location)) %> |
+  <%= link_to 'Elimina collocazione', @location, method: :delete, data: { confirm: "Confermi cancellazione?" } %>
+ <% end %>
+
+
+
+<% else %>
+<br/>
+
+<% end %>
+<!--
+<br/>Esempi:
+content_tag(:pre, schema_collocazioni_centrale_vedi_esempi(@location))
+-->
+
+<% if can? :manage, Location %>
+<pre>
+  <%= content_tag(:div, @location.sql_for_update_items) %>
+</pre>
+<% end %>
+

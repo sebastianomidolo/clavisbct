@@ -15,7 +15,7 @@ class DngSession < ActiveRecord::Base
     end
     case service_name
     when 'talking_book'
-      ClavisPatron.insert_new_patron(ClavisPatron.mydiscovery_user(self.patron.id))
+      ClavisPatron.insert_or_update_patron(ClavisPatron.mydiscovery_user(self.patron.id))
       return self.patron.autorizzato_al_servizio_lp
     when 'download_pdf'
       # In this case, authorizable_object is the instance of ClavisManifestion we are going to check
@@ -43,10 +43,10 @@ class DngSession < ActiveRecord::Base
 
   def DngSession.find_by_params_and_request(params,request)
     return nil if params[:dng_user].blank?
-    user=DngSession.connection.quote(params[:dng_user].downcase)
+    user=DngSession.connection.quote(params[:dng_user])
     ip=DngSession.connection.quote(DngSession.format_client_ip(request))
     sql=%Q{SELECT s.* FROM dng_sessions s JOIN clavis.patron p USING(patron_id)
-            WHERE p.opac_username=#{user} AND client_ip=#{ip} ORDER BY s.id desc LIMIT 1}
+            WHERE lower(p.opac_username)=lower(#{user}) AND client_ip=#{ip} ORDER BY s.id desc LIMIT 1}
     logger.debug("DngSession.find_by_params_and_request =>\n#{sql}")
     DngSession.find_by_sql(sql).first
   end

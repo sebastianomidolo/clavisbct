@@ -2,7 +2,7 @@
 
 class SerialTitlesController < ApplicationController
   layout 'periodici'
-  before_filter :set_serial_title, only: [:index, :show, :edit, :update, :destroy, :print]
+  before_filter :set_serial_title, only: [:index, :show, :edit, :update, :destroy, :print, :subscr]
   before_filter :check_list_owner, only: [:new, :create]
   load_and_authorize_resource except: [:index]
   respond_to :html
@@ -12,10 +12,11 @@ class SerialTitlesController < ApplicationController
   def index
     invoice_filter_enabled=params[:invoice_id].blank? ? false : true
     @serial_titles=SerialTitle.trova(params,invoice_filter_enabled)
-    @pagetitle=SerialList.find(params[:serial_list_id]).title
+    @pagetitle=SerialList.find(params[:serial_list_id].to_i).title
     if current_user.nil?
       render template:'serial_titles/index_public'
     else
+      user_session[:current_library] = params[:library_id]
     end
   end
 
@@ -51,7 +52,11 @@ class SerialTitlesController < ApplicationController
     @serial_title.destroy
     redirect_to serial_titles_path(serial_list_id:serial_list_id)
   end
-  
+
+  def subscr
+    @pagetitle="#{@serial_title.title}"
+  end
+
   def show
     respond_to do |format|
       format.html {

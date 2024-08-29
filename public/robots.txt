@@ -7,6 +7,7 @@ Disallow: /clavis_authorities/*
 Disallow: /clavis_consistency_notes
 Disallow: /clavis_consistency_notes/*
 
+Disallow: /clavis_items
 Disallow: /clavis_items/*
 
 Disallow: /clavis_manifestations
@@ -18,8 +19,44 @@ Disallow: /excel_files/*
 Disallow: /excel_sheets/*
 Disallow: /iss_articles
 Disallow: /iss_articles/*
+Disallow: /iss_journals
+Disallow: /iss_journals/*
+Disallow: /iss_issues
+Disallow: /iss_issues/*
+Disallow: /iss_pages
+Disallow: /iss_pages/*
 
 Disallow: /schema_collocazioni_centrales/*
 
 Disallow: /talking_books
 Disallow: /talking_books/*
+
+Disallow: /procultura_cards
+Disallow: /procultura_cards/*
+
+Disallow: /procultura_folders
+Disallow: /procultura_folders/*
+
+Disallow: /bctcards
+Disallow: /bctcards/*
+
+Disallow: /serial_titles
+Disallow: /serial_titles/*
+
+Disallow: /sp_items
+Disallow: /sp_items/*
+
+Disallow: /sp_sections
+Disallow: /sp_sections/*
+
+Disallow: /sp_bibliographies
+Disallow: /sp_bibliographies/*
+
+Disallow: /bct_letters
+Disallow: /bct_letters/*
+
+Disallow: /bct_people
+Disallow: /bct_people/*
+
+Disallow: /bct_places
+Disallow: /bct_places/*

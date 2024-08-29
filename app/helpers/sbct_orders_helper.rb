@@ -88,8 +88,13 @@ module SbctOrdersHelper
         edit_lnk = r.id
       end
     end
-    orderstatus << "Data arrivo: #{r.data_arrivo}" if !r.data_arrivo.blank?
-
+    if !r.data_arrivo.blank?
+      if r.in_ritardo=='t'
+        orderstatus << content_tag(:i, "Data arrivo: #{r.data_arrivo}", title:"Tempo impiegato: #{r.order_age}")
+      else
+        orderstatus << content_tag(:span, "Data arrivo: #{r.data_arrivo}", title:"Tempo impiegato: #{r.order_age}")
+      end
+    end
     h={A:'warning',N:'danger',O:'info'}
     trclass = h[r.order_status.to_sym]
 

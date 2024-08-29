@@ -39,7 +39,7 @@ module ClavisManifestationsHelper
 
   def clavis_manifestation_opac_preview(record)
     mid = record.class==ClavisManifestation ? record.id : record
-    return "Non presente in opac" if mid.nil?
+    return "" if mid.nil?
     %Q{<iframe src="https://bct.comperio.it/opac/detail/badge/sbct:catalog:#{mid}?height=300&showabstract=1&coversize=normal" frameborder="0" width="600" height="300"></iframe>}.html_safe
   end
 
@@ -53,7 +53,7 @@ module ClavisManifestationsHelper
     content_tag(:table, res.join.html_safe, class: 'table')
   end
 
-  def clavis_manifestations_shortlist(records)
+  def clavis_manifestations_shortlist(records,sbam_lnk=false)
     res=[]
     res << content_tag(:tr, content_tag(:td, 'BID') +
                        content_tag(:td, 'level') +
@@ -67,20 +67,23 @@ module ClavisManifestationsHelper
 
     # content_tag(:td, r.last_sbn_sync.blank? ? 'never' : l.last_sbn_sync) +
 
+    sbam="https://www.sbam.to.it/opac/detail/view/sbam:catalog:"
     records.each do |r|
       sbnsync=r.last_sbn_sync.blank? ? '' : r.last_sbn_sync.to_date
-
+      lnk = link_to('[opac]', r.clavis_url(:opac), :target=>'_blank')
+      lnk << link_to("[sbam]", "#{sbam}#{r.sba_mid}", :target=>'_blank') if sbam_lnk==true
       tit=r.title.blank? ? '[vedi titolo]' : r.title[0..80]
       res << content_tag(:tr, content_tag(:td, r.thebid) +
-                         content_tag(:td, r.bib_level) +
-                         content_tag(:td, r.bib_type) +
-                         content_tag(:td, r.created_by) +
-                         content_tag(:td, r.modified_by) +
-                         content_tag(:td, sbnsync) +
-                         content_tag(:td, link_to('[opac]', r.clavis_url(:opac), :target=>'_blank')) +
-                         content_tag(:td, link_to('[edit]', r.clavis_url(:edit), :target=>'_blank')) +
-                         content_tag(:td, link_to(tit, r.clavis_url, :target=>'_blank')))
-    end
+                              content_tag(:td, r.bib_level) +
+                              content_tag(:td, r.bib_type) +
+                              content_tag(:td, r.created_by) +
+                              content_tag(:td, r.modified_by) +
+                              content_tag(:td, sbnsync) +
+                              content_tag(:td, lnk) +
+                              content_tag(:td, link_to('[SBN]', r.iccu_opac_url, :target=>'_blank')) +
+                              content_tag(:td, link_to('[edit]', r.clavis_url(:edit), :target=>'_blank')) +
+                              content_tag(:td, link_to(tit, r.clavis_url, :target=>'_blank')))
+      end
     content_tag(:table, res.join.html_safe)
   end
 
@@ -193,8 +196,11 @@ module ClavisManifestationsHelper
           content = talking_book_opac_presentation(record,true)
         else
           uname = dng_session.nil? ? 'Gentile utente' : dng_session.patron.appellativo
+          uname = 'Gentile utente'
           content="#{uname}, Lei non risulta iscritto al Servizio del libro parlato: pertanto non ha accesso alle registrazioni audio presenti nel nostro archivio. Maggiori informazioni sono disponibili alla pagina "
-          content+=content_tag(:span, link_to('"Condizioni di iscrizione e prestito"', 'https://bct.comperio.it/libroparlato/'))
+
+          content="#{uname}, per accedere alle registrazioni audio presenti nel nostro archivio consulti le informazioni disponibili alla pagina "
+          content+=content_tag(:span, link_to('"Condizioni di iscrizione e prestito"', 'https://bct.comune.torino.it/programmi-progetti/programma/il-servizio-del-libro-parlato'))
           content+=content_tag(:br)
           content += talking_book_opac_presentation(record,false)
         end

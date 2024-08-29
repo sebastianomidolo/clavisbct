@@ -6,7 +6,9 @@ module TalkingBookReadersHelper
                             content_tag(:td, "<b>Libri letti</b>".html_safe, class:'col-md-2') +
                             content_tag(:td, "<b>Attivo</b>".html_safe))
     records.each do |r|
-      lnk = link_to("#{r.nome} #{r.cognome}", talking_book_reader_path(r))
+      txt = "#{r.nome} #{r.cognome}"
+      txt = '[modifica]' if txt.blank?
+      lnk = link_to(txt, talking_book_reader_path(r))
       cssclass=r.attivo? ? 'success' : 'danger'
       lnk_catalogo = r.count=='0' ? '-' : link_to(r.count, talking_books_path(talking_book_reader_id:r.id),
                                                   class:'center-block',

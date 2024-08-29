@@ -1,0 +1,35 @@
+  
+<%= simple_form_for(@talking_book_download, :method=>'get', :html => {:class => 'form-vertical', role: 'form'} ) do |f|  %>
+  
+ <%= f.error_notification %>
+
+<%=
+  attr = :method
+  slc = TalkingBookDownload.generic_select(attr,params)
+  (f.input attr, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "submit()"}, include_blank:true) if slc.size>0
+%>
+ 
+<%=
+  attr = :http_status
+  slc = TalkingBookDownload.generic_select(attr,params)
+  (f.input attr, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "submit()"}, include_blank:true) if slc.size>0
+%>
+<%=
+  attr = :username
+  slc = TalkingBookDownload.generic_select(attr,params)
+  (f.input attr, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "submit()"}, include_blank:true) if slc.size>0
+%>
+<%=
+  attr = :http_path
+  slc = TalkingBookDownload.generic_select(attr,params)
+  (f.input attr, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "submit()"}, include_blank:true) if slc.size>0
+%>
+
+
+<%= f.button :submit, value: 'Cerca' , class:'btn btn-success'%>
+
+
+<% end %>
+
+
+<% javascript_tag("jQuery('#sbct_supplier_supplier_name').select().focus()") %>

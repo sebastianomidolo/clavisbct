@@ -16,12 +16,10 @@
 
 <% @canmanage = true if can? :manage, Manoscritto %>
   
-<% @manoscritti.each do |m|
-   path = @canmanage ? edit_manoscritto_path(m) : m
-   %>
+<% @manoscritti.each do |m| %>
   <tr>
     <td><%= m.autore %>
-    <td><%= link_to(m.titolo, path) %>
+    <td><%= link_to(m.titolo, m) %>
     <td><b><%= m.collocazione %></b>
   </tr>
 <% end %>

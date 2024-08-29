@@ -1,5 +1,7 @@
 class SubjectsController < ApplicationController
   layout 'navbar'
+  before_filter :authenticate_user!
+
 
   # GET /subjects
   # GET /subjects.json

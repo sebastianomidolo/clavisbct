@@ -1,0 +1,25 @@
+<%= content_tag(:h3, "Prestiti di volumi forniti da #{@supplier.supplier_name}") %>
+
+<%= content_tag(:h4, "Dal #{params[:date_from]} al #{params[:date_to]}") if !params[:date_from].blank? %>
+
+
+<%= content_tag(:h4, "Totale volumi forniti: #{@supplier.clavis_items_count}, di cui #{@supplier.items_mai_prestati} mai prestati e #{@supplier.items_prestati_almeno_una_volta.size} prestati almeno una volta ") %>
+<%= content_tag(:h4, "Numero totale di prestiti: #{@clavis_loans.total_entries}") %>
+
+<%= will_paginate @clavis_loans, renderer: BootstrapPagination::Rails %>
+
+<%=
+   case params[:view]
+   when 'by_month'
+    content_tag(:div, clavis_loans_view_by_month(@clavis_loans))
+   when 'by_gender'
+    content_tag(:div, clavis_loans_view_by_gender(@clavis_loans))
+   when 'by_citizenship'
+    content_tag(:div, clavis_loans_view_by_citizenship(@clavis_loans))   
+   else
+    content_tag(:div, clavis_loans_view(@clavis_loans))
+   end
+%>
+
+
+

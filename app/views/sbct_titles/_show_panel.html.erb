@@ -14,9 +14,6 @@
             buttons << link_to("<b>Aggiungi copie</b>".html_safe, new_sbct_item_path(id_titolo:@sbct_title.id), class:'btn btn-warning') if can? :new, SbctItem and SbctTitle.libraries_select(current_user).size > 0
             if copie.size > 0
 	      buttons << link_to("<b>Aggiungi a #{@current_order.to_label} #{copie.size} copie selezionate</b>".html_safe, add_items_to_order_sbct_title_path(id_titolo:@sbct_title.id), class:'btn btn-warning')
-              if current_user.email=='sebax'
-                buttons << sbct_order_importi_disponibili(@current_order,copie)
-              end
             end
           end
         else
@@ -27,19 +24,24 @@
 	end
       end
 
+      user_session[:sbct_event] = params[:event_id].to_i if !params[:event_id].blank?
       if can? :manage, SbctEvent and user_session[:events_mode]=='on' and !user_session[:sbct_event].nil?
-         @sbct_event = SbctEvent.find(user_session[:sbct_event])
-         buttons << (render partial:'l_events_form', locals: {title:@sbct_title})
-		    else		     
-       if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian') and !user_session[:current_library].nil?
-		    l = ClavisLibrary.find(user_session[:current_library])
-         buttons << link_to("<b>Aggiungi copia per #{l.siglabct} (#{l.shortlabel.strip})</b>".html_safe,
-		    insert_item_sbct_title_path, class:'btn btn-warning') if can? :new, SbctItem 
-         # buttons << sbct_budget_qb_importo_disponibile(@sbct_title.find_best_budget(l.id), l.library_id)
-       end
+        @sbct_event = SbctEvent.find(user_session[:sbct_event])
+        buttons << "Evento collegato: #{link_to(@sbct_event.to_label, sbct_event_path(@sbct_event), class:'btn btn-info')}" if @sbct_title.sbct_events.size>0
+        # buttons << "AcquisitionManager, vedi #{link_to(@sbct_event.to_label, sbct_event_path(@sbct_event))}" if current_user.role?('AcquisitionManager')
+        if @sbct_event.owned_by(current_user)
+           buttons << (render partial:'l_events_form', locals: {title:@sbct_title})
+        end
+      else		     
+        if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian') and !user_session[:current_library].nil?
+	  l = ClavisLibrary.find(user_session[:current_library])
+          buttons << link_to("<b>Aggiungi copia per #{l.siglabct} (#{l.shortlabel.strip})</b>".html_safe,
+	     insert_item_sbct_title_path, class:'btn btn-warning') if can? :new, SbctItem 
+        end
       end
-      @sbct_title.sbct_events.each do |e|
-        buttons << "Copie richieste per #{link_to(e.to_label,sbct_event_path(e))} (#{e.sbct_event_type.to_label})"
+      SbctLEventTitle.richieste_aperte_per_titolo(@sbct_title.id).each do |et|
+         @sbct_event = et.sbct_event
+         buttons << ordina_copie_se_interessato_a(et,current_user)
       end
 
          if @sbct_title.vrfy_dup > 1

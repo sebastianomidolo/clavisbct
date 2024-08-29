@@ -1,0 +1,8 @@
+<%=
+  content_tag(:h4, "Ultimi titoli aggiunti a liste")
+  %>
+
+<%= will_paginate @sbct_titles, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, sbct_titles_lastins_list(@sbct_titles)) %>
+

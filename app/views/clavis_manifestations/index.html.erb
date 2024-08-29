@@ -2,12 +2,18 @@
 # lastmod 11 marzo 2013
 %>
 
+<pre>
+  Aggiungere all'URL &order=lss per ordinare per last_sbn_sync
+</pre>
+
 Ultimo record inserito:
 <%=
 cm=ClavisManifestation.last
 link_to(cm.id, cm.clavis_url)
 %>
 <%= cm.date_created.to_date if !cm.date_created.nil? %>
+
+<br/><%= link_to("Presenti in BCT e in SBAM", '/bumbam') %>
 
 <br/><%= link_to("cerca per created_by", shortlist_clavis_manifestations_path(:created_by=>1)) %>
 
@@ -16,3 +22,4 @@ link_to(cm.id, cm.clavis_url)
 
 <%= content_tag(:h3, 'Tabella bib_types') %>
 <%= content_tag(:div, clavis_manifestations_oggbibl) %>
+

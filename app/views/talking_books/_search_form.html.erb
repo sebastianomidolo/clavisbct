@@ -1,11 +1,14 @@
+<!--
 <p><strong>Cerca un libro parlato (digita l&#39;autore o il titolo, oppure il codice di collocazione)</strong>
   </p>
+-->
 
 <%= form_tag(talking_books_url, :method=>:get) do %>
 
 <p>
-  <%= text_field_tag('qs', params[:qs], size:35) %>
-  <%= label_tag  "qs", "&nbsp;".html_safe %>
+  <%= label_tag  "qs", "Cerca un libro parlato (autore o titolo o collocazione)".html_safe %>
+  <br/>
+  <%= text_field_tag('qs', params[:qs], size:15) %>
 </p>
 
 <!--

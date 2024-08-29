@@ -1,0 +1,5 @@
+<%= content_tag(:h4, "Nuovo sollecito per #{@serial_title.title}") %>
+
+<%= render partial:'form' %>
+
+<%= content_tag(:div, serial_titles_issues_report(@serial_title.title_details(@clavis_library.id))) %>

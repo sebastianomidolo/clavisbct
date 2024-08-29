@@ -20,6 +20,16 @@ DECLARE
  END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION public.unimarc_100(unimarc_xml xml, pos integer, len integer) RETURNS varchar AS $$
+DECLARE
+ coded_dat varchar;
+ BEGIN
+  SELECT substr((xpath('//d100/sa/text()',unimarc_xml::xml))[1]::varchar,pos+1,len) into coded_dat;
+ RETURN coded_dat;
+ END;
+$$ LANGUAGE plpgsql;
+
+
 -- set search_path to public;
 CREATE OR REPLACE FUNCTION location_sql( l public.locations )
 RETURNS text AS $$
@@ -29,9 +39,9 @@ RETURNS text AS $$
   END;
 $$ LANGUAGE plpgsql;
 
-SELECT loc, location_sql(loc) FROM public.locations loc JOIN public.bib_sections bs
- ON bs.id = loc.bib_section_id where bs.library_id = 2
-   order by locked desc,primo nulls last,secondo nulls last limit 10;
+--SELECT loc, location_sql(loc) FROM public.locations loc JOIN public.bib_sections bs
+--  ON bs.id = loc.bib_section_id where bs.library_id = 2
+--   order by locked desc,primo nulls last,secondo nulls last limit 10;
 
 -- select location_sql(l) from public.locations l ;
 -- SET SEARCH_PATH TO import;

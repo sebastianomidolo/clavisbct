@@ -5,10 +5,10 @@ class SbctItem < ActiveRecord::Base
   self.primary_key = 'id_copia'
   self.table_name='sbct_acquisti.copie'
 
-  attr_accessible :id_titolo, :budget_id, :library_id, :numcopie, :order_date, :order_status, :supplier_id, :note_interne, :note_fornitore, :created_by, :home_library_id, :prezzo, :order_id, :supplier_label
+  attr_accessible :id_titolo, :budget_id, :library_id, :numcopie, :order_date, :order_status, :supplier_id, :note_interne, :note_fornitore, :created_by, :home_library_id, :prezzo, :order_id, :supplier_label, :event_id
   # validates :budget_id, presence: true
 
-  attr_accessor :supplier_label, :current_user
+  attr_accessor :supplier_label, :current_user, :js_code
 
   before_save :check_record
   after_save :log_changes
@@ -21,6 +21,7 @@ class SbctItem < ActiveRecord::Base
   belongs_to :clavis_library, foreign_key:'library_id'
   belongs_to :clavis_home_library, class_name:'ClavisLibrary', foreign_key:'home_library_id'
   belongs_to :sbct_order_status, foreign_key:'order_status'
+  belongs_to :sbct_event, foreign_key:'event_id'
 
   def to_label
     "Item #{self.id} - #{self.sbct_title.titolo} #{self.clavis_library.to_label}"
@@ -44,8 +45,10 @@ class SbctItem < ActiveRecord::Base
   def prezzo_con_sconto_applicato
     pt=self.sbct_title.prezzo
     return nil if pt.nil?
-    return pt if self.supplier_id.nil?
-    sconto = self.sbct_supplier.clavis_supplier.discount.to_f
+    #return pt if self.supplier_id.nil?
+    #sconto = self.sbct_supplier.clavis_supplier.discount.to_f
+    return pt if self.budget_id.nil?
+    sconto = self.sbct_budget.discount.to_f
     return pt if sconto.nil?
     (pt - (pt * sconto)/100).round(2)
   end
@@ -103,7 +106,7 @@ class SbctItem < ActiveRecord::Base
       b.budget_id as budget_id, s.supplier_id as supplier_id,
       CASE WHEN s is null THEN t.prezzo
       ELSE
-       round(t.prezzo-t.prezzo*(cs.discount/100),2)
+       round(t.prezzo-t.prezzo*(b.discount/100),2)
       END as prezzo,
       #{qb} as qb, #{strongness} as strongness
         from sbct_acquisti.titoli t left join sbct_acquisti.copie cp
@@ -112,7 +115,6 @@ class SbctItem < ActiveRecord::Base
        __budgetjoin__
 
        left join sbct_acquisti.suppliers s on(s.supplier_id=b.supplier_id)
-       left join clavis.supplier cs on(cs.supplier_id=b.supplier_id)
       where cp is null 
        __conditions__
       and t.id_titolo in (#{title_ids.join(',')})}
@@ -138,7 +140,7 @@ INSERT INTO sbct_acquisti.copie (id_titolo,order_status,library_id,created_by,bu
     %Q{BEGIN;
      #{sql}
 COMMIT;
-    }    
+    }
   end
 
   def togli_da_ordine
@@ -244,8 +246,8 @@ COMMIT;
   def SbctItem.auto_insert(with_sql,sbct_item,parms={})
     library_filter=" and cp.library_id=#{sbct_item.library_id}"
     sql = %Q{with t1 as (#{with_sql})\n
-      select t1.id_titolo,t1.isbn, t1.manifestation_id,t1.collana,t1.datapubblicazione,
-       t1.anno,t1.reparto,t1.date_created,t1.prezzo,t1.target_lettura,t1.titolo,t1.infocopie,
+      select t1.id_titolo,t1.isbn, t1.manifestation_id,t1.collana,t1.datapubblicazione,NULL as data_ins_in_lista,
+       t1.anno,t1.reparto,t1.date_created,t1.prezzo,t1.target_lettura,t1.titolo,t1.infocopie,t1.note,
        t1.editore,t1.autore,
        cp.id_copia,cp.library_id from t1 left join sbct_acquisti.copie cp
            on(cp.id_titolo = t1.id_titolo#{library_filter}) where cp is null;
@@ -258,7 +260,7 @@ COMMIT;
 
   def SbctItem.sql_for_budget_assign(with_sql,sbct_item,parms={})
     sql = %Q{with t1 as (#{with_sql})\n
-      select t1.id_titolo,t1.isbn, t1.manifestation_id,t1.collana,t1.datapubblicazione,
+      select t1.id_titolo,t1.isbn, t1.manifestation_id,t1.collana,t1.datapubblicazione,NULL as data_ins_in_lista,
        t1.anno,t1.reparto,t1.date_created,t1.prezzo,t1.target_lettura,t1.titolo,t1.infocopie,
        t1.editore,t1.autore,
        cp.id_copia,cp.library_id from t1 left join sbct_acquisti.copie cp
@@ -347,18 +349,7 @@ COMMIT;
       end
 
       sql = %Q{
-with t1 as
-  (select lc.label as siglabct,cl.library_id, substr(cl.description,6) as biblioteca, sum(cp.prezzo*cp.numcopie) as importo,
-      sum(cp.numcopie) as numero_copie
-      from sbct_acquisti.library_codes lc join clavis.library cl on(cl.library_id=lc.clavis_library_id)
-    join sbct_acquisti.copie cp using(library_id) #{join_liste}
-     #{cond}
-     group by lc.label,cl.library_id
-  ) select siglabct,library_id,biblioteca, importo, numero_copie,
-    round((100 * importo / (sum(importo) OVER ())),2) as percentuale from t1;}
-
-      sql = %Q{
--- Nuova febbraio 2023 - aggiornamento 6 giugno 2023
+-- Nuova febbraio 2023 - aggiornamento 6 giugno 2023 e 26 febbraio 2024
 with t1 as
   (select pbud.budget_id,pbud.total_amount as budget_amount,lc.label as siglabct,cl.library_id,
   --  substr(cl.description,6) as biblioteca,
@@ -369,12 +360,14 @@ with t1 as
       pbud.partial_amount as importo_spendibile,
       pbud.subquota_amount as importo_spendibile_quota,
       pbud.quota, pbud.quota_percent, pbud.subquota, qb
-      from sbct_acquisti.library_codes lc join clavis.library cl on(cl.library_id=lc.clavis_library_id)
+      from sbct_acquisti.library_codes lc join clavis.library cl on(cl.library_id=lc.clavis_library_id and lc.pac is true)
     join sbct_acquisti.copie cp using(library_id)
    left join public.pac_budgets pbud on(pbud.budget_id=cp.budget_id and pbud.library_id=cp.library_id)
      #{join_liste}
-     #{cond}
 
+     -- inizio condizioni:
+     #{cond}
+     -- fine condizioni
      group by qb,pbud.quota_percent,pbud.budget_id,pbud.total_amount,lc.label,cl.library_id,pbud.partial_amount,pbud.subquota_amount,pbud.quota,pbud.subquota
   ) select
 --  budget_id,budget_amount,
@@ -423,7 +416,7 @@ select lc.label as siglabct,cl.library_id,substr(cl.description,6) as biblioteca
     count(*) as numero_copie,
     round((100 * sum(cp.prezzo*cp.numcopie) / (sum(sum(cp.prezzo*cp.numcopie)) OVER ())),2) as percentuale
  from t1 join public.pac_items cp using(id_titolo)
-    join sbct_acquisti.library_codes lc on (lc.clavis_library_id=cp.library_id)
+    join sbct_acquisti.library_codes lc on (lc.clavis_library_id=cp.library_id and lc.pac is true)
     join clavis.library cl on(cl.library_id=lc.clavis_library_id)
      group by lc.label,cl.library_id
      order by percentuale desc
@@ -462,12 +455,10 @@ UPDATE sbct_acquisti.copie c set supplier_id = t1.supplier_id, order_status='A',
 
   def SbctItem.assegna_prezzo
     sql = %Q{
-      update sbct_acquisti.copie c
-         set prezzo = t.prezzo - (cs.discount*t.prezzo)/100
-      from sbct_acquisti.titoli t, clavis.supplier cs 
-       where t.id_titolo = c.id_titolo
-          and cs.supplier_id = c.supplier_id
-          and c.prezzo is null;
+      update sbct_acquisti.copie c set prezzo = t.prezzo - (b.discount*t.prezzo)/100
+        from sbct_acquisti.titoli t, sbct_acquisti.budgets b 
+       where t.prezzo is not null and t.prezzo > 0 and t.id_titolo = c.id_titolo
+          and b.budget_id = c.budget_id and c.prezzo is null;
     }
     self.connection.execute(sql)
   end
@@ -720,8 +711,12 @@ SELECT t.titolo,t.id_titolo,t.ean,t.autore,t.editore,t.prezzo as listino,array_t
 
     else
       @sql = %Q{SELECT t.titolo,t.id_titolo,c.id_copia,c.prezzo as prezzo_scontato,c.numcopie,c.budget_id,c.order_status,
-              c.supplier_id,c.data_arrivo,lc.label as siglabiblioteca
-      from sbct_acquisti.copie c join sbct_acquisti.titoli t using(id_titolo) join sbct_acquisti.library_codes lc on (lc.clavis_library_id=c.library_id)
+              c.supplier_id,c.data_arrivo,lc.label as siglabiblioteca,
+	      age(c.data_arrivo,ord.order_date) as order_age,
+	      case when age(c.data_arrivo,ord.order_date) > interval '60 days' then true else false end as in_ritardo
+      from sbct_acquisti.copie c join sbct_acquisti.titoli t using(id_titolo)
+       join sbct_acquisti.orders ord using(order_id)
+       join sbct_acquisti.library_codes lc on (lc.clavis_library_id=c.library_id)
       #{cond}
       order by #{order_by}
       }
@@ -790,11 +785,10 @@ SELECT t.titolo,t.id_titolo,t.ean,t.autore,t.editore,t.prezzo as listino,array_t
     res.concat(avanzo)
   end
 
-  def SbctItem.create_order_file(supplier,items,format)
+  def SbctItem.create_order_file(supplier,items,format,budget)
     require 'csv'
-    if supplier.discount == 0.0
-      # raise "supplier sconto 0 #{supplier.discount}"
-
+    # budget.nil? qui significa che questo ordine è per un fornitore tipo MiC (non ha un singolo budget associato, ma multipli budget)
+    if budget.nil?
       csv_string = CSV.generate({col_sep:",", quote_char:'"'}) do |csv|
         csv << ['CodiceEan','Autore','Titolo','Editore','Copie','Prezzo','Totale','Biblioteche','Note']
         items.each do |r|
@@ -810,7 +804,7 @@ SELECT t.titolo,t.id_titolo,t.ean,t.autore,t.editore,t.prezzo as listino,array_t
           cnt += 1
           prog_ordine="#{cnt} id #{r.id_titolo}"
           note = r.note_fornitore; note = '-' if note.blank?
-          csv << [r.ean,r.autore,r.titolo,r.editore,r.numcopie,r.listino,supplier.discount,sprintf('%.02f', (r.prezzo_scontato.to_f*r.numcopie)),r.order_id,prog_ordine,r.siglebct,note]
+          csv << [r.ean,r.autore,r.titolo,r.editore,r.numcopie,r.listino,budget.discount,sprintf('%.02f', (r.prezzo_scontato.to_f*r.numcopie)),r.order_id,prog_ordine,r.siglebct,note]
         end
       end
     end

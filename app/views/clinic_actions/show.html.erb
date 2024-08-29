@@ -1,0 +1,14 @@
+<%= link_to("Modifica", edit_clinic_action_path) %>
+
+<% if !@clinic_action.sql.blank? %>
+ <%= content_tag(:pre, @clinic_action.sql) %>
+ <%= content_tag(:pre, @clinic_action.sql_secure) if @clinic_action.sql_secure!=@clinic_action.sql %>
+ exec:
+ <%= content_tag(:pre, @clinic_action.sql_exec_command) %>
+ <% else %>
+ </br>
+ <%= link_to("Esegui azione #{@clinic_action.to_label}", "/clinic/#{@clinic_action.reparto}/#{@clinic_action.azione}", class:'btn btn-success') %>
+<% end %>
+
+
+<%= content_tag(:span, link_to('Elimina azione', @clinic_action, method: :delete, data: { confirm: "Confermi eliminazione?" }, class:'btn btn-warning')) if can? :manage, @clinic_action and @clinic_action.sql.blank? %>

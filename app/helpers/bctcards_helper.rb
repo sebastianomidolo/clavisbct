@@ -61,16 +61,25 @@ module BctcardsHelper
   def bctcards_breadcrumbs
     # return "controller: #{params[:controller]} / action: #{params[:action]} - #{params.inspect}"
     links=[]
-    links << link_to('Biblioteche e archivi digitali', 'https://bct.comune.torino.it/sedi-orari/centrale/biblioteche-e-archivi-digitali')
-    links << link_to('Repertori dal passato della Biblioteca civica', 'https://bct.comune.torino.it/repertori-dal-passato-della-biblioteca-civica')
-    case params[:namespace]
-    when 'bioico'
-      links << link_to('Repertorio bio-iconografico', 'https://bct.comune.torino.it/repertorio-bio-iconografico')
-    when 'cattor'
-      links << link_to('Catalogo Torino', 'https://bct.comune.torino.it/catalogo-torino')
-    when 'catarte'
-      links << link_to('Catalogo Arte', 'https://bct.comune.torino.it/catalogo-arte')
+    if params[:controller]=='bctcards'
+      links << link_to('Biblioteche e archivi digitali', 'https://bct.comune.torino.it/sedi-orari/centrale/biblioteche-e-archivi-digitali')
+      links << link_to('Repertori dal passato della Biblioteca civica', 'https://bct.comune.torino.it/repertori-dal-passato-della-biblioteca-civica')
     end
+    if params[:controller]=='bio_iconografico_namespaces'
+      links << link_to('Repertori BCT', bio_iconografico_namespaces_path)
+    end
+
+    
+
+    label = params[:namespace]
+    if @bio_iconografico_namespace.nil?
+      if BioIconograficoNamespace.exists?(params[:namespace])
+        @bio_iconografico_namespace = BioIconograficoNamespace.find(params[:namespace])
+        label = @bio_iconografico_namespace.label
+      end
+    end
+
+    links << link_to(@bio_iconografico_namespace.title,@bio_iconografico_namespace.baseurl) if !@bio_iconografico_namespace.nil?
 
     if params[:controller]=='bctcards' and params[:action]=='index' and !params[:topic_id].blank?
       links << link_to('Ricerca', "/bctcards?namespace=#{params[:namespace]}")

@@ -40,13 +40,14 @@ create or replace view public.serial_details as
     select st.serial_list_id,st.id,cm.manifestation_id,st.title,cm.publisher,
             st.prezzo_stimato*abb.tot_copie as prezzo_totale_stimato,st.prezzo_stimato,
              st.note,st.note_fornitore,abb.libraries,abb.library_names,abb.tot_copie,abb.numero_copie,
-	     abb.prezzo_in_fattura,abb.invoice_ids,
+	     abb.prezzo_in_fattura,abb.invoice_ids,st.sospeso,st.estero,
              public.serial_frequency_of_issue(cm.unimarc::xml) as frequency_code, freq.label as frequency_label,
              array_agg(i.item_id order by issue_year desc, issue_number desc) as item_ids,
              array_agg(i.issue_arrival_date order by issue_year desc, issue_number desc) as issue_arrival_dates,
              array_agg(i.issue_arrival_date_expected order by issue_year desc, issue_number desc) as issue_arrival_dates_expected,
 	     array_agg(i.issue_description order by issue_year desc, issue_number desc) as issue_descriptions,
-	     array_agg(issue_status_label order by issue_year desc, issue_number desc) as issue_status
+	     array_agg(i.issue_status order by issue_year desc, issue_number desc) as issue_status,
+             array_agg(i.issue_status_label order by issue_year desc, issue_number desc) as issue_status_label
             from public.serial_titles st
 	    join abb on(abb.title_id=st.id)
             left join public.serial_invoices si on(si.clavis_invoice_id::text=abb.invoice_ids)
@@ -58,8 +59,9 @@ select i.manifestation_id,i.item_id,i.issue_year,i.issue_number,
    to_char(issue_arrival_date, 'dd-mm-yyyy') as issue_arrival_date,
    to_char(issue_arrival_date_expected, 'dd-mm-yyyy') as issue_arrival_date_expected,
    i.issue_description,
-   i.issue_status as issue_status_label
+   i.issue_status, lv1.value_label as issue_status_label
      from clavis.item i
+      JOIN clavis.lookup_value lv1 on(lv1.value_key=i.issue_status AND lv1.value_language = 'it_IT' AND lv1.value_class = 'ISSUESTATUS')
    where i.manifestation_id=st.manifestation_id AND home_library_id=abb.library_id
     and i.issue_year is not null
      order by i.issue_year desc, i.issue_number desc

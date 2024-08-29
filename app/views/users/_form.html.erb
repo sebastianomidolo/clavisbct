@@ -1,0 +1,13 @@
+<%= simple_form_for(@user) do |f| %>
+  <%= f.error_notification %>
+
+  <%= f.input :email, label:'Username' %>
+  <div class="form-inputs">
+    <%= f.association :roles, collection:Role.where('id!=1').order('name'), include_blank: true, input_html:{multiple:true, size:Role.count} %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, :value=>'Salva' %>
+  </div>
+<% end %>

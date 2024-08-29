@@ -8,7 +8,12 @@ class SbctUsersController < ApplicationController
     if current_user.id!=(params[:id].to_i)
       render text:'no no' and return
     end
-    @sbct_user = SbctUser.find(params[:id])
+    begin
+      @sbct_user = SbctUser.find(params[:id])
+    rescue
+      @sbct_user = SbctUser.new
+      @sbct_user.id = params[:id]
+    end
   end
 
   # Imposta la biblioteca di default per la sessione corrente

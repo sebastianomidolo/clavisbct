@@ -1,8 +1,8 @@
 <%= render :partial => 'sbct_titles/homepage' %>
 
-<%= content_tag(:h4, "Utenti PAC") %>
+<%= content_tag(:h5, "Utenti PAC (intesi come utenti ClavisBct che hanno uno dei ruoli \"Acquisition*\")") %>
 
-<%= link_to('<b>Aggiungi utente</b>'.html_safe, add_user_sbct_titles_path, class:'btn btn-warning') %>
+<%= link_to('<b>Aggiungi utente</b>'.html_safe, add_user_sbct_titles_path, class:'btn btn-warning') if can? :manage, User %>
 
 <%= content_tag(:div, sbct_titles_users(@users)) %>
 

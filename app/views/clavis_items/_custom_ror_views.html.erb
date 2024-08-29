@@ -1,0 +1,5 @@
+<%= simple_form_for(@clavis_item, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+<%= hidden_field_tag(:n, params[:n]) %>
+<%= clavis_items_op_select_tag %>
+
+<% end %>

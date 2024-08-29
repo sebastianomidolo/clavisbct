@@ -15,12 +15,13 @@
 <%= content_tag(:h4, "#{@patron.lettore} <b>#{@patron.to_label}</b> (#{link_to(@patron.barcode, @patron.clavis_url(:newloan))}) - #{link_to('[vedi tutte le richieste]',search_closed_stack_item_requests_url(patron_id:@patron.id))}".html_safe) %>
 
 
-<%= content_tag(:pre, %Q{SELECT '#{@patron.opac_secret} (#{@patron.opac_enable == '1' ? 'enabled' : 'disabled'})' as "ClavisBCT",opac_secret,date_created,date_updated,opac_enable FROM patron WHERE patron_id=#{@patron.id};}) if current_user.email=='seba' %>
+<% content_tag(:pre, %Q{SELECT '#{@patron.opac_secret} (#{@patron.opac_enable == '1' ? 'enabled' : 'disabled'})' as "ClavisBCT",opac_secret,date_created,date_updated,opac_enable FROM patron WHERE patron_id=#{@patron.id};}) if current_user.email=='seba' %>
 
+<% content_tag(:pre, @patron.sql_for_update_date_updated_field) %>
 
 <%= render :partial => 'item_search' %>
 
-<%= content_tag(:div, clavis_patron_show(@patron,flash[:notice]), id:'clavisbct_unique_id') %>
+<%= content_tag(:div, clavis_patron_show(@patron,@current_library,flash[:notice]), id:'clavisbct_unique_id') %>
 
 <%=
   sql=%Q{select item_id from closed_stack_item_requests where patron_id=#{@patron.id} and request_time > CURRENT_DATE}

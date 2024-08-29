@@ -1,0 +1,22 @@
+<%= content_tag(:h3, d_objects_folder_split(@d_objects_folder)) %>
+<%= content_tag(:p, @d_objects_folder.readme.html_safe) if !@d_objects_folder.readme.nil? %>
+
+<%= numfiles=@d_objects_folder.files_caricati_oggi
+    content_tag(:p, "Files caricati oggi: #{numfiles}") if numfiles>0
+%>
+
+<%=
+  if @d_objects_folder.pdf_disabled=='true'
+   dupfiles=@d_objects_folder.manifestation_ids_duplicati
+   content_tag(:div, d_objects_folder_manifestation_ids_list(dupfiles), {class:'text-warning'}) if dupfiles!=[]
+  end
+%>
+
+<%
+#  content_tag(:h4, d_objects_folder_browse(@d_objects_folder))
+  %>
+
+test
+
+
+

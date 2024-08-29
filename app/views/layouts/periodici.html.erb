@@ -25,7 +25,11 @@
       <div class="jumbotron">
 	<a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
 	<div class="briciole">
-          <a href="https://clavisbct.comperio.it"><img src="/bct-homepage-green.png" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+	  <% if user_signed_in? %>
+           <a href="https://clavisbct.comperio.it"><img src="/bct-homepage-green.png" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+	   <% else %>
+	    <a href="https://bct.comune.torino.it"><img src="/bct-homepage.png" alt="Biblioteche Civiche Torinesi" width="20" height="20" style="margin-bottom: 5px"></a>
+          <% end %>
 	  <%= periodici_breadcrumbs -%>
 	</div>
         <%= yield %>

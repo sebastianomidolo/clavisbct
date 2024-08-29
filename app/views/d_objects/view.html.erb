@@ -5,18 +5,20 @@
 <%= render partial:'cover_image_check_box' if (@d_object.writable_by?(current_user) and @d_object.d_objects_folder.pdf_disabled!='true') %>
 
 <%= content_tag(:span, d_object_browse(@d_object)) %>
+<%= content_tag(:span, d_object_user_folder(@dopf,@d_object), id:"d_object_id_#{@d_object.id}") %>
+
 
 <% if @d_object.mime_type.split(';').first=='application/pdf' %>
   <%= content_tag(:div, "File PDF contenente #{@d_object.pdf_count_pages} pagine") %>
   <%= content_tag(:div, d_object_view_pdf(@d_object)) %>
 <% else %>
- <%= content_tag(:div, link_to(image_tag(view_d_object_path(@d_object, format:'jpeg', size:'300x')),
+ <%= content_tag(:div, link_to(image_tag(view_d_object_path(@d_object, format:'jpeg', size:'600x')),
                                view_d_object_path(@d_object, format:'jpeg'))) if ['image/jpeg', 'image/tiff', 'image/png'].include?(@d_object.mime_type.split(';').first)
  %>
 <% end %>
 <div class="clearfix"></div>
 <% if @d_object.d_objects_folder.d_objects.size>1 %>
-<%= link_to("[Mostra il contenuto della cartella (#{@d_object.d_objects_folder.d_objects.size} files)]", d_objects_folder_path(@d_object.d_objects_folder))  %>
+<%= link_to("[Mostra il contenuto della cartella (#{@d_object.d_objects_folder.d_objects.size} files)]", d_objects_folder_path(@d_object.d_objects_folder,view:'list'))  %>
 <% else %>
 Unico file contenuto nella cartella
 <% end %>
@@ -29,5 +31,7 @@ Unico file contenuto nella cartella
 </pre>
 
 <% if can? :manage, DObject %>
-<% link_to('Carica su Omeka', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>
+<% link_to('Carica su Omeka (esempio, non funziona più perché ho disinstallato Omeka)', upload_omeka_files_path(:d_object_id=>@d_object.id)) %>
 <% end %>
+
+<%= content_tag(:p, @d_object.tags) %>

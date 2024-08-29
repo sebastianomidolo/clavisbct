@@ -1,0 +1,26 @@
+
+<% if params[:library_id].blank? %>
+<%= link_to('Nuovo schema di collocazione', new_location_path) %>
+<%= locations_libraries %>
+<% else %>
+
+<% order = '' %>
+
+<%= content_tag(:span, "[#{link_to('per collocazione', locations_path(library_id:params[:library_id]))}]".html_safe) %>
+
+<%= content_tag(:span, "[#{link_to('per ubicazione', locations_path(order:'p',library_id:params[:library_id]))}]".html_safe) %>
+<%= content_tag(:span, "[#{link_to('per 2o elemento', locations_path(order:'2e',library_id:params[:library_id]))}]".html_safe) %>
+
+<%= content_tag(:span, "[#{link_to('ultimi inserimenti', locations_path(order:'id',library_id:params[:library_id]))}]".html_safe) %>
+
+<% if @managed_library %>
+<br/>
+<%= link_to('Nuovo schema di collocazione', new_location_path(library_id:@clavis_library)) %>
+<%= link_to('<b>Inserisci nuova ubicazione</b>'.html_safe, new_bib_section_path(library_id:@clavis_library.id), class:'btn btn-warning') if can? :manage, BibSection %>
+<% end %>
+
+<%= content_tag(:div, locations_list(@collocazioni, params[:order])) %>
+
+<% end %>
+
+

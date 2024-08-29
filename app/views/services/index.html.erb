@@ -1,0 +1,11 @@
+<% flash.each do |key, value| %>
+<div class="alert"><%= value %></div>
+<% end %>
+
+
+<% link_to 'Inserimento servizio... (evitare per ora)', new_service_path %>
+
+<%= content_tag(:div, services_list(@services)) %>
+
+
+<%= link_to("Documentazione", service_docs_path) %>

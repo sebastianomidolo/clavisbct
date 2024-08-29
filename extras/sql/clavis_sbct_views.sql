@@ -21,11 +21,12 @@ CREATE OR REPLACE VIEW sbct_acquisti.vcopie AS
  select id_copia,id_titolo,
    case when c.home_library_id is not null then c.home_library_id else c.library_id end as library_id,
    case when c.home_library_id is not null then lc2.label else lc1.label end as siglabct,
-    order_status as status,c.data_arrivo,
+    order_status as status,c.data_arrivo,c.budget_id,o.order_date,
    c.supplier_id,prezzo,c.order_id,clavis_item_id, ci.item_status, ci.item_source, ci.inventory_date
    FROM sbct_acquisti.copie c
     left join sbct_acquisti.library_codes lc1 on (lc1.clavis_library_id=c.library_id)
     left join sbct_acquisti.library_codes lc2 on (lc2.clavis_library_id=c.home_library_id)
+    left join sbct_acquisti.orders o using(order_id)
     left join clavis.item ci on(ci.item_id=c.clavis_item_id);
 
 
@@ -155,7 +156,7 @@ SELECT root_id,id_lista,level,label, order_sequence FROM tree_view;
 CREATE OR REPLACE VIEW public.pac_lists as
 WITH RECURSIVE tree_view AS (
 
-  SELECT id_lista, hidden, owner_id, parent_id, label, 0 AS level,
+  SELECT id_lista, library_id, hidden, owner_id, parent_id, label, 0 AS level,
       CAST(label AS text) AS order_sequence,
       id_lista as root_id
     FROM sbct_acquisti.liste
@@ -163,13 +164,13 @@ WITH RECURSIVE tree_view AS (
 
 UNION ALL
 
-  SELECT parent.id_lista, parent.hidden, parent.owner_id, parent.parent_id, parent.label, level + 1 AS level,
+  SELECT parent.id_lista, parent.library_id, parent.hidden, parent.owner_id, parent.parent_id, parent.label, level + 1 AS level,
          CAST(order_sequence || '_' || CAST(parent.label AS TEXT) AS TEXT) AS order_sequence,
 	 root_id
     FROM sbct_acquisti.liste parent JOIN tree_view tv ON parent.parent_id = tv.id_lista
 )
 
-SELECT root_id,id_lista,hidden,owner_id,level,label, order_sequence FROM tree_view;
+SELECT root_id,id_lista,hidden,owner_id,library_id,level,label, parent_id, order_sequence FROM tree_view;
 
 
 create or replace view public.vedi_mic as
@@ -231,3 +232,15 @@ with t1 as
 select * from t1 left join  sbct_acquisti.suppliers s
     on s.supplier_name ~ t1.multibudget_label;
 
+create or replace view sbct_acquisti.view_in_liste
+as
+SELECT
+  tl.id_titolo, tl.id_lista,t.datapubblicazione,
+  tl.date_created as inserito_in_lista,
+  date_part('day', now() - t.datapubblicazione) AS gg_da_pubblicazione,
+  date_part('day', now() - tl.date_created) AS gg_in_lista
+from sbct_acquisti.l_titoli_liste tl
+  join sbct_acquisti.titoli t using(id_titolo);
+  
+--  where tl.date_created is not null
+--     and t.datapubblicazione < now();

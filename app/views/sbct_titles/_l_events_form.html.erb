@@ -1,8 +1,15 @@
-<%= content_tag(:div, "Richiesta copie per #{@sbct_event.to_label} (#{@sbct_event.sbct_event_type.to_label})") %>
 
 <%
+  if @sbct_event.owned_by(current_user)
+   read_only = false
+  else
+   read_only = true
+  end
+
   if SbctLEventTitle.exists?([@sbct_event.id,title.id])
+    @nuovoevento=false
     @sbct_l_event_title = SbctLEventTitle.find([@sbct_event.id,title.id])
+    read_only = true if !@sbct_l_event_title.validated.nil? 
   else
     @nuovoevento=true
     @sbct_l_event_title = SbctLEventTitle.new({"id_titolo"=>title.id})
@@ -10,27 +17,42 @@
   end
 %>
 
+<hr/>
+<%=
+  if read_only
+  msg = "Attenzione: <b>questa richiesta è già stata esaminata dall'Ufficio Acquisti</b><br/>"
+  msg << "Status convalida: #{@sbct_l_event_title.stato_convalida}<br/>"
+  msg << "#{content_tag(:div, "Richiesta chiusa", class:'label label-warning')}<br/>" if @sbct_l_event_title.closed?
+  else
+  msg = @nuovoevento==true ? "Inserimento richiesta" : "Modifica richiesta"
+  end
+  content_tag(:div, "#{msg} copie per #{@sbct_event.to_label} (#{@sbct_event.sbct_event_type.to_label})".html_safe)
+%>
+
+
 <%= simple_form_for(@sbct_l_event_title) do |f| %>
 
     <%= f.input :id_titolo, as: 'hidden' %>
     <%= f.association :sbct_event, as: 'hidden' %>
 
 <div class="form-inputs">
-    <%= f.input :numcopie, label:'Numero di copie desiderate' %>
-    <%= f.input :notes, label:'Note' %>
+    <%= f.input :numcopie, label:'Numero di copie desiderate (da 1 a 20)', disabled: read_only %>
+    <%= f.input :notes, label:'Note', disabled: read_only, input_html: {rows: 6, cols: 50} %>
 </div>
 
   <div class="form-actions">
     <%=
       txtbtn = @nuovoevento ? "Inserisci richiesta" : "Conferma modifiche"
-      f.button :submit, value: txtbtn, class:'btn btn-success'
+      f.button :submit, value: txtbtn, disabled: read_only,  class:'btn btn-success'
       %>
 
     <%=
-      if !@nuovoevento
+      if !@nuovoevento and @sbct_event.owned_by(current_user) and !@sbct_l_event_title.closed?
         link_to("Elimina richiesta", @sbct_l_event_title, method: :delete, data: { confirm: "Confermi eliminazione della richiesta?" }, class:'btn btn-warning')
       end
     %>
 
   </div>
 <% end %>
+
+<%= content_tag(:span, "Modifiche recepite", class:'label label-info') if !params[:modifiche].blank? %>

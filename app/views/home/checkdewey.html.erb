@@ -1,0 +1,13 @@
+<%= content_tag(:pre, @sql) %>
+<%= content_tag(:h4, "#{@records.count} esemplari con collocazioni da controllare confrontandole con la CDD attribuita") %>
+
+<table class="table">
+<% @records.each do |r| %>
+
+<%=
+  lnk = ClavisItem.clavis_url(r['item_id'],:edit)
+  content_tag(:tr, content_tag(:td, "CDD&nbsp;#{r['manifestation_dewey']}".html_safe) + content_tag(:td, r['collocation']) + content_tag(:td, link_to(r['title'],lnk,target:'_new')))
+ %>
+
+<% end %>
+</table

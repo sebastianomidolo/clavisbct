@@ -1,4 +1,3 @@
-
 SET SEARCH_PATH TO import;
 
 set standard_conforming_strings to false;
@@ -30,7 +29,7 @@ end as print_year,
 
 case when ci.inventory_serie_id != '' then ci.inventory_serie_id end as inventory_serie_id,
 
-ci.inventory_number,cm.manifestation_id,cm.bib_level,cm.bib_type,
+ci.inventory_number,cm.manifestation_id,cm.bib_level,cm.bib_type_first,cm.bib_type,
 
 -- case when ci.inventory_date is null then ci.date_created else ci.inventory_date end as inventory_date,
 
@@ -123,23 +122,97 @@ case -- per statcol
   when ci.home_library_id in(2,3) then
 
     case
-      -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null 
-      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG'
-         and occ.primo = 'R' and cdd.class_code IS NULL
-                         then occ.primo || '.' || substr(occ.secondo,1,1) || '00'
+      -- civica centrale, RAG   ATTENZIONE differenziare con occ.coll_rag not null
 
-      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG'
-         and occ.primo = 'R' and cdd.class_code IS NOT NULL
-                         then occ.primo || '.' || substr(cdd.class_code,1,1) || '00'
-
-      when cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-      when upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
-      -- [segue tutta la casistica per 2 e 3]
-      -- a titolo di esempio (non so se si vada così nell'analitico):
       when ci.home_library_id = 3 and (cc.colloc_stringa ~ E'^907\\.C\\.' OR cc.colloc_stringa ~ E'^L\\.B\\.')
                          then 'libretti_ballo'
       when ci.home_library_id = 3 and (uni105.u105_11 = 'i' OR cc.colloc_stringa ~ E'^L\\.O\\.')
                          then 'libretti'
+      when ci.home_library_id = 3 and cm.bib_type = 'c01' then 'partiture musicali'
+      when ci.home_library_id = 3 and cm.bib_type = 'j01' then 'dischi vinile'
+      when ci.home_library_id = 3 and cm.bib_type = 'j02' then 'CD'
+      when ci.home_library_id = 3 and cm.bib_type = 'j03' then 'DVD (audio)'
+      when ci.home_library_id = 3 and cm.bib_type = 'g03' then 'DVD (video)'
+
+      -- when ci.home_library_id = 3 and uni105.u105_4 = 'r' then 'ragazzi'
+
+       -- manoscritti e rari
+     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^400\\.[A-G]|^401\\.[A-G]|^402\\.[A-G]|^403\\.[A-G]|^404\\.[A-G]|^405\\.[A-G]') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^407\\.[A-G]|^408\\.[A-G]|^408\\.L\\.|^408\\.[M-P]') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^407\\.[XA-XD]|^408\\.[XA-XD]') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^410\\.[A-H]|^411\\.[A-H]|^412\\.[A-H]|^413\\.[A-H]|^410\\.[XA-XD]') then 'RARI'
+
+     when ci.home_library_id = 2 and
+         (cc.primo_i between 67 and 79 and cc.secondo between 'A' and 'H')
+        then 'RARI'
+     
+     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^Archivio\\.|^Fer\\.|^Fot\\.|^Reg\\.') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* ('manos') then 'RARI'
+
+      -- multimedia centrale
+      when ci.home_library_id = 2 and ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
+      when ci.home_library_id = 2 and ci.item_media in ('A','N','M','G') then 'Audioregistrazione'
+      when ci.home_library_id = 2 and ci.item_media = 'L' then 'Oggetto'
+      when ci.home_library_id = 2 and ci.item_media = 'H' then 'Musica a Stampa'
+      when ci.home_library_id = 2 and ci.item_media = 'E' then 'Microforma'
+      when ci.home_library_id = 2 and ci.item_media = 'D' then 'Materiale Cartografico'
+      when ci.home_library_id = 2 and ci.item_media = 'B' then 'Manoscritto'
+      when ci.home_library_id = 2 and ci.item_media = 'Q' then 'DVD'
+      when ci.home_library_id = 2 and ci.item_media = 'T' then 'Libro Parlato'
+      when ci.home_library_id = 2 and ci.item_media = 'C' then 'Grafica'
+
+      -- ragazzi centrale
+      -- RAG
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'R' and substr(occ.colloc_stringa,3,3) ~ E'^\\d{3}$'
+         then 'R.' || substr(occ.colloc_stringa,3,1)::char(3) || '00'
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then occ.primo || '.' || occ.secondo
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.colloc_stringa is null and substr(cdd.class_code,1,3) ~ E'^\\d{3}$'
+         then 'R.' || substr(cdd.class_code,1,1)::char(3) || '00'
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.colloc_stringa ~ '' then 'RNonClassif'
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.colloc_stringa is null  and upclass.up_class_code IS NOT NULL
+         then 'R.' || substr(upclass.up_class_code,1,1) || '00'
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' then 'RAG'
+
+     -- ANTE2009 
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.primo = 'R' and substr(occ.colloc_stringa,3,3) ~ E'^\\d{3}$' then 'R.' || substr(occ.colloc_stringa,3,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.primo = 'R' and substr(occ.colloc_stringa,3,3) ~ E'^\\d{3}$' then 'R.' || substr(occ.colloc_stringa,3,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then occ.primo || '.' || occ.secondo
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then occ.primo || '.' || occ.secondo
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.colloc_stringa is null and substr(cdd.class_code,1,3) ~ E'^\\d{3}$' then 'R.' || substr(cdd.class_code,1,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.colloc_stringa is null and substr(cdd.class_code,1,3) ~ E'^\\d{3}$' then 'R.' || substr(cdd.class_code,1,1)::char(3) || '00'
+
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and upclass.up_class_code IS NOT NULL then 'R.' || substr(upclass.up_class_code,1,1) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and upclass.up_class_code IS NOT NULL then 'R.' || substr(upclass.up_class_code,1,1) || '00'
+
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.colloc_stringa ~ '' then 'RNonClassif'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.colloc_stringa ~ '' then 'RNonClassif'
+
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.') THEN 'ante2009'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+           then 'ante2009'
+	   
+      -- adulti centrale
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^CCNC|^CCPT') then 'Narrativa'
+
+      --when ci.home_library_id = 2 and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+      --when ci.home_library_id = 2 and upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+
       else '2,3 non assegnati'
     end
 
@@ -168,7 +241,7 @@ case -- per statcol
     when cc.colloc_stringa ~ '^NF' then 'Narrativa NF'
     when cc.colloc_stringa ~ '^NG' then 'Narrativa NG'
     when cc.colloc_stringa ~ '^NR' then 'Narrativa NR'
-    when cc.colloc_stringa ~ (E'^N|^CCNC|^CCPT') then 'Narrativa'
+    when cc.colloc_stringa ~ '^N' then 'Narrativa'
 
     when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
 
@@ -176,9 +249,14 @@ case -- per statcol
 
     -- when cc.primo = 'RN' and cc.terzo_i    between 1 and 19 then cc.primo || '.' || cc.terzo
     when cc.primo = 'RN' and cc.secondo_i  between 1 and 19 then cc.primo || '.' || cc.secondo
+--modifica
+    when cc.primo = 'RN' and cc.terzo_i   between 1 and 19 then cc.primo || '.' || cc.terzo
+    --when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
 
-    when occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
-    when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
+
+--rimettere a posto
+    --when occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then occ.primo || '.' || occ.terzo
+    --when occ.primo = 'RN' and occ.secondo_i between 1 and 19 then occ.primo || '.' || occ.secondo
 
     when substr(cc.colloc_stringa,1,3) ~ E'^\\d{3}$'
       then substr(cc.colloc_stringa,1,1)::char(3) || '00'
@@ -215,6 +293,7 @@ case -- per statcol
 
 end as statcol,
 
+   oca.colloc_stringa as coll_adu,
    cc.colloc_stringa as colloc_stringa, ci.collocation as colloc_clavis, occ.colloc_stringa as coll_rag, occ.home_library_id as coll_rag_library_id,
    occ.secondo_i as coll_rag_secondo_i,
    occ.item_id as coll_rag_item_id,
@@ -227,18 +306,22 @@ end as statcol,
    ci.owner_library_id,lc2.label as owner_library,
    case when uni105.u105_4  != '' then uni105.u105_4 end as u105_4,
    case when uni105.u105_11 != '' then uni105.u105_11 end as u105_11,
+   case when uni105.u100_pubblico != '' then uni105.u100_pubblico end as u100_pubblico,
 
   case
     when ci.home_library_id in(2,3) then
       case
         when ci.inventory_serie_id = 'RAG' then 'ragazzi' -- NB serie RAG è solo Centrale (non serve filtro per biblioteca)
 	when ci.home_library_id = '3' and uni105.u105_4 = 'r' then 'ragazzi'
-	-- aggiungere casistica centrale libri per ragazzi
+	when ci.home_library_id = '2' and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.') then 'ragazzi'
+	when ci.home_library_id = '2' and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+	  then 'ragazzi'
         else 'adulti'
       end
     else -- Tutte le non 2,3
       case when
-        ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.R\\.|^DVD\\.RN\\.|^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7') ) )
+        ( (ci.section in ('R','RN','CAA')) OR (cc.colloc_stringa ~ (E'^R\\.|^RC\\.|^RN\\.|^DVD\\.791\\.433\\.| ^DVD\\.791\\.4334\\.|^DVD\\.R\\.|^DVD\\.RN\\.|
+                                                                      ^CD\\.R\\.|^CD\\.RN\\.|^MCD\\.7|^MC\\.7') ) )
         then 'ragazzi'
       else 'adulti'
     end
@@ -257,6 +340,14 @@ case
 
   case
 -- multimedia
+    when ci.home_library_id in(2,3) then
+
+    case
+    when ci.home_library_id = 2 and ci.item_media in ('R','A','N','M','G','L','E','Q','T') THEN 'multimedia'
+    else 'da assegnare'
+  end
+else
+  case
     when ci.item_media = 'A' or cc.colloc_stringa ~ (E'^MCD\\.|^MC\\.')  or cc.primo = 'CD' then 'multimedia'
     when cc.colloc_stringa ~ E'^MCD\\.9'  then 'multimedia'
     when ci.item_media = 'T' then 'multimedia'
@@ -268,7 +359,7 @@ case
     when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'vol_narrativa'
 
     else 'vol_saggistica'
-     
+   end  
   end as genere,
 
 /*
@@ -321,6 +412,16 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
 	    AND xc.colloc_stringa ~ '^R' AND oci.item_status != 'E'
 	    AND oci.item_id != ci.item_id and ci.owner_library_id>0 limit 1) as occ on true
 
+   --prova
+   LEFT JOIN LATERAL
+        (SELECT xc.colloc_stringa,oci.home_library_id,xc.primo,xc.secondo,xc.terzo,xc.secondo_i,xc.terzo_i,xc.item_id
+        FROM item AS oci JOIN collocazioni AS xc using(item_id)
+           JOIN sbct_acquisti.library_codes ON(clavis_library_id=oci.home_library_id AND owner='bct')
+         WHERE oci.manifestation_id = cm.manifestation_id and oci.home_library_id!=ci.home_library_id
+            AND oci.item_status != 'E'
+            AND oci.item_id != ci.item_id and ci.owner_library_id>0 limit 1) as oca on true
+--fine prova
+
 
      LEFT JOIN LATERAL
      (SELECT lam.link_type as up_link_type, au.authority_id as up_authority_id, regexp_replace(au.class_code, E'\\s|\\t', '', 'g') as up_class_code
@@ -364,4 +465,10 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
        order by cl.loan_date_begin desc limit 1) as last_loans on true
 
       WHERE ci.item_media != 'S' AND ci.item_status != 'E';
-      
+
+
+select item_id,manifestation_id,statcol,colloc_stringa,home_library from view_super_items where manifestation_id
+    in(93460,761211,642909,268164,180303,541278);
+
+
+-- select item_id,manifestation_id,statcol,colloc_stringa,home_library from view_super_items where statcol='RARI';

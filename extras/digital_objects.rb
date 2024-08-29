@@ -163,9 +163,18 @@ module DigitalObjects
     fm=FileMagic.mime
 
     mp=digital_objects_mount_point
+    # puts "creo forse entry per #{dirname}"
+    crfolder = dirname.sub(mp,'')
+    # puts "vale a dire: #{crfolder}"
+    DObjectsFolder.makedir(crfolder)
+
     filecount=0
     Dir[(File.join(dirname,'*'))].each do |entry|
       if File.directory?(entry)
+        # puts "creo forse entry per #{entry}"
+        crfolder = entry.sub(mp,'')
+        # puts "vale a dire: #{crfolder}"
+        DObjectsFolder.makedir(crfolder)
         filecount += digital_objects_dirscan(entry, fdout)
       else
         fstat = File.stat(entry)

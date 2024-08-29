@@ -16,7 +16,7 @@ module ClavisIssueHelper
     <div class="cover-overlay adjust-size"> </div>
     <div class="cover-border left"> </div>
     <img title="__TITLE__"
-        src="http://sbct.comperio.it/index.php?file=__NUMFILE__"
+        src="https://sbct.comperio.it/index.php?file=__NUMFILE__"
         alt="__TITLE__"
         property="image"
     /></a></div>}

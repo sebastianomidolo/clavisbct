@@ -1,0 +1,5 @@
+<%= content_tag(:h3, "#{@cm.total_entries} notizie presenti sia in Bct che in Sbam (si aggiorna strada facendo)") %>
+
+<%= will_paginate @cm, renderer: BootstrapPagination::Rails %>
+
+<%= content_tag(:div, clavis_manifestations_shortlist(@cm,true)) %>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <%= @pagetitle.nil? ? content_tag(:title, params[:controller] + ': ' + params[:action]) : content_tag(:title, @pagetitle) %> 
+
+    <%= stylesheet_link_tag "sp_bibliographies.css", :media => "all" %>
+
+    <%= javascript_include_tag "application" %>
+    <%= csrf_meta_tags %>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+<%
+access_link=[]
+if user_signed_in?
+ access_link << link_to(current_user.email, edit_user_registration_path)
+ access_link << link_to("<b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete)
+else
+ access_link << link_to("Entra", new_user_session_path)
+end
+%>
+
+    <div class="container">
+
+      <!-- Static navbar -->
+
+<!--
+       <p class="notice"><%= notice %></p>
+       <p class="alert"><%= alert %></p>
+-->
+
+      <!-- Main component for a primary marketing message or call to action -->
+      <div class="jumbotron">
+	<a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
+	<div class="briciole">
+	  <% if user_signed_in? %>
+           <a href="https://clavisbct.comperio.it"><img src="/bct-homepage-green.png" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+	   <% else %>
+	    <a href="https://bct.comune.torino.it"><img src="/bct-homepage.png" alt="Biblioteche Civiche Torinesi" width="20" height="20" style="margin-bottom: 5px"></a>
+          <% end %>
+	  <%= sp_bibliographies_breadcrumbs -%>
+	</div>
+        <%= yield %>
+      </div>
+    </div> <!-- /container -->
+  </body>
+</html>
+
+<!-- preso da: "http://getbootstrap.com/examples/navbar/" -->
+
+

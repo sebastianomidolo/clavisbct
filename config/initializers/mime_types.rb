@@ -6,4 +6,4 @@
 
 Mime::Type.register "audio/mp3", :mp3
 Mime::Type.register "application/msword", :doc
-
+Mime::Type.register "application/vnd.ms-excel", :xls

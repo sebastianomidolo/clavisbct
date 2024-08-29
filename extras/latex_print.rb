@@ -5,7 +5,11 @@ module LatexPrint
     def initialize(name, inputdata=[], replace_amp=true)
       @template=File.join(Rails.root.to_s,'extras','latex_templates',"#{name}.tex.erb")
       erb = ERB.new(File.read(@template))
-      @texinput = erb.result(binding)
+      begin
+        @texinput = erb.result(binding)
+      rescue
+        raise "Errore in PDF::initialize con name='#{name}': #{$!}"
+      end
       @texinput.gsub!("&", '\\\&') if replace_amp
       @texinput.gsub!("_", ' ')
       @texinput.gsub!("«", '``')
@@ -46,7 +50,7 @@ module LatexPrint
         # puts "non pdf"
         # x=x.split(':').last
         # puts "errore TeX: #{x.inspect}"
-        data=nil
+        data="Errore in makepdf: #{x.inspect}"
       else
         # puts "OK pdf"
         fd = File.open(pdf_file)

@@ -23,14 +23,19 @@
 
 <ul>
 
-  <%= content_tag(:li, link_to('Periodici Civica Centrale (collocazioni <b>Per.</b>)'.html_safe,
-      clavis_consistency_notes_path)) %>
-  <%= content_tag(:li, link_to('Schema collocazioni Centrale (in elaborazione)', list_schema_collocazioni_centrales_path)) %>
-  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path)) if can? :search, ClavisItem %>
-  <%= content_tag(:li, button_to('Prenotazioni su esemplare pendenti', clavis_item_requests_path, method:'get')) if can? :manage, ClavisItemRequest %>
-  <%= content_tag(:li, button_to('Gestione liste e ordini periodici', serial_lists_path, method:'get')) if can? :index, SerialList and current_user.email!='tutti' %>
+  <% content_tag(:li, link_to('Periodici Civica Centrale (collocazioni <b>Per.</b>)'.html_safe, clavis_consistency_notes_path)) %>
+  <%= content_tag(:li, link_to('Cerca esemplari', clavis_items_path, class:'btn btn-default')) if can? :search, ClavisItem %>
 
-  <%= content_tag(:li, button_to('Periodici correnti', serial_lists_path, method:'get')) if current_user.nil? %>
+  <%= content_tag(:li, link_to('Scarto', scarto_clavis_items_path, class:'btn btn-info')) if can? :scarto, ClavisItem %>
+
+  <% if !current_user.nil? and !current_user.clavis_default_library.nil? and current_user.clavis_default_library.id==3 %>
+  <%= content_tag(:li, link_to('Da DB musicale audiovisivi', "/extra_cards?extra_card%5Bmusicale%5D=1", class:'btn btn-default')) if can? :search, ClavisItem %>
+  <% end %>
+  
+  <%= content_tag(:li, button_to('Prenotazioni su esemplare pendenti', clavis_item_requests_path, method:'get')) if can? :manage, ClavisItemRequest %>
+  <%= content_tag(:li, button_to('Gestione liste e ordini periodici', serial_lists_path, method:'get')) if can? :index, SerialList and !current_user.role?('SerialReadonly') %>
+
+  <%= content_tag(:li, button_to('Periodici correnti (sola lettura)', serial_lists_path, method:'get')) if !current_user.nil? and current_user.role?('SerialReadonly') %>
   <%= content_tag(:li, link_to('Cerca esemplari (con filtro per data di ultima modifica)', clavis_items_path(mode:'lastmod'))) if can? :search, ClavisItem %>
 
   <%= content_tag(:li, link_to('Cerca esemplari Adabas 2011 ', '/adabas_inventories')) if can? :manage, AdabasInventory %>
@@ -39,44 +44,103 @@
   <%= content_tag(:li, link_to('Lista contatti errati', '/cp_wc')) if can? :wrong_contacts, ClavisPatron %>
   <%= content_tag(:li, link_to('Lista contatti con email nel campo cellulare', '/cp_wc?contact_note=@')) if can? :wrong_contacts, ClavisPatron %>
 
-  <%= content_tag(:li, link_to('Soggettario', subjects_path)) %>
+  <%=
+    if File.exists? '/home/seb/utenti_duplicati.txt'
+      content_tag(:li, link_to("Controllo utenti duplicati (ultimo aggiornamento a ieri: #{File.read('/home/seb/utenti_duplicati.txt')})", duplicates_clavis_patrons_path)) if can? :duplicates, ClavisPatron
+    else
+      content_tag(:li, link_to("Controllo utenti duplicati", duplicates_clavis_patrons_path)) if can? :duplicates, ClavisPatron
+    end
+
+    %>
+  
+  <% content_tag(:li, link_to('Soggettario', subjects_path)) %>
  <% if can? :manage, Container %>
  <%= content_tag(:li, link_to('Gestione contenitori fuori sede (Q)', containers_path(filter:'Q'))) %>
- <%= content_tag(:li, link_to('Gestione contenitori fuori sede (SC)', containers_path(filter:'SC'))) %>
+ <% content_tag(:li, link_to('Gestione contenitori fuori sede (SC)', containers_path(filter:'SC'))) %>
  <% end %>
+ <!--
 <% if can? :ricollocazioni, ClavisItem %>
-  <%= content_tag(:li, link_to('Scaffale aperto', '/sa')) %>
+  <%= content_tag(:li, link_to('Seleziona libri candidati a essere spostati in Scaffale aperto', '/sa')) %>
 <% end %>
 <% if can? :ricolloca_scaffale_aperto, OpenShelfItem %>
-  <%= content_tag(:li, link_to('Ricollocazioni', 'https://clavisbct.comperio.it/open_shelf_items/estrazione_da_magazzino')) %>
+  <%= content_tag(:li, link_to('Effettua le ricollocazioni', 'https://clavisbct.comperio.it/open_shelf_items/estrazione_da_magazzino')) %>
 <% end %>
-
-  <%= content_tag(:li, link_to('Ricerca proposte acquisto utenti opac', clavis_purchase_proposals_path)) if can? :manage, ClavisPurchaseProposal %>
+-->
+ 
+<%= content_tag(:li, link_to('Ricerca proposte acquisto utenti opac', clavis_purchase_proposals_path("clavis_purchase_proposal[status]":'A'),
+       class:'btn btn-info', style:'color:#1f1f1f')) if can? :manage, ClavisPurchaseProposal %>
 
   <%= content_tag(:li, link_to('Interrogazione prestiti', clavis_loans_path)) if can? :manage, ClavisLoan %>
   <%= content_tag(:li, link_to('Interrogazione prestiti Goethe Institut', view_goethe_loans_clavis_loans_path)) if can? :view_goethe_loans, ClavisLoan %>
 
 
-  <%= content_tag(:li, button_to('Richieste a magazzino Civica Centrale', closed_stack_item_requests_path, method:'get')) if can? :index, ClosedStackItemRequest %>
+  <%=
+    t = ClosedStackItemRequest.status
+    if !current_user.nil? and !current_user.clavis_default_library.nil?
+     mylib = 'Civica Centrale'
+     mylib = current_user.clavis_default_library.to_label if !current_user.nil?
+     btn = link_to("Richieste a magazzino #{mylib}", closed_stack_item_requests_path, class:'btn btn-default')
+     content_tag(:li, "#{btn}#{t}".html_safe) if can? :index, ClosedStackItemRequest
+    else
+     nil
+    end
+    #if !current_user.nil?
+    #content_tag(:li, "#{btn}#{t}".html_safe) if ['dorcol','seba'].include?(current_user.email)
+    #end
+    %>
 
   <% content_tag(:li, link_to('Estrazione da magazzino', estrazione_da_magazzino_open_shelf_items_path)) %>
 
   <%= content_tag(:li, link_to('Postazioni OPAC', work_stations_path)) if can? :manage, WorkStation %>
 
-
-  <% if can? :search, ClavisItem %>
-    <% content_tag(:li, link_to('Esemplari senza piano assegnato', clavis_items_path(senzapiano:'y'))) %>
-    <% content_tag(:li, link_to('Esemplari (periodici) senza piano assegnato', "http://clavisbct.comperio.it/clavis_items?utf8=%E2%9C%93&clavis_item%5Btitle%5D=&clavis_item%5Bcollocation%5D=&clavis_item%5Binventory_number%5D=&clavis_item%5Bmanifestation_dewey%5D=&clavis_item%5Bowner_library_id%5D=2&clavis_item%5Bin_container%5D=0&clavis_item%5Bitem_status%5D=&clavis_item%5Bitem_media%5D=S&clavis_item%5Bopac_visible%5D=&commit=cerca&senzapiano=y")) %>
-    <% content_tag(:li, link_to('Sesto piano', clavis_items_path(piano:'6° piano'))) %>
-    <% content_tag(:li, link_to('Secondo seminterrato', clavis_items_path(piano:'Secondo seminterrato'))) %>
+  <% if can? :index, Location %>
+    <%= content_tag(:li, link_to('Tabelle di Collocazione BCT', locations_path, class:'btn btn-info',style:'color:#1f1f1f')) %>
+  <% else %>
+   <% if can? :search, ClavisItem %>
+     <% content_tag(:li, link_to('Schema collocazioni Centrale', list_schema_collocazioni_centrales_path, class:'btn btn-default')) %>
+     <% content_tag(:li, link_to('Esemplari senza piano assegnato', clavis_items_path(senzapiano:'y'))) %>
+     <% content_tag(:li, link_to('Esemplari (periodici) senza piano assegnato', "http://clavisbct.comperio.it/clavis_items?utf8=%E2%9C%93&clavis_item%5Btitle%5D=&clavis_item%5Bcollocation%5D=&clavis_item%5Binventory_number%5D=&clavis_item%5Bmanifestation_dewey%5D=&clavis_item%5Bowner_library_id%5D=2&clavis_item%5Bin_container%5D=0&clavis_item%5Bitem_status%5D=&clavis_item%5Bitem_media%5D=S&clavis_item%5Bopac_visible%5D=&commit=cerca&senzapiano=y")) %>
+     <% content_tag(:li, link_to('Sesto piano', clavis_items_path(piano:'6° piano'))) %>
+     <% content_tag(:li, link_to('Secondo seminterrato', clavis_items_path(piano:'Secondo seminterrato'))) %>
+   <% end %>
   <% end %>
-  
-  <%= content_tag(:li, link_to('Schema collocazioni Centrale', schema_collocazioni_centrales_path)) if can? :manage, SchemaCollocazioniCentrale %>
 
-  <%= content_tag(:li, link_to('Bio-iconografico', bio_iconografico_cards_path(namespace:BioIconograficoCard.default_namespace(current_user)))) if !current_user.nil? and !BioIconograficoCard.default_namespace(current_user).nil? %>
+  <%=
+    if can? :manage, BioIconograficoNamespace
+    content_tag(:li, link_to('Repertori BCT - gestione', bio_iconografico_namespaces_path, class:'btn btn-default'))
+    else
+    content_tag(:li, link_to('Repertori BCT', bio_iconografico_cards_path, title:'Bio iconografico e altri', class:'btn btn-default')) if can? :index, BioIconograficoCard
+    end
+    %>
 
-  <%= content_tag(:li, link_to('Bibliografie', sp_bibliographies_path)) if can? :index, SpBibliography %>
-  <%= content_tag(:li, button_to('Acquisti (nuova procedura CR in fase di sviluppo)', '/cr', method:'get', class:'btn btn-success')) if can? :homepage, SbctTitle %>
+
+
+  <%= content_tag(:li, link_to('Bibliografie', sp_bibliographies_path(status:'AC'))) if can? :index, SpBibliography %>
+  <%= content_tag(:li, link_to('Procedure per Acquisti Coordinati (PAC)', '/pac', method:'get', class:'btn btn-success',style:'color:#1a1a1a')) if can? :homepage, SbctTitle %>
+
+ <%= content_tag(:li, button_to('Procedure per Acquisti Coordinati (PAC - Scorciatoie)', '/sbct_presets', method:'get', class:'btn btn-warning',style:'color:#1a1a1a')) if can? :homepage, SbctTitle %>
+
+  <%= if can? :manage, SbctEvent
+    txt='Eventi (PAC)'
+    url_link=sbct_events_path
+    if !current_user.nil? and SbctLEventTitle.nuovi? and current_user.role?(['AcquisitionManager','AcquisitionStaffMember'])
+      txt << ' *** nuove richieste eventi ***'
+      url_link = '/sbct_events?rstatus=1'
+    end
+    if !current_user.nil? and SbctLEventTitle.titoli_selezionabili? and current_user.role?('AcquisitionLibrarian')
+      txt << ' *** ci sono titoli selezionabili ***'
+      url_link = '/sbct_events?rstatus=4'
+    end
+
+    content_tag(:li, link_to(txt, url_link, method:'get', class:'btn btn-info',style:'color:#1a1a1a'))
+    end
+  %>
+
+  <%= content_tag(:li, button_to('BctUsers', users_path, method:'get', class:'btn')) if can? :manage, User %>
+
+  <% if can? :index, Service %>
+  <%= content_tag(:li, button_to('Servizi', service_path(1), method:'get', class:'btn btn-warning')) %>
+  <% end %>
 
   
 </ul>
@@ -88,3 +152,32 @@
        width="274" height="192"
        ></a>
 -->
+
+<!-- <iframe src="https://bct.comperio.it:443/data/html/widget/4265" frameborder=0 width=980></iframe> -->
+
+<% if !current_user.nil? %>
+<span>
+<% content_tag(:span, link_to('Estensione ClavisBct', "https://bctwww.comperio.it/clavis/ClavisBCT_manual.html",style:'color:#aaeedd;background:#1a1a1a')) %> 
+<%= content_tag(:span, link_to('Numeri mancanti', "https://bctwww.comperio.it/mn/",style:'color:#1a1a1a;background:#aaeedd')) %>
+</span>
+<% end %>
+
+<% if can? :use, Clinic %>
+<span>
+<%= content_tag(:span, link_to('Officina dati', '/clinic',style:'color:#dddda1;background:#88aa22')) %>
+</span>
+<% end %>
+
+
+<% if !current_user.nil? %>
+<br/>
+<% begin %>
+<%= content_tag(:h6, "Biblioteca corrente: #{link_to(mylib,sbct_user_path(current_user))}".html_safe) if !current_user.clavis_default_library.nil? %>
+<% rescue %>
+-
+<% end %>
+<% else %>
+
+<%= button_to("Effettua l'accesso", new_user_session_path, method:'get', class:'btn btn-info col-md-12',style:'color:#1a1a1a') %>
+
+<% end %>

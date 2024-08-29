@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <%= @pagetitle.nil? ? content_tag(:title, params[:controller] + ': ' + params[:action]) : content_tag(:title, @pagetitle) %> 
+
+    <%= stylesheet_link_tag "csir.css", :media => "all" %>
+
+    <%= javascript_include_tag "application" %>
+
+
+    <%= csrf_meta_tags %>
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+      <![endif]-->
+
+
+  </head>
+
+  <body>
+
+<%
+access_link=[]
+if user_signed_in?
+ access_link << link_to(current_user.email, edit_user_registration_path)
+ access_link << link_to("<b>[esci]</b>".html_safe, destroy_user_session_path, :method => :delete)
+else
+ access_link << link_to("Entra", new_user_session_path)
+end
+%>
+
+    <div class="container">
+
+      <!-- Static navbar -->
+
+<!--
+       <p class="notice"><%= notice %></p>
+       <p class="alert"><%= alert %></p>
+-->
+
+<% if params[:dataonly]!='true' %>
+      <!-- Main component for a primary marketing message or call to action -->
+      <div class="jumbotron">
+	<a href="https://bct.comune.torino.it"><img src="/bct-logo.svg" alt="Biblioteche Civiche Torinesi" width="275" height="45"></a>
+        <span style="font-size:14px; background-color:#31b0d5; color:#fff">
+	<%=
+	  if user_signed_in?
+
+	    x = []
+            if !current_user.clavis_librarian.nil?
+               @current_order = SbctOrder.find(user_session[:current_order]) if !user_session[:current_order].nil?  
+          @current_budget = SbctBudget.find(user_session[:current_budget]) if !user_session[:current_budget].nil?
+           x << content_tag(:span, link_to("#{current_user.clavis_librarian.to_shortlabel}",sbct_user_path(current_user.id),style:"background-color:#FCE94F; color:#204A88"),{title:"UserId: #{current_user.id}"})
+               x << content_tag(:span, "#{current_user.clavis_libraries_sigle.join(', ')}", style:"background-color:#0F4252; color:#fff")
+	       rp = report_selezionati(current_user)
+                x << content_tag(:span, "#{rp}".html_safe) if !rp.blank?
+		title_id = @sbct_title.nil? ? params[:current_title_id] : @sbct_title.id
+		mylink = ''
+                if user_session[:current_list].nil?
+		     # mylink = %Q{#{link_to("nessuna lista", sbct_lists_path(current_title_id:title_id),style:"background-color:#0F4252; color:#fff")}}
+		else
+    		      mylist=SbctList.find(user_session[:current_list])
+		      if mylist.allow_uploads==true
+   		        mypath = upload_sbct_lists_path(id_lista:mylist.id,current_title_id:title_id)
+		      else
+                        mypath=sbct_list_path(mylist, current_title_id:title_id)
+		      end
+		      mylink = %Q{#{link_to("Lista attiva: #{mylist.label}", mypath,style:"background-color:#FCE94F; color:#204A88")}}
+		end
+		x << mylink
+                if !user_session[:sbct_event].nil?
+		   @sbct_event = SbctEvent.find(user_session[:sbct_event]) if @sbct_event.class!=SbctEvent
+                   x << "Evento: #{link_to(@sbct_event.to_label, sbct_event_path(@sbct_event))}"
+                end
+
+               x << content_tag(:span, link_to("#{@current_order.to_label}", sbct_order_path(@current_order))) if !@current_order.nil?
+	       x << content_tag(:span, link_to("Budget: #{@current_budget.to_label} (#{number_to_currency(@current_budget.importo_residuo)})", sbct_budget_path(@current_budget))) if !@current_budget.nil?
+
+            end
+	      if !current_user.sbct_supplier.nil?
+                x << content_tag(:span, "Benvenuta #{current_user.sbct_supplier.supplier_name}")
+	      end
+	#	     x.join(' / ').html_safe
+	     content_tag(:span, x.join(' ').html_safe, style:"background-color:#FFF; color:#204A88")
+	  end
+        %>
+        </span>
+	<div class="briciole">
+	  <% if user_signed_in? %>
+	  <!--
+          <a href="https://clavisbct.comperio.it"><img src="/hypnotizing_circle_swirl_rotating_300_wht.gif" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+-->
+	  <a href="https://clavisbct.comperio.it"><img id='baaboom' src="/bct-homepage-green.png" alt="ClavisBct" width="20" height="20" style="margin-bottom: 5px"></a>
+	   <% else %>
+	    <a href="https://bct.comune.torino.it"><img src="/bct-homepage.png" alt="Biblioteche Civiche Torinesi" width="20" height="20" style="margin-bottom: 5px"></a>
+            <% end %>
+	    
+	    <%=
+	      if ['locations','bib_sections'].include?(params[:controller])
+                locations_breadcrumbs
+     	      else
+   	        sbct_titles_breadcrumbs
+	      end
+	      -%>
+	</div>
+	
+	<% end %>
+	<!-- avvisi qui <br/> -->
+        <%= yield %>
+
+      </div>
+    </div> <!-- /container -->
+  </body>
+</html>
+
+
+    <script>
+      jQuery("#new_sbct_title").submit(function(event) {
+           // jQuery('#baaboom').attr('src', '/homeburdswirl.gif');
+           jQuery('#baaboom').attr('src', '/hypnotizing_circle_swirl_rotating_300_wht.gif');
+           // event.preventDefault();
+      });
+
+function inviaform() {
+      // jQuery('#baaboom').attr('src', '/homeburdswirl.gif');
+        jQuery('#baaboom').attr('src', '/hypnotizing_circle_swirl_rotating_300_wht.gif');
+        jQuery("#new_sbct_title").submit();
+      }
+
+function toggle_library_selection(element,library_id,id_titolo,id_lista) {
+    var url = '/sbct_titles/' + id_titolo + '/add_to_library.js?' + 'checked=' + element.checked + '&library_id=' + library_id + '&id_lista=' + id_lista;
+    // myurl=url;
+    jQuery.ajax({
+	url: url,
+	context: document.body
+    }).done(function() {
+	$( this ).addClass( "done" );
+	// alert("ricevuto");
+    });
+}
+
+function change_item_order_status(element,item_id) {
+    var contesto=jQuery(element).attr('contesto');
+    var cnt = jQuery(element).attr('line_counter');
+    var url = '/sbct_items/' + item_id + '/change_item_order_status.js?contesto=' + contesto + '&line_counter=' + cnt + '&order_status=' + element.value;
+      
+    // alert(url);
+    jQuery.ajax({
+	url: url,
+	context: document.body
+    }).done(function() {
+	$( this ).addClass( "done" );
+	// alert("ricevuto");
+    });
+}
+
+function associa_lista_a_budget(element,id_lista) {
+    alert('funzione non abilitata');
+    return;
+    budget_id = element.value;
+    var url = '/sbct_lists/' + id_lista + '/associa_a_budget.js?budget_id=' + budget_id;
+    // alert(url);
+    jQuery.ajax({
+	url: url,
+	context: document.body
+    }).done(function() {
+	// alert("tornato da chiamata Ajax");
+    });
+}
+
+    </script>

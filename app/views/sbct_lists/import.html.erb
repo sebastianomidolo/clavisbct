@@ -1,0 +1,32 @@
+<%= form_tag(import_sbct_list_path, method: 'get') do %>
+<%= select_tag(:import_from_list_id, options_for_select(SbctList.list_select(@sbct_list), params[:import_from_list_id]), :onchange=>'submit();', prompt:'Importa titoli da lista...') %>
+<% end %>
+
+<% if !@import_list.nil? %>
+
+<%= form_tag(import_sbct_list_path, method: 'post') do %>
+
+<%= hidden_field_tag(:import_from_list_id, @import_list.id) %>
+
+ <br/>
+ <%=
+   cnt=@sbct_list.connection.execute("SELECT count(id_titolo) FROM sbct_acquisti.l_titoli_liste WHERE id_lista=#{@import_list.id}").first['count'].to_i
+   content_tag(:b, "Vuoi importare #{cnt} titoli della lista #{@import_list.id} \"#{@import_list.to_label}\"?")
+ %>
+
+   <%= button_to("Sì, confermo importazione", import_sbct_list_path(import_from_list_id:@import_list), method:'post', class:'btn btn-success') %>
+ 
+ <%
+   @sbct_titles = SbctList.lastins(params.merge(id_lista:@import_list.id),current_user)
+   if @sbct_titles.size > 0
+ %>
+   <%= content_tag(:div, sbct_titles_lastins_list(@sbct_titles, @sbct_list)) %>
+  <% end %>
+ <% end %>
+<% end %>
+  
+
+
+
+
+

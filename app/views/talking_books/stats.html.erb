@@ -1,0 +1,61 @@
+<%= content_tag(:h3, "Dati su acquisizione libro parlato") %>
+
+<% if !can? :manage, TalkingBook %>
+ Funzioni non abilitate
+<% end %>
+
+<pre>
+  <%=
+    sql = %Q{select date_part('year',data_consegna) as "Anno",count(*) as "Data consegna"
+       from libroparlato.catalogo
+    where data_consegna notnull group by date_part('year',data_consegna) order by date_part('year',data_consegna)}
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno di consegna   ') + content_tag(:td, 'Numero di libri consegnati'))
+    TalkingBook.connection.execute(sql).to_a.each do |r|
+    res << content_tag(:tr, content_tag(:td, r['Anno']) + content_tag(:td, r['Data consegna']))
+    end
+    content_tag(:table, content_tag(:tbody, res.join.html_safe))
+   %>
+</pre>
+
+<pre>
+  <%=
+    sql = %Q{select date_part('year',data_ritiro) as "Anno",count(*) as "Data ritiro"
+       from libroparlato.catalogo
+    where data_ritiro notnull group by date_part('year',data_ritiro) order by date_part('year',data_ritiro)}
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno di ritiro   ') + content_tag(:td, 'Numero di libri ritirati'))
+    TalkingBook.connection.execute(sql).to_a.each do |r|
+    res << content_tag(:tr, content_tag(:td, r['Anno']) + content_tag(:td, r['Data ritiro']))
+    end
+    content_tag(:table, content_tag(:tbody, res.join.html_safe))
+   %>
+</pre>
+
+<pre>
+  <%=
+    sql = %Q{select date_part('year',data_collocazione) as "Anno",count(*) as "Data collocazione"
+       from libroparlato.catalogo
+    where data_collocazione notnull group by date_part('year',data_collocazione) order by date_part('year',data_collocazione)}
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno di collocazione   ') + content_tag(:td, 'Numero di libri collocati'))
+    TalkingBook.connection.execute(sql).to_a.each do |r|
+    res << content_tag(:tr, content_tag(:td, r['Anno']) + content_tag(:td, r['Data collocazione']))
+    end
+    content_tag(:table, content_tag(:tbody, res.join.html_safe))
+   %>
+</pre>
+
+<pre>
+  <%=
+    sql = %Q{select date_part('year',digitalizzato) as "Anno",count(*)
+       from libroparlato.catalogo
+    where digitalizzato notnull group by date_part('year',digitalizzato) order by date_part('year',digitalizzato)}
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno di digitalizzazione   ') + content_tag(:td, 'Numero di libri digitalizzati'))
+    TalkingBook.connection.execute(sql).to_a.each do |r|
+    res << content_tag(:tr, content_tag(:td, r['Anno']) + content_tag(:td, r['count']))
+    end
+    content_tag(:table, content_tag(:tbody, res.join.html_safe))
+   %>
+</pre>

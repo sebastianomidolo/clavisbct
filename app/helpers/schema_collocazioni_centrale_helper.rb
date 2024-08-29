@@ -1,12 +1,13 @@
+# coding: utf-8
 module SchemaCollocazioniCentraleHelper
   def schema_collocazioni_centrale_list(records, order)
     res = []
     if order=='p'
-      col2='Piano'
+      col2='Ubicazione'
       col3='Scaffale'
     else
       col2='Scaffale'
-      col3='Piano'
+      col3='Ubicazione'
     end
     
     res << content_tag(:tr, content_tag(:td, '', class:'col-md-1') +
@@ -16,11 +17,12 @@ module SchemaCollocazioniCentraleHelper
                             content_tag(:td, 'Filtro collocazione', class:'col-md-2') +
                             content_tag(:td, 'Annotazioni'))
     records.each do |r|
+      lnktit=link_to(r.scaffale.blank? ? '[titoli]' : r.scaffale , clavis_items_path(schema_collocazione_centrale:r.id), class:'btn btn-info', title:'Vedi esemplari', target:'_new')
       if order=='p'
         col2=r.piano
-        col3=r.scaffale
+        col3=lnktit
       else
-        col2=r.scaffale
+        col2=lnktit
         col3=r.piano
       end
       col2 = content_tag(:b, col2) if !col2.nil? and r.locked
@@ -61,6 +63,67 @@ module SchemaCollocazioniCentraleHelper
                               content_tag(:td, lnk))
     end
     content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def schema_collocazioni_centrale_items_details(record,verbose=true)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Tipologia', class:'col-md-2') +
+                            content_tag(:td, 'Stato', class:'col-md-2') +
+                            content_tag(:td, 'Numero volumi', class:'col-md-8'))
+    piano = record.bib_section.name
+    record.items_details(verbose=verbose,exec=true).each do |r|
+      # lnk = clavis_items_path(piano:piano,schema_collocazione_centrale:@collocazione.id,"clavis_item[home_library_id]":2)
+      lnk = clavis_items_path(piano:piano,"clavis_item[home_library_id]":record.library_id,"clavis_item[item_media]":r['item_media'],"clavis_item[item_status]":r['item_status'],schema_collocazione_centrale:record.id,with_manifestations:'')
+      res << content_tag(:tr, content_tag(:td, r['tipologia']) +
+                              content_tag(:td, link_to(r['stato'],lnk)) +
+                              content_tag(:td, r['volumi']))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def schema_collocazioni_centrale_items_series(record,verbose=true)
+    verbose = false ; # comunque "false" per evitare che serie inventariali non legate alla biblioteca non appaiono (vedi fondo CLA)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'SerieId', class:'col-md-2') +
+                            content_tag(:td, 'Descrizione', class:'col-md-2') +
+                            content_tag(:td, 'Numero volumi', class:'col-md-8'))
+    piano = record.bib_section.name
+    record.items_series(verbose=verbose,exec=true).each do |r|
+      lnk = clavis_items_path(piano:piano,"clavis_item[home_library_id]":record.library_id,schema_collocazione_centrale:record.id,"clavis_item[inventory_serie_id]":r['serie'],with_manifestations:'')
+      res << content_tag(:tr, content_tag(:td, r['serie']) +
+                              content_tag(:td, r['description']) +
+                              content_tag(:td, link_to(r['volumi'],lnk,class:'btn btn-info')))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+  def schema_collocazioni_centrale_items_edition_dates(record,verbose=true)
+    res = []
+    res << content_tag(:tr, content_tag(:td, 'Anno di pubblicazione', class:'col-md-2') +
+                            content_tag(:td, 'Numero volumi', class:'col-md-8'))
+    piano = record.bib_section.name
+    record.items_edition_dates(verbose=verbose,exec=true).each do |r|
+      lnk = clavis_items_path(piano:piano,"clavis_item[home_library_id]":record.library_id,schema_collocazione_centrale:record.id,edition_date:r['edition_date'],with_manifestations:'S')
+      res << content_tag(:tr, content_tag(:td, r['edition_date']) +
+                              content_tag(:td, link_to(r['volumi'],lnk,class:'btn btn-info')))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def schema_collocazioni_centrale_libraries
+    res = []
+    ActiveRecord::Base.connection.execute("select cl.library_id,cl.label,count(*) from schema_collocazioni_centrale sc join clavis.library cl using(library_id) group by cl.library_id order by cl.label").each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r['label'],schema_collocazioni_centrales_path(library_id:r['library_id']))) +
+                              content_tag(:td, link_to("ubicazioni per #{r['label']}", bib_sections_path(library_id:r['library_id']))))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')    
+  end
+
+  def schema_collocazioni_centrale_breadcrumbs
+    # return params.inspect
+    links=[]
+    links << link_to('SchemaCollocazioniCentrale', '/schema_collocazioni_centrales', {title:'Home page schema collocazioni'})
+    links << link_to(@clavis_library.label, schema_collocazioni_centrales_path(library_id:@clavis_library)) if !@clavis_library.nil?
+    %Q{&nbsp; / &nbsp;#{links.join('&nbsp; / &nbsp;')}}.html_safe
   end
 
   def schema_collocazioni_centrale_riepilogo

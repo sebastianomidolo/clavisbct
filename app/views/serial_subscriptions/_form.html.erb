@@ -1,0 +1,14 @@
+<%= simple_form_for(@serial_subscription) do |f| %>
+<%= f.error_notification %>
+<!-- contesto -->
+  <%= params.delete(:serial_title); hidden_params(params) %>
+
+ <div class="form-inputs">
+   <pre><%= f.input :note, as:'text', hint: "Note", label:false, input_html: {cols: 80, rows: 3} %></pre>
+   <%= f.input :numero_copie, input_html: { min: '1' } %>
+   <%= f.input :prezzo, input_html: { min: '1' } %>
+ </div>
+ <div class="form-actions">
+  <%= f.button :submit, value:'Salva le modifiche' %>
+ </div>
+<% end %>

@@ -1,0 +1,22 @@
+<!--
+42 | SpBibliographyManager
+43 | SpBibliographyUser
+33 | SpSectionManager
+  -->
+
+<%= content_tag(:h4, 'Gestione utenti') %>
+
+<% if can?(:manage,SpBibliography) %>
+
+<%= button_to('Aggiungi utente', add_user_sp_bibliographies_path, method:'put') %>
+
+<%= content_tag(:div, sp_users_list) %>
+
+
+
+<% else %>
+no access
+<% end %>
+
+<br/>
+

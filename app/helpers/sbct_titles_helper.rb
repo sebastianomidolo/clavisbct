@@ -40,30 +40,64 @@ module SbctTitlesHelper
     table_title + content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
   end
 
-  def sbct_titles_lastins_list(records)
+  def sbct_titles_lastins_list(records,sbct_list)
     return '' if records.size==0
     res = []
+
+    links = []
+    links << link_to("in lista", sbct_list_path(sbct_list, order:'gl'), title:'Ordina per numero di giorni da inserimento in lista')
+    links << link_to("data pubblicazione", sbct_list_path(sbct_list, order:'gp'), title:'Ordina per numero di giorni dalla data di pubblicazione')
+
     res << content_tag(:tr, content_tag(:td, "Lista", class:'col-md-2') +
-                            content_tag(:td, "Inserito", class:'col-md-1') +
-                            content_tag(:td, "Titolo", class:'col-md-8') +
+                            content_tag(:td, "Inserito&nbsp;da".html_safe, class:'col-md-1') +
+                            content_tag(:td, "#{link_to('Titolo', sbct_list_path(sbct_list))} (#{links.join(' ')})".html_safe, class:'col-md-8') +
                             content_tag(:td, "Note", class:'col-md-1'), class:'success')
     records.each do |r|
+      ulnk = r.username.blank? ? '-' : link_to(r.username, lastins_sbct_lists_path(username:r.username))
+      msg = ''
+      if r.days_before_autorm.to_i > 0
+        ngg = r.days_before_autorm.to_i - r.gg_in_lista.to_i
+        if ngg < 0
+          msg = " - verrà rimosso al prossimo allineamento (domani)"
+        else
+          msg = " - verrà rimosso fra #{ngg} giorni"
+        end
+      end
+      mymsg=r.gg_in_lista=='0' ? 'oggi' : "#{r.gg_in_lista} giorni fa#{msg}"
+      specif = "#{link_to(r.titolo,r)}<br/><em>Inserito in lista: #{r.date_created.to_date} (#{mymsg})</em>"
+      if !r.datapubblicazione.blank?
+        msg = ''
+        if r.pubbl_age_limit.to_i > 0
+          ngg = r.pubbl_age_limit.to_i - r.gg_da_pubblicazione.to_i
+          if ngg < 0
+            msg = " - verrà rimosso al prossimo allineamento (domani)"
+          else
+            msg = " - verrà rimosso fra #{ngg} giorni"
+          end
+        end
+        if r.gg_da_pubblicazione.to_i < 0
+          msg=''
+          # specif << "<br/>Data pubblicazione FUTURA: #{r.datapubblicazione} (fra #{r.gg_da_pubblicazione.to_i.abs} giorni#{msg})"
+          specif << "<br/>Data pubblicazione FUTURA: #{r.datapubblicazione}"
+        else
+          mymsg=r.gg_da_pubblicazione=='0' ? 'oggi' : "#{r.gg_da_pubblicazione} giorni fa#{msg}"
+          specif << "<br/>Data pubblicazione: #{r.datapubblicazione} (#{mymsg})"
+        end
+      end
       res << content_tag(:tr, content_tag(:td, link_to(r.order_sequence, sbct_list_path(r.root_id))) +
-                              content_tag(:td, link_to(r.username, lastins_sbct_lists_path(username:r.username))) +
-                              content_tag(:td, "#{link_to(r.titolo,r)}<br/><em>Inserimento in lista: #{r.date_created.to_date}</em>".html_safe) +
+                              content_tag(:td, ulnk) +
+                              content_tag(:td, specif.html_safe) +
                               content_tag(:td, r.note))
     end
     content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
   end
   
   def sbct_titles_list(records, managed_libraries=[])
-    checkbox_on = false
-    #if current_user.email=='opeseba'
-      checkbox_on = @sbct_item.nil? ? false : true
-    #end
+    # checkbox_on = false
+    checkbox_on = @sbct_item.nil? ? false : true
     res=[]
     covers = params[:nocovers].blank? ? content_tag(:td, 'copertina', class:'col-md-1') : ''
-    check_column = checkbox_on==true ? content_tag(:td, '<b>x</b>'.html_safe, class:'col-md-1') : ''
+    check_column = checkbox_on==true ? content_tag(:td, '<b>x</b>'.html_safe, id:'check_column_ctrl', class:'col-md-1 btn', onclick:'toggle_titles(this);') : ''
 
     res << content_tag(:tr, check_column.html_safe + covers.html_safe +
                             content_tag(:td, 'autore', class:'col-md-2') +
@@ -129,10 +163,21 @@ module SbctTitlesHelper
       # if params[:nocovers].blank?
 
       ref_img = content_tag(:td, link_to(img_link,sbct_title_path(r.id_titolo, :page=>params[:page], budget_id:params[:budget_id], id_lista:id_lista, selection_mode:params[:selection_mode]), target:'_blank'))
+      row_class = ''
       if check_column.blank?
         checkbox = ''
       else
-        checkbox = content_tag(:td, check_box_tag("title_ids[]", r.id_titolo, true))
+        if @sbct_item.js_code == :switch_title
+          if user_session[:tinybox].include?(r.id_titolo)
+            checked=true
+            row_class = 'warning'
+          else
+            checked=false
+          end
+          checkbox = content_tag(:td, check_box_tag("title_ids[]", r.id_titolo, checked, id:"title_check_#{r.id_titolo}", onclick:"add_or_remove_title_from_tinybox(this);"))
+        else
+          checkbox = content_tag(:td, check_box_tag("title_ids[]", r.id_titolo, true))
+        end
       end
 
       begin
@@ -156,9 +201,9 @@ module SbctTitlesHelper
                               content_tag(:td, ref_tit + prezzo + lacollana + datapubbl + anno + reparto + target_lettura + data_inserimento + in_liste_da + note) +
                               content_tag(:td, lnk_editore) +
                               content_tag(:td, lesigle) +
-                              content_tag(:td, extlnk.join(' ').html_safe), id:"title_#{r.id}")
+                              content_tag(:td, extlnk.join(' ').html_safe), id:"title_#{r.id}", class:row_class)
     end
-    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')
+    content_tag(:table, res.join("\n").html_safe, class:'table table-condensed', id:'main_table_id')
 end
 
 def sbct_titles_format_infocopie(infocopie)
@@ -326,7 +371,8 @@ def sbct_titles_format_infocopie(infocopie)
               # lnk << link_to('[cambia lista]', sbct_lists_path(current_title_id:record))
               lnk << link_to('[cambia lista]', sbct_title_path(record,req:'chlist'))
             end
-            lnk << link_to('<b>Aggiungi copie</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo), class:'btn btn-warning') if can? :new, SbctItem and record.prezzo.to_i > 0 and SbctTitle.libraries_select(current_user).size > 0
+            # lnk << link_to('<b>Aggiungi copie</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo), class:'btn btn-warning') if can? :new, SbctItem and record.prezzo.to_i > 0 and SbctTitle.libraries_select(current_user).size > 0
+            lnk << link_to('<b>Aggiungi copie</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo), class:'btn btn-warning') if can? :new, SbctItem  and SbctTitle.libraries_select(current_user).size > 0
             lnk << link_to('<b>Aggiungi copie dono</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo,nobudget:true), class:'btn btn-warning') if can? :manage, SbctItem
             lnk << link_to('<b>Deposito legale</b>'.html_safe, new_sbct_item_path(id_titolo:record.id_titolo,dl:true), class:'btn btn-warning') if can? :manage, SbctItem
 
@@ -382,6 +428,85 @@ def sbct_titles_format_infocopie(infocopie)
     res=content_tag(:table, res.join.html_safe, class:'table table-condensed')
   end
 
+  def sbct_titles_show_short_title(record)
+    res=[]
+    # res << content_tag(:tr, content_tag(:td, 'Campo') + content_tag(:td, 'Valore'), class:'active')
+    links_ok=nil
+    if !record.manifestation_id.blank? and record.ean.blank?
+      ean_links = sbct_titles_links_via_ean('',record.manifestation_id)
+      res << content_tag(:tr, content_tag(:td, 'Clavis') + content_tag(:td, " <b>[#{ean_links.join(', ')}]</b>".html_safe))
+      links_ok=true
+    end
+    record.attributes.keys.each do |k|
+      next if record[k].blank?
+      # next if ['utente'].include?(k)
+      txt = record[k]
+      if k == 'ean' and links_ok.nil?
+        ean_links = sbct_titles_links_via_ean(txt,record.manifestation_id)
+        txt = link_to(txt, sbct_titles_path("sbct_title[ean]":txt))
+        res << content_tag(:tr, content_tag(:td, k.upcase) + content_tag(:td, "#{txt} - <b>[#{ean_links.join(', ')}]</b>".html_safe))
+        next
+      end
+      next if k == 'crold_notes'
+      next if k == 'utente'
+      if k == 'parent_id'
+        res << content_tag(:tr, content_tag(:td, "Serie") + content_tag(:td, link_to(record.parent_title.titolo, sbct_title_path(record.parent_id))))
+        next
+      end
+      if k == 'prezzo'
+        res << content_tag(:tr, content_tag(:td, k.capitalize) + content_tag(:td, number_to_currency(txt)))
+      else
+        if k=='id_titolo'
+          if can? :edit, SbctTitle
+
+            lnk = ''.html_safe
+
+            
+            if !@current_list.nil? and (can? :edit, SbctList or !@current_list.assign_user_session(current_user, @current_list).nil?)
+              
+              if @sbct_title.sbct_lists.include?(@current_list)
+                # lnk << link_to("<b>Rimuovi dalla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-danger')
+              else
+                # lnk << link_to("<b>Aggiungi alla lista #{@current_list.to_label}</b>".html_safe, sbct_title_path(record.id, toggle_list:@current_list.id), class:'btn btn-success')
+              end
+              # lnk << link_to('[cambia lista]', sbct_lists_path(current_title_id:record))
+              lnk << link_to('[cambia lista]', sbct_title_path(record,req:'chlist'))
+            end
+
+            res << content_tag(:tr, content_tag(:td, '') + content_tag(:td, lnk))
+          end
+        else
+          if ['created_by','updated_by'].include?(k)
+            res << content_tag(:tr, content_tag(:td, k) + content_tag(:td, "#{User.find(txt).email} / user_id: #{txt}"))
+          else
+            tv = txt.class==ActiveSupport::TimeWithZone ? txt.to_date : txt
+            if txt.class==ActiveSupport::TimeWithZone
+              res << content_tag(:tr, content_tag(:td, k.capitalize) + content_tag(:td, tv))
+            else
+              # txt = link_to(tv, sbct_titles_path("sbct_title[#{k}]":txt))
+              v = link_to(txt, sbct_titles_path("sbct_title[titolo]":"#{k}:#{txt}"))
+              res << content_tag(:tr, content_tag(:td, k.capitalize) + content_tag(:td, v))
+            end
+            # res << content_tag(:tr, content_tag(:td, k.capitalize) + content_tag(:td, tv))
+          end
+        end
+      end
+    end
+
+    if record.clavis_purchase_proposals.size > 0
+      res << content_tag(:tr, content_tag(:td, 'Proposte acquisto lettori Clavis') + content_tag(:td, sbct_clavis_purchase_proposals(record.clavis_purchase_proposals)))
+      if !record.manifestation_id.nil?
+        txt = %Q{<span style='font-size:12px;'>&lt;a href="https://bct.comperio.it/opac/detail/view/sbct:catalog:#{record.manifestation_id}"&gt;Presente nel catalogo delle BCT&lt;/a&gt;</span>}.html_safe
+        res << content_tag(:tr, content_tag(:td, "<span style='font-size:12px'>risposta da copiare e incollare</span>".html_safe) + content_tag(:td, txt))
+      end
+    end
+
+    res << content_tag(:tr, content_tag(:td, sbct_libraries(record),colspan:2)) if user_session[:delivery_notes_mode].nil?
+
+    res=content_tag(:table, res.join.html_safe, class:'table table-condensed')
+  end
+
+  
   # cpp sta per clavis purchase proposals
   def sbct_clavis_purchase_proposals(cpp)
     res = []
@@ -539,6 +664,13 @@ def sbct_titles_format_infocopie(infocopie)
     infodat << %Q{<span title="data modifica">#{(r.date_updated.nil? ? '' : r.date_updated.to_date.to_s)}</span>}
     infodat << "Note fornitore: #{r.note_fornitore}" if !r.note_fornitore.blank?
     infodat << "Note interne: #{r.note_interne}" if !r.note_interne.blank?
+    if !r.event_id.blank?
+      (
+        ev = r.sbct_event
+        tlink = "Tenere da parte per #{ev.creator.email}"
+        infodat << content_tag(:span, %Q{#{link_to(tlink, sbct_event_path(ev.id), target:'_blank')}}.html_safe, title:"Evento: #{ev.to_label}")
+      )
+    end
     infodat << "Destinato a <b>#{r.dest_siglabib}</b>" if !r.dest_siglabib.blank?
 
     if current_user.role?('AcquisitionLibrarian')
@@ -683,7 +815,7 @@ def sbct_titles_format_infocopie(infocopie)
   end
 
   def sbct_titles_breadcrumbs
-    # return params.inspect
+    # return params.inspect if current_user.email=='seba'
     links=[]
     if SbctTitle.user_roles(current_user).include?('AcquisitionSupplier')
       links << "Situazione ordini per #{SbctSupplier.find_by_external_user_id(current_user.id).to_label}"
@@ -727,6 +859,14 @@ def sbct_titles_format_infocopie(infocopie)
       links << link_to('Scorciatoie', sbct_presets_path)
     end
 
+    if params[:controller]=='sbct_l_event_titles'
+      # links << link_to('Eventi', sbct_events_path(myevents:'S'))
+      links << link_to('Eventi', sbct_events_path)
+      links << link_to(@sbct_event.to_label, sbct_event_path(@sbct_event)) if !@sbct_event.nil?
+      links << 'Convalida richieste'
+    end
+
+    
     if params[:controller]=='clavis_purchase_proposals' and ['show','index'].include?(params[:action])
       links << link_to('Proposte acquisto', clavis_purchase_proposals_path("clavis_purchase_proposal[status]":'A'))
     end
@@ -911,4 +1051,23 @@ def sbct_titles_format_infocopie(infocopie)
 
     content_tag(:table, res.join.html_safe, class:'table table-striped')
   end
+
+  def delivery_notes_controllo_prezzi
+    sql=%Q{select t.titolo,t.id_titolo,rl.prezzo as prezzo_in_bolla,t.prezzo from sbct_acquisti.report_logistico rl join sbct_acquisti.titoli t using(id_titolo) where rl.prezzo != t.prezzo;}
+    res = []
+    SbctTitle.find_by_sql(sql).each do |r|
+      res << content_tag(:tr, content_tag(:td, link_to(r.titolo, sbct_title_path(r.id_titolo), target:'_new')) +
+                              content_tag(:td, r.prezzo_in_bolla) +
+                              content_tag(:td, r.prezzo))
+    end
+    if res.size>0
+      header=content_tag(:tr, content_tag(:td, 'Titolo', class:'col-md-6') +
+                              content_tag(:td, 'Prezzo in bolla', class:'col-md-1') +
+                              content_tag(:td, 'Prezzo in PAC', class:'col-md-5'))
+      content_tag(:table, header + res.join.html_safe, class:'table table-striped')
+    else
+    end
+    
+  end
+  
 end

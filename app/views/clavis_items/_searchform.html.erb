@@ -1,6 +1,7 @@
 
 <%= simple_form_for(@clavis_item, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
 <%= hidden_field_tag('piano', params[:piano]) %>
+<%= hidden_field_tag('order', params[:order]) %>
 <%= hidden_field_tag('location', params[:location]) %>
 
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
@@ -8,8 +9,14 @@
   <%= f.input :inventory_number, hint: 'Inventario', label: false, placeholder: 'numero inventario' %>
   <%= f.input :inventory_serie_id, hint: 'Serie inventariale', label: false, placeholder: 'serie inventariale' %>
   <%= f.input :manifestation_dewey, hint: 'Classificazione Dewey', label: false, placeholder: 'dewey' %>
-  <%= f.input :acquisition_year, hint: 'Anno di acquisizione (solo per serieinv V)', label: false, placeholder: 'anno',
-            input_html: { min: '1897', max: '1988' } %>
+  <%=
+    if @clavis_item.respond_to?(:acquisition_year)
+     f.input :acquisition_year, hint: 'Anno di acquisizione (solo per serieinv V)', label: false, placeholder: 'anno',
+    input_html: { min: '1897', max: '1988' }
+    else
+      content_tag(:h6, "Acquisition_year non disponibile al momento")
+    end
+    %>
 
   <%= f.input :publication_year, hint: 'Anno di pubblicazione', label: false %>
 
@@ -74,11 +81,8 @@ Ubicazione: <%= select_tag(:location, options_for_select(lofs, params[:location]
    <%= hidden_field_tag('sql_and', params[:sql_and]) %>
   <% end %>
 
-  <% if current_user.email=='sebaxx' %>
-    Shelf_id: <%= text_field_tag 'shelf_id', params[:shelf_id], size:10 %>
-  <% else %>
-     <%= hidden_field_tag('shelf_id', params[:shelf_id]) %>
-  <% end %>
+  <%= hidden_field_tag('shelf_id', params[:shelf_id]) %>
+  <%= content_tag(:span, "shelf_id: #{params[:shelf_id]}") if !params[:shelf_id].blank? %>
 
   
   <br/><%= f.submit 'cerca', :class=>'btn btn-info' %>
@@ -88,12 +92,10 @@ Ubicazione: <%= select_tag(:location, options_for_select(lofs, params[:location]
 
 
    <%=
-     if can?(:stat, ClavisItem) and !user_session[:sql_itemsearch_conditions].nil?
-     link_to('Statistica prestiti', clavis_items_path(op:'loans_report',n:@clavis_items.total_entries), title:"Prestiti su #{@clavis_items.total_entries} esemplari trovati", data: { confirm: "Questa operazione è un po' lunga, confermi?"})
-     # clavis_items_op_select_tag
+     if !user_session[:sql_itemsearch_conditions].nil?
+      link_to('Esame risultati', clavis_items_path(op:'item_media_report',n:@clavis_items.total_entries), target:'esame_risultati',title:"Esame risultati su #{@clavis_items.total_entries} esemplari trovati", class: 'btn btn-warning')
      end
     %>
-
 
   
   <%= button_to_function("mostra tutti i campi di ricerca", "$('#mostra_tutti_i_campi').hide();$('.control-group','#new_clavis_item').show();", id: "mostra_tutti_i_campi", class: "btn btn-success") if @attrib.size>0 %>
@@ -114,7 +116,7 @@ Ubicazione: <%= select_tag(:location, options_for_select(lofs, params[:location]
     <%= link_to('elenco per estrazione da magazzino', params.merge(format:'pdf',pdf_template:'rawlist',per_page:999999)) + ' | ' %>
     <%=
       #if ['seba','patraiz'].include?(current_user.email)
-        titolo = @clavis_items[0].title.sub(' [note: ]', '')
+        titolo = @clavis_items[0].title.nil? ? '[errore da verificare]' : @clavis_items[0].title.sub(' [note: ]', '')
       link_to('Topografico', params.merge(format:'pdf',heading:titolo,pdf_template:'topografico',per_page:999999)) + ' | '
       #end
       %>
@@ -126,7 +128,8 @@ Ubicazione: <%= select_tag(:location, options_for_select(lofs, params[:location]
    <%= link_to('ordina_per_piano', params.merge(order:'')) if @clavis_items.count>1 %>
   <% else %>
    <%= link_to('ordina_per_collocazione', params.merge(order:'collocation')) if @clavis_items.count>1 %>
-  <% end %>
+   <% end %>
+   |
    <%= link_to('ordina_per_nota_prestito', params.merge(order:'loan_alert_note')) if @clavis_items.count>1 %>   
  <% end %>
   

@@ -9,6 +9,8 @@ require 'will_paginate/array'
 class DObject < ActiveRecord::Base
   attr_accessible :name, :d_objects_folder_id, :filename, :access_right_id, :mime_type, :tags,
                   :x_mid, :x_item_id, :x_ti, :x_au, :x_an, :x_pp, :x_uid, :x_sc, :x_dc, :fulltext
+  attr_accessor :folder_name
+
   has_many :references, :class_name=>'Attachment', :foreign_key=>'d_object_id'
   belongs_to :access_right
   belongs_to :d_objects_folder
@@ -180,7 +182,7 @@ class DObject < ActiveRecord::Base
   end
 
   def set_clavis_manifestation_attachment
-    puts "#{self.id} in DObject#set_clavis_manifestation_attachment"
+    # puts "#{self.id} in DObject#set_clavis_manifestation_attachment"
     sql=[]
     o=self
     if o.x_mid.blank?
@@ -458,10 +460,24 @@ class DObject < ActiveRecord::Base
     DObjectsFolder.find_by_sql(sql).first
   end
 
+  def watermark_for_image(img)
+    watermark_text = Magick::Draw.new
+    img_info = "w%w h%h %xx%y b%b"
+    watermark_text.annotate(img, 0,0,20,0, img_info) do
+      self.gravity = Magick::NorthWestGravity
+      self.pointsize = 12
+      self.font_family = "Arial"
+      self.font_weight = Magick::BoldWeight
+      self.stroke = "none"
+    end
+    img
+  end
+  
   # Usata da ClavisManifestation#attachments_generate_pdf (e utilizzabile anche da altri)
   # https://rmagick.github.io/
   def DObject.to_pdf(ids,pdf_filename,params={})
-    puts "in DObject.to_pdf #{params.inspect}"
+    # puts "in DObject.to_pdf #{params.inspect}"
+    puts "in DObject.to_pdf ids uguale a #{ids}"
     return pdf_filename if File.exists?(pdf_filename) and params[:force]!=true
     if params[:nologo].blank? or !params[:include_logo].blank?
       logo = Magick::Image.read("/home/storage/preesistente/testzone/bctcopyr.png").first
@@ -473,8 +489,9 @@ class DObject < ActiveRecord::Base
     ids.each do |o|
       # puts o.filename_with_path
       img=Magick::Image.read(o.filename_with_path).first
+      
       if !img.image_type.nil? and img.image_type==Magick::TrueColorType
-        # img.resize_to_fit!(600)
+        # img.resize_to_fill!(400,400)
       end
 
       # img.resize_to_fit!(img.columns/4,img.rows/4)
@@ -493,11 +510,54 @@ class DObject < ActiveRecord::Base
         # img=img.watermark(logo,0.9,0.5,Magick::SouthGravity,0,0)
         # Dopo:
         lgo=logo.resize_to_fit(img.columns - img.columns/2)
-
         img=img.dissolve(lgo,0.4,0.5,Magick::SouthGravity,0,0)
+      end
+
+      if !params[:with_watermark].blank?
+        watermark_text = Magick::Draw.new
+        title = params[:metadata][o.id][1]
+        colloc = "Collocazione: #{params[:metadata][o.id][2]}"
+        img_info = "w%w h%h %xx%y b%b"
+        pointsize = img.x_resolution/72
+        pointsize = 12 if pointsize < 12
+        watermark_text.annotate(img, 0,0,10,0, title) do
+          self.gravity = Magick::NorthWestGravity
+          self.pointsize = pointsize
+          self.font_family = "Arial"
+          self.font_weight = Magick::BoldWeight
+          self.stroke = "none"
+        end
+        watermark_text.annotate(img, 0,0,10,30, img_info) do
+          self.gravity = Magick::NorthWestGravity
+          self.pointsize = pointsize
+          self.font_family = "Arial"
+          self.font_weight = Magick::BoldWeight
+          self.stroke = "none"
+        end
+
+        watermark_text.annotate(img, 0,0,10,10, colloc) do
+          self.gravity = Magick::SouthWestGravity
+          self.pointsize = pointsize
+          self.font_family = "Arial"
+          self.font_weight = Magick::BoldWeight
+          self.stroke = "none"
+        end
 
         
+        #watermark_text.annotate(watermark, 0,0,0,0, colloc) do
+        #  watermark_text.gravity = Magick::WestGravity
+        #  self.pointsize = 60
+        #  self.font_family = "Arial"
+        #  self.font_weight = Magick::BoldWeight
+        #  self.stroke = "none"
+        #end
+        
+        # img.composite!(img, Magick::SouthWestGravity, Magick::HardLightCompositeOp)
+        # img.resize_to_fit!(params[:resize_to_fit].to_i)
+        # img.resize!(100)
+        # img.resize_to_fill!(100)
       end
+
       iList << img
       GC.start
     end
@@ -515,6 +575,13 @@ class DObject < ActiveRecord::Base
     o.write_tags_from_filename
     o.save if o.changed?
     o
+  end
+
+  def image_info
+    img=Magick::Image.read(self.filename_with_path).first
+    puts "base_columns x base_rows: #{img.base_columns} x #{img.base_rows}"
+    puts "columns x rows: #{img.columns} x #{img.rows}"
+    img
   end
 
   def DObject.to_pdftest(ids)
@@ -590,7 +657,7 @@ class DObject < ActiveRecord::Base
 
   def DObject.find_or_create_by_filename(fname)
     f=DObjectsFolder.find_or_create_by_name(File.dirname(fname))
-    puts "f: #{f.inspect}"
+    # puts "f: #{f.inspect}"
     return nil if f.nil?
     DObject.find_or_create_by_name_and_d_objects_folder_id(File.basename(fname),f.id)
   end

@@ -9,7 +9,7 @@
 <%= content_tag(:div, @bio_iconografico_card.tags) %>
 
 
-<% if can? :delete, BioIconograficoCard %>
+<% if can? :create, BioIconograficoCard %>
 <%= button_to "Cancella record", { action: "delete", id: @bio_iconografico_card.id },
                                 method: :delete, data: { confirm: "Confermi cancellazione?" } %>
 <% end %>

@@ -1,3 +1,23 @@
 <%= simple_form_for(@clavis_purchase_proposal, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+  <%= hidden_field_tag :patron_id, params[:patron_id] %>
   <%= f.input :title, hint: 'parole nel titolo', as: 'string', label: false, placeholder: 'parole nel titolo' %>
-<% end %>
+
+
+  <%=
+  slc = ClavisPurchaseProposal.status_select
+  (f.input :status, collection: slc, hint: nil, as:'select', :input_html => {:onchange => "submit()"}, include_blank:true) if slc.size>0
+  %>
+
+  Tipologia <%= select_tag(:tipologia, options_for_select(ClavisPurchaseProposal.tipologia_select, params[:tipologia]), include_blank:true, onchange: 'submit()') %>
+
+  <%= link_to("Sql per Opac", sql_shelf_update_clavis_purchase_proposals_path, class:'btn btn-warning') %>
+  <%= link_to("Sql per risposta a utenti", sql_cpp_update_clavis_purchase_proposals_path, class:'btn btn-warning') %>
+
+
+
+
+  <% end %>
+
+
+

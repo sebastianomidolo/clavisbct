@@ -9,11 +9,15 @@ class SbctEventsController < ApplicationController
 
   def index
     @pagetitle="PAC - Eventi"
+    if params[:sbct_event].blank?
+      @sbct_event = SbctEvent.new()
+    else
+      @sbct_event = SbctEvent.new(params[:sbct_event])
+    end
     user_session[:events_mode]='on'
     user_session[:sbct_event] = nil
-    status = params[:sbct_event_status]
-    status = 'C' if status.blank?
-    @sbct_events = SbctEvent.where("event_status_id = #{SbctEvent.connection.quote(status)}")
+    user_session[:tinybox] = [] if user_session[:tinybox].nil?
+    @sbct_events = SbctEvent.tutti(@sbct_event, params, current_user)
   end
   def create
     @sbct_event = SbctEvent.new(params[:sbct_event])
@@ -41,11 +45,25 @@ class SbctEventsController < ApplicationController
     user_session[:sbct_titles_ids]=@sbct_titles.collect {|i| i.id}
     user_session[:sbct_titles_ids] = user_session[:sbct_titles_ids].uniq
     user_session[:sbct_event] = @sbct_event.id
+    @sbct_events = SbctEvent.tutti(@sbct_event, params.merge({event_id:@sbct_event.id}), current_user)
   end
 
   def destroy
-    @sbct_event.destroy if @sbct_event.sbct_titles.size==0
+    @sbct_event.destroy
     redirect_to sbct_events_path
+  end
+
+  def validate_all
+    @sbct_event.validate_all(current_user)
+    redirect_to sbct_event_path
+  end
+  def close_all
+    @sbct_event.close_all(current_user)
+    redirect_to sbct_event_path
+  end
+  def open_all
+    @sbct_event.open_all(current_user)
+    redirect_to sbct_event_path
   end
 
 end

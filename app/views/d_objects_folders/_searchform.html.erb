@@ -1,11 +1,18 @@
 <%= form_tag(d_objects_folders_path, :method=>:get) do %>
 
-<%= text_field_tag('tags', params[:tags]) %> (ricerca libera per parole)
+<%= text_field_tag('tags', params[:tags]) %> (ricerca libera per parole nelle cartelle)
 <p> Cerca solo nei nomi delle cartelle <%= check_box_tag('folders_only',1,params[:folders_only]) %> (togliendo la spunta, la ricerca avviene anche sul nome dei files; si può anche
-<%= link_to('limitare la ricerca ai soli nomi dei files', d_objects_path) %>)
+<%= link_to('cerca nei metadati dei singoli oggetti', d_objects_path, class:'btn btn-info') %>)
 </p>
 <%= text_field_tag('basefolder', params[:basefolder]) %> (inizio nome della cartella)
 
 <%= submit_tag('Cerca') %>
 
+<% end %>
+
+
+<% if !@dopf.nil? %>
+<%= link_to("Vedi cartella personale (#{@dopf.ids.count} oggetti)", d_objects_folder_path(0,view:'list')) if @dopf.ids.count > 0 %>
+ <%  @dopf.ids %>
+ <%= d_objects_view(DObject.find(@dopf.ids),params) %>
 <% end %>

@@ -1,0 +1,43 @@
+
+<%= content_tag(:span, flash[:notice], class:'label label-warning') %>
+
+<%=
+  cl = @user.clavis_librarian
+  
+  if cl.nil?
+    content_tag(:h4, "User #{@user.email} NON presente in Clavis".html_safe)
+  else
+    @xp = cl.working_time 
+    @default_library = @user.clavis_default_library.to_label
+
+    content_tag(:b, "ClavisLibrarian #{cl.id} #{@user.email} #{link_to(cl.to_label, cl.clavis_url)}".html_safe)
+  end
+%>
+
+<%= content_tag(:pre, %Q{
+    id utente: #{@user.id}
+    default_library: #{@default_library}
+    numero accessi: #{@user.sign_in_count}
+    xp: #{@xp}
+    current_sign_in_ip: #{@user.current_sign_in_ip}
+    current_sign_in_at: #{@user.current_sign_in_at}
+    last_sign_in_at: #{@user.last_sign_in_at}
+    last_sign_in_ip: #{@user.last_sign_in_ip}
+    created_at: #{@user.created_at}
+    updated_at: #{@user.updated_at}})
+%>
+<%=
+  c=@user.connection.execute("select count(id) from closed_stack_item_requests where #{@user.id} in (created_by,confirmed_by)")
+  c=c.first['count'].to_i
+  c == 0 ? '' : "#{c} richieste a magazzino create o confermate"
+%>
+<%= content_tag(:div, user_roles(@user)) %>
+
+<%= link_to('Modifica utente', edit_user_path) %>
+<br/>
+<%= link_to('Modifica password utente', edit_user_path(pwdchange:true)) %>
+<br/>
+<%= link_to('Oggetti digitali...',users_d_objects_folders_path(user_id:@user.id)) if @user.role?(['DObjectBrowse','DObjectManager','DObjectSearch']) %>
+<br/>
+<%= link_to('Elimina utente', @user, method: :delete, data: { confirm: "Confermi eliminazione utente #{@user.email}?" }) if @user.sign_in_count<=4 %>
+

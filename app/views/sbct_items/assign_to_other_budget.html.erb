@@ -1,0 +1,20 @@
+<%=
+    content_tag(:h4, "Assegnazione di questa copia a un altro budget (solo per amministratori e potenzialmente pericoloso perché non viene verificata la congruità della scelta: per esempio si può assegnare la copia a un budget chiuso, magari un MiC degli scorsi anni; si può anche sganciare la copia dal budget semplicemente lasciando vuoto il campo budget - buona fortuna)")
+ %>
+<%= content_tag(:h5, link_to("Vedi titolo: #{@sbct_item.sbct_title.titolo} ", sbct_title_path(@sbct_item.sbct_title))) %>
+
+<% if @sbct_item.order_status!='S' %>
+ <%= content_tag(:p, "Order status diverso da 'S', non si può cambiare budget per questa copia #{@sbct_item.inspect}") %>
+<% else %>
+ <%=
+   simple_form_for(@sbct_item) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :budget_id %>
+  </div>
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Assegna' , class:'btn btn-success'%>
+  </div>
+  <% end %>
+<% end %>

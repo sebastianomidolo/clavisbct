@@ -1,0 +1,4 @@
+<%= content_tag(:h3, "Esemplari con codici a barre duplicati (#{@records.size} casi)") %>
+<%= content_tag(:p, "Attenzione: le modifiche agli esemplari saranno visibili qui dal giorno successivo a quello della modifica") %>
+
+<%= content_tag(:div, misc_dup_barcodes(@records)) %>

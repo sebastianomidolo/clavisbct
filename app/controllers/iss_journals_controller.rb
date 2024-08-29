@@ -10,6 +10,7 @@ class IssJournalsController < ApplicationController
   end
   def show
     @iss_journal=IssJournal.find(params[:id])
+    @cm = ClavisManifestation.find_by_bid(@iss_journal.bid)
     @iss_issues=@iss_journal.issues
     @pagetitle="#{@iss_journal.title} - Riviste digitalizzate BCT"
   end

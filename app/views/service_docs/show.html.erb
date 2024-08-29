@@ -1,0 +1,17 @@
+
+<%= content_tag(:p, "Documento relativo al servizio #{link_to(@service.to_label,@service)}".html_safe) %>
+<%= content_tag(:h4, @service_doc.to_label) %>
+
+<%= content_tag(:pre, @service_doc.doc_text) %>
+
+<% if can? :manage, Service %>
+<%= link_to('Modifica', edit_service_doc_path) %>
+<%= link_to('Elimina', @service_doc,method: :delete, data: { confirm: 'Are you sure?' }) %>
+<%= link_to("<b>Aggiungi immagine</b>".html_safe, d_objects_service_doc_path(@service_doc), class:'btn btn-warning') %>
+<% end %>
+
+<hr/>
+
+
+<%= content_tag(:div, service_doc_attachments(@service_doc,params)) %>
+

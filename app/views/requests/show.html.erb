@@ -1,0 +1,41 @@
+<p id="notice"><%= notice %></p>
+
+
+<p>
+  <b>Operatore:</b>
+  <%= @request.patron_id %>
+</p>
+
+<p>
+  <b>Utente:</b>
+  <%= @request.utente %>
+</p>
+
+<p>
+  <b>Collocazione:</b>
+  <%= @request.collocazione %>
+</p>
+
+<p>
+  <b>Inventario:</b>
+  <%= @request.inventario %>
+</p>
+
+<p>
+  <b>Titolo:</b>
+  <%= @request.titolo %>
+</p>
+
+<p>
+  <b>Descrizione:</b>
+  <%= @request.description %>
+</p>
+
+<p>
+  <b>Request date:</b>
+  <%= @request.request_date %>
+</p>
+
+
+<%= link_to 'Edit', edit_request_path(@request) %> |
+<%= link_to 'Back', requests_path %>

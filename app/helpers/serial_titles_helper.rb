@@ -8,7 +8,7 @@ module SerialTitlesHelper
       freq = r.frequency_label.blank? ? '' : " [<em>#{r.frequency_label}</em>]"
 
       mytit = "#{r.title}#{freq}"
-      title = r.manifestation_id.nil? ? r.title : link_to(mytit.html_safe, ClavisManifestation.clavis_url(r.manifestation_id), {class:'',target:'_new'})
+      title = r.manifestation_id.nil? ? r.title : link_to(mytit.html_safe, ClavisManifestation.clavis_url(r.manifestation_id,:opac), {class:'',target:'_blank'})
 
       libraries = params[:library_id].blank? ? SerialSubscription.associa_copie_multiple(r.library_names,r.numero_copie) : ''
       res << content_tag(:tr, content_tag(:td, cnt+=1) +
@@ -29,7 +29,7 @@ module SerialTitlesHelper
       publisher = r.publisher.blank? ? '' : ". - #{r.publisher}"
       # title=link_current_params("#{r.title}#{freq}#{publisher}#{note}#{note_fornitore}".html_safe, edit_serial_title_path(r), params)
       clavis_lnk= r.manifestation_id.nil? ? '' : link_to("Clavis", ClavisManifestation.clavis_url(r.manifestation_id), {class:'btn btn-success',target:'_new'})
-      title=link_current_params("#{r.title}#{freq}#{publisher}".html_safe, edit_serial_title_path(r), params) +
+      title=link_current_params("#{r.title}#{freq}#{publisher}".html_safe, serial_title_path(r), params) +
             clavis_lnk + content_tag(:span, "#{note}#{note_fornitore}".html_safe)
 
       if r.tot_copie.to_i > 1
@@ -38,15 +38,23 @@ module SerialTitlesHelper
         totale = ''
       end
       libraries=SerialSubscription.associa_copie_multiple(r.library_names,r.numero_copie)
-      lnklib=link_current_params(libraries, serial_title_path(r), params)
+      if libraries=='[vai a acquisizioni]'
+        lnklib=''
+      else
+        lnklib=link_current_params(libraries, serial_title_path(r), params)
+      end
       if !params[:library_id].blank? and !r.manifestation_id.nil? and params[:items_details]=='t'
         title << serial_titles_issues_report(r)
       end
       # invoice_link = r.invoice_ids.blank? ? '' : "<br/>#{edit_serial_invoice_path(r.invoice_ids,serial_list_id:r.serial_list_id,library_id:@library_id,invoice_filter_enabled:true)}"
 
       invoice_link = r.invoice_ids.blank? ? '' : %Q{<br/>#{link_to("<b>fattura</b>".html_safe, edit_serial_invoice_path(r.invoice_ids.to_i,serial_list_id:r.serial_list_id,library_id:r.libraries.to_i,invoice_filter_enabled:true))}}
-      sspath = "/serial_subscriptions/#{r.id},#{r.libraries.to_i}"
-      subscription_link = r.invoice_ids.blank? ? '' : %Q{ | #{link_to("<b>altro</b>".html_safe, sspath)}}
+      if lnklib==''
+        subscription_link = r.invoice_ids.blank? ? '' : %Q{ | #{link_to("<b>altro</b>".html_safe, sspath)}}
+      else
+        sspath = "/serial_subscriptions/#{r.id},#{r.libraries.to_i}"
+        subscription_link = r.invoice_ids.blank? ? '' : %Q{ | #{link_to("<b>altro</b>".html_safe, sspath)}}
+      end
 
       res << content_tag(:tr, content_tag(:td, cnt+=1) +
                               content_tag(:td, title) +
@@ -138,9 +146,9 @@ module SerialTitlesHelper
     links=[]
 
     # links << link_to('Liste periodici', serial_lists_path) if params[:controller]!='lperiodici'
-    links << link_to('Liste periodici', serial_lists_path)
+    links << link_to('Periodici', serial_lists_path)
 
-    if ['serial_titles','serial_invoices','serial_subscriptions'].include?(params[:controller]) and ['new','create','edit','update','show','print'].include?(params[:action])
+    if ['serial_titles','serial_invoices','serial_subscriptions','serial_reminders'].include?(params[:controller]) and ['new','create','edit','update','show','print'].include?(params[:action])
       params[:serial_list_id]=@serial_list.id if params[:serial_list_id].blank?
       links << link_current_params(@serial_list.to_label, serial_titles_path,params)
     end
@@ -156,6 +164,10 @@ module SerialTitlesHelper
     if params[:controller]=='serial_invoices' and params[:action]=='show'
       links << link_current_params("Fatture", serial_invoices_path, params)
     end
+    if (params[:controller]=='serial_reminders') and !@serial_title.nil?
+      links << link_current_params('Solleciti', serial_reminders_path(serial_list_id:@serial_list.id))
+      links << link_current_params(@serial_title.title, serial_reminders_path(serial_title_id:@serial_title.id))
+    end
 
 
     return '' if links.size==0
@@ -164,32 +176,83 @@ module SerialTitlesHelper
   end
 
   def serial_titles_issues_report(r)
+    # return r.attributes
     res=[]
     cmds=[
       :issue_descriptions,
-      :issue_status,
-      :issue_arrival_dates,
+      :issue_status_label,
       :issue_arrival_dates_expected,
+      :issue_arrival_dates,
     ]
-
+    labels={
+      issue_descriptions:'Fascicolo',
+      issue_status_label:'Stato',
+      issue_arrival_dates_expected:'Arrivo previsto',
+      issue_arrival_dates:'Data arrivo',
+    }
+    mem_line = Array.new
+    mem_line_h = Hash.new
     cmds.each do |cmd|
+      td=[]
       dat=r.send(cmd)
       dat.gsub!(/{|}/,'')
       ar=CSV.parse_line(dat)
+      mem_line << ar
+      mem_line_h[cmd] = ar
       item_ids=CSV.parse_line(r.send(:item_ids).gsub(/{|}/,'')) if cmd==:issue_descriptions
-      td=[]
+      td << content_tag(:td, labels[cmd])
       i=0
-      # td << content_tag(:td, cmd[6..-1].capitalize)
       while i < ar.size  do
         if cmd==:issue_descriptions
           td << content_tag(:td, link_to(ar[i], ClavisItem.clavis_url(item_ids[i]), :target=>'_new'))
         else
-          td << content_tag(:td, ar[i])
+          if ar[i] == 'NULL'
+            td << content_tag(:td, '')
+          else
+            td << content_tag(:td, ar[i])
+          end
         end
-        i+=1
+        i += 1
       end
       res << content_tag(:tr, td.join.html_safe, {title:cmd[6..-1].capitalize})
     end
+    #td=[]
+    #td << content_tag(:td, mem_line.inspect)
+    #td << content_tag(:td, mem_line[3].inspect)
+    #td << content_tag(:td, mem_line.class)
+    #td << content_tag(:td, mem_line.first.size)
+    #td << content_tag(:td, mem_line.size)
+    #td << content_tag(:td, mem_line_h[:issue_arrival_dates_expected])
+    #res << content_tag(:tr, td.join.html_safe)
+
+    td=[]
+    td << content_tag(:td, "Giorni di ritardo")
+    i = 0
+    mem_line_h[:issue_arrival_dates_expected].each do |e|
+      data_arrivo = mem_line_h[:issue_arrival_dates][i]
+      i+=1
+      if data_arrivo == 'NULL'
+        if e=='NULL'
+          days = 0
+        else
+          e = Date.parse(e)
+          days = Time.now.to_date.mjd - e.mjd
+        end
+        if e!='NULL'
+          if days > 0
+            lnk = link_to(days, serial_reminders_path(serial_title_id:r.id,library_id:params[:library_id].to_i))
+            td << content_tag(:td, content_tag(:span, lnk, class:'label label-warning'))
+          else
+            td << content_tag(:td, content_tag(:span, "atteso fra #{days.abs} giorni", class:'label label-success'))
+          end
+        end
+      else
+        td << content_tag(:td, "")
+      end
+    end
+    res << content_tag(:tr, td.join.html_safe)
+    # res << content_tag(:tr, content_tag(:td, "r.class: #{r.issue_status}"))
+    
     content_tag(:table, res.join.html_safe, {:style=>'width: 90%;', class: 'table table-bordered table-condensed table-striped'})
   end
 
@@ -242,7 +305,7 @@ module SerialTitlesHelper
                                 content_tag(:td, link_to(r.invoice_number,serial_invoice_path(r,serial_list_id:r.serial_list_id,library_id:@library_id,invoice_filter_enabled:true))) +
                                 content_tag(:td, r.invoice_date.to_date) +
                                 content_tag(:td, number_to_currency(r.total_amount)) +
-                                content_tag(:td, prezzo.html_safe) +
+                                content_tag(:td, prezzo.nil? ? '---' : prezzo.html_safe) +
                                 content_tag(:td, number_to_currency(r.prezzo_stimato)) +
                                 content_tag(:td, number_to_currency(diff)))
       end

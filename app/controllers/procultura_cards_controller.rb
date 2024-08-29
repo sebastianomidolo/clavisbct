@@ -12,7 +12,7 @@ class ProculturaCardsController < ApplicationController
     if ids.blank?
       if params[:lettera].blank?
         q = params[:q].blank? ? '' : params[:q]
-        q.gsub!('&', ' ')
+        q.gsub!(/&|\(|\)/, ' ')
         ts=ProculturaCard.connection.quote_string(q.split.join(' & '))
         cond="to_tsvector('simple', heading) @@ to_tsquery('simple', '#{ts}')"
         params[:per_page]=1000

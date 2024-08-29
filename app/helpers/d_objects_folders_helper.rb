@@ -21,6 +21,34 @@ module DObjectsFoldersHelper
     content_tag(:table, res.join.html_safe, class:'table')
   end
 
+  def d_objects_folders_user_dir(records)
+    res=[]
+    records.each do |f|
+      if !f.folder_name.nil?
+        fname = f.folder_name.sub(/\/$/,'')
+      else
+        fname = "id: #{f.user_id}"
+      end
+      res << content_tag(:tr, content_tag(:td, link_to(fname,d_objects_folders_path(dirname:fname))) +
+                              content_tag(:td, f.mode))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
+  def d_objects_folders_user_dir_add(user)
+    res = []
+    sql= %Q{select f.id,f.name from d_objects_folders f left join d_objects_personal_folders pf using(name) where not f.name ~ '/' order by f.name;}
+
+    # Orribile modalità di filtro per le cartelle (ma ho fretta, fra 5 giorni vado in pensione...)
+    sql= %Q{select f.id,f.name from d_objects_folders f where not f.name ~ '/' and not f.name ~ '^Cartella personale' order by f.name;}
+    
+    DObjectsFolder.find_by_sql(sql).each do |r|
+      lnk = d_objects_folder_path(id:r.id,add_user_id:user.id)
+      res << content_tag(:tr, content_tag(:td, link_to(r.name,lnk)))
+    end
+    content_tag(:table, res.join.html_safe, class:'table')
+  end
+
   def d_objects_folder_show_cover_image(record)
     d_object=record.d_object_cover_image
     return '' if d_object.nil?
@@ -51,7 +79,11 @@ module DObjectsFoldersHelper
       text += " <b>#{r.x_ti}</b>".html_safe if !r.x_ti.blank?
       text += " <b>[pdf]</b>".html_safe if !r.pdf_url.nil?
       text += " <b>manifestation_id #{r.x_mid}</b>".html_safe if !r.x_mid.blank?
-      lnk=link_to(text, d_objects_folder_path(r.id))
+      if r.name.match '#'
+        lnk=link_to(text, d_objects_folder_path(r.id))
+      else
+        lnk=link_to(text, "/dob?p=#{r.name}")
+      end
       res << content_tag(:li, lnk)
     end
     content_tag(:ol, res.join.html_safe)
@@ -84,16 +116,19 @@ module DObjectsFoldersHelper
                   html_attrs:{size:record.basename.size+10})
   end
 
-  def d_objects_folder_list_content(records)
+  def d_objects_folder_list_content(folder)
+    records = folder.gfx_objects
     res=[]
     res << content_tag(:tr, content_tag(:td, '', class:'col-md-1') +
                             content_tag(:td, 'Nome', class:'col-md-2') +
                             content_tag(:td, 'Dimensioni', class:'col-md-1') +
                             content_tag(:td, 'Tipo'))
 
+    ckval = folder.id==0 ? true : false
     records.each do |r|
-      res << content_tag(:tr, content_tag(:td, link_to(image_tag(view_d_object_path(r, :format=>'jpeg', :size=>'50x')),
-                                          view_d_object_path(r))) +
+      res << content_tag(:tr, content_tag(:td, check_box_tag("object_ids[]", r.id, ckval)) +
+                              content_tag(:td, link_to(image_tag(view_d_object_path(r, :format=>'jpeg', :size=>'50x')),
+                                                       view_d_object_path(r))) +
                               content_tag(:td, r['name']) +
                               content_tag(:td, number_to_human_size(r['bfilesize'])) +
                               content_tag(:td, r['mime_type']))
@@ -114,7 +149,7 @@ module DObjectsFoldersHelper
     url=record.pdf_url
     fname=record.derived_pdf_filename
     if fname and File.readable?(fname)
-      res << "Dimensioni del file PDF: #{number_to_human_size(File.size(fname))} (#{File.size(fname)} bytes), generato il #{File.ctime(fname).to_date}".html_safe
+      res << "Dimensioni del file PDF #{fname}: #{number_to_human_size(File.size(fname))} (#{File.size(fname)} bytes), generato il #{File.ctime(fname).to_date}".html_safe
       if publ==true
         lnk="https://#{request.host_with_port}/getpdf/#{File.basename(record.free_pdf_filename)}"
       else
@@ -127,22 +162,32 @@ module DObjectsFoldersHelper
     content_tag(:p, res.join("\n").html_safe)
   end
 
+  def d_objects_folder_virtual_pdf_info(record)
+    res=[]
+    # record.pdf_url
+    fname=record.derived_pdf_filename
+    return fname
+    res << "<br/>Parametri pdf: #{record.pdf_params}" if res.size>0
+    res << "<br/>Fullpath: #{fname}" if res.size>0
+    content_tag(:p, res.join("\n").html_safe)
+  end
+
   def d_objects_folder_browse(record)
     return '' if record.parent.nil?
     lnks = []
     p = record.browse_object('prev')
     n = record.browse_object('next')
     if !p.nil?
-      lnks << link_to('first', d_objects_folder_path(record.browse_object('first')))
-      lnks << link_to('prev', d_objects_folder_path(p))
+      lnks << link_to('first', d_objects_folder_path(record.browse_object('first'), view:'list'))
+      lnks << link_to('prev', d_objects_folder_path(p, view:'list'))
     else
       lnks << 'first'
       lnks << 'prev'
     end
     if !n.nil?
-      lnks << link_to('next', d_objects_folder_path(n))
+      lnks << link_to('next', d_objects_folder_path(n, view:'list'))
       last=record.browse_object('last')
-      lnks << link_to('last', d_objects_folder_path(record.browse_object('last'))) if !last.nil?
+      lnks << link_to('last', d_objects_folder_path(record.browse_object('last'), view:'list')) if !last.nil?
     else
       lnks << 'next'
       lnks << 'last'

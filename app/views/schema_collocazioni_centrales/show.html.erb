@@ -1,31 +1,73 @@
-<%= content_tag(:div, "Piano: #{@collocazione.bib_section.name}") %>
 
-<%= content_tag(:div, "Scaffale: #{@collocazione.scaffale}") %>
 
-<%= content_tag(:div, "Palchetto: #{@collocazione.palchetto}") %>
+<%= content_tag(:h4, "Biblioteca #{@collocazione.clavis_library.to_label}") if !@collocazione.clavis_library.nil? %>
+<%=
+  begin
+  piano = @collocazione.bib_section.name
+  lnk = clavis_items_path(schema_collocazione_centrale:@collocazione.id)
+  lnk_section = link_to("Vedi tutti gli esemplari di questa ubicazione", clavis_items_path(bib_section:@collocazione.bib_section_id))
+  content_tag(:div, "Ubicazione: #{@collocazione.bib_section.name}  [#{lnk_section}]<br/>Numero stimato dei volumi: <b>#{link_to(@collocazione.items_count['count'],lnk)}</b>".html_safe)
+  rescue
+  end
+%>
+
+
+
+<%= content_tag(:div, "Scaffale (primo elemento della collocazione): #{@collocazione.scaffale}") %>
+
+<%= content_tag(:div, "Palchetto (secondo elemento della collocazione): #{@collocazione.palchetto}") %>
+
+<%= content_tag(:div, "Annotazioni: #{@collocazione.notes}") %>
 
 <%= content_tag(:div, "Filtro: #{@collocazione.filtro_colloc}") if !@collocazione.filtro_colloc.blank? %>
 
+
 <% if can? :manage,SchemaCollocazioniCentrale %>
  <% if @collocazione.locked %>
- <%= content_tag(:div, "Collocazione bloccata") %>
+ <% content_tag(:div, "Collocazione 'bloccata'") %>
  <% else %>
- <%= content_tag(:div, "Collocazione non bloccata") %>
+ <% content_tag(:div, "Collocazione 'non bloccata'") %>
  <% end %>
 
- <%= content_tag(:pre, @collocazione.sql_for_select_from_centrale_locations) %>
 
- <%= content_tag(:pre, @collocazione.sql_for_update_centrale_locations) %>
 
- <%= link_to('Modifica', edit_schema_collocazioni_centrale_path(@collocazione)) %> |
+ <% if @managed_library %>
+  <%= link_to('Modifica', edit_schema_collocazioni_centrale_path(@collocazione)) %> |
+  <%= link_to 'Elimina collocazione', @collocazione, method: :delete, data: { confirm: "Confermi cancellazione?" } %>
+ <% end %>
 
- <%= link_to 'Elimina collocazione', @collocazione, method: :delete,
-   data: { confirm: "Confermi cancellazione?" }
- %>
 <% end %>
 
-<%= content_tag(:span, link_to("Torna all'elenco", list_schema_collocazioni_centrales_path)) %>
+<% verbose = params[:details]=='true' ? true : false %>
+<% if !@collocazione.sql_for_update_centrale_locations.blank? %>
+<% begin %>
+<br/>Suddivisione per tipologia e stato (solo per esemplari presenti in Clavis - inclusi i fuori catalogo):
+ <%= content_tag(:div, schema_collocazioni_centrale_items_details(@collocazione,verbose=verbose)) %>
 
+<br/>Suddivisione per serie inventariali
+ <%= content_tag(:div, schema_collocazioni_centrale_items_series(@collocazione,verbose=verbose)) %>
+
+ <br/>Suddivisione per data di pubblicazione
+ <%= content_tag(:div, schema_collocazioni_centrale_items_edition_dates(@collocazione,verbose=verbose)) %>
+ 
+ <br/><%= link_to('Mostra etichette parlanti (richiede talvolta qualche minuto)', schema_collocazioni_centrale_path(details:'true'), class:'label label-success') if verbose==false %>
+
+ <% rescue %>
+<%= content_tag(:pre, "L'esecuzione del codice SQL produce errori #{$!}") %>
+ <% end %>
+ 
+<%= content_tag(:pre, @collocazione.items_details(verbose=verbose,exec=false)) %>
+<%= content_tag(:pre, @collocazione.items_series(verbose=verbose,exec=false)) %>
+<%= content_tag(:pre, @collocazione.items_edition_dates(verbose=verbose,exec=false)) %>
+
+<% else %>
+<br/>
+ok
+<% end %>
+<!--
 <br/>Esempi:
-<%= content_tag(:pre, schema_collocazioni_centrale_vedi_esempi(@collocazione)) %>
+content_tag(:pre, schema_collocazioni_centrale_vedi_esempi(@collocazione))
+-->
 
+
+<%= content_tag(:pre, @collocazione.sql_for_update_centrale_locations) %>

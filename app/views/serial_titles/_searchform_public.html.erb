@@ -1,0 +1,31 @@
+
+<%= simple_form_for(@serial_title, :method=>'get', :html => {:class => 'form-vertical', role: 'form' }) do |f| %>
+
+  <%= hidden_field_tag('serial_list_id', params[:serial_list_id]) %>
+  <%= hidden_field_tag('sospeso', 'f') %>
+
+  <%= if @serial_list.onelib
+       hidden_field_tag('library_id', @serial_list.serial_libraries.first.clavis_library_id)
+      else
+       x=@serial_list.library_select
+       x.shift
+       select_tag(:library_id, options_for_select(x,
+         params[:library_id]), prompt:'Tutte le sedi', :onchange=>'submit();')
+      end
+  %>
+
+  Fornitura <%= select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select,
+		params[:tipo_fornitura]), :onchange=>'submit();', include_blank:true) %>
+
+  <br/>
+
+    Lotto <%= select_tag(:estero,
+      options_for_select([['Italiani','f'],['Stranieri','t']],
+		params[:estero]), :onchange=>'submit();', include_blank:true) %>
+
+  Periodicità <%= select_tag(:frequency,
+      options_for_select(ClavisManifestation.unimarc_serial_frequencies_select,
+		params[:frequency]), :onchange=>'submit();', include_blank:true) %>
+ 
+<% end %>
+

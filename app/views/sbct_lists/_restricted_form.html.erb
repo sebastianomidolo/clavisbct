@@ -10,6 +10,22 @@
     <%= f.input :label, label:'Nome della lista' %>
     <%= f.input :hidden, label:'Lista privata', as:'boolean' %>
 
+    <%= f.input :days_before_autorm, label:'Numero di giorni di permanenza in lista', hint:'Significato: dopo il numero di giorni indicato, i titoli verranno automaticamente rimossi dalla lista, usare quindi con cautela' %>
+    <%= f.input :pubbl_age_limit, label:'Numero di giorni dalla data di pubblicazione', hint:'Per esempio: indicando 365, i titoli con data di pubblicazione maggiore di un anno verranno rimossi automaticamente' %>
+
+    
+
+    <%=
+      if @sbct_list.protected?
+      hint="Da questa lista non si potranno eliminare in un colpo solo tutti i titoli"
+      else
+      hint="Questa lista permette la cancellazione di tutti i titoli in essa contenuti in un colpo solo"
+      end
+      f.input :protected, label:'Protezione da cancellazioni', hint:hint, as:'boolean'
+    %>
+
+
+    
     <%= render :partial => 'sbct_lists/other',locals:{f:f} if current_user.role?('AcquisitionStaffMember') %>
     
   </div>

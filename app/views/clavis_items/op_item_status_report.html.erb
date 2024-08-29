@@ -1,0 +1,6 @@
+<%= content_tag(:h4, "Suddivisione per ItemStatus di #{params[:n]} esemplari trovati con l'ultima ricerca effettuata") %>
+<%= render partial:'custom_ror_views.html.erb' %>
+<%= content_tag(:div, op_item_status_report(@sql)) %>
+
+
+

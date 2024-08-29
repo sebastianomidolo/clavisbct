@@ -30,7 +30,10 @@ class SbctSupplier < ActiveRecord::Base
     self.deposito_legale? ? "#{self.supplier_name} (deposito legale)" : self.supplier_name
   end
 
-  def discount
+  # Metodo da riscrivere perché dal 2024 ci troviamo in una situazione per cui lo stesso fornitore
+  # che prima faceva un certo sconto poi ne ha fatto un altro e dunque non possiamo legare
+  # il fornitore a un solo sconto (lo abbiamo spostato nel budget)
+  def discount_do_not_use
     if self.clavis_supplier.nil?
       0.0
     else
@@ -69,9 +72,14 @@ update sbct_acquisti.copie as c
   end
 
   def importo_impegnato
-    # SbctSupplier.tutti({supplier_id:self.id,order_status:["'A'","'O'"]}).first.impegnato.to_f
-    r = SbctSupplier.tutti({supplier_id:self.id,order_status:["'A'","'O'"]}).first
-    r.nil? ? 0 : r.impegnato.to_f
+    # r = SbctSupplier.tutti({supplier_id:self.id,order_status:["'A'","'O'"]}).first
+    r = SbctSupplier.tutti({supplier_id:self.id,order_status:["'A'","'O'"]})
+    imp = 0.0
+    r.each do |x|
+      imp += x.impegnato.to_f
+    end
+    # r.nil? ? 0 : r.impegnato.to_f
+    r.nil? ? 0 : imp
   end
 
   def importo_residuo
@@ -257,15 +265,9 @@ from sbct_acquisti.suppliers s join sbct_acquisti.copie c using(supplier_id)
     end
     cond << "s.supplier_id=#{self.connection.quote(params[:supplier_id])}" if !params[:supplier_id].blank?
     cond = cond.size==0 ? '' : "WHERE #{cond.join(' AND ')}"
-    sql=%Q{select s.supplier_name, s.shortlabel, s.supplier_id, s.tipologie, cs.discount, sum(c.numcopie) as numero_copie,
-COALESCE((sum(c.prezzo * c.numcopie)),0) as impegnato,
-to_char(avg(c.prezzo), 'FM999999999.00') as costo_medio
-FROM sbct_acquisti.suppliers s join clavis.supplier cs using(supplier_id) left join sbct_acquisti.copie c
-using(supplier_id) left join sbct_acquisti.titoli t using(id_titolo)
-#{cond} group by s.supplier_name,s.supplier_id, cs.discount
-order by s.supplier_name; 
-    }
-    sql = %Q{select s.supplier_name, s.shortlabel, s.supplier_id, s.tipologie, cs.discount, ps.quota_fornitore, sum(c.numcopie) as numero_copie,
+    sql = %Q{
+select b.budget_id,b.label as budget_label,s.supplier_name, s.shortlabel, s.supplier_id, s.tipologie,
+  b.discount, ps.quota_fornitore, sum(c.numcopie) as numero_copie,
 COALESCE((sum(c.prezzo * c.numcopie)),0) as impegnato,
 (ps.quota_fornitore - COALESCE((sum(c.prezzo * c.numcopie)),0)) as residuo,
 to_char(avg(c.prezzo), 'FM999999999.00') as costo_medio
@@ -273,8 +275,10 @@ FROM sbct_acquisti.suppliers s join clavis.supplier cs using(supplier_id)
 left join sbct_acquisti.copie c on(c.supplier_id=s.supplier_id and c.order_status in ('O','A'))
 left join sbct_acquisti.titoli t using(id_titolo)
 left join sbct_acquisti.pac_suppliers ps on(ps.supplier_id=s.supplier_id)
-#{cond} group by s.supplier_name,s.supplier_id, cs.discount,ps.quota_fornitore
-order by s.supplier_name;}
+left join sbct_acquisti.budgets b using(budget_id)
+#{cond}
+group by b.budget_id,b.label,s.supplier_name,s.supplier_id, b.discount,ps.quota_fornitore
+order by s.supplier_name,b.label;}
     # puts sql
     fd=File.open("/home/seb/suppliers_tutti.sql", "w")
     fd.write(sql)
@@ -310,7 +314,7 @@ order by s.supplier_name;}
     self.connection.execute(sql)
   end
   def SbctSupplier.insert_from_clavis(supplier_name)
-    name = "#{supplier_name.strip} "
+    name = "#{supplier_name.strip}"
     sql=%Q{INSERT INTO sbct_acquisti.suppliers(supplier_id,supplier_name) (
       select cs.supplier_id,cs.supplier_name from clavis.supplier cs
          left join sbct_acquisti.suppliers ps using(supplier_id)

@@ -1,0 +1,27 @@
+
+<%= simple_form_for(@service) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+    <%= f.input :name, label:'Nome del servizio' %>
+    <%=
+      if @lock_parent.nil?
+       f.association :parent, collection:Service.parent_select(@service)
+      else
+       f.input :parent_id, as: 'hidden'
+      end
+    %>
+
+
+    <%= f.input :visible, as:'boolean' %>
+    <%= f.input :url, label:'Url per accesso' %>
+    <%= f.input :description, label:'Descrizione', input_html: {rows: 6, cols: 80} %>
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>
+
+

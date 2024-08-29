@@ -6,7 +6,7 @@
   print = link_current_params('[stampe]', print_serial_titles_path, params)
   prezzo = @serial_list.sum_prezzo_stimato(params)
   prezzo_selezione = params[:tipo_fornitura].blank? ? '' : "<b>#{number_to_currency(prezzo)}</b>"
-  prezzo_totale = @serial_list.sum_prezzo_stimato({library_id:params[:library_id],tipo_fornitura:'a,g'})
+  prezzo_totale = @serial_list.sum_prezzo_stimato(params.merge({library_id:params[:library_id],tipo_fornitura:'a,g,x,r'}))
   content_tag(:h4, "#{@serial_titles.count} titoli #{print} #{prezzo_selezione} (totale abbonamenti+edicola: <b>#{number_to_currency(prezzo_totale)}</b>)".html_safe)
 %>
 

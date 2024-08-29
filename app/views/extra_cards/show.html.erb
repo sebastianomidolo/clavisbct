@@ -21,7 +21,15 @@
 <% end %>
 
 <% if @extra_card.created_by.nil? %>
-<%= content_tag(:p, "Scheda con id #{@extra_card.id} importata da ToBi") %>
+
+<%=
+  if @extra_card.dbmusicale_id.blank?
+    content_tag(:p, "Scheda con id #{@extra_card.id} importata da ToBi")
+  else
+    content_tag(:p, "Scheda con id #{@extra_card.id} importata da dbMusicale altervista (id #{@extra_card.dbmusicale_id})")
+  end
+ %>
+
 <% else %>
 <%= content_tag(:p, "Scheda creata da #{@extra_card.created_by.email}") %>
 <% end %>

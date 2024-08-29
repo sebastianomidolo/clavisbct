@@ -1,0 +1,4 @@
+
+<%= content_tag(:div, "Sessioni DNG di #{content_tag(:b, @patron.to_label)}".html_safe) if !@patron.nil?%>
+
+<%= render partial:'dng_session_list' %>

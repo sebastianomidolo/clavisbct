@@ -90,6 +90,8 @@ class DObjectsController < ApplicationController
   def view
     @d_object = DObject.find(params[:id])
     @d_objects_folder = @d_object.d_objects_folder
+    @dopf = DObjectsPersonalFolder.find(user_session[:d_objects_personal_folder]) if !user_session[:d_objects_personal_folder].nil?
+
     render text:'non accessibile' and return if !@d_objects_folder.readable_by?(current_user)
 
     respond_to do |format|
@@ -106,6 +108,9 @@ class DObjectsController < ApplicationController
           img=Magick::Image.read(@d_object.filename_with_path).first
         end
         # img=img.blue_shift
+        if current_user.email=='seba'
+          img = @d_object.watermark_for_image(img)
+        end
         img.format='jpeg'
         if !params[:size].blank?
           s=params[:size].split('x')
@@ -121,6 +126,38 @@ class DObjectsController < ApplicationController
         send_data(img.to_blob, :type => 'image/jpeg; charset=binary', :disposition => 'inline')
       }
     end
+  end
+
+  def myfolderxxx
+    @d_object = DObject.find(params[:id])
+    user_session[:d_objects_ids] = [] if user_session[:d_objects_ids].nil?
+    if request.method=="POST"
+      user_session[:d_objects_ids] << @d_object.id
+    end
+    if request.method=="DELETE"
+      user_session[:d_objects_ids].delete(@d_object.id)
+    end
+    user_session[:d_objects_ids].uniq!
+    pf=DObjectsPersonalFolder.find_or_create_by_owner_id(current_user.id)
+    user_session[:d_objects_ids] = DObjectsFolder.virtual_d_objects_sort(user_session[:d_objects_ids])
+    pf.d_objects=user_session[:d_objects_ids].join(',')
+    pf.d_objects=DObjectsFolder.virtual_d_objects_sort(pf.d_objects)
+    pf.save
+  end
+
+  def myfolder
+    return if user_session[:d_objects_personal_folder].nil?
+    @d_object = DObject.find(params[:id])
+    @dopf = DObjectsPersonalFolder.find(user_session[:d_objects_personal_folder])
+    ids = @dopf.ids
+    if request.method=="POST"
+      ids << @d_object.id
+    end
+    if request.method=="DELETE"
+      ids.delete(@d_object.id)
+    end
+    @dopf.ids=ids.uniq
+    @dopf.save
   end
 
   def upload

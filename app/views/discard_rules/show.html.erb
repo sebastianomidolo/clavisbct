@@ -1,0 +1,12 @@
+ok
+
+<%= content_tag(:p, @discard_rule.attributes) %>
+
+
+<%= link_to("Simulazione scarto #{@discard_rule.descrizione}", "/clinic/stats/patrimonio?dr_id=#{@discard_rule.id}&smusi='S'") %>
+
+
+<br/>
+
+<%= link_to('Modifica', edit_discard_rule_path(@discard_rule), class:'btn btn-warning') if can? :edit, DiscardRule %>
+

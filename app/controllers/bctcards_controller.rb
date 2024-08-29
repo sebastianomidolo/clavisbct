@@ -1,21 +1,33 @@
 class BctcardsController < ApplicationController
-  # layout 'bctcards'
   layout 'bioico'
-  # layout 'procult/procult'
+  #  before_filter :authenticate_user!
+
 
   before_filter :set_card, only: [:show]
 
   respond_to :html
 
   def index
-    @namespace=params[:namespace]
+    begin
+      @bio_iconografico_namespace = BioIconograficoNamespace.find(params[:namespace])
+      (render text:'non pubblicato', layout:true and return) if !@bio_iconografico_namespace.published
+      @namespace=@bio_iconografico_namespace.label
+    rescue
+      fd=File.open("/home/seb/attack/attack.log", "a")
+      fd.write("#{Time.now} - #{[request.remote_ip, request.headers['REMOTE_ADDR']].uniq.join(', ')} - #{params.to_a.join(',')} - [#{$!}]\n")
+      fd.close
+      render text:$!, layout:true and return
+    end
+
     if params[:lettera].blank?
       @show_searchbox = true
     else
       # @bio_iconografico_cards=BioIconograficoCard.search(params)
       # return
     end
+
     @bio_iconografico_cards=BioIconograficoCard.search(params)
+    # render text:params.to_a.join and return
     return
 
     if params[:topic_id].blank?

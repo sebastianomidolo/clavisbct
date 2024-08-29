@@ -20,4 +20,12 @@ Bolla: <%= select_tag(:dnoteid, options_for_select(SbctTitle.delivery_notes_sele
 
 <% end %>
 
-<%= render template:'sbct_titles/index' if !params[:dnoteid].blank? %>
+<%=
+  if !params[:dnoteid].blank?
+  render template:'sbct_titles/index'
+  else
+     content_tag(:div, delivery_notes_controllo_prezzi)
+  end
+%>
+
+

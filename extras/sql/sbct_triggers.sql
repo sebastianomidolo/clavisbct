@@ -7,6 +7,7 @@ DROP TRIGGER sbct_acquisti_list_update ON sbct_acquisti.copie;
 DROP TRIGGER sbct_acquisti_list_delete ON sbct_acquisti.copie;
 DROP TRIGGER sbct_acquisti_list_insert ON sbct_acquisti.copie;
 DROP TRIGGER sbct_acquisti_list_update ON sbct_acquisti.titoli;
+DROP TRIGGER sbct_acquisti_copie_event_id_update ON sbct_acquisti.l_events_titles;
 
 CREATE OR REPLACE FUNCTION fnc_verify_sbct_acquisti_items() RETURNS trigger AS $$
 DECLARE
@@ -129,11 +130,25 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION fnc_sbct_acquisti_titles_update() RETURNS trigger AS $$
 DECLARE
 BEGIN
+  -- Effetto di questa chiamata è l'aggiornamento delle liste con "default_list" = true
   EXECUTE 'SELECT sbct_acquisti.insert_into_l_titoli_liste()';
 RETURN NEW;
 END;
 $$
 LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION update_event_id() RETURNS TRIGGER AS $$
+BEGIN
+  update sbct_acquisti.copie set event_id=null WHERE id_titolo=old.id_titolo and event_id=old.event_id;
+  return old;
+END;
+$$
+LANGUAGE plpgsql;
+CREATE TRIGGER sbct_acquisti_copie_event_id_update BEFORE DELETE ON sbct_acquisti.l_events_titles FOR EACH ROW EXECUTE PROCEDURE update_event_id();
+
+
 
 CREATE TRIGGER sbct_acquisti_list_update AFTER UPDATE ON sbct_acquisti.copie FOR EACH ROW EXECUTE PROCEDURE fnc_sbct_acquisti_list_update();
 CREATE TRIGGER sbct_acquisti_list_delete BEFORE DELETE ON sbct_acquisti.copie FOR EACH ROW EXECUTE PROCEDURE fnc_sbct_acquisti_list_update();

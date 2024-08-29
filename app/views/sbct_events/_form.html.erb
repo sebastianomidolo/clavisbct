@@ -5,13 +5,13 @@
 
   <div class="form-inputs">
 
-    <%= f.association :sbct_event_type, label:'Tipologia' %>
-    <%= f.association :sbct_event_status, label:'Status' %>
+    <%= f.association :sbct_event_type, collection:SbctEventType.order('label'), label:'Tipologia', include_blank:false %>
     <%= f.input :name, label:'Nome evento' %>
-    <%= f.input :event_start, label:'Inizia il' %>
-    <%= f.input :event_end, label:'Termina il' %>
 <pre>    <%= f.input :description, hint:'', label:'Descrizione evento', input_html:{rows: 4, cols: 80} %> </pre>
 
+Campi facoltativi:
+<%= f.input :event_start, :as => :date, :include_blank => true, :default => nil %>
+<%= f.input :event_end, :as => :date, :include_blank => true, :default => nil %>
   </div>
 
   <div class="form-actions">

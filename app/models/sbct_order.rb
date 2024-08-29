@@ -19,22 +19,31 @@ class SbctOrder < ActiveRecord::Base
     r
   end
 
+  def autocreate_list(user)
+    sql = %Q{select * from sbct_acquisti.liste where owner_id = #{user.id} and hidden and label='Ordine corrente'}
+    lista = SbctList.find_by_sql(sql).first
+    return if lista.nil?
+    lista.sbct_titles=[]
+    sql = %Q{with t1 as (select id_titolo from sbct_acquisti.copie where order_id=#{self.id})
+             insert into sbct_acquisti.l_titoli_liste(id_titolo,id_lista)
+              (select id_titolo,#{lista.id} from t1) on conflict(id_titolo,id_lista) do nothing;}
+    self.connection.execute(sql)
+  end
+
   def discount_check(mode=:list)
     action = 'select distinct * from t1 order by titolo' if mode==:list
     action = 'update sbct_acquisti.copie c set prezzo=t1.prezzo_scontato from t1 where c.id_copia=t1.id_copia' if mode==:update
     sql = %Q{
-        with t1 as (
-select ti.id_titolo,ti.titolo,ti.prezzo as listino,cs.discount,cp.prezzo as prezzo_copia,
-   cp.id_copia, round(ti.prezzo-ti.prezzo*(cs.discount/100),2) as prezzo_scontato
+      with t1 as (
+select ti.id_titolo,ti.titolo,ti.prezzo as listino,b.discount,cp.prezzo as prezzo_copia,
+   cp.id_copia, round(ti.prezzo-ti.prezzo*(b.discount/100),2) as prezzo_scontato
 from sbct_acquisti.copie cp
      join sbct_acquisti.titoli ti using(id_titolo)
-     join sbct_acquisti.suppliers s on(s.supplier_id=cp.supplier_id)
-     join clavis.supplier cs on(cs.supplier_id=s.supplier_id)
+     join sbct_acquisti.budgets b on(b.budget_id=cp.budget_id)
 where
- order_id=#{self.id} and cp.prezzo != round(ti.prezzo-ti.prezzo*(cs.discount/100),2)
+ order_id=#{self.id} and cp.prezzo != round(ti.prezzo-ti.prezzo*(b.discount/100),2)
 )
-#{action}}
-    sql
+    #{action}}
   end
 
   def add_items_to_order(item_ids_array)

@@ -1,8 +1,7 @@
 
 <%
    if params[:contact_note]=='@'
-   sql="select cp.patron_id,cc.contact_value as email,cc.contact_note,cp.name,cp.lastname,cp.last_seen from clavis.patron cp join clavis.contact cc using(patron_id) where cc.contact_note~'@' order by lower(cc.contact_value);"
-   sql="select cp.patron_id,cc.contact_value as email,cc.contact_note,cp.name,cp.lastname,cp.last_seen from clavis.patron cp join clavis.contact cc using(patron_id) where cc.contact_value~'@' and cc.contact_type not in('E','X') order by lower(cc.contact_value);"
+    sql="select cp.patron_id,cc.contact_value as email,cc.contact_note,cp.name,cp.lastname,cp.last_seen from clavis.patron cp join clavis.contact cc using(patron_id) where cc.contact_value~'@' and cc.contact_type not in('E','X','L') order by lower(cc.contact_value);"
    else
     sql="select cp.patron_id,cc.contact_value as email,cc.contact_note,cp.name,cp.lastname,cp.last_seen from clavis.patron cp join clavis.contact cc using(patron_id) where cc.contact_type='X' and cp.last_seen notnull order by lower(cc.contact_value);"
    end

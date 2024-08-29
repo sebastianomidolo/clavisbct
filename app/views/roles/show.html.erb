@@ -1,0 +1,9 @@
+<%= content_tag(:h4, "Ruolo: #{@role.name}") %>
+
+
+Servizi:
+<%= content_tag(:div, role_services(@role)) %>
+
+Utenti:
+<%= content_tag(:div, role_users(@role)) %>
+

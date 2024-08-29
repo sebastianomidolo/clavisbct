@@ -280,26 +280,17 @@ class BioIconograficoCard < DObject
     self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
   end
 
-  def self.list(params, bio_iconografico_card=nil)
+  def self.list(params, bio_iconografico_card)
     cond = []
-    if bio_iconografico_card.nil?
-      namespace = params[:namespace].blank? ? 'bioico' : params[:namespace]
-      cond << "b.lettera=#{self.connection.quote(params[:lettera])}"
-      if !params[:numero].blank?
-        cond << "b.numero>=#{self.connection.quote(params[:numero])}"
-      end
-      if !params[:range].blank?
-        from,to=params[:range].split('-')
-        cond << "b.numero between #{from} and #{to}"
-      end
-    else
-      b=bio_iconografico_card
-      namespace = b.namespace
-      # cond << "b.intestazione::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
-      cond << "o.tags::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
-      cond << "b.numero = #{b.numero}" if !b.numero.nil?
+    cond << "b.lettera=#{self.connection.quote(params[:lettera])}" if !params[:lettera].blank?
+    cond << "b.numero>=#{params[:numero].to_i}" if !params[:numero].blank?
+    if !params[:range].blank?
+      from,to=params[:range].split('-')
+      cond << "b.numero between #{self.connection.quote(from)} and #{self.connection.quote(to)}"
     end
-
+    namespace = bio_iconografico_card.namespace
+    # cond << "b.intestazione::text ~* #{self.connection.quote(b.intestazione)}" if !b.intestazione.nil?
+    cond << "o.tags::text ~* #{self.connection.quote(bio_iconografico_card.intestazione)}" if !bio_iconografico_card.intestazione.nil?
     return [] if cond.size==0
     cond << "b.namespace=#{self.connection.quote(namespace)}"
     cond = "WHERE #{cond.join(" and ")}"
@@ -308,13 +299,18 @@ class BioIconograficoCard < DObject
       from bio_iconografico_cards b join d_objects o using(id)
       #{cond}
       order by lettera, numero}
+    fd=File.open("/home/seb/bio_iconografico_list.sql", "w")
+    fd.write(sql)
+    fd.close
+    
     pp=params[:per_page].blank? ? 50 : params[:per_page]
     self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
   end
 
+  # Sostuitata da BioIconograficoNamespace#numfiles (da cancellare poi)
   def self.conta(params={})
     cond = params[:lettera].blank? ? '' : "AND lettera = #{self.connection.quote(params[:lettera])}"
-    sql="select count(*) from bio_iconografico_cards where namespace = '#{params[:namespace]}' #{cond}"
+    sql="select count(*) from bio_iconografico_cards where namespace = #{self.connection.quote(params[:namespace])} #{cond}"
     self.connection.execute(sql).first['count'].to_i
   end
 
@@ -343,12 +339,6 @@ class BioIconograficoCard < DObject
       order by id}
     pp=params[:per_page].blank? ? 50 : params[:per_page]
     self.paginate_by_sql(sql, :per_page=>pp, :page=>params[:page])
-  end
-
-  def self.total_filesize(params={})
-    cond = params[:namespace].blank? ? '' : "WHERE b.namespace=#{self.connection.quote(params[:namespace])}"
-    sql="select sum(bfilesize) as size from bio_iconografico_cards b join d_objects o using (id) #{cond}"
-    self.connection.execute(sql).first['size'].to_i
   end
 
   def self.namespaces(user=nil)

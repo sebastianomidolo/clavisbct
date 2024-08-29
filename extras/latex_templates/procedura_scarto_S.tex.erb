@@ -1,0 +1,70 @@
+% Procedura scarto - contesto S
+
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=32mm, right=20mm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[headings]{fancyhdr}
+
+\usepackage{supertabular}
+
+\renewcommand{\headrulewidth}{0pt}
+
+
+\hoffset=-20mm
+\voffset=0mm
+\textwidth=184mm
+\textheight=26cm
+
+
+\pagestyle{fancy}
+
+
+<%= "\\fancyhead[L]{#{inputdata.nome_biblioteca}}" %>
+<%= "\\fancyhead[R]{Stampa: #{Time.now.to_date}}" %>
+
+\tablehead{%
+\hline
+Pubblico & Formato & Scartabili & Items totali \\
+\hline
+}
+
+\tabletail{%
+\hline
+}
+
+\def\arraystretch{1.5}
+
+\begin{document}
+
+
+\begin{center}
+\begin{supertabular}{|l|l|l|l|}
+\hline
+
+<%
+ res=[]	
+
+ inputdata.each do |r|
+   if r.formato.blank?
+    pubblico = ''
+    formato = r.pubblico.blank? ? "\\bf{Totale generale}": "\\bf{Totale #{r.pubblico}}"
+    totale = r.totale
+   else
+    pubblico = r.pubblico
+    formato = r.formato
+    totale = r.totale
+   end
+   res << "#{pubblico} & #{formato} & #{r.scartabili} & #{totale} \\\\ \\hline"
+ end
+ # res <<  "\\hline & Totali & #{sca} & #{tot} \\\\ \\hline"
+%>
+
+<%= res.join("\n") %>
+
+\end{supertabular}
+\end{center}
+
+
+
+\end{document}

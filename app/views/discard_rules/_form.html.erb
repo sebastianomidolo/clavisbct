@@ -1,0 +1,20 @@
+<%= simple_form_for(@discard_rule) do |f|  %>
+  <%= f.error_notification %>
+
+  <div class="form-inputs">
+
+    <%= f.input :classe_from %>
+    <%= f.input :classe_to %>
+    <%= f.input :descrizione %>
+    <%= f.input :edition_age %>
+    <%= f.input :anni_da_ultimo_prestito %>
+    <%= f.input :smusi %>
+    <%= f.input :pubblico %>
+
+
+  </div>
+
+  <div class="form-actions">
+    <%= f.button :submit, value: 'Salva' , class:'btn btn-success'%>
+  </div>
+<% end %>

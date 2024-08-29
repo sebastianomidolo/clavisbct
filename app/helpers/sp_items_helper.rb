@@ -20,11 +20,13 @@ module SpItemsHelper
   end
 
   def sp_items_list_items(sp_items)
+    return sp_items_list_items_logged_in(sp_items) if !current_user.nil?
     res=[]
     sp_items.each do |i|
       image = i.manifestation_id.nil? ? '' : link_to(image_tag(dnl_d_object_path(1, format:'jpeg', manifestation_id:i.manifestation_id,size:'200x')),build_link(sp_item_path(i)))
       # txt = i.mainentry.blank? ? i.to_html : "<b>#{i.mainentry}.</b>  #{i.to_html}"
       txt = i.mainentry.blank? ? i.bibdescr : "<b>#{i.mainentry}.</b>  #{i.bibdescr}"
+      txt = '[senza titolo]' if txt.blank?
       note = i.note.blank? ? '' : "<br/><em>#{i.note}</em>"
       res << content_tag(:tr, content_tag(:td, image) +
                               content_tag(:td,
@@ -35,6 +37,26 @@ module SpItemsHelper
     content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
   end
 
+  def sp_items_list_items_logged_in(sp_items)
+    return 'error' if current_user.nil?
+    res=[]
+    sp_items.each do |i|
+      image = i.manifestation_id.nil? ? '' : link_to(image_tag(dnl_d_object_path(1, format:'jpeg', manifestation_id:i.manifestation_id,size:'200x')),build_link(sp_item_path(i)))
+      # txt = i.mainentry.blank? ? i.to_html : "<b>#{i.mainentry}.</b>  #{i.to_html}"
+      txt = i.mainentry.blank? ? i.bibdescr : "<b>#{i.mainentry}.</b>  #{i.bibdescr}"
+      txt = '[senza titolo]' if txt.blank?
+      note = i.note.blank? ? '' : "<br/><em>#{i.note}</em>"
+      lnk = build_link(sp_item_path(i))
+      clavislnk = i.manifestation_id.nil? ? '' : link_to('[clavis]', ClavisManifestation.clavis_url(i.manifestation_id.to_i, :edit))
+      res << content_tag(:tr, content_tag(:td, image) +
+                              content_tag(:td, clavislnk) +
+                              content_tag(:td, link_to(SpBibliography.latex2html(txt).html_safe, lnk) + note.html_safe) +
+                              content_tag(:td, i.collciv))
+    end
+    content_tag(:table, res.join.html_safe, {class: 'table table-striped'})
+  end
+
+  
   def sp_items_ricollocati_a_scaffale_aperto(sp_items)
     res=[]
     sp_items.each do |i|
@@ -65,6 +87,7 @@ module SpItemsHelper
     res = []
     cnt = 0
     cm = sp_item.clavis_manifestation
+
     d_objects = []
     cm.attachments.order(:position).each do |a|
       d_object = DObject.find(a.d_object_id)
@@ -78,8 +101,10 @@ module SpItemsHelper
         d_objects << d_object if a.attachment_category_id!='F'
       end
     end
+    # return d_objects.size
     if res == []
       f = cm.d_objects_folders.first
+      # return cm.id
       if f.nil?
         # return sp_item_d_objects_view(sp_item, d_objects)
         # return "Visualizzo già grande questi oggetti: #{d_objects.inspect}"
@@ -89,6 +114,7 @@ module SpItemsHelper
         end
         return res==[] ? "\n<!-- non ci sono immagini associate -->\n".html_safe : content_tag(:div, res.join.html_safe)
       else
+        # return f.id
         retval = sp_item_d_objects_view(sp_item, f.d_objects)
         retval2 = []
         d_objects -= f.d_objects
@@ -110,16 +136,18 @@ module SpItemsHelper
   def sp_item_d_objects_browse(sp_item, d_object, page=nil)
     # return "eccomi, sp_item.class: #{d_object.mime_type} - page: #{page}"
     lnks = []
-    btf = ' << '
+    btf = ' |< '
     btp = ' < '
     btn = ' > '
-    btl = ' >> '
+    btl = ' >| '
+    ccss = 'label label-info'
     if !page.nil?
       page = page.to_i
       p = d_object.browse_object('prev',page)
       n = d_object.browse_object('next',page)
       if !p.nil?
         lnks << link_to(btf, sp_item_path(sp_item,d_object:d_object,page:1))
+        # lnks << link_to(content_tag(:span, btf, class:ccss, title:"vai alla prima pagina"), sp_item_path(sp_item,d_object:d_object,page:1))
         lnks << link_to(btp, sp_item_path(sp_item,d_object:d_object,page:p))
       else
         lnks << btf
@@ -151,7 +179,9 @@ module SpItemsHelper
         lnks << btl
       end
     end
-    content_tag(:p, " #{lnks.join(' ')}".html_safe, {class:'browse_item_d_objects'})
+    # content_tag(:p, " #{lnks.join(' ')}".html_safe, {class:'label label-info browse_item_d_objects'})
+    content_tag(:span, " #{lnks.join(' ')}".html_safe, {class:'label label-info'})
+    # content_tag(:span, "#{lnks.join('')}".html_safe, class:ccss)
   end
 
   def sp_item_d_objects_view(sp_item, records)
@@ -197,6 +227,7 @@ module SpItemsHelper
                         
   def sp_items_browse(record)
     lnks = []
+    ccss = 'label label-info'
     btf = ' << '
     btp = ' < '
     btn = ' > '
@@ -204,21 +235,22 @@ module SpItemsHelper
     p = record.previous_item
     n = record.next_item
     if !p.nil?
-      lnks << link_to(btf, sp_item_path(record.first_item))
-      lnks << link_to(btp, sp_item_path(p))
+      lnks << link_to(content_tag(:span, btf, class:ccss), sp_item_path(record.first_item))
+      lnks << link_to(content_tag(:span, btp, class:ccss), sp_item_path(p))
     else
-      lnks << btf
-      lnks << btp
+      lnks << content_tag(:span, btf, class:ccss)
+      lnks << content_tag(:span, btp, class:ccss)
     end
     if !n.nil?
-      lnks << link_to(btn, sp_item_path(n))
+      lnks << link_to(content_tag(:span, btn, class:ccss), sp_item_path(n))
       last=record.last_item
-      lnks << link_to(btl, sp_item_path(record.last_item)) if !last.nil?
+      lnks << link_to(content_tag(:span, btl, class:ccss), sp_item_path(record.last_item)) if !last.nil?
     else
-      lnks << btn
-      lnks << btl
+      lnks << content_tag(:span, btn, class:ccss)
+      lnks << content_tag(:span, btl, class:ccss)
     end
-    content_tag(:p, " #{lnks.join(' ')}".html_safe, {class:'browse_items'})
+    # content_tag(:span, " #{lnks.join(' ')}".html_safe, {class:'browse_items'})
+    content_tag(:span, "#{lnks.join('')}".html_safe, class:ccss)
   end
 
 end

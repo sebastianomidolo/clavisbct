@@ -1,0 +1,18 @@
+
+<%= content_tag(:h4, "Oggetti digitali per utente #{@user.email} #{@user.id}") %>
+
+
+<%= content_tag(:div, d_objects_folders_user_dir(@user.d_objects_folders)) %>
+
+<% if params[:mode].blank? %>
+ <%= link_to("<b>Aggiungi cartella</b>".html_safe, users_d_objects_folders_path(user_id:@user.id,mode:'add_folder')) %>
+<% end %>
+
+<% if params[:mode] == 'add_folder' %>
+ Aggiungi cartella:
+ <%= content_tag(:div, d_objects_folders_user_dir_add(@user)) %>
+ <%= link_to("<b>Fatto</b>".html_safe, users_d_objects_folders_path(user_id:@user.id)) %>
+<% end %>
+
+
+<% content_tag(:pre, @user.sql_for_d_objects_folders) %>

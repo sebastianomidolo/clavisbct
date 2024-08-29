@@ -1,0 +1,101 @@
+\documentclass[a4paper,12pt]{article}
+
+% Per la stampa foglietti da inserire nel libro prima della catalogazione
+% con l'indicazione delle biblioteche assegnatarie e altre indicazioni utili per la catalogazione
+
+% \usepackage[italian]{babel}
+\usepackage[utf8]{inputenc}
+
+% \usepackage[crossmark,cutmark]{ticket}
+
+% \usepackage[circlemark,emptycrossmark]{ticket}
+\usepackage[circlemark,emptycrossmark,rowmode,boxed]{ticket}
+% \usepackage[circlemark,emptycrossmark]{ticket}
+
+% \usepackage[cutmark]{ticket}
+% \usepackage{rotating}
+
+% tdf START
+\unitlength=1mm
+
+\hoffset=-22mm
+\voffset=-22mm
+
+% OLD:
+%\ticketNumbers{3}{3}
+%\ticketSize{68}{90} % in unitlength
+%\ticketDistance{0}{0} % in unitlength
+
+% NEW:
+\ticketNumbers{3}{2}
+\ticketSize{68}{140} % in unitlength
+\ticketDistance{0}{0} % in unitlength
+
+
+% tdf END
+
+\renewcommand{\ticketdefault}{%no background
+}
+
+% OLD:
+%% \newcommand{\card}[7]{\ticket{%
+%%     \put(2,84){\parbox{18mm}{\Huge\raggedright{\textsc{#1}}}}%
+%%     \put(4,84){\parbox{62mm}{\large\raggedleft{\textsc{#2}}}}%
+%%     \put(2,72){\parbox[t]{62mm}{\large\raggedright #3}}%
+%%     \put(2,42){\parbox{62mm}{\large\raggedright #4}}%
+%%     \put(2,22){\parbox{62mm}{\normalsize\raggedright #5}}%
+%%     \put(2,12){\parbox{62mm}{\Large\raggedright #6}}%
+%%     \put(2,4){\parbox{62mm}{\tiny\raggedright #7}}%
+%%  }}
+
+% NEW:
+\newcommand{\card}[8]{\ticket{%
+    \put(2,132){\parbox{18mm}{\Huge\raggedright{\textsc{#1}}}}%
+    \put(4,132){\parbox{62mm}{\large\raggedleft{\textsc{#2}}}}%
+    \put(2,120){\parbox[t]{62mm}{\large\raggedright #3}}%
+    \put(2,74){\parbox[t]{62mm}{\Large\raggedright #4}}%
+    \put(4,56){\parbox[t]{62mm}{\Large\raggedright #5}}%
+    \put(2,22){\parbox{62mm}{\normalsize\raggedright #6}}%
+    \put(2,12){\parbox{62mm}{\Large\raggedright #7}}%
+    \put(2,4){\parbox{62mm}{\tiny\raggedright #8}}%
+ }}
+
+% \crop
+
+\begin{document}
+
+<%
+ res=[]
+ cnt = 0
+ inputdata.each do |e|
+  e.titolo.gsub!("{", '\\\{')
+  e.titolo.gsub!("%", '\\\%')
+  data_arrivo = e.data_arrivo.blank? ? '' : "\\\\Data arrivo: #{e.data_arrivo.to_date}"
+  multicopia = e.numcopie > 1 ? 'm' : 's'
+  cnt += 1
+  note = []
+  note << e.note_fornitore if !e.note_fornitore.blank?
+  note << e.note_interne if !e.note_interne.blank?
+  if note.size==0
+    note = ''
+  else
+    note = note.join(' ')
+    note = "{\\large\\it{#{note}}}"
+  end
+  numcopie = e.numcopie > 1 ? "\\\\Copie: {\\bf#{e.numcopie}}" : ''
+  supplier = e.shortlabel.blank? ? e.supplier_name : e.shortlabel
+  siglebct = e.siglebctdest.blank? ? e.siglebct : "#{e.siglebctdest} (comprato da #{e.siglebct})"
+    # res << "\\card{\\fbox{#{multicopia}}}{\\fbox{#{supplier}}}{#{e.titolo[0..120]}}{Bibl: {\\bf{#{siglebct}}}#{numcopie}}{#{note}}{Bolla: #{e.numerobollaconsegna}}{Prezzo: #{e.prezzo_scontato} euro}{ISBN #{e.ean}}{IdTitoloAcq: #{e.id_titolo} --- IdOrdine: \\fbox{#{e.order_id}}#{data_arrivo}}"
+    res << "\\card{\\fbox{#{multicopia}}}{\\fbox{#{supplier}}}{#{e.titolo[0..120]}}{Bibl: {\\bf{#{siglebct}}}#{numcopie}}{#{note}}{Prezzo: #{e.prezzo_scontato} euro}{ISBN #{e.ean}}{IdTitoloAcq: #{e.id_titolo} --- IdOrdine: \\fbox{#{e.order_id}}#{data_arrivo}}"	
+ end
+%>
+<%=
+  if res.size==0
+  "Nessun titolo"
+  else
+  res.join("\n")
+  end
+%>
+ 
+
+\end{document}

@@ -1,0 +1,98 @@
+% Procedura scarto - contesto L
+
+\documentclass[landscape,a4paper,10pt]{article}
+
+\usepackage[a4paper, top=20mm, bottom=10mm, left=32mm, right=20mm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[headings]{fancyhdr}
+
+\usepackage{supertabular}
+
+\renewcommand{\headrulewidth}{0pt}
+
+
+\hoffset=-20mm
+\voffset=0mm
+\textwidth=28cm
+\textheight=19cm
+
+
+\pagestyle{fancy}
+
+
+<%= "\\fancyhead[L]{#{inputdata.nome_biblioteca}}" %>
+<%= "\\fancyhead[R]{Stampa: #{Time.now.to_date}}" %>
+
+
+
+\begin{document}
+
+
+\tabletail{%
+\hline
+%\multicolumn{11}{r}{\small\sl continua\ldots}
+}
+
+%\tablelasttail{%
+%\hline
+%\multicolumn{11}{r}{\small\sl fine\ldots}
+%}
+
+
+
+
+<%
+ res=[]	
+
+ prec_classe=''
+ inputdata.each do |e|
+   if e.classe != prec_classe
+     regola = %Q{Classe: #{e.classe.split('-').uniq.join('--')}
+               Descrizione: #{e.descrizione[0..30]}
+               Anni da edizione: #{e.anno_edizione}
+	       Anni da ultimo prestito: #{e.anni_da_ultimo_prestito}
+	       smusi: #{e.smusi}}
+     res << "\\end{supertabular}" if !prec_classe.blank?
+
+     res << %Q{
+\\tablefirsthead{%
+\\hline
+\\multicolumn{11}{|c|}{\\small\\sl #{regola}}\\\\
+\\hline
+
+Media & Collocazione & Titolo &  Barcode & Inventario & Ediz & Ultimo\_prest & Num\_prestiti & C\_unica & Num\_altr\_bib & Altre\_bib \\\\
+
+\\hline}
+}
+     res << %Q{
+\\tablehead{%
+\\hline
+\\multicolumn{11}{|c|}{\\small\\sl (continuazione #{regola})}\\\\
+\\hline
+Media & Collocazione & Titolo &  Barcode & Inventario & Ediz & Ultimo\_prest & Num\_prestiti & C\_unica & Num\_altr\_bib & Altre\_bib \\\\
+\\hline}
+}
+
+     res << "\\newline\\vspace*{5mm}\\newline" if !prec_classe.blank?
+     res << "\\newline\\begin{supertabular}{|l|l|p{3.5cm}|l|l|l|l|l|l|l|p{3cm}|}"
+   end
+   prec_classe = e.classe
+   ultimo_prest = e.ultimo_prest.blank? ? '---' : e.ultimo_prest.to_date
+   num_prestiti = e.num_prestiti == '0' ? 'nessuno' : e.num_prestiti
+   copia_unica = e.copia_unica == 't' ? 'sì' : 'no'
+   e.titolo.gsub!("&", '\\\&')
+   e.titolo.gsub!("%", '\\\%')
+   res << %Q{#{e.media} & #{e.colloc_stringa[0..16]} & #{e.titolo[0..45]} & #{e.barcode} & {\\tt #{e.inventory_serie_id}-#{e.inventory_number}}
+        & #{e.anno_ediz} & #{ultimo_prest} & #{num_prestiti} & #{copia_unica} & #{e.other_library_count} & #{e.other_library_labels} \\\\}
+ end
+ res << "\\end{supertabular}" if !prec_classe.blank?
+ #  res << "\\markboth{uno}{due}"
+%>
+
+
+
+<%= res.join("\n") %>
+
+
+
+\end{document}

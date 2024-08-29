@@ -1,0 +1,32 @@
+<%= content_tag(:p, @dopf.ids) %>
+<%= content_tag(:div, id:"div_#{@d_objects_folder.id}") do %>
+ <%= d_objects_folder_virtual_pdf_info(@d_objects_folder) %>
+<% end %>
+
+<%= content_tag(:p, "<b>#{@d_objects_folder.gfx_objects.size} files</b> per un totale di #{number_to_human_size(@d_objects_folder.gfx_size)} bytes".html_safe) %>
+
+<%= form_tag(makepdf_d_objects_folder_path, method: 'get', id:'form1', remote:true) do %>
+
+
+<p>
+<%= label_tag(:resize_ratio, "Rapporto di ridimensionamento (1=nessun ridim., 2=riduci a metà etc<br/>si possono usare i decimali con punto: 2.3)".html_safe) %>
+<%= text_field_tag :resize_ratio, @d_objects_folder.pdf_params['resize_ratio'] %>
+</p>
+ 
+<p>
+  <%= check_box_tag :include_logo, 1, (@d_objects_folder.pdf_params['include_logo'].blank? ? false : true) %>
+<%= label_tag(:include_logo, "Includi logo BCT") %>
+</p>
+<p>
+<%= check_box_tag :gray_scale, 1, (@d_objects_folder.pdf_params['gray_scale'].blank? ? false : true) %>
+<%= label_tag(:gray_scale, "Converti in bianco e nero (non ha effetto sulle immagini originali)") %>
+</p>
+
+<%= hidden_field_tag :overwrite, '1' %>
+
+ <%= submit_tag 'Produci file PDF', data: { disable_with: "Creazione PDF in corso..."}, :class=>'btn btn-info' %>
+<%= content_tag(:div, d_objects_folder_list_content(@d_objects_folder)) %>
+ <%= submit_tag 'Produci file PDF', data: { disable_with: "Creazione PDF in corso..."}, :class=>'btn btn-info' %>
+
+ 
+<% end %>

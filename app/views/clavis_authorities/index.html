@@ -20,6 +20,9 @@
 <%=
   lnk=link_to('<br/><b>Duplicati...</b>'.html_safe, dupl_clavis_authorities_path(authority_type:params[:authority_type]))
   content_tag(:p, "Trovate #{@clavis_authorities.total_entries} voci con #{@sql_conditions}#{lnk}".html_safe)
+  %>
+<%=
+  content_tag(:p, link_to('Classi da correggere (iniziano con spazio)', "https://clavisbct.comperio.it/clavis_authorities?utf8=%E2%9C%93&sort=&authority_type=C&bidnotnull=&no_bncf=&rectype=&qs=%5E+"))
 %>
 
 

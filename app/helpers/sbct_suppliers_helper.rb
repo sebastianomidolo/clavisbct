@@ -23,81 +23,26 @@ module SbctSuppliersHelper
     content_tag(:table, res.join.html_safe, class:'table table-condensed')    
   end
 
-  def sbct_suppliers_list_old(records, maxquota=nil, display_total=false)
-    res = []
-    if maxquota.nil?
-      res << content_tag(:tr, content_tag(:td, 'Fornitore') +
-                              content_tag(:td, 'Etichetta') +
-                              content_tag(:td, 'Copie') +
-                              content_tag(:td, 'Sconto') +
-                              content_tag(:td, 'Impegnato') +
-                              content_tag(:td, 'Media'), class:'success')
-    else
-      copie_cnt = 0
-      impegnato = 0.0
-      totale_residuo = 0.0
-      res << content_tag(:tr, content_tag(:td, 'Fornitore') +
-                              content_tag(:td, 'Copie') +
-                              content_tag(:td, 'Sconto') +
-                              content_tag(:td, 'Impegnato') +
-                              content_tag(:td, 'Residuo') +
-                              content_tag(:td, 'Media'), class:'success')
-    end
-    records.each do |r|
-      lnk = link_to("#{r.to_label} (#{r.supplier_id})",sbct_supplier_path(r), target:'_blank')
-      impegnato_class = maxquota.nil? ? '' : (r.impegnato.to_f > maxquota ? 'danger' : 'info')
-      sconto = (r.discount.blank? or r.discount.to_i==0) ? 'N/D' : "#{r.discount}%"
-      ftext = lnk
-      ftext = "#{lnk} <b>[#{r.tipologie}]</b>" if !r.tipologie.blank?
-      if maxquota.nil?
-        res << content_tag(:tr, content_tag(:td, ftext.html_safe) +
-                                content_tag(:td, r.shortlabel) +
-                                content_tag(:td, r.numero_copie) +
-                                content_tag(:td, sconto) +
-                                content_tag(:td, number_to_currency(r.impegnato), class:impegnato_class) +
-                                content_tag(:td, number_to_currency(r.costo_medio)))
-      else
-        residuo = maxquota - r.impegnato.to_f
-        copie_cnt += r.numero_copie.to_i
-        impegnato += r.impegnato.to_f
-        totale_residuo += residuo
-        res << content_tag(:tr, content_tag(:td, lnk) +
-                                content_tag(:td, r.numero_copie) +
-                                content_tag(:td, sconto) +
-                                content_tag(:td, number_to_currency(r.impegnato), class:impegnato_class) +
-                                content_tag(:td, number_to_currency(residuo), class:impegnato_class) +
-                                content_tag(:td, number_to_currency(r.costo_medio)))
-      end
-    end
-    if !maxquota.nil? and display_total==true
-      res << content_tag(:tr, content_tag(:td, '') +
-                              content_tag(:td, copie_cnt) +
-                              content_tag(:td, '') +
-                              content_tag(:td, number_to_currency(impegnato)) +
-                              content_tag(:td, number_to_currency(totale_residuo)) +
-                              content_tag(:td, ''), class:'success')
-    end
-
-    content_tag(:table, res.join.html_safe, class:'table table-condensed')
-  end
-
-
   def sbct_suppliers_list(records)
     res = []
     copie_cnt = 0
     impegnato = 0.0
     totale_residuo = 0.0
     res << content_tag(:tr, content_tag(:td, 'Fornitore') +
+                            content_tag(:td, 'Budget') +
+                            content_tag(:td, 'Sconto') +
                             content_tag(:td, 'Copie') +
                             content_tag(:td, 'Impegnato') +
-                            content_tag(:td, 'Residuo'), class:'success')
+                            content_tag(:td, 'Costo medio'), class:'success')
     records.each do |r|
       lnk = link_to("#{r.to_label} (#{r.supplier_id})",sbct_supplier_path(r), target:'_blank')
       maxquota = r.quota_fornitore.nil? ? nil : r.quota_fornitore.to_f
-      impegnato_class = maxquota.nil? ? '' : (r.impegnato.to_f > maxquota ? 'danger' : 'info')
+      # impegnato_class = maxquota.nil? ? '' : (r.impegnato.to_f > maxquota ? 'danger' : 'info')
+      impegnato_class = ''
       ftext = lnk
       ftext = "#{lnk} <b>[#{r.tipologie}]</b>" if !r.tipologie.blank?
       if maxquota.nil?
+        # Al momento (7 febbraio 2024) questo caso non si verifica
         res << content_tag(:tr, content_tag(:td, ftext.html_safe) +
                                 content_tag(:td, r.shortlabel) +
                                 content_tag(:td, r.numero_copie) +
@@ -107,20 +52,21 @@ module SbctSuppliersHelper
         copie_cnt += r.numero_copie.to_i
         impegnato += r.impegnato.to_f
         totale_residuo += residuo
+        blnk = r.budget_id.nil? ? r.budget_label : link_to(r.budget_label,sbct_budget_path(r.budget_id.to_i))
         res << content_tag(:tr, content_tag(:td, lnk) +
+                                content_tag(:td, blnk) +
+                                content_tag(:td, r.discount) +
                                 content_tag(:td, r.numero_copie) +
                                 content_tag(:td, number_to_currency(r.impegnato), class:impegnato_class) +
-                                content_tag(:td, number_to_currency(residuo), class:impegnato_class))
+                                content_tag(:td, number_to_currency(r.costo_medio), class:impegnato_class))
       end
     end
-    res << content_tag(:tr, content_tag(:td, '') +
-                            content_tag(:td, copie_cnt) +
-                            content_tag(:td, number_to_currency(impegnato)) +
-                            content_tag(:td, number_to_currency(totale_residuo)), class:'success')
+    #res << content_tag(:tr, content_tag(:td, '') +
+    #                        content_tag(:td, copie_cnt) +
+    #                        content_tag(:td, number_to_currency(impegnato)) +
+    #                        content_tag(:td, number_to_currency(totale_residuo)), class:'success')
     content_tag(:table, res.join.html_safe, class:'table table-condensed')
   end
-
-
   
   def sbct_suppliers_reassign_list(records, sbct_item)
     res = []

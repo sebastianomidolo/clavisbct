@@ -215,7 +215,8 @@ module DObjectsHelper
     lista.size==0 ? nil : lista.join.html_safe
   end
 
-  def d_objects_view(records)
+  def d_objects_view(records,params={})
+    return d_objects_view_list_files(records,params) if params[:view]=='list'
     res=[]
     res2=[]
     cnt=0
@@ -230,7 +231,16 @@ module DObjectsHelper
           # Usare questa per linkare a una pagina con tasti di navigazione avanti e indietro (da realizzare):
           # res << content_tag(:span, link_to(image_tag(imgpath), dnl_d_object_path(o)))
         else
-          res << content_tag(:span, link_to(image_tag(view_d_object_path(o, :format=>'jpeg', :size=>'x150')), view_d_object_path(o)))
+          if params[:context].blank?
+            url = params[:link_action].blank? ? view_d_object_path(o) : "#{params[:link_action]}?d_object_id=#{o.id}"
+            size = params[:scale_image]=='no' ? '' : 'x150'
+            res << content_tag(:span, link_to(image_tag(view_d_object_path(o, :format=>'jpeg', :size=>size)), url), :title=>o.tags)
+          else
+            size = params[:scale_image]=='no' ? '' : 'x250'
+            imgpath = dnl_d_object_path(o, :format=>'jpeg', :size=>size)
+            res << content_tag(:span, link_to(image_tag(imgpath), dnl_d_object_path(o, :format=>'jpeg')))
+          end
+          # res << content_tag(:span, link_to(image_tag(view_d_object_path(o, :format=>'jpeg', :size=>'x150')), view_d_object_path(o)))
         end
       else
         next if o.access_right_id!=0 and current_user.nil?
@@ -243,6 +253,37 @@ module DObjectsHelper
       res2 = ''
     end
     content_tag(:div, res.join.html_safe + res2)
+  end
+
+  def d_objects_view_list_files(records,params={})
+    return if records.size==0
+    res = []
+    cnt = 0
+    if records.first['folder_name'].blank?
+      res << content_tag(:tr, content_tag(:td, '#', class:'col-md-1') +
+                              content_tag(:td, 'File', class:'col-md-3') +
+                              content_tag(:td, 'Dimensioni', class:'col-md-1') +
+                              content_tag(:td, 'Bytes', class:'col-md-1') +
+                              content_tag(:td, 'Tags', class:'col-md-6'), class:'success')
+    else
+      res << content_tag(:tr, content_tag(:td, '#', class:'col-md-1') +
+                              content_tag(:td, 'Cartella', class:'col-md-3') +
+                              content_tag(:td, 'File', class:'col-md-3') +
+                              content_tag(:td, 'Dimensioni', class:'col-md-1') +
+                              content_tag(:td, 'Bytes', class:'col-md-1') +
+                              content_tag(:td, 'Tags', class:'col-md-6'), class:'success')
+    end
+    records.each do |r|
+      cnt += 1
+      folder = r['folder_name'].blank? ? '' : content_tag(:td, link_to(r['folder_name'],d_objects_folder_path(r.d_objects_folder.id,view:'list')))
+      res << content_tag(:tr, content_tag(:td, link_to(cnt, view_d_object_path(r))) +
+                              folder +
+                              content_tag(:td, r.name) +
+                              content_tag(:td, number_to_human_size(r.bfilesize)) +
+                              content_tag(:td, r.bfilesize) +
+                              content_tag(:td, r.tags))
+    end
+    content_tag(:table, res.join.html_safe, class:'table table-condensed')
   end
 
   def d_object_view_pdf(record)
@@ -281,6 +322,19 @@ module DObjectsHelper
 
   def d_object_url(record, host)
     "https://" + host + dnl_d_object_path(record,format:record.mime_format,name:record.name)
+  end
+
+  # pf sta per d_objects_personal_folder
+  # obj è un'istanza di DObject
+  def d_object_user_folder(pf, obj)
+    return if pf.nil?
+    ids = pf.ids
+    if ids.include?(obj.id)
+      lnk=link_to("rimuovi dalla cartella personale (#{ids.size})".html_safe, myfolder_d_object_path(obj), remote:true, method:'delete', class:'btn btn-danger')
+    else
+      lnk=link_to("aggiungi alla cartella personale (#{ids.size})".html_safe, myfolder_d_object_path(obj), remote:true, method:'post', class:'btn btn-success')
+    end
+    lnk
   end
   
 end

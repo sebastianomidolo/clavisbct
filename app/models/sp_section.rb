@@ -6,10 +6,11 @@ class SpSection < ActiveRecord::Base
   after_save :update_sp_items
   before_destroy :rearrange_sections
 
-  attr_accessible :number, :parent, :sortkey, :title, :status, :bibliography_id, :description, :clavis_shelf_id, :updated_by, :clavis_patron_id, :homepage
+  attr_accessible :number, :parent, :sortkey, :title, :status, :bibliography_id, :description, :clavis_shelf_id, :updated_by, :clavis_patron_id, :homepage, :location_id
 
   belongs_to :sp_bibliography, :foreign_key=>'bibliography_id'
   belongs_to :clavis_shelf, foreign_key: :clavis_shelf_id
+  belongs_to :location, foreign_key: :location_id
 
   def sp_items(order=nil)
     orderby = order.nil? ? "lower(trim(regexp_replace(sort_text, '[^a-zA-Z0-9 ]', '', 'g')))" : "public.espandi_collocazione(collciv)"
@@ -20,7 +21,7 @@ class SpSection < ActiveRecord::Base
          FROM sp.sp_items WHERE bibliography_id = '#{self.bibliography_id}' and section_number=#{self.number})
            SELECT *,lower(trim(regexp_replace(sort_text, '[^a-zA-Z0-9 ]', '', 'g'))) as truesortkey
            from t1 order by #{orderby} collate "C";}
-    puts sql
+    # puts sql
     SpItem.find_by_sql(sql)
   end
 
@@ -55,6 +56,8 @@ class SpSection < ActiveRecord::Base
   end
 
   def update_sp_items
+    return items_import_from_locations if !self.location_id.nil?
+
     if !self.clavis_patron_id.nil?
       self.items_import_from_patron_loans
     else
@@ -62,6 +65,37 @@ class SpSection < ActiveRecord::Base
     end
   end
 
+  def items_import_from_locations
+    return [] if self.location_id.nil?
+    library_id=self.sp_bibliography.library_id
+    location=Location.find(self.location_id)
+    sql = %Q{
+      BEGIN;
+       delete from sp.sp_items where bibliography_id=#{self.bibliography_id} and section_number=#{self.number};
+    with titles as
+    (SELECT ci.manifestation_id,cc.collocazione,
+           a.full_text as mainentry,
+           case when i.isbd is null then trim(ci.title) else i.isbd end as bibdescr
+      from public.locations l
+       join clavis.collocazioni cc on(cc.location_id=l.id)
+       join clavis.item ci using(item_id)
+       LEFT JOIN public.isbd i on(i.manifestation_id=ci.manifestation_id)
+       left join clavis.l_authority_manifestation lam on(lam.manifestation_id=ci.manifestation_id
+	        and lam.link_type=700)
+       left join clavis.authority a using(authority_id)
+        where l.id=#{self.location_id} and ci.manifestation_id>0
+        group by 1,2,3,4
+      )
+--       select * from titles where manifestation_id=960853;
+      INSERT INTO sp.sp_items (bibliography_id,section_number,manifestation_id,bibdescr,mainentry,collciv)
+         (select #{self.bibliography_id},#{self.number},manifestation_id,bibdescr,mainentry,collocazione from titles);
+      COMMIT;
+    }
+    # puts sql
+    self.connection.execute(sql)
+    nil
+  end
+  
   def items_import_from_patron_loans
     return if self.clavis_patron_id.nil?
     patron=ClavisPatron.find(self.clavis_patron_id)
@@ -93,17 +127,21 @@ class SpSection < ActiveRecord::Base
          clavis_loans_dates_info(loan_date_begin, loan_date_end) from titles);
        COMMIT;
       }
-    puts sql
+    # puts sql
     self.connection.execute(sql)
     nil
   end
 
   def check_section_title
+    if !self.location_id.nil?
+      self.title=Location.find(self.location_id).to_label if self.title.blank?
+    end
+
     if self.clavis_shelf_id.nil?
       return if self.clavis_patron_id.nil?
       patron=ClavisPatron.find(self.clavis_patron_id)
-      self.title="Libri prestati a #{patron.to_label} [#{patron.id}]"
-      # self.title="Libri prestati [#{patron.id}]"
+      # self.title="Libri prestati a #{patron.to_label} [#{patron.id}]"
+      self.title="Libri prestati a [#{patron.id}]"
       self.status='0'
       return
     end

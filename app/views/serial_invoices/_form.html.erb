@@ -1,0 +1,11 @@
+<%= simple_form_for(@serial_invoice) do |f| %>
+<%= f.error_notification %>
+<%= hidden_field_tag('serial_list_id', @serial_list.id) %>
+<div class="form-inputs">
+    <%= f.input :clavis_invoice_id, hint: "Identificativo della fattura in Clavis", label:false %>
+    <%= f.input :total_amount, hint: "Totale fattura", label:false %>
+</div>
+<div class="form-actions">
+  <%= f.button :submit, value:'Conferma inserimento' %>
+</div>
+<% end %>

@@ -14,7 +14,7 @@
 <%= link_to("<b>Elimina ordine</b>".html_safe, @sbct_order, method: :delete, data: { confirm: "Confermi eliminazione ordine #{@sbct_order.to_label}?"},class:'btn btn-warning') %>
 Questo ordine non ha ancora titoli associati
 <% else %>
-<%= content_tag(:h5, link_to('Distribuzione per biblioteche', '#distribuzione'), class:'label label-info') if current_user.role? 'AcquisitionManager' %>
+<%= content_tag(:h5, link_to('Distribuzione per biblioteche', '#distribuzione'), class:'label label-info') if current_user.role? ['AcquisitionManager','AcquisitionLibrarian'] %>
 <%= content_tag(:span, link_to('Vedi Copie', sbct_items_path("sbct_item[order_id]":@sbct_order), class:'btn btn-warning')) %>
 <%= content_tag(:span, link_to('Vedi Titoli', sbct_titles_path(order_id:@sbct_order.id), class:'btn btn-warning')) %>
 
@@ -23,7 +23,7 @@ Questo ordine non ha ancora titoli associati
 <br/>
 <%=
   items_da_verificare = SbctItem.find_by_sql(@sbct_order.discount_check(:list))
-  content_tag(:div, sbct_items_short_list(items_da_verificare)) if items_da_verificare.size > 0
+  content_tag(:div, sbct_items_short_list(items_da_verificare)) if items_da_verificare.size > 0 and current_user.role? ['AcquisitionManager']
 %>
 <%=
   link_to("Ricalcola lo sconto su #{items_da_verificare.size} copie", vrfy_sbct_order_path(@sbct_order), class:'btn btn-warning') if items_da_verificare.size > 0 and can? :edit,SbctOrder %>
@@ -53,10 +53,9 @@ Questo ordine non ha ancora titoli associati
 
 <% content_tag(:pre, @sql) %>
 
-<% if current_user.role? 'AcquisitionManager' %>
+<% if current_user.role? ['AcquisitionManager','AcquisitionLibrarian'] %>
 <a name='distribuzione'></a>
-<p class='label label-info'>Distribuzione per biblioteche (ordinati o arrivati):
-  [utilizzabile solo da AcquisitionManager]
+<p class='label label-info'>Distribuzione per biblioteche (ordinati o arrivati)
 </p>
 <%= content_tag(:div, sbct_items_distribuzione_per_biblioteche({order_id:@sbct_order.id,ordinati_o_arrivati:true,contesto:'ordine'})) %>
 <% end %>

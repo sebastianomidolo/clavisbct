@@ -1,13 +1,28 @@
-<% if params[:order]=='p' %>
-<%= order='p';content_tag(:span, "<b>Ordinamento per piano</b> [#{link_to('ordina per scaffale', schema_collocazioni_centrales_path)}]".html_safe) %>
+
+<% if params[:library_id].blank? %>
+<%= link_to('Nuovo schema di collocazione', new_schema_collocazioni_centrale_path) %>
+<%= schema_collocazioni_centrale_libraries %>
 <% else %>
-<%= order='s';content_tag(:span, "<b>Ordinamento per scaffale</b> [#{link_to('ordina per piano', schema_collocazioni_centrales_path(order:'p'))}]".html_safe) %>
+<% if params[:order]=='p' %>
+<%= order='p';content_tag(:span, "<b>Ordinamento per ubicazione</b> [#{link_to('ordina per scaffale', schema_collocazioni_centrales_path(library_id:params[:library_id]))}]".html_safe) %>
+<% else %>
+<%= order='s';content_tag(:span, "<b>Ordinamento per scaffale</b> [#{link_to('ordina per ubicazione', schema_collocazioni_centrales_path(order:'p',library_id:params[:library_id]))}]".html_safe) %>
 <% end %>
 
-<%= link_to('Nuova collocazione...', new_schema_collocazioni_centrale_path) %>
+<%= content_tag(:span, "[#{link_to('ordina per ultimi inserimenti', schema_collocazioni_centrales_path(order:'id',library_id:params[:library_id]))}]".html_safe) %>
+
+<% if @managed_library %>
+<br/>
+<%= link_to('Nuovo schema di collocazione', new_schema_collocazioni_centrale_path(library_id:@clavis_library)) %>
+<%= link_to('<b>Inserisci nuova ubicazione</b>'.html_safe, new_bib_section_path(library_id:@clavis_library.id), class:'btn btn-warning') if can? :manage, BibSection %>
+<% end %>
 
 <%= content_tag(:div, schema_collocazioni_centrale_list(@collocazioni, order)) %>
 
-<%= content_tag(:div, schema_collocazioni_centrale_riepilogo) %>
-<%= content_tag(:div, schema_collocazioni_centrale_non_assegnati) %>
+<!--
+content_tag(:div, schema_collocazioni_centrale_riepilogo)
+content_tag(:div, schema_collocazioni_centrale_non_assegnati)
+  -->
+
+<% end %>
 

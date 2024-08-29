@@ -12,7 +12,7 @@ class SpBibliography < ActiveRecord::Base
   belongs_to :clavis_library, foreign_key:'library_id'
 
   def sp_items_toplevel
-    SpItem.where(bibliography_id:self.id,section_number:nil)
+    SpItem.where(bibliography_id:self.id,section_number:nil).order('sortkey')
   end
 
   def to_label
@@ -380,7 +380,7 @@ class SpBibliography < ActiveRecord::Base
 
   def SpBibliography.status_select
     [
-      ['Nuova (non pubblicata)', 'N'],
+      ['Non pubblicata', 'N'],
       ['Pubblicata (in lavorazione)', 'C'],
       ['Pubblicata (archiviata)', 'A'],
     ]

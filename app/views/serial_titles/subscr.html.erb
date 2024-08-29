@@ -1,0 +1,76 @@
+<%=
+  if @serial_list.locked?
+   content_tag(:h3, @serial_title.title)
+  else
+   content_tag(:h3, link_current_params(@serial_title.title, edit_serial_title_path(@serial_title), params))
+  end
+%>
+
+<script>
+    function edit_serial_subscription(selectObject) {
+        v=selectObject;
+	var library_id=jQuery('#library_id',selectObject.parentElement).val();
+	var id=jQuery('#serial_title_id').val();
+        var url='/serial_titles/' + id + '?library_id=' + library_id + '&tipo_fornitura=' + selectObject.value;
+	url=encodeURI(url);
+	jQuery.ajax({
+	    url: url,
+	    dataType: "script"
+	});
+    }
+</script>
+
+<% if !@serial_title.manifestation_id.blank? %>
+  <% cm=ClavisManifestation.find(@serial_title.manifestation_id) %>
+  <p>Titolo in Clavis: <%= link_to(cm.title,ClavisManifestation.clavis_url(cm.id,:show)) %></p>
+<% end %>
+
+<hr/>
+<%= content_tag(:div, "Prezzo stimato: #{number_to_currency(@serial_title.prezzo_stimato)}") %>
+<% content_tag(:div, "Prezzo stimato per numero copie: #{number_to_currency(@serial_title.prezzo_stimato_per_numero_copie)}") %>
+
+<%= hidden_field_tag('serial_title_id', @serial_title.id) %>
+
+<table class='table'>
+  <%= content_tag(:tr,
+      content_tag(:td, content_tag(:b, "Biblioteca"), class:'col-md-4') +
+      content_tag(:td, content_tag(:b, "Tipo fornitura"), class:'col-md-2') +
+      content_tag(:td, "Codice", class:'col-md-1') +
+      content_tag(:td, "", class:'col-md-1') +
+      content_tag(:td, "Note", class:'col-md-2') +
+      content_tag(:td, "Prezzo", class:'col-md-2'))
+      %>
+  <% @serial_title.clavis_libraries(true,current_user).each do |l| %>
+  <%= next if (l.okgest.nil? and l.serial_title_id.nil?) or (@serial_list.locked? and l.serial_title_id.nil?)
+      span_id="#{@serial_title.id}_#{l.ok_library_id}"
+      if !l.okgest.nil? and !@serial_list.locked?
+         col="#{select_tag(:tipo_fornitura, options_for_select(@serial_list.subscription_select(current_user),
+              l.tipo_fornitura), :onchange=>'edit_serial_subscription(this);', include_blank:true)}
+            #{hidden_field_tag('library_id', l.ok_library_id)}".html_safe
+      else
+        col=l.tipo_fornitura
+      end
+      # perlib=PeriodicoBiblioteca.new(per_id:@periodico_id,library_id:l.ok_library_id,prezzo:l.prezzo)
+      if !l.numero_copie.nil?
+        if l.numero_copie.to_i>1 
+          numcopie = "#{l.numero_copie} copie"
+        end
+      else
+        numcopie = ''
+      end
+      sspath = edit_serial_subscription_path(@serial_title,{ok_library_id:l.ok_library_id})
+      content_tag(:tr,
+          content_tag(:td, link_current_params(l.label, sspath, params), {title:"Note e numero copie di questo titolo per #{l.label} (library_id #{l.ok_library_id})"}) +
+          content_tag(:td, col) +
+          content_tag(:td, l.tipo_fornitura, :id=>span_id) +
+          content_tag(:td, numcopie) +
+          content_tag(:td, l.note) +
+          content_tag(:td, number_to_currency(l.prezzo)))
+      %>
+<% end %>
+</table>
+
+<%= content_tag(:pre, @serial_title.textdata) %>
+
+
+

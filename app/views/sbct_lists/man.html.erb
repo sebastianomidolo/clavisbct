@@ -3,7 +3,7 @@
 <% content_tag(:p, "Totale impegnato: #{number_to_currency(@sbct_list.totale_ordine)}") %>
 
 <%=
-  contatitoli=@sbct_list.conta_titoli
+  contatitoli=@sbct_list.conta_titoli(:all)
   content_tag(:p, "Contiene #{contatitoli} titoli pari a #{number_to_currency(@sbct_list.valore_titoli)}")
   %>
 
@@ -32,3 +32,5 @@
 <% else %>
 
 <% end %>
+
+

@@ -12,7 +12,8 @@ class SbctTitlesController < ApplicationController
     user_session[:tinybox] = [] if user_session[:tinybox].nil?
     @pagetitle="PAC - HomePage"
     @sbct_title = SbctTitle.new(params[:sbct_title])
-    if SbctTitle.user_roles(current_user).include?('AcquisitionLibrarian')
+    user_session[:sbct_event] = nil
+    if (current_user.role?('AcquisitionLibrarian'))
       # user_session[:current_library] = current_user.clavis_libraries.first.id
       if current_user.clavis_default_library.nil? or current_user.clavis_default_library.siglabct.blank?
         user_session[:current_library] = nil
@@ -283,7 +284,7 @@ class SbctTitlesController < ApplicationController
     @cr_title = SbctTitle.find_by_sql("select * from cr_acquisti.acquisti where id=#{@sbct_title.id}").first
     @current_order = SbctOrder.find(user_session[:current_order]) if !user_session[:current_order].nil?
     @current_budget = SbctBudget.find(user_session[:current_budget]) if !user_session[:current_budget].nil?
-    @sbct_event = user_session[:sbct_event] if !user_session[:sbct_event].nil?
+    @sbct_event = SbctEvent.find(user_session[:sbct_event]) if !user_session[:sbct_event].nil?
 
     # @sbct_clavis_libraries = @sbct_title.sbct_clavis_libraries
     if !user_session[:current_list].nil?
@@ -301,6 +302,7 @@ class SbctTitlesController < ApplicationController
   end
 
   def insert_item
+    user_session[:current_library] = current_user.clavis_librarian.default_library_id
     supplier_id = nil
     if !user_session[:current_library].nil?
       budget_id = params[:budget_id].to_i
@@ -327,17 +329,23 @@ class SbctTitlesController < ApplicationController
         )
       end
     else
-      budget = SbctBudget.find(user_session[:current_budget])
-      budget_id = budget.id
-      library_id = budget.clavis_libraries.first.id
+      if !user_session[:current_budget].nil?
+        budget = SbctBudget.find(user_session[:current_budget])
+        budget_id = budget.id
+        library_id = budget.clavis_libraries.first.id
+      else
+        library_id = user_session[:current_library]
+      end
     end
+    event_id = params[:event_id].blank? ? nil : params[:event_id].to_i
     item = SbctItem.new(id_titolo:@sbct_title.id,
                         library_id:library_id,
                         budget_id:budget_id,
                         supplier_id:supplier_id,
                         created_by:current_user.id,
+                        event_id:event_id,
                         order_status:'S')
-    if current_user.role?('AcquisitionLibrarian') and current_user.clavis_libraries.collect {|l| l.library_id if l.library_id==item.library_id}.compact.size > 0
+    if event_id.nil? and current_user.role?('AcquisitionLibrarian') and current_user.clavis_libraries.collect {|l| l.library_id if l.library_id==item.library_id}.compact.size > 0
       item.strongness=1
       item.qb = true
     else
@@ -455,6 +463,8 @@ class SbctTitlesController < ApplicationController
     @pagetitle="PAC - Bolle di consegna"
     if !params[:dnoteid].blank?
       params[:dataonly]='true'
+      # Spiegazione della linea seguente: order:'9' si riferisce al tipo di ordinamento richiesto,
+      #         vedi app/views/sbct_titles/_order.html.erb - 9 corrisponde all'ordinamento per titolo
       @sql,@sbct_title,@sbct_list,@sbct_budgets,@sbct_budget=SbctTitle.sql_for_tutti({dnoteid:params[:dnoteid],order:'9'},current_user)
       # render text:"<pre>#{@sql}</pre>" and return
       @sbct_titles = SbctTitle.paginate_by_sql(@sql, page:params[:page], per_page:200)
@@ -490,7 +500,11 @@ class SbctTitlesController < ApplicationController
         # raise "debug bolla di consegna - #{@sbct_titles.first.attributes}"
         # raise "debug bolla di consegna - #{@sbct_titles[43].id}"
         filename="#{heading}.pdf"
-        lp=LatexPrint::PDF.new('delivery_note', @sbct_titles, false)
+        begin
+          lp=LatexPrint::PDF.new('delivery_note', @sbct_titles, false)
+        rescue
+          raise "errore: #{$!}"
+        end
         send_data(lp.makepdf, :filename=>filename,:disposition=>'inline', :type=>'application/pdf')
       }
     end

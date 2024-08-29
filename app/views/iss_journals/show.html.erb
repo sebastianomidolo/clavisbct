@@ -1,10 +1,11 @@
 <%= content_tag(:h4, @iss_journal.title) %>
 
-<h3>
+<h4>
 <%=
- link_to("Scheda bibliografica completa", "https://bctwww.comperio.it/sbn?#{@iss_journal.bid}") if @iss_journal.id!=23
+  # link_to("Scheda bibliografica completa", "https://bctwww.comperio.it/sbn?#{@iss_journal.bid}") if @iss_journal.id!=23
+  link_to("Scheda bibliografica su Opac BCT", @cm.clavis_url(:opac)) if !@cm.nil?
 %>
-</h3>
+</h4>
 
 
 <%= render partial:'iss_pages/search_form' %>

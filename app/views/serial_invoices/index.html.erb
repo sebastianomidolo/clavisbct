@@ -1,0 +1,6 @@
+<%= content_tag(:h4, "Fatture per <b>#{@serial_list.to_label}</b>".html_safe) %>
+
+<%= link_current_params('Inserimento fattura (deve essere presente in ClavisNG)', new_serial_invoice_path, params) if can? :new, SerialInvoice %>
+
+<%= content_tag(:div, serial_invoices_list(@serial_list)) %>
+

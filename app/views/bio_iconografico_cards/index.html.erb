@@ -1,8 +1,9 @@
+
 <% if params[:lettera].blank? %>
-<% content_tag(:div, "Totale schede inserite: #{BioIconograficoCard.conta(params)}") %>
+<%= content_tag(:div, "Totale schede inserite: #{@bio_iconografico_namespace.numfiles(params)}") %>
 <% else %>
 <%= info = params[:numero].blank? ? '' : " (a partire dalla numero #{params[:numero]})"
- content_tag(:div, "<b>#{BioIconograficoCard.conta(params)}</b> schede per la lettera #{params[:lettera]}#{info}".html_safe) %>
+ content_tag(:div, "<b>#{@bio_iconografico_namespace.numfiles(params)}</b> schede per la lettera #{params[:lettera]}#{info}".html_safe) %>
 <% end %>
 
 <% if flash[:notice] %>
@@ -24,4 +25,5 @@
 
 <% content_tag(:div, (render(partial:'topics_cloud'))) %>
 
-<%= link_to("Informazioni dati #{params[:namespace]}", info_bio_iconografico_cards_path(namespace:params[:namespace])) %>
+
+

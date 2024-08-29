@@ -28,6 +28,13 @@ class SbctBudget < ActiveRecord::Base
     self.sbct_supplier.nil? ? "nessuno" : self.sbct_supplier.to_label
   end
 
+  def release_budget
+    raise "budget #{} aperto - non altero le copie" if !self.locked
+    # sql = %Q{update sbct_acquisti.copie set budget_id=NULL where order_status='S' and budget_id=#{self.id} and supplier_id is null}
+    sql = %Q{update sbct_acquisti.copie set budget_id=NULL where order_status='S' and budget_id=#{self.id}}
+    self.connection.execute(sql)
+  end
+
   def pac_libraries
     sql = "select * from public.pac_budgets where budget_id = #{self.id} order by library_name"
     SbctLBudgetLibrary.find_by_sql(sql)
@@ -67,7 +74,8 @@ class SbctBudget < ActiveRecord::Base
     SbctBudget.find_by_sql(sql)
   end
 
-  def budget_report
+  def budget_report(library_id=nil)
+    return self.budget_report_library(library_id) if !library_id.nil?
     sql = %Q{select os.label as stato,cp.order_status,sum(cp.prezzo * cp.numcopie) as totale, sum(cp.numcopie) as numcopie
           from sbct_acquisti.copie cp join sbct_acquisti.order_status os on(os.id=cp.order_status)
          join sbct_acquisti.budgets b using(budget_id) where budget_id = #{self.id} group by os.label,cp.order_status;}
@@ -75,6 +83,20 @@ class SbctBudget < ActiveRecord::Base
     SbctOrderStatus.find_by_sql(sql)
   end
 
+  def budget_report_library(library_id)
+    cond = library_id.nil? ?  '' : "and cp.library_id = #{library_id}"
+    sql = %Q{select cp.library_id,b.budget_id,b.quota,cp.qb,b.partial_amount,b.subquota_amount,
+b.quota,b.subquota,b.quota_percent,
+os.label as stato,cp.order_status,sum(cp.prezzo * cp.numcopie) as totale, sum(cp.numcopie) as numcopie
+          from sbct_acquisti.copie cp join sbct_acquisti.order_status os on(os.id=cp.order_status)
+         join public.pac_budgets b on(b.budget_id=cp.budget_id and b.library_id=cp.library_id)
+	 where cp.budget_id = #{self.id} and cp.library_id = #{library_id}
+	 group by 1,2,3,4,5,6,7,8,9,10,11
+	 order by os.label;}
+    puts sql
+    SbctOrderStatus.find_by_sql(sql)
+  end
+  
   def importo_residuo(order_status_array=['A','O'])
     res = self.total_amount
     return if res.nil?
@@ -116,7 +138,7 @@ class SbctBudget < ActiveRecord::Base
       end
     end
     # parms = {budget_ids:self.id,order_status:'S'}
-    # puts "chiamo SbctItem.items_per_libraries con parms #{parms}"
+    puts "chiamo SbctItem.items_per_libraries con parms #{parms}"
     SbctItem.items_per_libraries(parms).each do |e|
       # puts "QUI: #{e.inspect}"
       h[[e.siglabct,e.qb]]=e.ancora_disp.to_f
@@ -268,19 +290,6 @@ from sbct_acquisti.budgets b
     return
   end
 
-  def liste
-    sql=%Q{select l.id_lista,l.data_libri,tt.tipo_titolo,l.label,count(l) as numero_copie
- from sbct_acquisti.liste l
-       join sbct_acquisti.l_titoli_liste tl using(id_lista)
-       join sbct_acquisti.copie c using(id_titolo)
-       join sbct_acquisti.budgets b using(budget_id)
-       join sbct_acquisti.tipi_titolo tt using(id_tipo_titolo)
-       where b.budget_id=#{self.id}
-       group by l.id_lista,l.data_libri,tt.tipo_titolo
-       order by l.data_libri;}
-    SbctList.find_by_sql(sql)
-  end
-
   def siglabct
     s=ClavisLibrary.siglebct.key(self.library_id.to_i)
     return if s.nil?
@@ -386,13 +395,13 @@ order by b.label;}
     fd.close
 
     res = []
+    if !params[:mybudgets].blank?
+      res << ['Assegna automaticamente in base al reparto','autoassign']
+    end
     self.connection.execute(sql).to_a.each do |r|
       label = r['label']
       label << " (#{r['clavis_label']}, #{r['total_amount']} euro)" if !r['clavis_label'].nil?
       res << [label,r['key']]
-    end
-    if !params[:mybudgets].blank?
-      res << ['Assegna automaticamente','autoassign']
     end
     res
   end
