@@ -52,44 +52,36 @@ class ClavisPatronsController < ApplicationController
     user=params[:user]
     opac_secret=params[:pass]
     ip=params[:ip]
-    pwd=params[:p]
+
+    sql = %Q{SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(user)})}
+    patron = ClavisPatron.find_by_sql(sql).first
+    if !patron.nil?
+      patron.allinea_da_clavis
+    else
+      msg = "- #{user}"
+      render :text=>msg, :content_type=>'text/plain'
+      return
+    end
 
     # Da sostituire poi con: DngSession.format_client_ip(request)
     @client_ip=[request.remote_ip, request.headers['REMOTE_ADDR']].uniq.join(', ')
     # @client_ip=DngSession.format_client_ip(request)
     @hash_ip=Digest::SHA1.hexdigest(@client_ip)
 
-    soap_auth=false
     p=nil
-    if ClavisPatron.mydiscovery_authorized?(user,pwd)
-      # p=ClavisPatron.find_by_opac_username(user.downcase)
-      p = ClavisPatron.find_by_sql("SELECT * FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(user)})").first
-      soap_auth=true
-    end
-    if p.nil? and soap_auth==false
-      @msg="NOTFOUND #{user} - secret: #{opac_secret}"
-      @msg += " | soap_auth: #{soap_auth} --> pwd '#{pwd}' username = '#{user}'"
-    else
-      @msg="TROVATO #{p.opac_username} #{p.lastname} (soap_auth: #{soap_auth}) | #{@client_ip}"
-    end
+    sql = %Q{SELECT patron_id FROM clavis.patron WHERE lower(opac_username) = lower(#{ClavisPatron.connection.quote(user)})
+              and opac_enable='1' and opac_secret = #{ClavisPatron.connection.quote(opac_secret)}}
+    p = ClavisPatron.find_by_sql(sql).first
     dng_session=nil
     if !p.nil?
       dng_session=p.register_dng_login(@client_ip)
     end
     if dng_session.nil?
-      #fd=File.open("/home/seb/utenti_con_login_fallito.log", 'a')
-      #fd.write("#{Time.now} #{@msg}\n")
-      #fd.close
+      msg = "login failed"
     else
-      #fd=File.open("/home/seb/utenti_con_login_ok.log", 'a')
-      session_id = dng_session.nil? ? -1 : dng_session.id
-      #fd.write("#{Time.now} #{@msg} [dng_session: #{session_id}]\n")
-      #fd.close
+      msg = "login ok - #{dng_session.id}"
     end
-    
-    # logger.warn("user_checkin_notification: #{@msg} [dng_session: #{dng_session}]")
-
-    render :text=>@msg, :content_type=>'text/plain'
+    render :text=>msg, :content_type=>'text/plain'
   end
 
   def wrong_contacts
