@@ -77,14 +77,14 @@ class ClavisPatronsController < ApplicationController
       dng_session=p.register_dng_login(@client_ip)
     end
     if dng_session.nil?
-      fd=File.open("/home/seb/utenti_con_login_fallito.log", 'a')
-      fd.write("#{Time.now} #{@msg}\n")
-      fd.close
+      #fd=File.open("/home/seb/utenti_con_login_fallito.log", 'a')
+      #fd.write("#{Time.now} #{@msg}\n")
+      #fd.close
     else
-      fd=File.open("/home/seb/utenti_con_login_ok.log", 'a')
+      #fd=File.open("/home/seb/utenti_con_login_ok.log", 'a')
       session_id = dng_session.nil? ? -1 : dng_session.id
-      fd.write("#{Time.now} #{@msg} [dng_session: #{session_id}]\n")
-      fd.close
+      #fd.write("#{Time.now} #{@msg} [dng_session: #{session_id}]\n")
+      #fd.close
     end
     
     # logger.warn("user_checkin_notification: #{@msg} [dng_session: #{dng_session}]")
