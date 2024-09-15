@@ -146,23 +146,39 @@ case -- per statcol
          (cc.primo_i between 67 and 79 and cc.secondo between 'A' and 'H')
         then 'RARI'
      
-     when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^Archivio\\.|^Fer\\.|^Fot\\.|^Reg\\.') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^Archivio\\.|^Fer\\.|^Fot\\.|^Reg\\.') then 'RARI'
      when ci.home_library_id = 2 and cc.colloc_stringa ~* ('manos') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* ('ms') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* ('manos') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* ('sci') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* ('gioberti') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^tesi') then 'RARI'
+     when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^coll\\.') then 'Collezioni'
+     when ci.home_library_id = 2 and cc.primo_i = '303' then 'Dante'
+     when ci.home_library_id = 2 and cc.primo_i between 317 and 319 then 'Teatro'
+     when ci.home_library_id = 2 and cc.primo_i  between 811 and 820 then 'Kennedy'
+     when ci.home_library_id = 2 and
+         (cc.primo_i = 599 and cc.secondo = 'H') then 'Hoepli'
+
 
       -- multimedia centrale
       when ci.home_library_id = 2 and ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'VHS'
       when ci.home_library_id = 2 and ci.item_media in ('A','N','M','G') then 'Audioregistrazione'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~ '^CD' then 'Audioregistrazione'
       when ci.home_library_id = 2 and ci.item_media = 'L' then 'Oggetto'
       when ci.home_library_id = 2 and ci.item_media = 'H' then 'Musica a Stampa'
       when ci.home_library_id = 2 and ci.item_media = 'E' then 'Microforma'
       when ci.home_library_id = 2 and ci.item_media = 'D' then 'Materiale Cartografico'
       when ci.home_library_id = 2 and ci.item_media = 'B' then 'Manoscritto'
       when ci.home_library_id = 2 and ci.item_media = 'Q' then 'DVD'
+      when ci.home_library_id = 2 and cc.primo= 'DVD' then 'DVD'
       when ci.home_library_id = 2 and ci.item_media = 'T' then 'Libro Parlato'
       when ci.home_library_id = 2 and ci.item_media = 'C' then 'Grafica'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^Tattili') then 'Tattili'
 
       -- ragazzi centrale
       -- RAG
+      when ci.home_library_id = 2 and ci.section = 'CAA' then 'CAA'
       when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'R' and substr(occ.colloc_stringa,3,3) ~ E'^\\d{3}$'
          then 'R.' || substr(occ.colloc_stringa,3,1)::char(3) || '00'
       when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then occ.primo || '.' || occ.secondo
@@ -208,12 +224,36 @@ case -- per statcol
            then 'ante2009'
 	   
       -- adulti centrale
+      when ci.home_library_id = 2 and occ.colloc_stringa is not null then 'coll_rag'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^Per\\.|^P\\.G\\.|^A\\.A\\.') then 'Periodici'
+      when ci.home_library_id = 2 and ci.section = 'SERA.ARA' then 'ARABI'
+      when ci.home_library_id = 2 and ci.section = 'CCVT' and substr(cc.secondo,1,3) ~ E'^\\d{3}$'
+         then substr(cc.secondo,1,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^Cons\\.P\\.') and substr(cc.colloc_stringa,8,3) ~ E'^\\d{3}$'
+         then substr(cc.colloc_stringa,8,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^Cons\\.') and substr(cc.colloc_stringa,6,3) ~ E'^\\d{3}$'
+         then substr(cc.colloc_stringa,6,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.primo = 'SAP' and substr(cc.secondo,1,3) ~ E'^\\d{3}$'
+         then substr(cc.secondo,1,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cc.colloc_stringa ~* (E'^S\\.L\\.') and substr(cc.colloc_stringa,5,3) ~ E'^\\d{3}$'
+         then substr(cc.colloc_stringa,5,1)::char(3) || '00'
+      when ci.home_library_id = 2 and ci.section = 'BIBLIO' then 'BIBLIO'
+      when ci.home_library_id = 2 and ci.section = 'BCT' and cc.primo_i between 1 and 58 and cc.secondo ~ E'^[A-F]' then '700'
+      when ci.home_library_id = 2 and ci.section = 'BCT' and cc.primo_i between 664 and 666 then '700'
+      when ci.home_library_id = 2 and ci.inventory_serie_id = 'ART' then '700'
+
       when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^CCNC|^CCPT') then 'Narrativa'
+      when ci.home_library_id = 2 and oca.colloc_stringa ~ (E'^N') then 'Narrativa'
+      when ci.home_library_id = 2 and oca.colloc_stringa ~ E'^[A-Za-z]{3,7}$' then 'Narrativa'
 
-      --when ci.home_library_id = 2 and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
-      --when ci.home_library_id = 2 and upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
+      when ci.home_library_id = 2 and substr(oca.colloc_stringa,1,3) ~ E'^\\d{3}$' then substr(oca.colloc_stringa,1,1)::char(3) || '00'
+      when ci.home_library_id = 2 and substr(oca.colloc_stringa,3,3) ~ E'^\\d{3}$' then substr(oca.colloc_stringa,3,1)::char(3) || '00'
+      when ci.home_library_id = 2 and substr(oca.colloc_stringa,4,3) ~ E'^\\d{3}$' then substr(oca.colloc_stringa,4,1)::char(3) || '00'
+      when ci.home_library_id = 2 and substr(oca.colloc_stringa,5,3) ~ E'^\\d{3}$' then substr(oca.colloc_stringa,5,1)::char(3) || '00'
+      when ci.home_library_id = 2 and cdd.class_code IS NOT NULL then substr(cdd.class_code,1,1) || '00'
+      when ci.home_library_id = 2 and upclass.up_class_code IS NOT NULL then substr(upclass.up_class_code,1,1) || '00'
 
-      else '2,3 non assegnati'
+      else 'da assegnare'
     end
 
   else -- tutte le NON 2,3
@@ -344,7 +384,19 @@ case
 
     case
     when ci.home_library_id = 2 and ci.item_media in ('R','A','N','M','G','L','E','Q','T') THEN 'multimedia'
-    else 'da assegnare'
+    when ci.home_library_id = 2 and ci.section in ('CCNC','CCPT') then 'vol_narrativa'
+    when ci.home_library_id = 2 and oca.colloc_stringa ~ (E'^N') then 'vol_narrativa'
+    when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then 'vol_narrativa'
+    when ci.home_library_id = 2 and ci.inventory_serie_id = 'RAG' and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then 'vol_narrativa'
+    when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then 'vol_narrativa'
+    when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.primo = 'RN' and occ.secondo_i  between 1 and 19 then 'vol_narrativa'
+    when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^206\\.[K-R]|^686\\.|^689\\.|^701\\.A|^701\\.B|^701\\.C|^702\\.A|^703\\.')
+        and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then 'vol_narrativa'
+    when ci.home_library_id = 2 and cc.colloc_stringa ~ (E'^587\\.[A-G]|^588\\.|^589\\.|^590\\.|^591\\.|^592\\.|^593\\.|^594\\.|^595\\.|^596\\.|^597\\.')
+        and occ.primo = 'RN' and occ.terzo_i   between 1 and 19 then 'vol_narrativa'
+    else 'vol_saggistica'
   end
 else
   case
@@ -354,7 +406,7 @@ else
     when ci.item_media = 'Q' or cc.primo= 'DVD' then 'multimedia'
     when ci.item_media = 'R' or cc.colloc_stringa ~ '^V' then 'multimedia'
 
-    when (ci.section in ('RN','CCNC','N','NG','NR','NF','CCPT')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
+    when (ci.section in ('RN','N','NG','NR','NF')) OR (cc.colloc_stringa ~ (E'^RN|^R\\.N|^N') )
         then 'vol_narrativa'
     when ci.section = 'BCT' and collocation ~ E'^[A-Za-z]{3,7}$' then 'vol_narrativa'
 
@@ -418,7 +470,7 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
         FROM item AS oci JOIN collocazioni AS xc using(item_id)
            JOIN sbct_acquisti.library_codes ON(clavis_library_id=oci.home_library_id AND owner='bct')
          WHERE oci.manifestation_id = cm.manifestation_id and oci.home_library_id!=ci.home_library_id
-            AND oci.item_status != 'E'
+            AND oci.item_status != 'E' and xc.primo not in ('CLA','SAL','Collina') and oci.home_library_id != '3'
             AND oci.item_id != ci.item_id and ci.owner_library_id>0 limit 1) as oca on true
 --fine prova
 
@@ -467,8 +519,8 @@ select item_id,colloc_stringa,genere,alt_genere from view_super_items where alt_
       WHERE ci.item_media != 'S' AND ci.item_status != 'E';
 
 
-select item_id,manifestation_id,statcol,colloc_stringa,home_library from view_super_items where manifestation_id
-    in(93460,761211,642909,268164,180303,541278);
+--select item_id,manifestation_id,statcol,colloc_stringa,home_library from view_super_items where manifestation_id
+  --  in(93460,761211,642909,268164,180303,541278);
 
 
 -- select item_id,manifestation_id,statcol,colloc_stringa,home_library from view_super_items where statcol='RARI';
