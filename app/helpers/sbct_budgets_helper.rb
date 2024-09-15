@@ -71,9 +71,16 @@ module SbctBudgetsHelper
                             content_tag(:td, number_to_currency(totale)))
 
     if numcopie>0
-      testo = "Importo budget per la biblioteca: #{number_to_currency(importo_biblioteca)}"
+      testo = "Importo totale budget per la biblioteca <b>#{library.siglabct}</b>: #{number_to_currency(importo_biblioteca)}".html_safe
       res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
-      testo = "Quota selezionabile dalla biblioteca: #{number_to_currency(quota_biblioteca)}"
+      residuo = importo_biblioteca.to_f - totale
+      if residuo < 0
+        testo = "Attenzione! Residuo: <b>#{number_to_currency(residuo)}</b>".html_safe
+      else
+        testo = "Residuo: <b>#{number_to_currency(residuo)}</b>".html_safe
+      end
+      res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
+      testo = "Quota selezionabile dalla biblioteca <b>#{library.siglabct}</b>: #{number_to_currency(quota_biblioteca)}".html_safe
       res << content_tag(:tr, content_tag(:td, testo, {colspan:3}))
     end
 

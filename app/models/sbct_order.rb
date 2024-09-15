@@ -13,7 +13,11 @@ class SbctOrder < ActiveRecord::Base
 
   def to_label
     # "Ordine #{self.id} (#{self.label}) del #{self.order_date.to_date} #{self.sbct_supplier.supplier_name}"
-    r = "Ordine BCT #{self.id} del #{self.order_date.to_date} #{self.sbct_supplier.supplier_name}"
+    if self.inviato
+      r = "Ordine BCT #{self.id} del #{self.order_date.to_date} #{self.sbct_supplier.supplier_name}"
+    else
+      r = "Ordine BCT #{self.id} (da inviare) #{self.sbct_supplier.supplier_name}"
+    end
     r << " #{self.sbct_budget.to_label}" if !self.sbct_budget.nil?
     # "#{self.label} del #{self.order_date.to_date} #{self.sbct_supplier.supplier_name}"
     r
