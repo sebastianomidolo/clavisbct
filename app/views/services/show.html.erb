@@ -1,7 +1,7 @@
 
 <%= content_tag(:h4, @service.to_label) %>
 
-<%= content_tag(:pre, @service.description.html_safe) if !@service.description.nil? %>
+<%= content_tag(:div, content_tag(:p, @service.description.html_safe))if !@service.description.nil? %>
 
 <% if can? :edit, Service %>
 <%= link_to("Modifica", edit_service_path(@service), class:'btn btn-warning') %>
