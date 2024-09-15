@@ -475,15 +475,38 @@ COMMIT;
     self.connection.execute(sql)
   end
 
-  def autoremove_titles
+  def autoremove_titles_old
     return 0 if self.days_before_autorm.nil? or self.days_before_autorm==0
     t1 = self.sbct_titles.count
     days = self.days_before_autorm
     sql = "delete from #{SbctLTitleList.table_name} WHERE id_lista=#{self.id} and date_created < now() - interval '#{days} days';"
-    puts sql
     self.connection.execute(sql)
     t2 = self.sbct_titles.count
     return t1-t2
+  end
+
+  def autoremove_titles(mode)
+    sql = self.sql_for_autoremove_titles(mode)
+    self.connection.execute(sql)
+  end
+
+  def sql_for_autoremove_titles(mode)
+    if mode=='in_lista'
+      cond = 'gg_in_lista >= days_before_autorm'
+    end
+    if mode=='pubbl_age'
+      cond = 'gg_da_pubblicazione >= pubbl_age_limit'
+    end
+    raise "specificare 'in_lista' oppure 'pubbl_age'" if cond.nil?
+    sql=%Q{with t1 as
+      (select v.id_lista, v.id_titolo, v.gg_in_lista,v.gg_da_pubblicazione,
+          l.days_before_autorm, l.pubbl_age_limit
+      from sbct_acquisti.view_in_liste v join sbct_acquisti.liste l using(id_lista)
+        where v.id_lista=#{self.id}
+      )
+       delete from sbct_acquisti.l_titoli_liste where id_lista=#{self.id}
+         and id_titolo in (select id_titolo from t1 where #{cond});
+      }
   end
 
   def insert_title_ids(ids,user)
@@ -607,12 +630,12 @@ WHERE l.id_lista in(select id_lista from sbct_acquisti.liste where parent_id=#{s
     if params[:id_lista].to_i > 0
       cond << " and tl.id_lista=#{params[:id_lista].to_i}"
     end
-    order_by = "tl.date_created desc"
+    order_by = "tl.date_created desc nulls last, t.titolo"
     case params[:order]
     when 'gl'
-      order_by = "vin.gg_in_lista desc"
+      order_by = "vin.gg_in_lista desc nulls last, t.titolo"
     when 'gp'
-      order_by = "vin.gg_da_pubblicazione desc nulls last"
+      order_by = "vin.gg_da_pubblicazione desc nulls last, t.titolo"
     end
         
     sql = %Q{select tl.id_lista as tl_id_lista,liste.days_before_autorm,liste.pubbl_age_limit,
@@ -627,12 +650,13 @@ tl.id_titolo,tl.date_created,tl.created_by, pl.order_sequence, t.titolo ,t.autor
       left join public.users u on (u.id=tl.created_by)
       left join clavis.librarian l on (l.username=u.email)
       left join sbct_acquisti.view_in_liste vin on(vin.id_titolo=t.id_titolo and vin.id_lista=tl.id_lista)
-  where tl.date_created is not null and pl.hidden is false #{cond}
+  -- where tl.date_created is not null and pl.hidden is false #{cond}
+  where true #{cond}
   and pl.level = 0 order by #{order_by}}
     fd=File.open("/home/seb/sbct_list_lastins.sql", "w")
     fd.write(sql)
     fd.close
-    SbctTitle.paginate_by_sql(sql, page:params[:page], per_page:300)
+    SbctTitle.paginate_by_sql(sql, page:params[:page], per_page:3000)
   end
   
   def SbctList.clavis_label_select
