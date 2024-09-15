@@ -3,7 +3,7 @@
 
   <div class="form-inputs">
     <%= hidden_field_tag :validating_now, 't' %>
-    <%= f.input :numcopie, label:'Numero di copie richieste' %>
+    <%= f.input :numcopie, collection:1..20, label:'Numero di copie richieste' %>
     <%= f.input :event_id, as:'hidden' %>
     <%= f.input :id_titolo, as:'hidden' %>
     <%= f.input :validated, as:'boolean', label:'Convalidata' %>

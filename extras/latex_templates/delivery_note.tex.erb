@@ -100,13 +100,13 @@ Titolo & Editore & Qtà & Copie &Prezzo & Id \\
 
    e.sbct_events.each do |event|
      u = User.find(event.created_by)
-     titolo += "\\par\\hfill{Tenere da parte per #{u.clavis_librarian.to_shortlabel}: #{event.name}}"
+     titolo += "\\par\\bf{{Tenere da parte per #{u.clavis_librarian.to_shortlabel}: #{event.name}}}"
      print_alert = true
    end
 
    # Le note interne è meglio non stamparle in bolla
    e.copie_con_note_interne_e_siglabib_in(library_codes.split.join(',')).each do |nota_interna|
-     titolo += "\\par\\hfill{Nota: #{nota_interna}}"
+     titolo += "\\par\\bf{{Nota: #{nota_interna}}}"
      print_alert = true
    end
 

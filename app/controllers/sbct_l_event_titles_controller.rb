@@ -21,7 +21,7 @@ class SbctLEventTitlesController < ApplicationController
     l.requested_by = current_user.id
     l.request_date = Time.now
     l.save
-    redirect_to sbct_title_path(l.sbct_title)
+    redirect_to sbct_title_path(l.sbct_title,modifiche:'new')
   end
 
   def update
@@ -37,8 +37,7 @@ class SbctLEventTitlesController < ApplicationController
       if le.validating_now
         redirect_to sbct_event_path(le.sbct_event)
       else
-        edit_ok = '1'
-        redirect_to sbct_title_path(le.sbct_title,modifiche:edit_ok)
+        redirect_to sbct_title_path(le.sbct_title,modifiche:'edit_ok')
       end
     else
       render text:'non autorizzato', layout:true and return

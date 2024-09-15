@@ -1,4 +1,4 @@
-<%= content_tag(:h6, "Evento: #{@sbct_event.to_label} - creato da: #{@sbct_event.creator.clavis_librarian.to_shortlabel}") %>
+<%= content_tag(:h6, "Evento #{@sbct_event.id} : #{@sbct_event.to_label} - creato da: #{@sbct_event.creator.clavis_librarian.to_shortlabel}") %>
 
 <%= content_tag(:span, "Note: #{@sbct_event.description}") if !@sbct_event.description.blank? %>
 <br/>

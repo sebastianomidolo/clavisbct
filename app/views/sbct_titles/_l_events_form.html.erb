@@ -36,7 +36,7 @@
     <%= f.association :sbct_event, as: 'hidden' %>
 
 <div class="form-inputs">
-    <%= f.input :numcopie, label:'Numero di copie desiderate (da 1 a 20)', disabled: read_only %>
+    <%= f.input :numcopie, collection: 1..20, label:'Numero di copie desiderate', include_blank:false, disabled: read_only %>
     <%= f.input :notes, label:'Note', disabled: read_only, input_html: {rows: 6, cols: 50} %>
 </div>
 
@@ -55,4 +55,5 @@
   </div>
 <% end %>
 
-<%= content_tag(:span, "Modifiche recepite", class:'label label-info') if !params[:modifiche].blank? %>
+<%= content_tag(:span, "Richiesta inserita", class:'label label-info') if params[:modifiche]=='new' %>
+<%= content_tag(:span, "Modifiche recepite", class:'label label-info') if params[:modifiche]=='edit_ok' %>

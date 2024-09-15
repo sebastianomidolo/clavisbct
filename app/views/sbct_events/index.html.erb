@@ -6,5 +6,9 @@
 <%= link_to('<b>Inserisci evento</b>'.html_safe, new_sbct_event_path, class:'btn btn-warning') if can? :create, SbctEvent %>
 
 <%= content_tag(:div, sbct_events_list(@sbct_events)) %>
-<%= content_tag(:pre, File.read('/home/seb/sbct_events.sql')) if current_user.email=='seba' %>
+
+<!--
+ content_tag(:pre, File.read('/home/seb/sbct_events.sql')) if current_user.email=='seba'
+  -->
+
 
