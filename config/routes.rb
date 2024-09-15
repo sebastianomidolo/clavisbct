@@ -150,13 +150,12 @@ Clavisbct::Application.routes.draw do
 
   devise_for :clavis_patrons
 
-  match 'jsonip' => 'home#jsonip'
+  match 'jsonip' => 'home#jsonip', via: [:post]
   match 'logxhr' => 'home#logxhr'
 
   match 'obj/:id/:key' => 'd_objects#objshow'
 
-  # match 'ccu/:user/:pass/:clientip' => 'clavis_patrons#user_checkin_notification'
-  match 'ccu/:user/:pass/:ip' => 'clavis_patrons#user_checkin_notification'
+  match 'ccu/:pass/:clientip' => 'clavis_patrons#user_checkin_notification', via: [:post]
 
   resources :d_objects do
     collection do

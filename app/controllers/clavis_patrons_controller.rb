@@ -49,6 +49,9 @@ class ClavisPatronsController < ApplicationController
   end
 
   def user_checkin_notification
+    headers['Access-Control-Allow-Origin'] = "*"
+    headers['Access-Control-Allow-Methods'] = "POST"
+
     user=params[:user]
     opac_secret=params[:pass]
     ip=params[:ip]
