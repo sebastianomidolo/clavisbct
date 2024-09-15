@@ -31,6 +31,16 @@ class SbctListsController < ApplicationController
 
   def show
     render text:'lista privata' and return if @sbct_list.hidden and (@sbct_list.owner_id != current_user.id)
+
+    if params[:esegui]=='autoremove_on_days_before_autorm'
+      @sbct_list.autoremove_titles('in_lista')
+      redirect_to sbct_list_path(@sbct_list)
+    end
+    if params[:esegui]=='autoremove_on_pubbl_age_limit'
+      @sbct_list.autoremove_titles('pubbl_age')
+      redirect_to sbct_list_path(@sbct_list)
+    end
+
     user_session[:current_list] = @sbct_list.assign_user_session(current_user,user_session[:current_list])
     @pagetitle="PAC - Lista #{@sbct_list.to_label}"
     sql=%Q{select original_filename,date_created,count(*) from sbct_acquisti.import_titoli

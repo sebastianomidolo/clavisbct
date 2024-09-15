@@ -48,45 +48,83 @@ module SbctTitlesHelper
     links << link_to("in lista", sbct_list_path(sbct_list, order:'gl'), title:'Ordina per numero di giorni da inserimento in lista')
     links << link_to("data pubblicazione", sbct_list_path(sbct_list, order:'gp'), title:'Ordina per numero di giorni dalla data di pubblicazione')
 
-    res << content_tag(:tr, content_tag(:td, "Lista", class:'col-md-2') +
-                            content_tag(:td, "Inserito&nbsp;da".html_safe, class:'col-md-1') +
-                            content_tag(:td, "#{link_to('Titolo', sbct_list_path(sbct_list))} (#{links.join(' ')})".html_safe, class:'col-md-8') +
+    res << content_tag(:tr, content_tag(:td, "#", class:'col-md-1') +
+                            content_tag(:td, "Inserito&nbsp;da".html_safe, class:'col-md-2') +
+                            content_tag(:td, "#{link_to('Titolo', sbct_list_path(sbct_list))} (#{links.join(' / ')})".html_safe, class:'col-md-8') +
                             content_tag(:td, "Note", class:'col-md-1'), class:'success')
+    cnt = 0
     records.each do |r|
+      cnt += 1
       ulnk = r.username.blank? ? '-' : link_to(r.username, lastins_sbct_lists_path(username:r.username))
-      msg = ''
-      if r.days_before_autorm.to_i > 0
-        ngg = r.days_before_autorm.to_i - r.gg_in_lista.to_i
-        if ngg < 0
-          msg = " - verrà rimosso al prossimo allineamento (domani)"
-        else
-          msg = " - verrà rimosso fra #{ngg} giorni"
-        end
-      end
-      mymsg=r.gg_in_lista=='0' ? 'oggi' : "#{r.gg_in_lista} giorni fa#{msg}"
-      specif = "#{link_to(r.titolo,r)}<br/><em>Inserito in lista: #{r.date_created.to_date} (#{mymsg})</em>"
-      if !r.datapubblicazione.blank?
-        msg = ''
-        if r.pubbl_age_limit.to_i > 0
-          ngg = r.pubbl_age_limit.to_i - r.gg_da_pubblicazione.to_i
-          if ngg < 0
-            msg = " - verrà rimosso al prossimo allineamento (domani)"
+
+      if r.date_created.nil?
+        specif1 = "#{link_to(r.titolo,r)}<br/><em>Data di inserimento in lista sconosciuta</em>"
+      else
+        if !r.days_before_autorm.blank?
+          tra = r.days_before_autorm.to_i - r.gg_in_lista.to_i
+          if r.gg_in_lista.to_i >= r.days_before_autorm.to_i
+            msgcss = 'danger'
+            if tra < 0
+              msg = content_tag(:span, "verrà rimosso", class:"label label-#{msgcss}")
+            else
+              msg = content_tag(:span, "verrà rimosso", class:"label label-#{msgcss}")
+            end
           else
-            msg = " - verrà rimosso fra #{ngg} giorni"
+            msgcss = 'success'
+            msg = "ancora #{tra} giorni"
+            msg = content_tag(:span, msg, class:"label label-#{msgcss}")
           end
-        end
-        if r.gg_da_pubblicazione.to_i < 0
-          msg=''
-          # specif << "<br/>Data pubblicazione FUTURA: #{r.datapubblicazione} (fra #{r.gg_da_pubblicazione.to_i.abs} giorni#{msg})"
-          specif << "<br/>Data pubblicazione FUTURA: #{r.datapubblicazione}"
         else
-          mymsg=r.gg_da_pubblicazione=='0' ? 'oggi' : "#{r.gg_da_pubblicazione} giorni fa#{msg}"
-          specif << "<br/>Data pubblicazione: #{r.datapubblicazione} (#{mymsg})"
+          msg = ''
         end
+        mymsg =
+          case r.gg_in_lista.to_i
+          when 0
+            'oggi'
+          when 1
+            'ieri'
+          else
+            "#{r.gg_in_lista} giorni fa"
+          end
+        specif1 = "#{link_to(r.titolo,r)}<br/><em>Inserito in lista: #{r.date_created.to_date} (#{mymsg}) #{msg}</em>"
       end
-      res << content_tag(:tr, content_tag(:td, link_to(r.order_sequence, sbct_list_path(r.root_id))) +
+
+      if r.datapubblicazione.blank?
+        specif2 = "Data pubblicazione sconosciuta"
+      else
+        if !r.pubbl_age_limit.blank?
+          tra = r.pubbl_age_limit.to_i - r.gg_da_pubblicazione.to_i
+          if r.gg_da_pubblicazione.to_i >= r.pubbl_age_limit.to_i
+            msgcss = 'error'
+            if tra < 0
+              msg = content_tag(:span, "verrà rimosso", class:"label label-#{msgcss}")
+            else
+              msg = content_tag(:span, "verrà rimosso", class:"label label-#{msgcss}")
+            end
+          else
+            msgcss = 'success'
+            msg = "ancora #{tra} giorni"
+            msg = content_tag(:span, msg, class:"label label-#{msgcss}")
+          end
+        else
+          msg = ''
+        end
+        mymsg =
+          case r.gg_da_pubblicazione.to_i
+          when 0
+            'oggi'
+          when 1
+            'ieri'
+          else
+            r.gg_da_pubblicazione.to_i > 0 ? "#{r.gg_da_pubblicazione} giorni fa" : 'FUTURA'
+          end
+        msg = '' if r.gg_da_pubblicazione.to_i < 0
+        specif2 = "Data pubblicazione: #{r.datapubblicazione.to_date} (#{mymsg}) #{msg}</em>"
+      end
+
+      res << content_tag(:tr, content_tag(:td, cnt) +
                               content_tag(:td, ulnk) +
-                              content_tag(:td, specif.html_safe) +
+                              content_tag(:td, "#{specif1}<br/>#{specif2}".html_safe) +
                               content_tag(:td, r.note))
     end
     content_tag(:table, res.join("\n").html_safe, class:'table table-condensed')

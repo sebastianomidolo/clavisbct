@@ -125,9 +125,9 @@ task :import_from_clavis => :environment do
   Location.update_all_items
   puts "tornato da Location.update_all_items #{Time.now}"
 
-  puts "chiamo ora SbctList.autoremove_titles #{Time.now}"
-  SbctList.autoremove_titles
-  puts "tornato da SbctList.autoremove_titles #{Time.now}"
+  # puts "chiamo ora SbctList.autoremove_titles #{Time.now}"
+  # SbctList.autoremove_titles
+  # puts "tornato da SbctList.autoremove_titles #{Time.now}"
 
   cmd="/usr/bin/truncate -s0 /home/seb/autoprintweb.log"
   Kernel.system(cmd)

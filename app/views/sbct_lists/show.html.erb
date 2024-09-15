@@ -5,9 +5,15 @@
 
 <%= content_tag(:h5, "Referente: #{@sbct_list.owner_to_label}") if !@sbct_list.sbct_user.nil? %>
 
-<%= content_tag(:p, "I titoli vengono rimossi da questa lista dopo <b>#{@sbct_list.days_before_autorm} giorni</b> dalla lora aggiunta".html_safe, class:'label label-info') if !@sbct_list.days_before_autorm.nil? %>
+<%=
+  lnk = link_to('[rimuovi ora]', sbct_list_path(@sbct_list, esegui:'autoremove_on_days_before_autorm'), data: { confirm: "Confermi rimozione dei titoli lista?" })
+  content_tag(:span, "I titoli vengono tolti dalla lista <b>#{@sbct_list.days_before_autorm} giorni</b> dopo il loro inserimento #{lnk}".html_safe, class:'label label-info') if !@sbct_list.days_before_autorm.nil?
+  %>
 
-<%= content_tag(:p, "I titoli vengono rimossi da questa lista dopo <b>#{@sbct_list.pubbl_age_limit} giorni</b> dalla data di pubblicazione".html_safe, class:'label label-warning') if !@sbct_list.pubbl_age_limit.nil? %>
+<%=
+  lnk = link_to('[rimuovi ora]', sbct_list_path(@sbct_list, esegui:'autoremove_on_pubbl_age_limit'), data: { confirm: "Confermi rimozione dei titoli lista?" })
+  content_tag(:span, "I titoli vengono tolti dalla lista <b>#{@sbct_list.pubbl_age_limit} giorni</b> dopo la data di pubblicazione #{lnk}".html_safe, class:'label label-warning') if !@sbct_list.pubbl_age_limit.nil?
+  %>
 
 
 <!--
@@ -120,6 +126,6 @@ content_tag(:div, sbct_items_per_libraries({id_lista:@sbct_list.id,arrivati_o_or
   @sbct_titles = SbctList.lastins(params.merge(id_lista:@sbct_list.id),current_user)
   if @sbct_titles.size > 0
 %>
-<%= content_tag(:h4, "Ultimi titoli aggiunti") %>
+<% content_tag(:h4, "Titoli di questa lista") %>
 <%= content_tag(:div, sbct_titles_lastins_list(@sbct_titles,@sbct_list)) %>
 <% end %>
