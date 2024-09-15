@@ -24,7 +24,11 @@ class Clinic < ActiveRecord::Base
     cond << "#{ta}bib_type_first=#{Clinic.connection.quote(params[:bib_type_first])}" if !params[:bib_type_first].blank?
     cond << "#{ta}bib_type=#{Clinic.connection.quote(params[:bib_type])}" if !params[:bib_type].blank?
     if !params[:u100_pubblico].blank?
-      cond << "#{ta}u100_pubblico ~ #{Clinic.connection.quote(params[:u100_pubblico].split('').join('|'))}" if !params[:u100_pubblico].blank?
+      if params[:u100_pubblico] == 'NULL'
+        cond << "#{ta}u100_pubblico IS NULL"
+      else
+        cond << "#{ta}u100_pubblico ~ #{Clinic.connection.quote(params[:u100_pubblico].split('').join('|'))}" if !params[:u100_pubblico].blank?
+      end
     end
     if !params[:pubblico].blank?
       case params[:pubblico]
@@ -172,6 +176,7 @@ class Clinic < ActiveRecord::Base
       ['adulti, intermedio - n','n'],
       ['Adulti (k-m-n)','kmn'],
       ['sconosciuto - u','u'],
+      ['non specificato in Clavis','NULL'],
     ]
   end
 
